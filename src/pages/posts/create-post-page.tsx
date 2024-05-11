@@ -122,7 +122,10 @@ const CreatePostPage: React.FC = () => {
           </ReactDropzone>
 
           {postFolders.map((folder) => (
-            <Card key={folder.id} onClick={() => setSelectedFolder(folder)} className="mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+            <Card key={folder.id} onClick={() => {
+              setSelectedFolder(folder);
+              setSelectedPost(null);
+            }} className="mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-lg">
                 {folder.name}
               </h2>
@@ -148,7 +151,7 @@ const CreatePostPage: React.FC = () => {
               </div>
               {/* Display image, video, audio and date created as paragraph */}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Created: {post.created_at}
+                Created: {post.created_at.split("T")[0]} {post.created_at.split("T")[1].split(".")[0]}
               </p>
             </Card>
           ))}

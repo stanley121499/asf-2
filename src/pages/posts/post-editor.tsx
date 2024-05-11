@@ -2,7 +2,7 @@ import { Button } from "flowbite-react";
 import React, { useEffect } from "react";
 import { PostFolder } from "../../context/post/PostFolderContext";
 import { Post, PostInsert, usePostContext } from "../../context/post/PostContext";
-import { PostFolderMedia } from "../../context/post/PostFolderMediaContext";
+import { PostFolderMedia, usePostFolderMediaContext } from "../../context/post/PostFolderMediaContext";
 import { usePostMediaContext, PostMediaInsert } from "../../context/post/PostMediaContext";
 import * as flowbiteReact from "flowbite-react";
 import { useAlertContext } from "../../context/AlertContext";
@@ -16,9 +16,10 @@ interface PostEditorProps {
 }
 
 const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFolder, setSelectedPost, selectedPost }) => {
-  const { createPostMedia, deleteAllPostMediaByPostId } = usePostMediaContext();
+  const { createPostMedia, deleteAllPostMediaByPostId, postMedias } = usePostMediaContext();
   const { createPost, updatePost } = usePostContext();
   const { showAlert } = useAlertContext();
+  const { postFolderMedias } = usePostFolderMediaContext();
   const [postDetailToggle, setPostDetailToggle] = React.useState(false);
   const [selectedMedias, setSelectedMedias] = React.useState<PostFolderMedia[]>([]);
   const [arrangedMedias, setArrangedMedias] = React.useState<PostFolderMedia[]>([]);
@@ -90,6 +91,15 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
         photo_size: selectedPost.photo_size,
         cta_text: selectedPost.cta_text,
       });
+      
+      selectedPost.medias = postMedias.filter((media) => media.post_id === selectedPost.id);
+
+      // Compare media_url in selectedPost.medias and postFolderMedias to generate an array of PostFolderMedia
+      const selectedPostMedias = selectedPost.medias.map((media) => {
+        return postFolderMedias.find((pfm) => pfm.media_url === media.media_url) || null;
+      });
+
+      setArrangedMedias(selectedPostMedias.filter((media) => media !== null) as PostFolderMedia[]);
     } else {
       setPostData({
         name: "",
@@ -99,8 +109,10 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
         photo_size: "MEDIUM",
         cta_text: "",
       });
+
+      setArrangedMedias([]);
     }
-  }, [selectedFolder?.id, selectedPost]);
+  }, [postFolderMedias, postMedias, selectedFolder?.id, selectedPost]);
 
 
   return (
@@ -233,7 +245,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
               <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
               <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
               <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
-              <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white dark:bg-gray-800">
+              <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white">
                 <div className="pt-5">
                   <PostComponent caption={postData.caption || ""} medias={arrangedMedias.map((m) => m.media_url)} captionPosition={postData.caption_position || ""} ctaText={postData.cta_text || ""} photoSize={postData.photo_size || ""} />
                 </div>
