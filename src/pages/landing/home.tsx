@@ -12,10 +12,10 @@ const HomePage: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      <BackgroundImageCards />
+      {/* <BackgroundImageCards />
       <CardsWithGridLayoutAndCTA />
       <HeadingWithCTAButton />
-      <OverlayCardsWithZoomEffect />
+      <OverlayCardsWithZoomEffect /> */}
       {/* <BottomNav /> */}
       <OriginalFooterOfFlowbite />
     </>

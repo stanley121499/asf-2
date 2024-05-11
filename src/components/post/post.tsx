@@ -66,7 +66,7 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
             {/* <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             {ctaText}
           </button> */}
-            <p className="mt-4 text-sm">{ctaText}</p>
+            <p className="text-sm underline">{ctaText} {">"}</p>
           </div>
         </div>
       )}

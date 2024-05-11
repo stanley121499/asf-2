@@ -50,9 +50,14 @@ const SchedulePostListPage: React.FC = function () {
       <div className="block items-center justify-between border-b border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:flex">
         <div className="mb-1 w-full">
           <div className="mb-2 flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-              Schedule Posts
-            </h1>
+            <div className="flex items-center gap-x-3">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+                Schedule Posts
+              </h1>
+              <a href="/posts/list" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">All Posts</a>
+              <a href="/posts/schedule" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">Schedule</a>
+            </div>
+
             <form className="lg:pr-3">
               <Label htmlFor="posts-search" className="sr-only">
                 Search
@@ -73,7 +78,7 @@ const SchedulePostListPage: React.FC = function () {
       <div className="flex flex-col p-4 ">
         <div className="overflow-x-auto">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
-            <div className={selectedPost? "col-span-2" : "col-span-3"}>
+            <div className={selectedPost ? "col-span-2" : "col-span-3"}>
               <div className="overflow-hidden shadow">
                 {posts.length > 0 ? (
                   <Table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">

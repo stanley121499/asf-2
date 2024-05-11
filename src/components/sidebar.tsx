@@ -10,6 +10,7 @@ import {
 import { useSidebarContext } from "../context/SidebarContext";
 import isSmallScreen from "../helpers/is-small-screen";
 import { BsFillFilePostFill } from "react-icons/bs";
+import { GoHomeFill } from "react-icons/go";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
@@ -33,8 +34,9 @@ const ExampleSidebar: React.FC = function () {
     >
       <Sidebar
         aria-label="Sidebar with multi-level dropdown example"
-        collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
-        // collapsed={true}
+        // collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
+        collapsed={true}
+        className="pt-0"
       >
         <div className="flex h-full flex-col justify-between py-2">
           <div>
@@ -44,7 +46,7 @@ const ExampleSidebar: React.FC = function () {
 
                 <Sidebar.Item
                   href="/dashboard"
-                  icon={HiChartPie}
+                  icon={GoHomeFill}
                   className={
                     "/dashboard" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
                   }
@@ -61,8 +63,18 @@ const ExampleSidebar: React.FC = function () {
                 >
                   Users
                 </Sidebar.Item>
+                <Sidebar.Item
+                  icon={BsFillFilePostFill}
+                  href="/posts/list"
+                  className={
+                    "/posts/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+                  }
+                >
+                  All Posts
+                </Sidebar.Item>
 
-                <Sidebar.Collapse
+
+                {/* <Sidebar.Collapse
                   icon={BsFillFilePostFill}
                   label="Posts"
                   open={isPostOpen}
@@ -76,7 +88,6 @@ const ExampleSidebar: React.FC = function () {
                     All Posts
                   </Sidebar.Item>
 
-                  {/* Schedule */}
                   <Sidebar.Item
                     href="/posts/schedule"
                     className={
@@ -85,7 +96,7 @@ const ExampleSidebar: React.FC = function () {
                   >
                     Schedule
                   </Sidebar.Item>
-                </Sidebar.Collapse>
+                </Sidebar.Collapse> */}
               </Sidebar.ItemGroup>
             </Sidebar.Items>
           </div>

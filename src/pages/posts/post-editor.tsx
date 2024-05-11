@@ -111,6 +111,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
       });
 
       setArrangedMedias([]);
+      setSelectedMedias([]);
     }
   }, [postFolderMedias, postMedias, selectedFolder?.id, selectedPost]);
 
@@ -149,7 +150,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                       alt="media"
                       className="w-full h-56 object-cover rounded" />
                     {/* Show a tick on top of the image if selected */}
-                    {(selectedMedias.find((m) => m.id === media.id)  || arrangedMedias.find((m) => m.id === media.id)) && (
+                    {(selectedMedias.find((m) => m.id === media.id) || arrangedMedias.find((m) => m.id === media.id)) && (
                       <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -294,8 +295,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
       )}
       {
         !selectedFolder && (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-lg text-gray-500 dark:text-gray-400">Select a folder to view medias</p>
+          <div className="flex items-center justify-center" style={{ height: "calc(100vh - 4rem)" }}>
+            <div className="text-center">
+
+              <img alt="" src="/images/illustrations/sign-in.svg" className="lg:max-w-md" />
+              <p className="text-lg text-gray-500 dark:text-gray-400">Select a folder to start</p>
+            </div>
           </div>
         )
       }
