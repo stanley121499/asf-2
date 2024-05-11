@@ -4,17 +4,14 @@ import {
   Label,
   Modal,
   Select,
-  TextInput,
-  Datepicker,
+  TextInput
 } from "flowbite-react";
 import React, { useState } from "react";
 import { FaUsersCog } from "react-icons/fa";
-import { FaPhoneFlip } from "react-icons/fa6";
 import {
   HiMail,
   HiPlus,
 } from "react-icons/hi";
-import { LiaBirthdayCakeSolid } from "react-icons/lia";
 import { PiPasswordBold } from "react-icons/pi";
 import { useAlertContext } from "../../context/AlertContext";
 import { User, useUserContext } from "../../context/UserContext";
@@ -27,17 +24,11 @@ const AddUserModal: React.FC = function () {
     email: "",
     password: "",
     user_detail: {
-      birthday: "",
-      role: "customer",
-      contact_number: "",
+      role: "USER",
     }
   });
 
   const handleAddUser = async () => {
-    // append @fruitcalculator.com to the email
-    userData.email = `${userData.email.split("@")[0]}@fruitcalculator.com`;
-
-
     await addUser(userData as User).then(() => {
       setOpen(false);
       showAlert("User added successfully", "success");
@@ -86,35 +77,7 @@ const AddUserModal: React.FC = function () {
                   onChange={(e) => setUserData({ ...userData, password: e.target.value })}
                 />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="birthday">Birthday</Label>
-              <div className="mt-1">
-                {/* Date input should show and save in the format of DD-MM-YYYY */}
-                <Datepicker
-                  id="birthday"
-                  name="birthday"
-                  icon={LiaBirthdayCakeSolid}
-                  value={userData.user_detail.birthday}
-                  onSelectedDateChanged={(date) => setUserData({ ...userData, user_detail: { ...userData.user_detail, birthday: date.toLocaleDateString() } })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="contact_number">Contact Number</Label>
-              <div className="mt-1">
-                <TextInput
-                  id="contact_number"
-                  name="contact_number"
-                  placeholder="09123456789"
-                  icon={FaPhoneFlip}
-                  value={userData.user_detail.contact_number}
-                  onChange={(e) => setUserData({ ...userData, user_detail: { ...userData.user_detail, contact_number: e.target.value } })}
-                />
-              </div>
-            </div>
+            </div>            
 
             <div>
               <Label htmlFor="role">Role</Label>

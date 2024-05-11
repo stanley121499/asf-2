@@ -5,7 +5,7 @@ const privacyPolicyContent = {
   sections: [
     {
       title: "Introduction",
-      content: "At Fruit Calculator, accessible from Fruit Calculator.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Fruit Calculator and how we use it. If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us. This Privacy Policy applies only to our online activities and is valid for visitors to our website with regards to the information that they shared and/or collect in Fruit Calculator. This policy is not applicable to any information collected offline or via channels other than this website.",
+      content: "At ASF, accessible from ASF.com, one of our main priorities s the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by ASF and how we use it. Ifi you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us. This Privacy Policy applies only to our online activities and is valid for visitors to our website with regards to the information that they shared and/or collect in ASF. This policy is not applicable to any information collected offline or via channels other than this website.",
     },
     {
       title: "Consent",
@@ -21,19 +21,19 @@ const privacyPolicyContent = {
     },
     {
       title: "Log Files",
-      content: "Fruit Calculator follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this and a part of hosting services’ analytics. The information collected by log files include internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users’ movement on the website, and gathering demographic information."
+      content: "ASF follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this and a part of hosting services’ analytics. The information collected by log files include internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users’ movement on the website, and gathering demographic information."
     },
     {
       title: "Cookies and Web Beacons",
-      content:"Like any other website, Fruit Calculator uses ‘cookies’. These cookies are used to store information including visitors’ preferences, and the pages on the website that the visitor accessed or visited. The information is used to optimize the users’ experience by customizing our web page content based on visitors’ browser type and/or other information."
+      content:"Like any other website, ASF uses ‘cookies’. These cookies are used to store information including visitors’ preferences, and the pages on the website that the visitor accessed or visited. The information is used to optimize the users’ experience by customizing our web page content based on visitors’ browser type and/or other information."
     },
     {
       title: "Advertising Partners Privacy Policies",
-      content:"You may consult this list to find the Privacy Policy for each of the advertising partners of Fruit Calculator. Third-party ad servers or ad networks uses technologies like cookies, JavaScript, or Web Beacons that are used in their respective advertisements and links that appear on Fruit Calculator, which are sent directly to users’ browser. They automatically receive your IP address when this occurs. These technologies are used to measure the effectiveness of their advertising campaigns and/or to personalize the advertising content that you see on websites that you visit. Note that Fruit Calculator has no access to or control over these cookies that are used by third-party advertisers."
+      content:"You may consult this list to find the Privacy Policy for each of the advertising partners of ASF. Third-party ad servers or ad networks uses technologies like cookies, JavaScript, or Web Beacons that are used in their respective advertisements and links that appear on ASF, which are sent directly to users’ browser. They automatically receive your IP address when this occurs. These technologies are used to measure the effectiveness of their advertising campaigns and/or to personalize the advertising content that you see on websites that you visit. Note that ASF has no access to or control over these cookies that are used by third-party advertisers."
     },
     {
       title: "Third Party Privacy Policies",
-      content:"Fruit Calculator’s Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options. You can choose to disable cookies through your individual browser options. To know more detailed information about cookie management with specific web browsers, it can be found at the browsers’ respective websites."
+      content:"ASF’s Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options. You can choose to disable cookies through your individual browser options. To know more detailed information about cookie management with specific web browsers, it can be found at the browsers’ respective websites."
     },
     {
       title: "CCPA Privacy Rights (Do Not Sell My Personal Information)",
@@ -45,11 +45,11 @@ const privacyPolicyContent = {
     },
     {
       title: "Children’s Information",
-      content:"Another part of our priority is adding protection for children while using the internet. We encourage parents and guardians to observe, participate in, and/or monitor and guide their online activity. Fruit Calculator does not knowingly collect any Personal Identifiable Information from children under the age of 13. If you think that your child provided this kind of information on our website, we strongly encourage you to contact us immediately and we will do our best efforts to promptly remove such information from our records."
+      content:"Another part of our priority is adding protection for children while using the internet. We encourage parents and guardians to observe, participate in, and/or monitor and guide their online activity. ASF does not knowingly collect any Personal Identifiable Information from children under the age of 13. If you think that your child provided this kind of information on our website, we strongly encourage you to contact us immediately and we will do our best efforts to promptly remove such information from our records."
     },
     {
       title: "Data Deletion",
-      content:"If you want to delete your activities Fruit Calculator Internal Blasting Too, you can remove your information by following these steps: 1. Go to your Facebook Account’s Setting & Privacy. Click “Settings” 2. Look for “Apps and Websites” and you will see all of the apps and websites you linked with your Facebook. 3. Search and Click “Fruit Calculator Internal Blasting Too” in the search bar. 4. Scroll and click “Remove”. 5. Congratulations, you have successfully removed your app activities. In addition, you may email to support@topasiaedu.com to request for your data deletion."
+      content:"If you want to delete your activities ASF Internal Blasting Too, you can remove your information by following these steps: 1. Go to your Facebook Account’s Setting & Privacy. Click “Settings” 2. Look for “Apps and Websites” and you will see all of the apps and websites you linked with your Facebook. 3. Search and Click “ASF Internal Blasting Too” in the search bar. 4. Scroll and click “Remove”. 5. Congratulations, you have successfully removed your app activities. In addition, you may email to support@topasiaedu.com to request for your data deletion."
     }
 
     // Add more sections as needed...

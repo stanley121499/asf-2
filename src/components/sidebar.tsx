@@ -2,28 +2,27 @@
 import classNames from "classnames";
 import { Sidebar } from "flowbite-react";
 import React, { useEffect, useState } from "react";
-import { BiSolidCategory } from "react-icons/bi";
 import { FaUsers } from "react-icons/fa";
-import { FaRegNoteSticky } from "react-icons/fa6";
-import { GrTransaction } from "react-icons/gr";
 import {
   HiChartPie,
 } from "react-icons/hi";
-import { IoDocumentTextOutline } from "react-icons/io5";
-import { useAuthContext } from "../context/AuthContext";
+// import { useAuthContext } from "../context/AuthContext";
 import { useSidebarContext } from "../context/SidebarContext";
-import isSmallScreen from "../helpers/is-small-screen";
+// import isSmallScreen from "../helpers/is-small-screen";
+import { BsFillFilePostFill } from "react-icons/bs";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
     useSidebarContext();
   const [currentPage, setCurrentPage] = useState("");
-  const { user_detail } = useAuthContext();
+  // const { user_detail } = useAuthContext();
+  const [isPostOpen, setPostOpen] = useState(true);
 
   useEffect(() => {
     const newPage = window.location.pathname;
 
     setCurrentPage(newPage);
+    setPostOpen(newPage.includes("/posts/"));
   }, [setCurrentPage]);
 
   return (
@@ -34,7 +33,8 @@ const ExampleSidebar: React.FC = function () {
     >
       <Sidebar
         aria-label="Sidebar with multi-level dropdown example"
-        collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
+        // collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
+        collapsed={true}
       >
         <div className="flex h-full flex-col justify-between py-2">
           <div>
@@ -52,72 +52,40 @@ const ExampleSidebar: React.FC = function () {
                   Dashboard
                 </Sidebar.Item>
 
-                {/* Transactions */}
                 <Sidebar.Item
-                  href="/transactions"
-                  icon={GrTransaction}
+                  href="/users/list"
+                  icon={FaUsers}
                   className={
-                    "/transactions" === currentPage
-                      ? "bg-gray-100 dark:bg-gray-700"
-                      : ""
+                    "/users/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
                   }
                 >
-                  Transactions
+                  Users
                 </Sidebar.Item>
 
-                {/* Note */}
-                {(user_detail?.role === "admin" || user_detail?.role === "employee") && (
+                <Sidebar.Collapse
+                  icon={BsFillFilePostFill}
+                  label="Posts"
+                  open={isPostOpen}
+                >
                   <Sidebar.Item
-                    href="/notes"
-                    icon={FaRegNoteSticky}
+                    href="/posts/list"
                     className={
-                      "/notes" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+                      "/posts/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
                     }
                   >
-                    Notes
+                    All Posts
                   </Sidebar.Item>
-                )}
-                {/* Result */}
-                {(user_detail?.role === "admin" || user_detail?.role === "employee") && (
-                  <Sidebar.Item
-                    href="/results"
-                    icon={IoDocumentTextOutline}
-                    className={
-                      "/results" === currentPage
-                        ? "bg-gray-100 dark:bg-gray-700"
-                        : ""
-                    }
-                  >
-                    Results
-                  </Sidebar.Item>
-                )}
 
-                {/* Users */}
-                {(user_detail?.role === "admin" || user_detail?.role === "employee") && (
+                  {/* Schedule */}
                   <Sidebar.Item
-                    href="/users/list"
-                    icon={FaUsers}
+                    href="/posts/schedule"
                     className={
-                      "/users/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+                      "/posts/schedule" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
                     }
                   >
-                    Users
+                    Schedule
                   </Sidebar.Item>
-                )}
-
-                {/* Categories */}
-                {(user_detail?.role === "admin" || user_detail?.role === "employee") && (
-                  <Sidebar.Item
-                    href="/categories"
-                    icon={BiSolidCategory}
-                    className={
-                      "/categories" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-                    }
-                  >
-                    Categories
-                  </Sidebar.Item>
-                )}
-
+                </Sidebar.Collapse>
               </Sidebar.ItemGroup>
             </Sidebar.Items>
           </div>

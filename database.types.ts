@@ -9,306 +9,158 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      account_balances: {
+      post_folder_medias: {
         Row: {
-          balance: number
-          category_id: number
-          created_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          category_id: number
-          created_at?: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          category_id?: number
-          created_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_account_balance_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_account_balance_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bakis: {
-        Row: {
-          balance: number
-          category_id: number
-          created_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          category_id: number
-          created_at?: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          category_id?: number
-          created_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "baki_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "baki_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      categories: {
-        Row: {
-          id: number
-          name: string
-        }
-        Insert: {
-          id?: number
-          name: string
-        }
-        Update: {
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      notes: {
-        Row: {
-          amount: number
-          category_id: number
           created_at: string
           id: string
           media_url: string
-          method: string
-          status: string
-          target: Database["public"]["Enums"]["transaction_target"]
-          user_id: string
+          post_folder_id: string | null
         }
         Insert: {
-          amount: number
-          category_id: number
           created_at?: string
           id?: string
           media_url: string
-          method: string
-          status?: string
-          target: Database["public"]["Enums"]["transaction_target"]
-          user_id: string
+          post_folder_id?: string | null
         }
         Update: {
-          amount?: number
-          category_id?: number
           created_at?: string
           id?: string
           media_url?: string
-          method?: string
-          status?: string
-          target?: Database["public"]["Enums"]["transaction_target"]
-          user_id?: string
+          post_folder_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "notes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "post_folder_medias_post_folder_id_fkey"
+            columns: ["post_folder_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_notes_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
+            referencedRelation: "post_folders"
             referencedColumns: ["id"]
           },
         ]
       }
-      results: {
+      post_folders: {
         Row: {
-          category_id: number
+          created_at: string
+          id: string
+          image_count: number
+          name: string
+          video_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name: string
+          video_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name?: string
+          video_count?: number
+        }
+        Relationships: []
+      }
+      post_medias: {
+        Row: {
+          arrangement: number | null
           created_at: string
           id: number
-          result: string
+          media_url: string
+          post_id: string
+        }
+        Insert: {
+          arrangement?: number | null
+          created_at?: string
+          id?: number
+          media_url: string
+          post_id: string
+        }
+        Update: {
+          arrangement?: number | null
+          created_at?: string
+          id?: number
+          media_url?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          caption: string | null
+          caption_position: string
+          created_at: string
+          cta_text: string | null
+          id: string
+          name: string
+          photo_size: string
+          post_folder_id: string | null
           status: string
-          target: Database["public"]["Enums"]["transaction_target"]
-          user_id: string
+          time_post: string | null
         }
         Insert: {
-          category_id: number
+          caption?: string | null
+          caption_position?: string
           created_at?: string
-          id?: number
-          result: string
+          cta_text?: string | null
+          id?: string
+          name: string
+          photo_size?: string
+          post_folder_id?: string | null
           status?: string
-          target: Database["public"]["Enums"]["transaction_target"]
-          user_id: string
+          time_post?: string | null
         }
         Update: {
-          category_id?: number
+          caption?: string | null
+          caption_position?: string
           created_at?: string
-          id?: number
-          result?: string
+          cta_text?: string | null
+          id?: string
+          name?: string
+          photo_size?: string
+          post_folder_id?: string | null
           status?: string
-          target?: Database["public"]["Enums"]["transaction_target"]
-          user_id?: string
+          time_post?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "public_results_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "posts_post_folder_id_fkey"
+            columns: ["post_folder_id"]
             isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "results_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      transactions: {
-        Row: {
-          account_balance_id: string | null
-          amount: number
-          baki_id: string | null
-          category_id: number | null
-          created_at: string
-          id: number
-          note_id: string | null
-          result_id: number | null
-          source: string | null
-          target: Database["public"]["Enums"]["transaction_target"]
-          type: string
-          user_id: string | null
-        }
-        Insert: {
-          account_balance_id?: string | null
-          amount?: number
-          baki_id?: string | null
-          category_id?: number | null
-          created_at?: string
-          id?: number
-          note_id?: string | null
-          result_id?: number | null
-          source?: string | null
-          target: Database["public"]["Enums"]["transaction_target"]
-          type: string
-          user_id?: string | null
-        }
-        Update: {
-          account_balance_id?: string | null
-          amount?: number
-          baki_id?: string | null
-          category_id?: number | null
-          created_at?: string
-          id?: number
-          note_id?: string | null
-          result_id?: number | null
-          source?: string | null
-          target?: Database["public"]["Enums"]["transaction_target"]
-          type?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_transaction_account_balance_id_fkey"
-            columns: ["account_balance_id"]
-            isOneToOne: false
-            referencedRelation: "account_balances"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_baki_id_fkey"
-            columns: ["baki_id"]
-            isOneToOne: false
-            referencedRelation: "bakis"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_note_id_fkey"
-            columns: ["note_id"]
-            isOneToOne: false
-            referencedRelation: "notes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_result_id_fkey"
-            columns: ["result_id"]
-            isOneToOne: false
-            referencedRelation: "results"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "post_folders"
             referencedColumns: ["id"]
           },
         ]
       }
       user_details: {
         Row: {
-          birthday: string | null
-          contact_number: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string
+          created_at: string
+          id: string
+          role: string
         }
         Insert: {
-          birthday?: string | null
-          contact_number?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          user_id: string
+          created_at?: string
+          id: string
+          role?: string
         }
         Update: {
-          birthday?: string | null
-          contact_number?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string
+          created_at?: string
+          id?: string
+          role?: string
         }
         Relationships: [
           {
-            foreignKeyName: "userdetails_userid_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "user_details_id_fkey"
+            columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -323,8 +175,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      transaction_target: "baki" | "account_balance"
-      user_role: "customer" | "employee" | "admin"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never

@@ -17,7 +17,7 @@ const SignInPage: FC = function () {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission behavior
-    const email = username + '@fruitcalculator.com'; // Append domain to username to create email
+    const email = username
     const result = await signIn(email, password);
 
     // Handle sign-in errors
@@ -43,7 +43,7 @@ const SignInPage: FC = function () {
           className="mr-3 h-10"
         />
         <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
-          Fruit Calculator
+          ASF
         </span>
       </a>
       <Card

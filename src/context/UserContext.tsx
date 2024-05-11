@@ -2,17 +2,12 @@ import React, { createContext, useContext, useEffect, useState, PropsWithChildre
 import { supabase } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
-import { useCategoryContext } from "./CategoryContext";
-import { Baki } from "./BakiContext";
-import { AccountBalance } from "./AccountBalanceContext";
 
 export type User = {
   id: string;
   email: string;
   password: string;
   user_detail: Database["public"]["Tables"]["user_details"]["Row"];
-  baki: Baki[];
-  account_balance: AccountBalance[];
 };
 export type Users = { users: User[] };
 
@@ -30,7 +25,6 @@ export function UserProvider({ children }: PropsWithChildren) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
-  const { categories } = useCategoryContext();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -42,53 +36,20 @@ export function UserProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      // for each user, fetch the user details, account balance, and baki and add them to the user object
       let usersWithDetails = await Promise.all(
         users.users.map(async (user: any) => {
           const { data: user_detail, error } = await supabase
             .from("user_details")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("id", user.id)
             .single();
 
           if (error) {
-            console.error("Error fetching user details:", error);
+            showAlert("Error fetching user details", "error");
             return { ...user, user_detail: null };
           }         
 
           return { ...user, user_detail};            
-        })
-      );
-
-      usersWithDetails = await Promise.all(
-        usersWithDetails.map(async (user: any) => {
-          const { data: account_balance, error } = await supabase
-            .from("account_balances")
-            .select("*")
-            .eq("user_id", user.id)
-
-          if (error) {
-            console.error("Error fetching account balance:", error);
-            return { ...user, account_balance: null };
-          }
-
-          return { ...user, account_balance };
-        })
-      );
-
-      usersWithDetails = await Promise.all(
-        usersWithDetails.map(async (user: any) => {
-          const { data: baki, error } = await supabase
-            .from("bakis")
-            .select("*")
-            .eq("user_id", user.id)
-
-          if (error) {
-            console.error("Error fetching baki:", error);
-            return { ...user, baki: null };
-          }
-
-          return { ...user, baki };
         })
       );
 
@@ -148,28 +109,6 @@ export function UserProvider({ children }: PropsWithChildren) {
       setLoading(false);
       return;
     }
-
-    // Create Account Balance
-    categories.forEach(async (category) => {
-      await supabase
-        .from("account_balances")
-        .insert({
-          user_id: data.user.id,
-          category_id: category.id,
-          balance: 0
-        });
-    });
-
-    // Create Baki
-    categories.forEach(async (category) => {
-      await supabase
-        .from("bakis")
-        .insert({
-          user_id: data.user.id,
-          category_id: category.id,
-          balance: 0
-        });
-    });
 
     showAlert("User added successfully", "success");
     setLoading(false);

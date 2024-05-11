@@ -33,7 +33,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const { data: user_detail, error } = await supabase
           .from("user_details")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("id", user.id)
           .single();
 
         if (error) {

@@ -1,9 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from "react";
 import NavbarSidebarLayout from "../layouts/navbar-sidebar";
-import BalanceCards from "../components/dashboard/balance-cards";
-import CreateNoteForm from "../components/dashboard/create-note-form";
-
 const DashboardPage: React.FC = function () {
   return (
     <NavbarSidebarLayout>
@@ -14,10 +11,8 @@ const DashboardPage: React.FC = function () {
           </h1>
         </div>
         <div className="col-span-full xl:col-auto">
-          <BalanceCards />
         </div>
         <div className="col-span-1">
-          <CreateNoteForm />
         </div>
       </div>
     </NavbarSidebarLayout>

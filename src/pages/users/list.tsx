@@ -94,22 +94,14 @@ const UsersTable: React.FC<Users> = function ({ users }) {
     <Table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
       <Table.Head className="bg-gray-100 dark:bg-gray-700">
         <Table.HeadCell>Username</Table.HeadCell>
-        <Table.HeadCell>Birthday</Table.HeadCell>
-        <Table.HeadCell>Phone Number</Table.HeadCell>
         <Table.HeadCell>Role</Table.HeadCell>
-        <Table.HeadCell>Baki Total</Table.HeadCell>
-        <Table.HeadCell>Account Balance Total</Table.HeadCell>
         <Table.HeadCell>Actions</Table.HeadCell>
       </Table.Head>
       <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
         {users.map((user) => (
           <Table.Row key={user.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <Table.Cell>{user.email.split("@")[0]}</Table.Cell>
-            <Table.Cell>{user.user_detail.birthday}</Table.Cell>
-            <Table.Cell>{user.user_detail.contact_number}</Table.Cell>
+            <Table.Cell>{user.email}</Table.Cell>
             <Table.Cell>{user.user_detail.role}</Table.Cell>
-            <Table.Cell>{user.baki.reduce((acc, baki) => acc + baki.balance, 0)}</Table.Cell>
-            <Table.Cell>{user.account_balance.reduce((acc, account_balance) => acc + account_balance.balance, 0)}</Table.Cell>
             <Table.Cell>
               <div className="flex items-center gap-x-3 whitespace-nowrap">
                 <EditUserModal user={user} />
