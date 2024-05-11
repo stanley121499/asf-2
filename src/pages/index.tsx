@@ -8,6 +8,12 @@ const DashboardPage: React.FC = function () {
       {/* One Column Straight in the center */}
       <div className="flex items-center justify-center" style={{ height: "calc(100vh - 4rem)" }}>
         <div className="text-center">
+          {/* Logo */}
+          <img
+            alt=""
+            src="../../images/logo.svg"
+            className="mx-auto h-12 sm:h-16"
+          />
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white sm:text-4xl">
             ASF
           </h1>
