@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface PostProps {
   caption: string;
@@ -9,6 +9,8 @@ interface PostProps {
 }
 
 const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, ctaText, photoSize }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   // Function to determine caption classes based on the position
   const getCaptionClasses = () => {
     switch (captionPosition) {
@@ -37,22 +39,37 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
     }
   }
 
+  // Auto-scroll images
+  useEffect(() => {
+    if (medias.length <= 1) return; // No need to scroll if there's only one images
+
+    const intervalId = setInterval(() => {
+      setCurrentIndex((current) => (current + 1) % medias.length);
+    }, 1000); 
+
+    return () => clearInterval(intervalId); // Clean up the interval on component unmount
+  }, [medias.length]);
+
+  console.log("medias", medias)
+  console.log("currentIndex", currentIndex)
   return (
     <div className="relative overflow-hidden bg-black">
       {/* Background image with optional photo size */}
-      <div className={`bg-cover bg-center ${getPhotoSizeClasses()}`} style={{ backgroundImage: `url(${medias[0]})` }}>
-        {/* Dimmed background overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+      {medias.length > 0 && (
+        <div className={`bg-cover bg-center ${getPhotoSizeClasses()}`} style={{ backgroundImage: `url(${medias[currentIndex]})` }}>
+          {/* Dimmed background overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-        {/* Caption overlay with dimmed background */}
-        <div className={`text-white p-4 ${getCaptionClasses()}`}>
-          <p className="text-lg">{caption}</p>
-          {/* <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          {/* Caption overlay with dimmed background */}
+          <div className={`text-white p-4 ${getCaptionClasses()}`}>
+            <p className="text-lg">{caption}</p>
+            {/* <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             {ctaText}
           </button> */}
-          <p className="mt-4 text-sm">{ctaText}</p>
+            <p className="mt-4 text-sm">{ctaText}</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

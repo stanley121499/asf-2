@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import { Button, Card, Label } from "flowbite-react";
 import { usePostFolderContext, PostFolder, PostFolderInsert } from "../../context/post/PostFolderContext";
@@ -8,6 +8,7 @@ import { useAlertContext } from "../../context/AlertContext";
 import { supabase } from "../../utils/supabaseClient";
 import ReactDropzone from "react-dropzone";
 import PostEditor from "./post-editor";
+import { useParams } from "react-router-dom";
 
 const CreatePostPage: React.FC = () => {
   const { postFolders, createPostFolder } = usePostFolderContext();
@@ -17,6 +18,17 @@ const CreatePostPage: React.FC = () => {
   const [selectedFolder, setSelectedFolder] = React.useState<PostFolder | null>(null);
   const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const { folderId, postId } = useParams();
+
+  useEffect(() => {
+    if (folderId) {
+      setSelectedFolder(postFolders.find((folder) => folder.id === folderId) || null);
+    }
+
+    if (postId) {
+      setSelectedPost(posts.find((post) => post.id === postId) || null);
+    }
+  }, [folderId, postFolders, postId, posts]);
 
   // Function to handle changes when files are selected
   const handleUpload = (acceptedFiles: File[], folderName: string) => {

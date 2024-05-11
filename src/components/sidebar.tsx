@@ -8,7 +8,7 @@ import {
 } from "react-icons/hi";
 // import { useAuthContext } from "../context/AuthContext";
 import { useSidebarContext } from "../context/SidebarContext";
-// import isSmallScreen from "../helpers/is-small-screen";
+import isSmallScreen from "../helpers/is-small-screen";
 import { BsFillFilePostFill } from "react-icons/bs";
 
 const ExampleSidebar: React.FC = function () {
@@ -33,8 +33,8 @@ const ExampleSidebar: React.FC = function () {
     >
       <Sidebar
         aria-label="Sidebar with multi-level dropdown example"
-        // collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
-        collapsed={true}
+        collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
+        // collapsed={true}
       >
         <div className="flex h-full flex-col justify-between py-2">
           <div>

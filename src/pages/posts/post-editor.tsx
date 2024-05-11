@@ -102,21 +102,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
     }
   }, [selectedFolder?.id, selectedPost]);
 
-  useEffect(() => {
-    if (selectedFolder) {
-      setSelectedMedias([]);
-      setArrangedMedias([]);
-      setPostData({
-        name: "",
-        post_folder_id: selectedFolder.id,
-        caption: "",
-        caption_position: "BOTTOM",
-        photo_size: "MEDIUM",
-        cta_text: "",
-      });
-    }
-  }, [selectedFolder]);
-
 
   return (
     <>

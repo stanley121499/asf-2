@@ -9,6 +9,7 @@ import React from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { usePostContext, Posts } from "../../context/post/PostContext";
+import { usePostMediaContext } from "../../context/post/PostMediaContext";
 
 const PostListPage: React.FC = function () {
   const { posts, loading } = usePostContext();
@@ -73,28 +74,40 @@ const PostListPage: React.FC = function () {
 };
 
 const PostsTable: React.FC<Posts> = function ({ posts }) {
-  // const { deletePost } = usePostContext();
+  const { postMedias } = usePostMediaContext();
+  const { deletePost } = usePostContext();
 
   return (
     <Table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-      <Table.Head className="bg-gray-100 dark:bg-gray-700">
-        <Table.HeadCell>Postname</Table.HeadCell>
-        <Table.HeadCell>Role</Table.HeadCell>
+      {/* <Table.Head className="bg-gray-100 dark:bg-gray-700">
+        <Table.HeadCell>Name</Table.HeadCell>
+        <Table.HeadCell>Created</Table.HeadCell>
         <Table.HeadCell>Actions</Table.HeadCell>
-      </Table.Head>
+      </Table.Head> */}
       <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
         {posts.map((post) => (
           <Table.Row key={post.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <Table.Cell>{post.name}</Table.Cell>
-            <Table.Cell>{post.created_at}</Table.Cell>
+            <Table.Cell width={150}>
+              <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-full" />
+            </Table.Cell>
             <Table.Cell>
-              <div className="flex items-center gap-x-3 whitespace-nowrap">
-                {/* <Button
-                  className="text-red-600 dark:text-red-400"
-                  onClick={() => deletePost(post)}
-                >
-                  <HiTrash />
-                </Button> */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                  {post.name}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {post.caption}
+                </p>
+              </div>
+            </Table.Cell>
+            <Table.Cell>
+              <div className="flex items-center gap-x-3 whitespace-nowrap justify-end">
+                <Button href={`/posts/create/${post.post_folder_id}/${post.id}`} className="btn btn-primary">
+                  Edit
+                </Button>
+                <Button onClick={() => deletePost(post.id)} color={"red"} >
+                  Delete
+                </Button>
               </div>
             </Table.Cell>
           </Table.Row>

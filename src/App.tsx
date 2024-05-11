@@ -23,6 +23,7 @@ import { PostMediaProvider } from "./context/post/PostMediaContext";
 import { PostFolderMediaProvider } from "./context/post/PostFolderMediaContext";
 import PostListPage from "./pages/posts/list";
 import CreatePostPage from "./pages/posts/create-post-page";
+import SchedulePostListPage from "./pages/posts/schedule-post-page";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -42,7 +43,8 @@ const App: React.FC = () => (
                         <Route path="/users/list" element={<UserListPage />} />
                         <Route path="/users/settings" element={<UserSettingsPage />} />
                         <Route path="/posts/list" element={<PostListPage />} />
-                        <Route path="/posts/create" element={<CreatePostPage />} />
+                        <Route path="/posts/create/:folderId?/:postId?" element={<CreatePostPage />} />
+                        <Route path="/posts/schedule" element={<SchedulePostListPage />} />
                       </Route>
 
                       {/* Public Routes */}

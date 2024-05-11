@@ -1,18 +1,26 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from "react";
 import NavbarSidebarLayout from "../layouts/navbar-sidebar";
+import { Button } from "flowbite-react";
 const DashboardPage: React.FC = function () {
   return (
     <NavbarSidebarLayout>
-      <div className="grid grid-cols-1 px-4 pt-6 xl:grid-cols-2 xl:gap-4">
-        <div className="col-span-full mb-4 xl:mb-2">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-            Dashboard
+      {/* One Column Straight in the center */}
+      <div className="flex items-center justify-center" style={{ height: "calc(100vh - 4rem)" }}>
+        <div className="text-center">
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white sm:text-4xl">
+            ASF
           </h1>
-        </div>
-        <div className="col-span-full xl:col-auto">
-        </div>
-        <div className="col-span-1">
+          <p className="text-gray-700 dark:text-gray-300 mt-2">
+            App System Formula
+          </p>
+          <p className="text-gray-700 dark:text-gray-300 mt-2">
+            Own App
+          </p>
+          {/* Buttons with transparent bg, grey outlined, blue when hovered */}
+          <Button href="/posts/list" className="btn btn-outline btn-gray mt-4 hover:bg-blue-500 hover:text-white">
+            Setting Posts
+          </Button>
         </div>
       </div>
     </NavbarSidebarLayout>
