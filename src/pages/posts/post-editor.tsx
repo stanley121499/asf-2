@@ -193,21 +193,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                 {/* Create a divider here */}
                 <div className="border-t border-gray-200 dark:border-gray-800 my-4"></div>
 
-                {/* Caption Position */}
-                <div className="mt-4">
-                  <flowbiteReact.Label>Caption Position</flowbiteReact.Label>
-                  <flowbiteReact.Select
-                    id="caption_position"
-                    name="caption_position"
-                    value={postData?.caption_position || "BOTTOM"}
-                    onChange={(e) => setPostData({ ...postData, caption_position: e.target.value })}
-                  >
-                    <option value="TOP">Top</option>
-                    <option value="MIDDLE">Middle</option>
-                    <option value="BOTTOM">Bottom</option>
-                  </flowbiteReact.Select>
-                </div>
-
                 {/* Photo Size */}
                 <div className="mt-4">
                   <flowbiteReact.Label>Photo Size</flowbiteReact.Label>
@@ -220,6 +205,21 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     <option value="SMALL">Small</option>
                     <option value="MEDIUM">Medium</option>
                     {/* <option value="LARGE">Large</option> */}
+                  </flowbiteReact.Select>
+                </div>
+
+                {/* Caption Position */}
+                <div className="mt-4">
+                  <flowbiteReact.Label>Caption Position</flowbiteReact.Label>
+                  <flowbiteReact.Select
+                    id="caption_position"
+                    name="caption_position"
+                    value={postData?.caption_position || "BOTTOM"}
+                    onChange={(e) => setPostData({ ...postData, caption_position: e.target.value })}
+                  >
+                    <option value="TOP">Top</option>
+                    <option value="MIDDLE">Middle</option>
+                    <option value="BOTTOM">Bottom</option>
                   </flowbiteReact.Select>
                 </div>
 

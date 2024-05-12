@@ -88,13 +88,15 @@ const SchedulePostListPage: React.FC = function () {
                           <Table.Cell width={150}>
                             <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-full" />
                           </Table.Cell>
+
+                          <Table.Cell> {getBadge(post)} </Table.Cell>
                           <Table.Cell>
                             <div>
                               <div className="flex items-center gap-x-5">
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
                                   {post.name}
                                 </h2>
-                                {getBadge(post)}
+                                
                               </div>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {post.caption}
@@ -175,7 +177,7 @@ const SchedulePostListPage: React.FC = function () {
                   <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
                   <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
                   <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
-                  <div className="rounded-[2rem] overflow-hidden w-[272px] h-[472px] bg-white dark:bg-gray-800">
+                  <div className="rounded-[2rem] overflow-hidden w-[272px] h-[472px] bg-white">
                     <div className="pt-5">
                       <PostComponent
                         caption={selectedPost.caption || ""}
@@ -203,7 +205,7 @@ const getBadge = (post: Post) => {
   // Generate based on time post and status
   if (post.time_post && post.time_post > new Date().toISOString()) {
     return (
-      <Badge color="yellow" className="text-xs">
+      <Badge color="yellow" className="text-xs w-fit">
         Scheduled
       </Badge>
     );
@@ -211,14 +213,14 @@ const getBadge = (post: Post) => {
 
   if (post.time_post && post.time_post < new Date().toISOString()) {
     return (
-      <Badge color="green" className="text-xs">
+      <Badge color="green" className="text-xs w-fit">
         Published
       </Badge>
     );
   }
 
   return (
-    <Badge color="gray" className="text-xs">
+    <Badge color="gray" className="text-xs w-filter">
       Draft
     </Badge>
   );
