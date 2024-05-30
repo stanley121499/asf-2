@@ -1,53 +1,53 @@
 import React, { useEffect } from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import { Button, Card, Label } from "flowbite-react";
-import { usePostFolderContext, PostFolder, PostFolderInsert } from "../../context/post/PostFolderContext";
-import { usePostContext, Post } from "../../context/post/PostContext";
-import { usePostFolderMediaContext, PostFolderMediaInsert } from "../../context/post/PostFolderMediaContext";
+import { useProductFolderContext, ProductFolder, ProductFolderInsert } from "../../context/product/ProductFolderContext";
+import { useProductContext, Product } from "../../context/product/ProductContext";
+import { useProductFolderMediaContext, ProductFolderMediaInsert } from "../../context/product/ProductFolderMediaContext";
 import { useAlertContext } from "../../context/AlertContext";
 import { supabase } from "../../utils/supabaseClient";
 import ReactDropzone from "react-dropzone";
-import PostEditor from "./post-editor";
+import ProductEditor from "./product-editor";
 import { useParams } from "react-router-dom";
 
-const CreatePostPage: React.FC = () => {
-  const { postFolders, createPostFolder } = usePostFolderContext();
-  const { posts } = usePostContext();
+const CreateProductPage: React.FC = () => {
+  const { productFolders, createProductFolder } = useProductFolderContext();
+  const { products } = useProductContext();
   const { showAlert } = useAlertContext();
-  const { createPostFolderMedia } = usePostFolderMediaContext();
-  const [selectedFolder, setSelectedFolder] = React.useState<PostFolder | null>(null);
-  const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
+  const { createProductFolderMedia } = useProductFolderMediaContext();
+  const [selectedFolder, setSelectedFolder] = React.useState<ProductFolder | null>(null);
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const { folderId, postId } = useParams();
+  const { folderId, productId } = useParams();
 
   useEffect(() => {
     if (folderId) {
-      setSelectedFolder(postFolders.find((folder) => folder.id === folderId) || null);
+      setSelectedFolder(productFolders.find((folder) => folder.id === folderId) || null);
     }
 
-    if (postId) {
-      setSelectedPost(posts.find((post) => post.id === postId) || null);
+    if (productId) {
+      setSelectedProduct(products.find((product) => product.id === productId) || null);
     }
-  }, [folderId, postFolders, postId, posts]);
+  }, [folderId, productFolders, productId, products]);
 
   // Function to handle changes when files are selected
   const handleUpload = (acceptedFiles: File[], folderName: string) => {
-    // Create a new Post Folder
-    const newPostFolder: PostFolderInsert = {
+    // Create a new Product Folder
+    const newProductFolder: ProductFolderInsert = {
       name: folderName,
       image_count: acceptedFiles.filter((file) => file.type.includes("png") || file.type.includes("jpg") || file.type.includes("jpeg") || file.type.includes("gif")).length,
       video_count: acceptedFiles.filter((file) => file.type.includes("mp4") || file.type.includes("mov") || file.type.includes("avi")).length
     };
 
-    createPostFolder(newPostFolder).then((postFolder) => {
-      if (postFolder) {
+    createProductFolder(newProductFolder).then((productFolder) => {
+      if (productFolder) {
         acceptedFiles.forEach(async (file) => {
           // Generate Random Unique ID for the media
           const randomId = Math.random().toString(36).substring(2);
 
           const { data, error } = await supabase
             .storage
-            .from("post_medias")
+            .from("product_medias")
             .upload(`${randomId}`, file, {
               cacheControl: '3600',
               upsert: false
@@ -59,12 +59,12 @@ const CreatePostPage: React.FC = () => {
             return;
           }
 
-          const newPostFolderMedia: PostFolderMediaInsert = {
-            post_folder_id: postFolder.id,
-            media_url: "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/post_medias/" + data.path,
+          const newProductFolderMedia: ProductFolderMediaInsert = {
+            product_folder_id: productFolder.id,
+            media_url: "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" + data.path,
           };
 
-          createPostFolderMedia(newPostFolderMedia).then(() => {
+          createProductFolderMedia(newProductFolderMedia).then(() => {
             showAlert("Files uploaded successfully", "success");
           }).catch((error) => {
             showAlert(error.message, "error");
@@ -77,8 +77,8 @@ const CreatePostPage: React.FC = () => {
 
   return (
     <NavbarSidebarLayout>
-      <div className="grid grid-cols-1 px-4 pt-6 xl:grid-cols-6 xl:gap-4">
-        <div className="col-span-1">
+      <div className="grid grid-cols-1 px-4 pt-6 xl:grid-cols-6 xl:gap-4 h-[100vh] overflow-y-auto hide-scrollbar">
+        <div className="col-span-1 border-r border-gray-200 dark:border-gray-700 p-2 h-full overflow-y-auto hide-scrollbar">
           <h5 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Folders</h5>
           <ReactDropzone
             onDrop={(acceptedFiles) => {
@@ -121,37 +121,41 @@ const CreatePostPage: React.FC = () => {
             )}
           </ReactDropzone>
 
-          {postFolders.map((folder) => (
-            <Card key={folder.id} onClick={() => {
+          {productFolders.map((folder) => (
+            <Card 
+            key={folder.id} 
+            onClick={() => {
               setSelectedFolder(folder);
-              setSelectedPost(null);
-            }} className="mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-lg">
+              setSelectedProduct(null);
+            }} 
+            className="mt-4 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-lg m-0">
                 {folder.name}
               </h2>
               {/* Display image count, video count and date created as paragraph */}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Photos: {folder.image_count} | Videos: {folder.video_count} | Created: {folder.created_at.split("T")[0]}
+                Photos: {folder.image_count} <br/> Videos: {folder.video_count} <br/> Created: {folder.created_at.split("T")[0]}
               </p>
             </Card>
           ))}
         </div>
         <div className="col-span-4">
-          <PostEditor selectedFolder={selectedFolder} setSelectedFolder={setSelectedFolder} setSelectedPost={setSelectedPost} selectedPost={selectedPost} />
+          <ProductEditor selectedFolder={selectedFolder} setSelectedFolder={setSelectedFolder} setSelectedProduct={setSelectedProduct} selectedProduct={selectedProduct} />
         </div>
-        <div className="col-span-1">
-          <Button className="btn btn-primary w-full mb-4" onClick={() => { setSelectedPost(null); }}>New Post</Button>
-          <h5 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Posts</h5>
-          {posts.filter((post) => post.post_folder_id === selectedFolder?.id).map((post) => (
-            <Card key={post.id} onClick={() => setSelectedPost(post)} className="mt-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
+        <div className="col-span-1 border-l border-gray-200 dark:border-gray-700 p-2 h-full overflow-y-auto hide-scrollbar">
+          <Button className="btn btn-primary w-full mb-4" onClick={() => { setSelectedProduct(null); }}>New Product</Button>
+          <h5 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Products</h5>        
+          {products.filter((product) => product.product_folder_id === selectedFolder?.id).map((product) => (
+            <Card key={product.id} onClick={() => setSelectedProduct(product)} className="mt-4 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                  {post.name}
+                  {product.name}
                 </h2>
               </div>
               {/* Display image, video, audio and date created as paragraph */}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Created: {post.created_at.split("T")[0]} {post.created_at.split("T")[1].split(".")[0]}
+                Created: {product.created_at.split("T")[0]} {product.created_at.split("T")[1].split(".")[0]}
               </p>
             </Card>
           ))}
@@ -162,4 +166,4 @@ const CreatePostPage: React.FC = () => {
   );
 }
 
-export default CreatePostPage;
+export default CreateProductPage;

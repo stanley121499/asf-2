@@ -85,23 +85,24 @@ const SchedulePostListPage: React.FC = function () {
                     <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                       {posts.filter((post) => post.name.toLowerCase().includes(searchValue.toLowerCase())).map((post) => (
                         <Table.Row key={post.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-                          <Table.Cell width={150}>
-                            <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-full" />
+                          <Table.Cell className="w-16">
+                            <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-sm" />
                           </Table.Cell>
-
-                          <Table.Cell> {getBadge(post)} </Table.Cell>
-                          <Table.Cell>
+                          <Table.Cell className="w-full">
                             <div>
                               <div className="flex items-center gap-x-5">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                  {post.name}
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2">
+                                  {post.name}  {getBadge(post)}
                                 </h2>
-                                
+
                               </div>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {post.caption}
                               </p>
                             </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {getBadge(post)}
                           </Table.Cell>
                           <Table.Cell>
                             <div className="flex items-center gap-x-3 whitespace-nowrap justify-end">

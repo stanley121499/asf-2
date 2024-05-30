@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          active: boolean
+          arrangement: number | null
+          created_at: string
+          id: string
+          media_url: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          arrangement?: number | null
+          created_at?: string
+          id?: string
+          media_url: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          arrangement?: number | null
+          created_at?: string
+          id?: string
+          media_url?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_folder_medias: {
         Row: {
           created_at: string
@@ -141,19 +171,275 @@ export type Database = {
           },
         ]
       }
-      user_details: {
+      product_categories: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          product_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_colors: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color: string
+          created_at?: string
+          id?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_colors_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_folder_medias: {
         Row: {
           created_at: string
+          id: string
+          media_url: string
+          product_folder_id: string
+          udpated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_url: string
+          product_folder_id: string
+          udpated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_url?: string
+          product_folder_id?: string
+          udpated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_folder_medias_product_folder_id_fkey"
+            columns: ["product_folder_id"]
+            isOneToOne: false
+            referencedRelation: "product_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_folders: {
+        Row: {
+          created_at: string
+          id: string
+          image_count: number
+          name: string
+          updated_at: string
+          video_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name: string
+          updated_at?: string
+          video_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name?: string
+          updated_at?: string
+          video_count?: number
+        }
+        Relationships: []
+      }
+      product_medias: {
+        Row: {
+          arrangement: number
+          created_at: string
+          id: string
+          media_url: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          arrangement?: number
+          created_at?: string
+          id?: string
+          media_url: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          arrangement?: number
+          created_at?: string
+          id?: string
+          media_url?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_medias_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sizes: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          product_id: string
+          size: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          product_id: string
+          size: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          product_id?: string
+          size?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          article_number: string | null
+          created_at: string
+          description: string | null
+          festival: string | null
+          id: string
+          name: string
+          price: number
+          product_folder_id: string | null
+          season: string | null
+          status: string
+          stock_code: string | null
+          stock_place: string | null
+          udpated_at: string
+        }
+        Insert: {
+          article_number?: string | null
+          created_at?: string
+          description?: string | null
+          festival?: string | null
+          id?: string
+          name: string
+          price?: number
+          product_folder_id?: string | null
+          season?: string | null
+          status?: string
+          stock_code?: string | null
+          stock_place?: string | null
+          udpated_at?: string
+        }
+        Update: {
+          article_number?: string | null
+          created_at?: string
+          description?: string | null
+          festival?: string | null
+          id?: string
+          name?: string
+          price?: number
+          product_folder_id?: string | null
+          season?: string | null
+          status?: string
+          stock_code?: string | null
+          stock_place?: string | null
+          udpated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_product_folder_id_fkey"
+            columns: ["product_folder_id"]
+            isOneToOne: false
+            referencedRelation: "product_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_details: {
+        Row: {
           id: string
           role: string
         }
         Insert: {
-          created_at?: string
           id: string
           role?: string
         }
         Update: {
-          created_at?: string
           id?: string
           role?: string
         }

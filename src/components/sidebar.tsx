@@ -2,13 +2,13 @@
 import classNames from "classnames";
 import { Sidebar } from "flowbite-react";
 import React, { useEffect, useState } from "react";
-import { FaUsers } from "react-icons/fa";
+import { FaBox, FaUsers } from "react-icons/fa";
 import {
   HiChartPie,
 } from "react-icons/hi";
 // import { useAuthContext } from "../context/AuthContext";
 import { useSidebarContext } from "../context/SidebarContext";
-import isSmallScreen from "../helpers/is-small-screen";
+// import isSmallScreen from "../helpers/is-small-screen";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
 
@@ -17,13 +17,11 @@ const ExampleSidebar: React.FC = function () {
     useSidebarContext();
   const [currentPage, setCurrentPage] = useState("");
   // const { user_detail } = useAuthContext();
-  const [isPostOpen, setPostOpen] = useState(true);
 
   useEffect(() => {
     const newPage = window.location.pathname;
 
     setCurrentPage(newPage);
-    setPostOpen(newPage.includes("/posts/"));
   }, [setCurrentPage]);
 
   return (
@@ -71,6 +69,17 @@ const ExampleSidebar: React.FC = function () {
                   }
                 >
                   All Posts
+                </Sidebar.Item>
+
+                {/* Product */}
+                <Sidebar.Item
+                  icon={FaBox}
+                  href="/products/list"
+                  className={
+                    "/products/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+                  }
+                >
+                  Products
                 </Sidebar.Item>
 
 

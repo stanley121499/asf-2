@@ -90,9 +90,9 @@ const PostsTable: React.FC<Posts> = function ({ posts }) {
       </Table.Head> */}
       <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
         {posts.map((post) => (
-          <Table.Row key={post.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <Table.Cell width={150}>
-              <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-full" />
+          <Table.Row key={post.id} className="hover:bg-gray-100 dark:hover:bg-gray-700 ">
+            <Table.Cell width={100}>
+              <img src={postMedias.find((media) => media.post_id === post.id)?.media_url} alt={post.name} className="w-10 h-10 object-cover rounded-sm" />
             </Table.Cell>
             <Table.Cell>
               <div>

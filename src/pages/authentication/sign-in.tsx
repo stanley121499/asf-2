@@ -14,6 +14,7 @@ const SignInPage: FC = function () {
   // Assume you've defined a state htmlFor email and password to capture form inputs
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState(''); // Assume you've defined a state to capture errors [optional]
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission behavior
@@ -23,6 +24,7 @@ const SignInPage: FC = function () {
     // Handle sign-in errors
     if (result.error) {
       console.error('Sign in error:', result.error.message);
+      setError(result.error.message);
     } else {
       navigate('/dashboard'); // Redirect to dashboard after successful sign-in
     }
@@ -55,6 +57,11 @@ const SignInPage: FC = function () {
         <h1 className="mb-3 text-2xl font-bold dark:text-white md:text-3xl">
           Sign in to platform
         </h1>
+        {error && ( 
+            <div className="mb-6 p-3 text-sm text-center text-red-500 bg-red-100 dark:bg-red-500 dark:text-red-100">
+              {error}
+            </div>
+          )}
         <form>
           <div className="mb-4 flex flex-col gap-y-3">
             <Label htmlFor="email">Your Username</Label>
@@ -75,7 +82,7 @@ const SignInPage: FC = function () {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <div className="mb-6 flex items-center justify-between">
+          {/* <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-x-3">
               <Checkbox id="rememberMe" name="rememberMe" />
               <Label htmlFor="rememberMe">Remember me</Label>
@@ -86,18 +93,19 @@ const SignInPage: FC = function () {
             >
               Lost Password?
             </a>
-          </div>
+          </div> */}
           <div className="mb-6">
             <Button type="submit" className="w-full lg:w-auto" onClick={handleLogin}>
               Login to your account
             </Button>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-300">
+          
+          {/* <p className="text-sm text-gray-500 dark:text-gray-300">
             Not registered?&nbsp;
             <a href="#" className="text-primary-600 dark:text-primary-300">
               Create account
             </a>
-          </p>
+          </p> */}
         </form>
       </Card>
     </div>

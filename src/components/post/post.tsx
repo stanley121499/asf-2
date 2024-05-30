@@ -41,7 +41,7 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
 
   // Auto-scroll images
   useEffect(() => {
-    if (medias.length <= 1) return; // No need to scroll if there's only one images
+    if (medias.length <= 1) { setCurrentIndex(0); return; } // No need to scroll if there's only one images
 
     const intervalId = setInterval(() => {
       setCurrentIndex((current) => (current + 1) % medias.length);
@@ -50,8 +50,6 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
     return () => clearInterval(intervalId); // Clean up the interval on component unmount
   }, [medias.length]);
 
-  console.log("medias", medias)
-  console.log("currentIndex", currentIndex)
   return (
     <div className="relative overflow-hidden bg-black">
       {/* Background image with optional photo size */}
