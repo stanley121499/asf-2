@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../../database.types";
 import { useAlertContext } from "../AlertContext";
@@ -10,15 +16,30 @@ import { useProductColorContext } from "./ProductColorContext";
 import { ProductColor } from "./ProductColorContext";
 import { ProductSize } from "./ProductSizeContext";
 
-export type Product = Database["public"]["Tables"]["products"]["Row"] & { medias: ProductMedia[], product_categories: any[], product_colors: ProductColor[], product_sizes: ProductSize[] };
+export type Product = Database["public"]["Tables"]["products"]["Row"] & {
+  medias: ProductMedia[];
+  product_categories: any[];
+  product_colors: ProductColor[];
+  product_sizes: ProductSize[];
+};
 export type Products = { products: Product[] };
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 interface ProductContextProps {
   products: Product[];
-  createProduct: (product: ProductInsert, selectedColors: string[], selectedSizes: string[], selectedCategories: Category[]) => Promise<Product | undefined>;
-  updateProduct: (product: ProductUpdate, selectedColors: string[], selectedSizes: string[], selectedCategories: Category[]) => Promise<void>;
+  createProduct: (
+    product: ProductInsert,
+    selectedColors: string[],
+    selectedSizes: string[],
+    selectedCategories: Category[]
+  ) => Promise<Product | undefined>;
+  updateProduct: (
+    product: ProductUpdate,
+    selectedColors: string[],
+    selectedSizes: string[],
+    selectedCategories: Category[]
+  ) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   loading: boolean;
 }
@@ -29,9 +50,10 @@ export function ProductProvider({ children }: PropsWithChildren) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
-  const { createProductColor, updateProductColor, deleteProductColor } = useProductColorContext();
-  const { createProductSize, updateProductSize, deleteProductSize } = useProductSizeContext();
-  const { createProductCategory, updateProductCategory, deleteProductCategory } = useProductCategoryContext();
+  const { createProductColor, updateProductColor } = useProductColorContext();
+  const { createProductSize, updateProductSize } = useProductSizeContext();
+  const { createProductCategory, deleteProductCategory } =
+    useProductCategoryContext();
 
   useEffect(() => {
     setLoading(true);
@@ -39,7 +61,9 @@ export function ProductProvider({ children }: PropsWithChildren) {
     const fetchProducts = async () => {
       const { data: products, error } = await supabase
         .from("products")
-        .select("*, product_colors(*), product_sizes(*), product_categories(category_id(*))");
+        .select(
+          "*, product_colors(*), product_sizes(*), product_categories(category_id(*))"
+        );
 
       if (error) {
         showAlert(error.message, "error");
@@ -58,20 +82,28 @@ export function ProductProvider({ children }: PropsWithChildren) {
 
       if (payload.eventType === "UPDATE") {
         setProducts((prev) =>
-          prev.map((product) => (product.id === payload.new.id ? payload.new : product))
+          prev.map((product) =>
+            product.id === payload.new.id ? payload.new : product
+          )
         );
       }
 
       if (payload.eventType === "DELETE") {
-        setProducts((prev) => prev.filter((product) => product.id !== payload.old.id));
+        setProducts((prev) =>
+          prev.filter((product) => product.id !== payload.old.id)
+        );
       }
     };
 
     const subscription = supabase
       .channel("products")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
-        handleChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        (payload) => {
+          handleChanges(payload);
+        }
+      )
       .subscribe();
 
     setLoading(false);
@@ -81,38 +113,77 @@ export function ProductProvider({ children }: PropsWithChildren) {
     };
   }, [showAlert]);
 
-
-
-  const createProduct = async (product: ProductInsert, selectedColors: string[], selectedSizes: string[], selectedCategories: Category[]) => {
-    const { data, error } = await supabase.from("products").insert(product).select();
-    if (error) { showAlert(error.message, "error"); console.error(error); return; }
+  const createProduct = async (
+    product: ProductInsert,
+    selectedColors: string[],
+    selectedSizes: string[],
+    selectedCategories: Category[]
+  ) => {
+    const { data, error } = await supabase
+      .from("products")
+      .insert(product)
+      .select();
+    if (error) {
+      showAlert(error.message, "error");
+      console.error(error);
+      return;
+    }
 
     const newProduct = data?.[0] as Product;
 
     selectedColors.forEach(async (color) => {
-      await createProductColor({ product_id: newProduct.id, color: color, active: true });
+      await createProductColor({
+        product_id: newProduct.id,
+        color: color,
+        active: true,
+      });
     });
 
     selectedSizes.forEach(async (size) => {
-      await createProductSize({ product_id: newProduct.id, size: size, active: true });
+      await createProductSize({
+        product_id: newProduct.id,
+        size: size,
+        active: true,
+      });
     });
 
     selectedCategories.forEach(async (category) => {
-      await createProductCategory({ product_id: newProduct.id, category_id: category.id });
+      await createProductCategory({
+        product_id: newProduct.id,
+        category_id: category.id,
+      });
     });
 
     return data?.[0];
   };
 
-  const updateProduct = async (product: ProductUpdate, selectedColors: string[], selectedSizes: string[], selectedCategories: Category[]) => {
-
-    const { error } = await supabase.from("products").update(product).eq("id", product.id).single();
-    if (error) { showAlert(error.message, "error"); console.error(error); }
+  const updateProduct = async (
+    product: ProductUpdate,
+    selectedColors: string[],
+    selectedSizes: string[],
+    selectedCategories: Category[]
+  ) => {
+    const { error } = await supabase
+      .from("products")
+      .update(product)
+      .eq("id", product.id)
+      .single();
+    if (error) {
+      showAlert(error.message, "error");
+      console.error(error);
+    }
 
     // Check if there are any colors to update
     if (selectedColors.length > 0) {
-      const { data: colors, error: colorError } = await supabase.from("product_colors").select("id,color").eq("product_id", product.id);
-      if (colorError) { showAlert(colorError.message, "error"); console.error(colorError); return; }
+      const { data: colors, error: colorError } = await supabase
+        .from("product_colors")
+        .select("id,color")
+        .eq("product_id", product.id);
+      if (colorError) {
+        showAlert(colorError.message, "error");
+        console.error(colorError);
+        return;
+      }
 
       // Update colors that are not in selectedColors
       colors?.forEach(async (color) => {
@@ -128,15 +199,26 @@ export function ProductProvider({ children }: PropsWithChildren) {
         .filter((color) => colors?.findIndex((c) => c.color === color) === -1)
         .forEach(async (color) => {
           if (product.id) {
-            await createProductColor({ product_id: product.id, color: color, active: true });
+            await createProductColor({
+              product_id: product.id,
+              color: color,
+              active: true,
+            });
           }
         });
     }
 
     // Check if there are any sizes to update
     if (selectedSizes.length > 0) {
-      const { data: sizes, error: sizeError } = await supabase.from("product_sizes").select("id,size").eq("product_id", product.id);
-      if (sizeError) { showAlert(sizeError.message, "error"); console.error(sizeError); return; }
+      const { data: sizes, error: sizeError } = await supabase
+        .from("product_sizes")
+        .select("id,size")
+        .eq("product_id", product.id);
+      if (sizeError) {
+        showAlert(sizeError.message, "error");
+        console.error(sizeError);
+        return;
+      }
 
       // Update sizes that are not in selectedSizes
       sizes?.forEach(async (size) => {
@@ -152,15 +234,26 @@ export function ProductProvider({ children }: PropsWithChildren) {
         .filter((size) => sizes?.findIndex((s) => s.size === size) === -1)
         .forEach(async (size) => {
           if (product.id) {
-            await createProductSize({ product_id: product.id, size: size, active: true });
+            await createProductSize({
+              product_id: product.id,
+              size: size,
+              active: true,
+            });
           }
         });
     }
 
     // Check if there are any categories to update
     if (selectedCategories.length > 0) {
-      const { data: categories, error: categoryError } = await supabase.from("product_categories").select("id").eq("product_id", product.id);
-      if (categoryError) { showAlert(categoryError.message, "error"); console.error(categoryError); return; }
+      const { data: categories, error: categoryError } = await supabase
+        .from("product_categories")
+        .select("id")
+        .eq("product_id", product.id);
+      if (categoryError) {
+        showAlert(categoryError.message, "error");
+        console.error(categoryError);
+        return;
+      }
 
       // Delete existing categories
       categories?.forEach(async (category) => {
@@ -170,19 +263,35 @@ export function ProductProvider({ children }: PropsWithChildren) {
       // Create new categories
       selectedCategories.forEach(async (category) => {
         if (product.id) {
-          await createProductCategory({ product_id: product.id, category_id: category.id });
+          await createProductCategory({
+            product_id: product.id,
+            category_id: category.id,
+          });
         }
       });
     }
   };
 
   const deleteProduct = async (productId: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", productId);
-    if (error) { showAlert(error.message, "error"); console.error(error); }
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", productId);
+    if (error) {
+      showAlert(error.message, "error");
+      console.error(error);
+    }
   };
 
   return (
-    <ProductContext.Provider value={{ products, createProduct, updateProduct, deleteProduct, loading }}>
+    <ProductContext.Provider
+      value={{
+        products,
+        createProduct,
+        updateProduct,
+        deleteProduct,
+        loading,
+      }}>
       {children}
     </ProductContext.Provider>
   );

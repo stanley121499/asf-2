@@ -69,17 +69,18 @@ module.exports = {
     },
     extend: {},
   },
-  plugins: [require("flowbite/plugin"),
-  function ({ addUtilities }) {
-    addUtilities({
-      '.hide-scrollbar': {
-        '-ms-overflow-style': 'none',  /* IE and Edge */
-        'scrollbar-width': 'none',  /* Firefox */
-        '&::-webkit-scrollbar': {
-          display: 'none',  /* Safari and Chrome */
-        },
-      },
-    });
-  },
+  plugins: [
+    require("flowbite/plugin"),
+    function ({ addUtilities }) {
+      addUtilities({
+        ".hide-scrollbar": {
+          "-ms-overflow-style": "none" /* IE and Edge */,
+          "scrollbar-width": "none" /* Firefox */,
+          "&::-webkit-scrollbar": {
+            display: "none" /* Safari and Chrome */,
+          },
+        }
+      });
+    },
   ],
 };

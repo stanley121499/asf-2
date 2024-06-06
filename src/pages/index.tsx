@@ -6,7 +6,9 @@ const DashboardPage: React.FC = function () {
   return (
     <NavbarSidebarLayout>
       {/* One Column Straight in the center */}
-      <div className="flex items-center justify-center" style={{ height: "calc(100vh - 4rem)" }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: "calc(100vh - 4rem)" }}>
         <div className="text-center">
           {/* Logo */}
           <img
@@ -20,12 +22,14 @@ const DashboardPage: React.FC = function () {
           <p className="text-gray-700 dark:text-gray-300 mt-2">
             App System Formula
           </p>
-          <p className="text-gray-700 dark:text-gray-300 mt-2">
-            Own App
-          </p>
+          <p className="text-gray-700 dark:text-gray-300 mt-2">Own App</p>
           {/* Buttons with transparent bg, grey outlined, blue when hovered */}
-          <Button href="/posts/list" className="btn btn-outline btn-gray mt-4 hover:bg-blue-500 hover:text-white">
+          <Button className="homepage-button mt-4" href="/posts/list">
             Setting Posts
+          </Button>
+          {/* Setting Product */}
+          <Button className="homepage-button mt-4" href="/products/list">
+            Setting Products
           </Button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import type { PropsWithChildren } from "react";
 import React from "react";
-import Navbar from "../components/navbar";
+// import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import { SidebarProvider, useSidebarContext } from "../context/SidebarContext";
 

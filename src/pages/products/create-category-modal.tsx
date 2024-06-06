@@ -2,19 +2,15 @@
 import {
   Button,
   Label,
-  Modal,
-  Select,
-  TextInput,
-  FileInput,
+  Modal, TextInput,
+  FileInput
 } from "flowbite-react";
 import React, { useState } from "react";
-import {
-  HiMail,
-  HiPlus,
-} from "react-icons/hi";
-import { PiPasswordBold } from "react-icons/pi";
+import { HiPlus } from "react-icons/hi";
 import { useAlertContext } from "../../context/AlertContext";
-import { Category, useCategoryContext } from "../../context/product/CategoryContext";
+import {
+  useCategoryContext
+} from "../../context/product/CategoryContext";
 import { supabase } from "../../utils/supabaseClient";
 
 const AddCategoryModal: React.FC = function () {
@@ -38,12 +34,11 @@ const AddCategoryModal: React.FC = function () {
     if (file) {
       const randomId = Math.random().toString(36).substring(2);
 
-      const { data, error } = await supabase
-        .storage
+      const { data, error } = await supabase.storage
         .from("product_medias")
         .upload(`${randomId}`, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (error) {
@@ -52,7 +47,9 @@ const AddCategoryModal: React.FC = function () {
         return;
       }
 
-      const media_url = "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" + data.path
+      const media_url =
+        "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" +
+        data.path;
 
       await createCategory({ ...categoryData, media_url });
     } else {
@@ -91,7 +88,9 @@ const AddCategoryModal: React.FC = function () {
                   name="name"
                   placeholder="Fruits & Vegetables"
                   value={categoryData.name}
-                  onChange={(e) => setCategoryData({ ...categoryData, name: e.target.value })}
+                  onChange={(e) =>
+                    setCategoryData({ ...categoryData, name: e.target.value })
+                  }
                 />
               </div>
             </div>

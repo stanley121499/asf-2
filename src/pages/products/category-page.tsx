@@ -1,13 +1,11 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import {
-  Button,
-  FileInput,
-  Label,
-  Table,
-  TextInput
-} from "flowbite-react";
+import { Button, FileInput, Label, TextInput } from "flowbite-react";
 import React from "react";
-import { Category, CategoryUpdate, useCategoryContext } from "../../context/product/CategoryContext";
+import {
+  Category,
+  CategoryUpdate,
+  useCategoryContext,
+} from "../../context/product/CategoryContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { IoIosSearch } from "react-icons/io";
@@ -16,8 +14,10 @@ import { supabase } from "../../utils/supabaseClient";
 import AddCategoryModal from "./create-category-modal";
 
 const CategoryListPage: React.FC = function () {
-  const { categories, loading, updateCategory, deleteCategory } = useCategoryContext();
-  const [selectedCategory, setSelectedCategory] = React.useState<Category | null>(null);
+  const { categories, loading, updateCategory, deleteCategory } =
+    useCategoryContext();
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<Category | null>(null);
   const [searchValue, setSearchValue] = React.useState("");
   const { showAlert } = useAlertContext();
   const [file, setFile] = React.useState<File | null>(null);
@@ -30,12 +30,11 @@ const CategoryListPage: React.FC = function () {
     if (file) {
       const randomId = Math.random().toString(36).substring(2);
 
-      const { data, error } = await supabase
-        .storage
+      const { data, error } = await supabase.storage
         .from("product_medias")
         .upload(`${randomId}`, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (error) {
@@ -44,18 +43,23 @@ const CategoryListPage: React.FC = function () {
         return;
       }
 
-      const media_url = "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" + data.path
+      const media_url =
+        "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" +
+        data.path;
 
       category.media_url = media_url;
-    } 
+    }
 
     await updateCategory(category);
     setSelectedCategory(null);
     setFile(null);
     showAlert("Category updated successfully", "success");
-  }
+  };
 
-  const handleChangeArrangement = async (categoryId: string, direction: "up" | "down") => {
+  const handleChangeArrangement = async (
+    categoryId: string,
+    direction: "up" | "down"
+  ) => {
     const category = categories.find((category) => category.id === categoryId);
     if (!category) return;
     const index = categories.indexOf(category);
@@ -73,7 +77,7 @@ const CategoryListPage: React.FC = function () {
     await updateCategory(category);
     await updateCategory(targetCategory);
     showAlert("Category arrangement updated successfully", "success");
-  }
+  };
 
   return (
     <NavbarSidebarLayout>
@@ -84,8 +88,16 @@ const CategoryListPage: React.FC = function () {
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
                 Products
               </h1>
-              <a href="/products/list" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">All Products</a>
-              <a href="/products/categories" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">Category</a>
+              <a
+                href="/products/list"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                All Products
+              </a>
+              <a
+                href="/products/categories"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Category
+              </a>
             </div>
             <AddCategoryModal />
           </div>
@@ -94,8 +106,11 @@ const CategoryListPage: React.FC = function () {
 
       <div className="flex flex-col p-4 ">
         <div className="overflow-x-auto">
-          <div className="grid grid-cols-4 gap-4">
-            <div className={selectedCategory ? "col-span-2" : "col-span-3"}>
+          <div className="grid grid-cols-4">
+            <div
+              className={`p-4 ${
+                selectedCategory ? "col-span-2" : "col-span-3"
+              }`}>
               <form className="lg:pr-3">
                 <Label htmlFor="categories-search" className="sr-only">
                   Search
@@ -105,69 +120,92 @@ const CategoryListPage: React.FC = function () {
                     id="categories-search"
                     name="categories-search"
                     placeholder="Search for Categories"
-                    className="w-full mb-4 background-transparent"
+                    className="w-full mb-4"
+                    style={{ background: "transparent" }}
                     value={searchValue}
                     icon={IoIosSearch}
                     onChange={(e) => setSearchValue(e.target.value)}
                   />
-
                 </div>
-
               </form>
               {categories.length > 0 ? (
-                <Table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                  <Table.Body className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                    {categories.filter((category) => category.name.toLowerCase().includes(searchValue.toLowerCase())).map((category) => (
-                      <Table.Row key={category.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <Table.Cell>
-                          <img src={category.media_url} alt={category.name} className="w-10 h-10 object-cover rounded-md" />
-                        </Table.Cell>
-                        <Table.Cell className="flex-grow">
-                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+                  {categories
+                    .filter((category) =>
+                      category.name
+                        .toLowerCase()
+                        .includes(searchValue.toLowerCase())
+                    )
+                    .map((category) => (
+                      <div
+                        key={category.id}
+                        className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={category.media_url}
+                            alt={category.name}
+                            className="w-16 h-16 object-cover rounded-md"
+                          />
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
                             {category.name}
                           </h2>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <div className="flex items-center gap-x-3 whitespace-nowrap justify-end">
-
-                            <Button color={"info"} onClick={() => setSelectedCategory(category)}>
-                              Edit
-                            </Button>
-                            <Button color={"red"} onClick={() => { deleteCategory(category.id); showAlert("Category deleted successfully", "success") }}>
-                              Delete
-                            </Button>
-                            {/* Move up & down button */}
-                            <div className="flex items-center gap-x-3">
-                              <Button color={"warning"} onClick={() => handleChangeArrangement(category.id, "up")}>
-                                Up
-                              </Button>
-                              <Button color={"purple"} onClick={() => handleChangeArrangement(category.id, "down")}>
-                                Down
-                              </Button>
-                            </div>
-                          </div>
-                        </Table.Cell>
-                      </Table.Row>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Button
+                            color={"info"}
+                            onClick={() => setSelectedCategory(category)}>
+                            Edit
+                          </Button>
+                          <Button
+                            color={"red"}
+                            onClick={() => {
+                              deleteCategory(category.id);
+                              showAlert(
+                                "Category deleted successfully",
+                                "success"
+                              );
+                            }}>
+                            Delete
+                          </Button>
+                          <Button
+                            color={"warning"}
+                            onClick={() =>
+                              handleChangeArrangement(category.id, "up")
+                            }>
+                            Up
+                          </Button>
+                          <Button
+                            color={"purple"}
+                            onClick={() =>
+                              handleChangeArrangement(category.id, "down")
+                            }>
+                            Down
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </Table.Body>
-                </Table>
-
+                </div>
               ) : (
                 <>
-                  <img src="/images/illustrations/404.svg" alt="No categories found" className="mx-auto" />
+                  <img
+                    src="/images/illustrations/404.svg"
+                    alt="No categories found"
+                    className="mx-auto"
+                  />
                   <div className="p-4 text-center">No categories found</div>
                 </>
               )}
             </div>
 
             {selectedCategory && (
-              <div className="col-span-1">
+              <div className="col-span-1 border-l border-gray-200 dark:border-gray-500 p-4">
                 <div className="mb-4 flex items-center justify-between">
-
                   <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
                     Edit Category
                   </h1>
-                  <Button color={"red"} onClick={() => setSelectedCategory(null)}>
+                  <Button
+                    color={"red"}
+                    onClick={() => setSelectedCategory(null)}>
                     Close
                   </Button>
                 </div>
@@ -191,7 +229,7 @@ const CategoryListPage: React.FC = function () {
                       <img
                         src={URL.createObjectURL(file)}
                         alt="Category Preview"
-                        className="object-cover rounded-sm w-50 max-h-64 rounded-md"
+                        className="object-cover rounded-sm w-full max-h-64 rounded-md"
                       />
                     </div>
                   )}
@@ -202,7 +240,7 @@ const CategoryListPage: React.FC = function () {
                       <img
                         src={selectedCategory.media_url}
                         alt="Category Preview"
-                        className="object-cover rounded-sm w-50 max-h-64 rounded-md"
+                        className="object-cover rounded-sm w-full max-h-64 rounded-md"
                       />
                     </div>
                   )}
@@ -215,40 +253,57 @@ const CategoryListPage: React.FC = function () {
                     name="name"
                     placeholder="Fruits & Vegetables"
                     value={selectedCategory?.name}
-                    onChange={(e) => setSelectedCategory({ ...selectedCategory, name: e.target.value })}
+                    onChange={(e) =>
+                      setSelectedCategory({
+                        ...selectedCategory,
+                        name: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
-                <Button color={"info"} onClick={() => handleUpdateCategory(selectedCategory)} className="mt-4 w-full">
+                <Button
+                  color={"info"}
+                  onClick={() => handleUpdateCategory(selectedCategory)}
+                  className="mt-4 w-full">
                   Save
                 </Button>
               </div>
             )}
 
             {/* Preview */}
-            <div className="col-span-1">
-
-
+            <div className="col-span-1 border-l border-gray-200 dark:border-gray-500 p-2 h-[calc(100vh-7rem)] flex items-center justify-center">
               {/* Create a div with contrasting white background and rounded corners */}
-              <div className="rounded-lg bg-white p-4 h-[80vh]">
-
+              <div className="rounded-lg bg-white p-4 h-[calc(100vh-9rem)] w-full overflow-y-auto">
                 {/* Create a row where the name of the category sits on top with the media as the background with slight dark overlay */}
                 {categories.map((category) => (
-                  <div className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${category.id === selectedCategory?.id ? "border-4 border-red-500" : ""}`} key={category.id} onClick={() => setSelectedCategory(category)}>
-                    <img src={category.media_url} alt={category.name} className="w-full h-full object-cover" />
+                  <div
+                    className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${
+                      category.id === selectedCategory?.id
+                        ? "border-4 border-red-500"
+                        : ""
+                    }`}
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category)}>
+                    <img
+                      src={category.media_url}
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
-                      <h2 className="text-white text-2xl font-semibold">{category.name}</h2>
+                      <h2 className="text-white text-2xl font-semibold">
+                        {category.name}
+                      </h2>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </div>
       {/* <Pagination /> */}
-    </NavbarSidebarLayout >
+    </NavbarSidebarLayout>
   );
 };
 

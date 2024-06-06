@@ -1,12 +1,23 @@
 import { Button } from "flowbite-react";
 import React, { useEffect } from "react";
 import { PostFolder } from "../../context/post/PostFolderContext";
-import { Post, PostInsert, usePostContext } from "../../context/post/PostContext";
-import { PostFolderMedia, usePostFolderMediaContext } from "../../context/post/PostFolderMediaContext";
-import { usePostMediaContext, PostMediaInsert } from "../../context/post/PostMediaContext";
+import {
+  Post,
+  PostInsert,
+  usePostContext,
+} from "../../context/post/PostContext";
+import {
+  PostFolderMedia,
+  usePostFolderMediaContext,
+} from "../../context/post/PostFolderMediaContext";
+import {
+  usePostMediaContext,
+  PostMediaInsert,
+} from "../../context/post/PostMediaContext";
 import * as flowbiteReact from "flowbite-react";
 import { useAlertContext } from "../../context/AlertContext";
 import PostComponent from "../../components/post/post";
+import { FaChevronDown } from "react-icons/fa6";
 
 interface PostEditorProps {
   selectedFolder: PostFolder | null;
@@ -15,14 +26,26 @@ interface PostEditorProps {
   setSelectedPost: React.Dispatch<React.SetStateAction<Post | null>>;
 }
 
-const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFolder, setSelectedPost, selectedPost }) => {
-  const { createPostMedia, deleteAllPostMediaByPostId, postMedias } = usePostMediaContext();
+const PostEditor: React.FC<PostEditorProps> = ({
+  selectedFolder,
+  setSelectedFolder,
+  setSelectedPost,
+  selectedPost,
+}) => {
+  const { createPostMedia, deleteAllPostMediaByPostId, postMedias } =
+    usePostMediaContext();
   const { createPost, updatePost } = usePostContext();
   const { showAlert } = useAlertContext();
   const { postFolderMedias } = usePostFolderMediaContext();
   const [postDetailToggle, setPostDetailToggle] = React.useState(false);
-  const [selectedMedias, setSelectedMedias] = React.useState<PostFolderMedia[]>([]);
-  const [arrangedMedias, setArrangedMedias] = React.useState<PostFolderMedia[]>([]);
+  const [selectedMedias, setSelectedMedias] = React.useState<PostFolderMedia[]>(
+    []
+  );
+  const [arrangedMedias, setArrangedMedias] = React.useState<PostFolderMedia[]>(
+    []
+  );
+  const [previewMedia, setPreviewMedia] = React.useState<string>("");
+
   const [postData, setPostData] = React.useState<PostInsert>({
     name: selectedPost?.name || "",
     post_folder_id: selectedFolder?.id,
@@ -59,7 +82,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
         setSelectedPost(null);
         showAlert("Post updated successfully", "success");
       });
-
     } else {
       createPost(postData).then((post) => {
         if (post) {
@@ -92,14 +114,23 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
         cta_text: selectedPost.cta_text,
       });
 
-      selectedPost.medias = postMedias.filter((media) => media.post_id === selectedPost.id);
+      selectedPost.medias = postMedias.filter(
+        (media) => media.post_id === selectedPost.id
+      );
 
       // Compare media_url in selectedPost.medias and postFolderMedias to generate an array of PostFolderMedia
       const selectedPostMedias = selectedPost.medias.map((media) => {
-        return postFolderMedias.find((pfm) => pfm.media_url === media.media_url) || null;
+        return (
+          postFolderMedias.find((pfm) => pfm.media_url === media.media_url) ||
+          null
+        );
       });
 
-      setArrangedMedias(selectedPostMedias.filter((media) => media !== null) as PostFolderMedia[]);
+      setArrangedMedias(
+        selectedPostMedias.filter(
+          (media) => media !== null
+        ) as PostFolderMedia[]
+      );
     } else {
       setPostData({
         name: "",
@@ -115,7 +146,6 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
     }
   }, [postFolderMedias, postMedias, selectedFolder?.id, selectedPost]);
 
-
   return (
     <>
       {selectedFolder && (
@@ -126,7 +156,11 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                 {postDetailToggle ? "Post Details" : "Medias"}
               </h2>
               <div className="flex items-center space-x-2">
-                <Button className="btn btn-primary" onClick={() => { setPostDetailToggle(!postDetailToggle) }}>
+                <Button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setPostDetailToggle(!postDetailToggle);
+                  }}>
                   {postDetailToggle ? "Medias" : "Post Details"}
                 </Button>
                 <Button className="btn btn-green" onClick={handleSave}>
@@ -136,29 +170,58 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
             </div>
 
             {!postDetailToggle && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 xl:gap-4 mt-4">
+              <div className="grid grid-cols-1 xl:grid-cols-3 xl:gap-4 mt-4 overflow-auto hide-scrollbar max-h-[calc(100vh-4rem)] relative">
+                {selectedFolder.medias.length > 12 && (
+                  <div className="absolute bottom-4 right-4 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center z-50">
+                    <span className="text-white text-lg">
+                      <FaChevronDown />
+                    </span>
+                  </div>
+                )}
                 {selectedFolder.medias.map((media) => (
                   // <Card key={media.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                  <div
-                    className="relative group cursor-pointer"
-                    key={media.id}
-                    onClick={() => {
-                      setSelectedMedias((prev) => [...prev, media]);
-                    }}>
-                    <img
-                      src={media.media_url}
-                      alt="media"
-                      className="w-full h-56 object-cover rounded" />
-                    {/* Show a tick on top of the image if selected */}
-                    {(selectedMedias.find((m) => m.id === media.id) || arrangedMedias.find((m) => m.id === media.id)) && (
-                      <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-
-                  </div>
+                  <>
+                    <div
+                      className="relative group cursor-pointer"
+                      key={media.id}
+                      onClick={() => {
+                        const isMediaSelected = selectedMedias.find(
+                          (m) => m.id === media.id
+                        );
+                        if (isMediaSelected) {
+                          setPreviewMedia(media.media_url);
+                        } else {
+                          setSelectedMedias((prev) => [...prev, media]);
+                          setPreviewMedia(media.media_url);
+                        }
+                      }}>
+                      <img
+                        src={media.media_url}
+                        alt="media"
+                        className="w-full object-cover rounded"
+                        style={{ height: `calc((100vh - 9rem) / 4)` }}
+                      />
+                      {/* Show a tick on top of the image if selected */}
+                      {(selectedMedias.find((m) => m.id === media.id) ||
+                        arrangedMedias.find((m) => m.id === media.id)) && (
+                        <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-green-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 ))}
               </div>
             )}
@@ -174,7 +237,9 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     placeholder="Enter name"
                     // icon={HiMail}
                     value={postData?.name}
-                    onChange={(e) => setPostData({ ...postData, name: e.target.value })}
+                    onChange={(e) =>
+                      setPostData({ ...postData, name: e.target.value })
+                    }
                   />
                 </div>
 
@@ -186,7 +251,9 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     name="caption"
                     placeholder="Enter caption"
                     value={postData?.caption || ""}
-                    onChange={(e) => setPostData({ ...postData, caption: e.target.value })}
+                    onChange={(e) =>
+                      setPostData({ ...postData, caption: e.target.value })
+                    }
                   />
                 </div>
 
@@ -200,8 +267,9 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     id="photo_size"
                     name="photo_size"
                     value={postData?.photo_size || "MEDIUM"}
-                    onChange={(e) => setPostData({ ...postData, photo_size: e.target.value })}
-                  >
+                    onChange={(e) =>
+                      setPostData({ ...postData, photo_size: e.target.value })
+                    }>
                     <option value="SMALL">Small</option>
                     <option value="MEDIUM">Medium</option>
                     {/* <option value="LARGE">Large</option> */}
@@ -215,8 +283,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     id="caption_position"
                     name="caption_position"
                     value={postData?.caption_position || "BOTTOM"}
-                    onChange={(e) => setPostData({ ...postData, caption_position: e.target.value })}
-                  >
+                    onChange={(e) =>
+                      setPostData({
+                        ...postData,
+                        caption_position: e.target.value,
+                      })
+                    }>
                     <option value="TOP">Top</option>
                     <option value="MIDDLE">Middle</option>
                     <option value="BOTTOM">Bottom</option>
@@ -234,14 +306,15 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                     name="cta_text"
                     placeholder="Enter call to action text"
                     value={postData?.cta_text || ""}
-                    onChange={(e) => setPostData({ ...postData, cta_text: e.target.value })}
+                    onChange={(e) =>
+                      setPostData({ ...postData, cta_text: e.target.value })
+                    }
                   />
                 </div>
               </>
             )}
           </div>
           <div className="col-span-1">
-
             <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
               <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
               <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
@@ -249,12 +322,21 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
               <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
               <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white">
                 <div className="pt-5">
-                  <PostComponent caption={postData.caption || ""} medias={arrangedMedias.map((m) => m.media_url)} captionPosition={postData.caption_position || ""} ctaText={postData.cta_text || ""} photoSize={postData.photo_size || ""} />
+                  <PostComponent
+                    caption={postData.caption || ""}
+                    medias={arrangedMedias.map((m) => m.media_url)}
+                    captionPosition={postData.caption_position || ""}
+                    ctaText={postData.cta_text || ""}
+                    photoSize={postData.photo_size || ""}
+                    previewMedia={previewMedia}
+                  />
                 </div>
               </div>
             </div>
 
-            <h5 className="text-lg font-semibold text-gray-900 dark:text-white mt-4">Selected Medias</h5>
+            <h5 className="text-lg font-semibold text-gray-900 dark:text-white mt-4">
+              Selected Medias
+            </h5>
             <div className="grid grid-cols-4 gap-2 mt-4">
               {arrangedMedias.map((media) => (
                 <div
@@ -262,50 +344,70 @@ const PostEditor: React.FC<PostEditorProps> = ({ selectedFolder, setSelectedFold
                   className="relative group cursor-pointer"
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    setArrangedMedias((prev) => prev.filter((m) => m.id !== media.id));
+                    setArrangedMedias((prev) =>
+                      prev.filter((m) => m.id !== media.id)
+                    );
                   }}>
-                  <img src={media.media_url} alt="media" className="w-16 h-16 object-cover rounded" />
+                  <img
+                    src={media.media_url}
+                    alt="media"
+                    className="w-16 h-16 object-cover rounded"
+                  />
                   {/* Show the arrangement index on top of the image */}
                   <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
-                    <p className="text-sm text-gray-900 dark:text-white">{arrangedMedias.indexOf(media) + 1}</p>
-
+                    <p className="text-sm text-gray-900 dark:text-white">
+                      {arrangedMedias.indexOf(media) + 1}
+                    </p>
                   </div>
                 </div>
               ))}
 
               {selectedMedias
-                .filter((media) => !arrangedMedias.find((m) => m.id === media.id))
+                .filter(
+                  (media) => !arrangedMedias.find((m) => m.id === media.id)
+                )
                 .map((media) => (
                   <div
                     key={media.id}
                     className="relative group cursor-pointer"
                     onContextMenu={(e) => {
                       e.preventDefault();
-                      setSelectedMedias((prev) => prev.filter((m) => m.id !== media.id));
+                      setSelectedMedias((prev) =>
+                        prev.filter((m) => m.id !== media.id)
+                      );
                     }}
                     onClick={() => {
                       setArrangedMedias((prev) => [...prev, media]);
                     }}>
-                    <img src={media.media_url} alt="media" className="w-16 h-16 object-cover rounded" />
+                    <img
+                      src={media.media_url}
+                      alt="media"
+                      className="w-16 h-16 object-cover rounded"
+                    />
                   </div>
                 ))}
             </div>
           </div>
-        </div >
+        </div>
       )}
-      {
-        !selectedFolder && (
-          <div className="flex items-center justify-center" style={{ height: "calc(100vh - 4rem)" }}>
-            <div className="text-center">
-
-              <img alt="" src="/images/illustrations/sign-in.svg" className="lg:max-w-md" />
-              <p className="text-lg text-gray-500 dark:text-gray-400">Select a folder to start</p>
-            </div>
+      {!selectedFolder && (
+        <div
+          className="flex items-center justify-center"
+          style={{ height: "calc(100vh - 4rem)" }}>
+          <div className="text-center">
+            <img
+              alt=""
+              src="/images/illustrations/sign-in.svg"
+              className="lg:max-w-md"
+            />
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+              Select a folder to start
+            </p>
           </div>
-        )
-      }
+        </div>
+      )}
     </>
-  )
-}
+  );
+};
 
 export default PostEditor;

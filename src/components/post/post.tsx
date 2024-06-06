@@ -6,9 +6,17 @@ interface PostProps {
   captionPosition: string;
   ctaText: string;
   photoSize: string; // Optional photo size (e.g., 'h-96 w-full')
+  previewMedia?: string;
 }
 
-const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, ctaText, photoSize }) => {
+const PostComponent: React.FC<PostProps> = ({
+  caption,
+  medias,
+  captionPosition,
+  ctaText,
+  photoSize,
+  previewMedia,
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Function to determine caption classes based on the position
@@ -37,15 +45,18 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
       default:
         return "h-96 w-full";
     }
-  }
+  };
 
   // Auto-scroll images
   useEffect(() => {
-    if (medias.length <= 1) { setCurrentIndex(0); return; } // No need to scroll if there's only one images
+    if (medias.length <= 1) {
+      setCurrentIndex(0);
+      return;
+    } // No need to scroll if there's only one images
 
     const intervalId = setInterval(() => {
       setCurrentIndex((current) => (current + 1) % medias.length);
-    }, 1000); 
+    }, 1000);
 
     return () => clearInterval(intervalId); // Clean up the interval on component unmount
   }, [medias.length]);
@@ -53,8 +64,10 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
   return (
     <div className="relative overflow-hidden bg-black">
       {/* Background image with optional photo size */}
-      {medias.length > 0 && (
-        <div className={`bg-cover bg-center ${getPhotoSizeClasses()}`} style={{ backgroundImage: `url(${medias[currentIndex]})` }}>
+      {(medias.length > 0 || previewMedia) && (
+        <div
+          className={`bg-cover bg-center ${getPhotoSizeClasses()}`}
+          style={{ backgroundImage: `${previewMedia ? `url(${previewMedia})` : `url(${medias[currentIndex]})`}` }}>
           {/* Dimmed background overlay */}
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
@@ -64,7 +77,11 @@ const PostComponent: React.FC<PostProps> = ({ caption, medias, captionPosition, 
             {/* <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             {ctaText}
           </button> */}
-            { ctaText && (<p className="text-sm underline">{ctaText} {">"}</p> )}
+            {ctaText && (
+              <p className="text-sm underline">
+                {ctaText} {">"}
+              </p>
+            )}
           </div>
         </div>
       )}

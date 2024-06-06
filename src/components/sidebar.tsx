@@ -3,9 +3,6 @@ import classNames from "classnames";
 import { Sidebar } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import { FaBox, FaUsers } from "react-icons/fa";
-import {
-  HiChartPie,
-} from "react-icons/hi";
 // import { useAuthContext } from "../context/AuthContext";
 import { useSidebarContext } from "../context/SidebarContext";
 // import isSmallScreen from "../helpers/is-small-screen";
@@ -28,62 +25,62 @@ const ExampleSidebar: React.FC = function () {
     <div
       className={classNames("lg:!block", {
         hidden: !isSidebarOpenOnSmallScreens,
-      })}
-    >
+      })}>
       <Sidebar
         aria-label="Sidebar with multi-level dropdown example"
         // collapsed={isSidebarOpenOnSmallScreens && !isSmallScreen()}
         collapsed={true}
-        className="pt-0"
-      >
-        <div className="flex h-full flex-col justify-between py-2">
-          <div>
-            <Sidebar.Items>
+        className="pt-0">
+        {/* <Sidebar.Logo href="#" img="../../images/logo.svg" imgAlt="ASF logo">
+          ASF
+        </Sidebar.Logo> */}
+        <Sidebar.Items>
+          <Sidebar.ItemGroup>
+            <Sidebar.Item
+              href="/dashboard"
+              icon={GoHomeFill}
+              className={
+                "/dashboard" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Dashboard
+            </Sidebar.Item>
 
-              <Sidebar.ItemGroup>
+            <Sidebar.Item
+              href="/users/list"
+              icon={FaUsers}
+              className={
+                "/users/list" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Users
+            </Sidebar.Item>
+            <Sidebar.Item
+              icon={BsFillFilePostFill}
+              href="/posts/list"
+              className={
+                "/posts/list" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              All Posts
+            </Sidebar.Item>
 
-                <Sidebar.Item
-                  href="/dashboard"
-                  icon={GoHomeFill}
-                  className={
-                    "/dashboard" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-                  }
-                >
-                  Dashboard
-                </Sidebar.Item>
+            {/* Product */}
+            <Sidebar.Item
+              icon={FaBox}
+              href="/products/list"
+              className={
+                "/products/list" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Products
+            </Sidebar.Item>
 
-                <Sidebar.Item
-                  href="/users/list"
-                  icon={FaUsers}
-                  className={
-                    "/users/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-                  }
-                >
-                  Users
-                </Sidebar.Item>
-                <Sidebar.Item
-                  icon={BsFillFilePostFill}
-                  href="/posts/list"
-                  className={
-                    "/posts/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-                  }
-                >
-                  All Posts
-                </Sidebar.Item>
-
-                {/* Product */}
-                <Sidebar.Item
-                  icon={FaBox}
-                  href="/products/list"
-                  className={
-                    "/products/list" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-                  }
-                >
-                  Products
-                </Sidebar.Item>
-
-
-                {/* <Sidebar.Collapse
+            {/* <Sidebar.Collapse
                   icon={BsFillFilePostFill}
                   label="Posts"
                   open={isPostOpen}
@@ -106,10 +103,8 @@ const ExampleSidebar: React.FC = function () {
                     Schedule
                   </Sidebar.Item>
                 </Sidebar.Collapse> */}
-              </Sidebar.ItemGroup>
-            </Sidebar.Items>
-          </div>
-        </div>
+          </Sidebar.ItemGroup>
+        </Sidebar.Items>
       </Sidebar>
     </div>
   );
