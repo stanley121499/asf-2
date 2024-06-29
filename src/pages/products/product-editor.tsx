@@ -146,11 +146,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         status: selectedProduct.status,
       });
 
-      setSelectedCategories(
-        selectedProduct.product_categories.map(
-          (category) => category.category_id
-        )
-      );
+      setSelectedCategories(selectedProduct.product_categories);
       // For color and size only use those that are active
       setSelectedColors(
         selectedProduct.product_colors
@@ -289,48 +285,46 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                 )}
                 {selectedFolder.medias.map((media) => (
                   // <Card key={media.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                  <>
-                    <div
-                      className="relative group cursor-pointer"
-                      key={media.id}
-                      onClick={() => {
-                        const isMediaSelected = selectedMedias.find(
-                          (m) => m.id === media.id
-                        );
-                        if (isMediaSelected) {
-                          setPreviewMedia(media.media_url);
-                        } else {
-                          setSelectedMedias((prev) => [...prev, media]);
-                          setPreviewMedia(media.media_url);
-                        }
-                      }}>
-                      <img
-                        src={media.media_url}
-                        alt="media"
-                        className="w-full object-cover rounded"
-                        style={{ height: `calc((100vh - 9rem) / 4)` }}
-                      />
-                      {/* Show a tick on top of the image if selected */}
-                      {(selectedMedias.find((m) => m.id === media.id) ||
-                        arrangedMedias.find((m) => m.id === media.id)) && (
-                        <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 text-green-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </>
+                  <div
+                    className="relative group cursor-pointer"
+                    key={media.id}
+                    onClick={() => {
+                      const isMediaSelected = selectedMedias.find(
+                        (m) => m.id === media.id
+                      );
+                      if (isMediaSelected) {
+                        setPreviewMedia(media.media_url);
+                      } else {
+                        setSelectedMedias((prev) => [...prev, media]);
+                        setPreviewMedia(media.media_url);
+                      }
+                    }}>
+                    <img
+                      src={media.media_url}
+                      alt="media"
+                      className="w-full object-cover rounded"
+                      style={{ height: `calc((100vh - 9rem) / 4)` }}
+                    />
+                    {/* Show a tick on top of the image if selected */}
+                    {(selectedMedias.find((m) => m.id === media.id) ||
+                      arrangedMedias.find((m) => m.id === media.id)) && (
+                      <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -342,7 +336,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                 style={{ maxHeight: "calc(100vh - 4rem)" }}>
                 {/* Name */}
                 <div className="mt-4">
-                  <flowbiteReact.Label>Name</flowbiteReact.Label>
+                  <flowbiteReact.Label>Product Name</flowbiteReact.Label>
                   <flowbiteReact.TextInput
                     id="name"
                     name="name"
@@ -578,10 +572,9 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                   />
                 </div>
                 {/* Status */}
-                <div className="mt-4">
+                {/* <div className="mt-4">
                   <flowbiteReact.Label>Status</flowbiteReact.Label>
                   <div className="relative">
-                    {/* Create 3 card ( draft, unpublished, publish ) */}
                     <div className="flex items-center space-x-4">
                       <flowbiteReact.Button
                         color={`${
@@ -617,7 +610,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                       </flowbiteReact.Button>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* <CategoryInput /> */}
               </div>

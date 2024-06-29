@@ -79,7 +79,21 @@ module.exports = {
           "&::-webkit-scrollbar": {
             display: "none" /* Safari and Chrome */,
           },
-        }
+        },
+        ".customDatePickerWidth": {
+          width: "100%",
+        },
+        ".customDatePickerWidth > div.react-datepicker-wrapper": {
+          width: "100%",
+        },
+        ".customDatePickerWidth > div > div.react-datepicker__input-container":
+          {
+            width: "100%",
+          },
+        ".customDatePickerWidth > div > div.react-datepicker__input-container input":
+          {
+            width: "100%",
+          },
       });
     },
   ],

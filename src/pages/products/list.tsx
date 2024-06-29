@@ -6,15 +6,18 @@ import LoadingPage from "../pages/loading";
 import {
   useProductContext,
   Products,
+  Product,
 } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
 import { IoIosSearch } from "react-icons/io";
 import { HiPlus } from "react-icons/hi";
+import ProductComponent from "../../components/product/product";
 
 const ProductListPage: React.FC = function () {
   const { products, loading } = useProductContext();
-
   const [searchValue, setSearchValue] = React.useState("");
+  const [productData, setProductData] = React.useState<Product | null>(null);
+  const { productMedias } = useProductMediaContext();
 
   if (loading) {
     return <LoadingPage />;
@@ -39,6 +42,12 @@ const ProductListPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Category
               </a>
+              {/* Schedule */}
+              <a
+                href="/products/schedule"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Schedule
+              </a>
             </div>
             <Button href="/products/create" className="btn btn-primary">
               <HiPlus className="text-xl" />
@@ -50,8 +59,50 @@ const ProductListPage: React.FC = function () {
 
       <div className="flex flex-col p-4 ">
         <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden shadow">
+          <div className="inline-block min-w-full align-middle grid grid-cols-4">
+            {productData && (
+              <div className="overflow-hidden shadow col-span-1 flex justify-center items-center">
+                <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
+                  <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
+                  <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
+                  <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
+                  <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
+                  <div className="rounded-[2rem] overflow-auto w-[272px] h-[572px] bg-white hide-scrollbar">
+                    <div className="pt-5">
+                      <ProductComponent
+                        name={productData?.name || "Product Name"}
+                        price={productData?.price || 100.0}
+                        color={
+                          productData?.product_colors
+                            ? productData.product_colors.map(
+                                (color) => color.color
+                              )
+                            : ["red", "blue", "green", "yellow"]
+                        }
+                        size={
+                          productData?.product_sizes
+                            ? productData.product_sizes.map((size) => size.size)
+                            : ["S", "M", "L", "XL"]
+                        }
+                        medias={productMedias
+                          .filter(
+                            (media) => media.product_id === productData?.id
+                          )
+                          .map((media) => media.media_url)}
+                        description={
+                          productData?.description ||
+                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus feugiat, molestie ipsum et, consequat nibh. Ut sit amet lacus ultrices, tincidunt metus in, maximus metus."
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div
+              className={`overflow-hidden shadow ${
+                productData ? "col-span-3" : "col-span-4"
+              }`}>
               <form className="lg:pr-3">
                 <Label htmlFor="products-search" className="sr-only">
                   Search
@@ -76,6 +127,7 @@ const ProductListPage: React.FC = function () {
                       .toLowerCase()
                       .includes(searchValue.toLowerCase())
                   )}
+                  setProductData={setProductData}
                 />
               ) : (
                 <>
@@ -96,7 +148,15 @@ const ProductListPage: React.FC = function () {
   );
 };
 
-const ProductsTable: React.FC<Products> = function ({ products }) {
+interface ProductsTableProps {
+  products: Product[];
+  setProductData: React.Dispatch<React.SetStateAction<Product | null>>;
+}
+
+const ProductsTable: React.FC<ProductsTableProps> = function ({
+  products,
+  setProductData,
+}) {
   const { productMedias } = useProductMediaContext();
   const { deleteProduct } = useProductContext();
   return (
@@ -122,7 +182,13 @@ const ProductsTable: React.FC<Products> = function ({ products }) {
                   />
                 </div>
               )}
-              style={{ height: `calc((100vh - 190px) / 2)`, backgroundColor: "transparent" }} >
+              style={{
+                height: `calc((100vh - 190px) / 2)`,
+                backgroundColor: "transparent",
+              }}
+              onClick={() => {
+                setProductData(product);
+              }}>
               <div className="flex justify-between flex-col gap-2">
                 <div className="flex items-center gap-x-3">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
@@ -143,14 +209,15 @@ const ProductsTable: React.FC<Products> = function ({ products }) {
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    href={`/products/create/${product.product_folder_id}/${product.id}`}
-                    className="btn btn-primary">
+                    className="w-40"
+                    href={`/products/create/${product.product_folder_id}/${product.id}`}>
                     Edit
                   </Button>
                   <Button
                     onClick={() => {
                       deleteProduct(product.id);
                     }}
+                    className="w-40"
                     color={"red"}>
                     Delete
                   </Button>

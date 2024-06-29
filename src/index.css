@@ -110,3 +110,11 @@
 * {
   scrollbar-color: #9ca3af transparent;
 }
+
+.react-datepicker__input-container {
+  width: inherit;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}

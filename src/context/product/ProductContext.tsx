@@ -21,6 +21,8 @@ export type Product = Database["public"]["Tables"]["products"]["Row"] & {
   product_categories: any[];
   product_colors: ProductColor[];
   product_sizes: ProductSize[];
+  stock_status: string;
+  stock_count: number;
 };
 export type Products = { products: Product[] };
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
@@ -42,6 +44,10 @@ interface ProductContextProps {
   ) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   loading: boolean;
+  updateProductTimePost: (
+    productId: string,
+    productTimePost: string
+  ) => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextProps>(undefined!);
@@ -59,18 +65,17 @@ export function ProductProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     const fetchProducts = async () => {
-      const { data: products, error } = await supabase
-        .from("products")
-        .select(
-          "*, product_colors(*), product_sizes(*), product_categories(category_id(*))"
-        );
+      const { data, error } = await supabase.rpc(
+        "fetch_products_with_computed_attributes"
+      );
 
       if (error) {
         showAlert(error.message, "error");
+        console.error(error);
         return;
       }
 
-      setProducts(products);
+      setProducts(data);
     };
 
     fetchProducts();
@@ -283,6 +288,20 @@ export function ProductProvider({ children }: PropsWithChildren) {
     }
   };
 
+  const updateProductTimePost = async (
+    productId: string,
+    productTimePost: string
+  ) => {
+    const { error } = await supabase
+      .from("products")
+      .update({ updated_at: new Date() })
+      .eq("id", productId);
+    if (error) {
+      showAlert(error.message, "error");
+      console.error(error);
+    }
+  };
+
   return (
     <ProductContext.Provider
       value={{
@@ -291,6 +310,7 @@ export function ProductProvider({ children }: PropsWithChildren) {
         updateProduct,
         deleteProduct,
         loading,
+        updateProductTimePost,
       }}>
       {children}
     </ProductContext.Provider>

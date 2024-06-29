@@ -3,15 +3,17 @@ import { Button, Label, TextInput } from "flowbite-react";
 import React from "react";
 import { HiPlus } from "react-icons/hi";
 import { IoIosSearch } from "react-icons/io";
-import { Posts, usePostContext } from "../../context/post/PostContext";
+import { Posts, usePostContext, Post } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
+import PostComponent from "../../components/post/post";
 
 const PostListPage: React.FC = function () {
   const { posts, loading } = usePostContext();
-
   const [searchValue, setSearchValue] = React.useState("");
+  const [postData, setPostData] = React.useState<Post | null>(null);
+  const { postMedias } = usePostMediaContext();
 
   if (loading) {
     return <LoadingPage />;
@@ -47,8 +49,35 @@ const PostListPage: React.FC = function () {
 
       <div className="flex flex-col p-4 ">
         <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden shadow">
+          <div className="inline-block min-w-full align-middle grid grid-cols-4">
+            {postData && (
+              <div className="overflow-hidden shadow col-span-1 flex justify-center items-center">
+                <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
+                  <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
+                  <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
+                  <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
+                  <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
+                  <div className="rounded-[2rem] overflow-auto w-[272px] h-[572px] bg-white hide-scrollbar">
+                    <div className="pt-5">
+                      <PostComponent
+                        caption={postData?.caption || ""}
+                        medias={postMedias
+                          .filter((media) => media.post_id === postData?.id)
+                          .map((media) => media.media_url)}
+                        captionPosition={postData?.caption_position || ""}
+                        ctaText={postData?.cta_text || ""}
+                        photoSize={postData?.photo_size || ""}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div
+              className={`overflow-hidden shadow ${
+                postData ? "col-span-3" : "col-span-4"
+              }`}>
               <form className="lg:pr-3">
                 <Label htmlFor="posts-search" className="sr-only">
                   Search
@@ -71,6 +100,7 @@ const PostListPage: React.FC = function () {
                   posts={posts.filter((post) =>
                     post.name.toLowerCase().includes(searchValue.toLowerCase())
                   )}
+                  setPostData={setPostData}
                 />
               ) : (
                 <>
@@ -91,7 +121,15 @@ const PostListPage: React.FC = function () {
   );
 };
 
-const PostsTable: React.FC<Posts> = function ({ posts }) {
+interface PostsTableProps {
+  posts: Post[];
+  setPostData?: React.Dispatch<React.SetStateAction<Post | null>>;
+}
+
+const PostsTable: React.FC<PostsTableProps> = function ({
+  posts,
+  setPostData,
+}) {
   const { postMedias } = usePostMediaContext();
   const { deletePost } = usePostContext();
 
@@ -106,6 +144,7 @@ const PostsTable: React.FC<Posts> = function ({ posts }) {
                 <div
                   key={`${post.id}-${index}`}
                   style={{ height: `calc((100vh - 167px) / 8)` }}
+                  onClick={() => setPostData && setPostData(post)}
                   className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                   <div className="flex items-center gap-4">
                     <img
@@ -121,10 +160,16 @@ const PostsTable: React.FC<Posts> = function ({ posts }) {
                     </h2>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Button color={"info"} href={`/posts/edit/${post.id}`}>
+                    <Button
+                      className="w-40"
+                      color={"info"}
+                      href={`/posts/edit/${post.id}`}>
                       Edit
                     </Button>
-                    <Button color={"red"} onClick={() => deletePost(post.id)}>
+                    <Button
+                      className="w-40"
+                      color={"red"}
+                      onClick={() => deletePost(post.id)}>
                       Delete
                     </Button>
                   </div>

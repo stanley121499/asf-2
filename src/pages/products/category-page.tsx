@@ -98,6 +98,12 @@ const CategoryListPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Category
               </a>
+              {/* Schedule */}
+              <a
+                href="/products/schedule"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Schedule
+              </a>
             </div>
             <AddCategoryModal />
           </div>
@@ -152,11 +158,13 @@ const CategoryListPage: React.FC = function () {
                         </div>
                         <div className="flex items-center gap-4">
                           <Button
+                            className="w-40"
                             color={"info"}
                             onClick={() => setSelectedCategory(category)}>
                             Edit
                           </Button>
                           <Button
+                            className="w-40"
                             color={"red"}
                             onClick={() => {
                               deleteCategory(category.id);
@@ -168,6 +176,7 @@ const CategoryListPage: React.FC = function () {
                             Delete
                           </Button>
                           <Button
+                            className="w-40"
                             color={"warning"}
                             onClick={() =>
                               handleChangeArrangement(category.id, "up")
@@ -175,6 +184,7 @@ const CategoryListPage: React.FC = function () {
                             Up
                           </Button>
                           <Button
+                            className="w-40"
                             color={"purple"}
                             onClick={() =>
                               handleChangeArrangement(category.id, "down")

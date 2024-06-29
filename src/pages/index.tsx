@@ -9,7 +9,7 @@ const DashboardPage: React.FC = function () {
       <div
         className="flex items-center justify-center"
         style={{ height: "calc(100vh - 4rem)" }}>
-        <div className="text-center">
+        <div className="text-center transform scale-150">
           {/* Logo */}
           <img
             alt=""
@@ -30,6 +30,10 @@ const DashboardPage: React.FC = function () {
           {/* Setting Product */}
           <Button className="homepage-button mt-4" href="/products/list">
             Setting Products
+          </Button>
+          {/* Setting Stock */}
+          <Button className="homepage-button mt-4" href="/stocks/overview">
+            Setting Stocks
           </Button>
         </div>
       </div>

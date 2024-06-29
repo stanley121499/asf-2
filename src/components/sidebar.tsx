@@ -8,6 +8,7 @@ import { useSidebarContext } from "../context/SidebarContext";
 // import isSmallScreen from "../helpers/is-small-screen";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
+import { FaBoxes } from "react-icons/fa";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
@@ -78,6 +79,18 @@ const ExampleSidebar: React.FC = function () {
                   : ""
               }>
               Products
+            </Sidebar.Item>
+
+            {/* Stock */}
+            <Sidebar.Item
+              icon={FaBoxes}
+              href="/stocks/overview"
+              className={
+                "/stocks/overview" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Stocks
             </Sidebar.Item>
 
             {/* <Sidebar.Collapse
