@@ -62,7 +62,6 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
     setLoading(true);
     const fetchProductPurchaseOrders = async () => {
       const { data, error } = await supabase.rpc("fetch_purchase_orders");
-      console.log(data);
 
       if (error) {
         showAlert(error.message, "error");
@@ -115,6 +114,8 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
     product_purchase_order: ProductPurchaseOrderInsert,
     product_purchase_order_entries: any[]
   ) {
+    console.log(product_purchase_order_entries)
+    console.log(product_purchase_order)
     const { data, error } = await supabase
       .from("product_purchase_orders")
       .insert(product_purchase_order)
@@ -122,6 +123,7 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
       .single();
 
     if (error) {
+      console.error(error);
       showAlert(error.message, "error");
     } else {
       const newProductPurchaseOrder = data as ProductPurchaseOrder;

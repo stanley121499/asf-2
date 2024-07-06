@@ -61,6 +61,7 @@ export function ProductReportProvider({ children }: PropsWithChildren) {
     const { data, error } = await supabase
       .from("product_reports")
       .insert(product_report)
+      .select("*") 
       .single();
 
     if (error) {

@@ -19,13 +19,16 @@ import {
   TextInput,
   Textarea,
 } from "flowbite-react";
+import { useProductEventContext } from "../../context/product/ProductEventContext";
 
 const CreatePurchaseOrderPage: React.FC = function () {
   const { products, loading } = useProductContext();
   const { createProductPurchaseOrder } = useProductPurchaseOrderContext();
-  const { productId } = useParams();
+  const { productId, productEventId } = useParams();
+  const { updateProductEvent } = useProductEventContext();
   const [formData, setFormData] = React.useState<ProductPurchaseOrderInsert>({
     product_id: productId || "",
+    product_event: productEventId || "",
   });
   const [productData, setProductData] = React.useState<Product | undefined>(
     undefined
@@ -33,6 +36,8 @@ const CreatePurchaseOrderPage: React.FC = function () {
   const [productOrderEntries, setProductOrderEntries] = React.useState<any[]>(
     []
   );
+
+  console.log(productId, productEventId);
 
   useEffect(() => {
     if (products) {
@@ -46,7 +51,23 @@ const CreatePurchaseOrderPage: React.FC = function () {
   }
 
   const savePurchaseOrder = async () => {
-    await createProductPurchaseOrder(formData , productOrderEntries);
+    const purchaseOrderData = {
+      ...formData,
+    };
+    await createProductPurchaseOrder(
+      purchaseOrderData,
+      productOrderEntries
+    ).then((data) => {
+      if (data) {
+        updateProductEvent({
+          id: formData.product_event || "",
+          purchase_order_id: data.id,
+        }).then(() => {
+          // Redirect to the user back to the previous page
+          window.history.back();
+        });
+      }
+    });
   };
 
   const addRow = () => {
@@ -92,15 +113,21 @@ const CreatePurchaseOrderPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Reports
               </a>
+              {/* Product Events */}
+              <a
+                href="/stocks/events"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Product Events
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col p-4 ">
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle gap-4">
-            <div className="overflow-auto scrollbar-hide w-full">
+      <div className="flex flex-col p-4 h-[calc(100vh-6rem)]">
+        <div className="overflow-x-auto h-full"> 
+          <div className="inline-block min-w-full align-middle gap-4 h-full">
+            <div className="overflow-auto scrollbar-hide w-full h-full">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
                 Create Purchase Order
               </h1>
@@ -244,7 +271,7 @@ const CreatePurchaseOrderPage: React.FC = function () {
                             ...formData,
                             shipping_date: e.toISOString(),
                           });
-                        }}      
+                        }}
                       />
                     </div>
 

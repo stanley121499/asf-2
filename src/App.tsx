@@ -11,6 +11,19 @@ import { PostProvider } from "./context/post/PostContext";
 import { PostFolderProvider } from "./context/post/PostFolderContext";
 import { PostFolderMediaProvider } from "./context/post/PostFolderMediaContext";
 import { PostMediaProvider } from "./context/post/PostMediaContext";
+import { CategoryProvider } from "./context/product/CategoryContext";
+import { ProductCategoryProvider } from "./context/product/ProductCategoryContext";
+import { ProductColorProvider } from "./context/product/ProductColorContext";
+import { ProductProvider } from "./context/product/ProductContext";
+import { ProductEventProvider } from "./context/product/ProductEventContext";
+import { ProductFolderProvider } from "./context/product/ProductFolderContext";
+import { ProductFolderMediaProvider } from "./context/product/ProductFolderMediaContext";
+import { ProductMediaProvider } from "./context/product/ProductMediaContext";
+import { ProductPurchaseOrderProvider } from "./context/product/ProductPurchaseOrderContext";
+import { ProductReportProvider } from "./context/product/ProductReportContext";
+import { ProductSizeProvider } from "./context/product/ProductSizeContext";
+import { ProductStockLogProvider } from "./context/product/ProductStockLogContext";
+import { ProductStockProvider } from "./context/product/ProductStockContext";
 import "./index.css";
 import DashboardPage from "./pages";
 import SignInPage from "./pages/authentication/sign-in";
@@ -22,29 +35,21 @@ import MaintenancePage from "./pages/pages/maintenance";
 import CreatePostPage from "./pages/posts/create-post-page";
 import PostListPage from "./pages/posts/list";
 import SchedulePostListPage from "./pages/posts/schedule-post-page";
-import UserListPage from "./pages/users/list";
-import UserSettingsPage from "./pages/users/settings";
-import { CategoryProvider } from "./context/product/CategoryContext";
-import { ProductCategoryProvider } from "./context/product/ProductCategoryContext";
-import { ProductSizeProvider } from "./context/product/ProductSizeContext";
-import { ProductColorProvider } from "./context/product/ProductColorContext";
-import { ProductMediaProvider } from "./context/product/ProductMediaContext";
-import { ProductProvider } from "./context/product/ProductContext";
-import { ProductFolderProvider } from "./context/product/ProductFolderContext";
-import { ProductFolderMediaProvider } from "./context/product/ProductFolderMediaContext";
+import CategoryListPage from "./pages/products/category-page";
 import CreateProductPage from "./pages/products/create-product-page";
 import ProductListPage from "./pages/products/list";
-import CategoryListPage from "./pages/products/category-page";
 import ScheduleProductListPage from "./pages/products/schedule-product-page";
-import StockOverviewPage from "./pages/stocks/overview";
-import StockAllProductPage from "./pages/stocks/list";
-import StockReportPage from "./pages/stocks/report";
-import { ProductPurchaseOrderProvider } from "./context/product/ProductPurchaseOrderContext";
-import { ProductReportProvider } from "./context/product/ProductReportContext";
-import CreateReportPage from "./pages/stocks/create-report";
-import ViewReportPage from "./pages/stocks/view-report";
 import CreatePurchaseOrderPage from "./pages/stocks/create-purchase-order";
+import CreateReportPage from "./pages/stocks/create-report";
+import StockAllProductEventPage from "./pages/stocks/event-list";
+import StockAllProductPage from "./pages/stocks/list";
+import StockOverviewPage from "./pages/stocks/overview";
+import StockReportPage from "./pages/stocks/report";
 import ViewPurchaseOrderPage from "./pages/stocks/view-purchase-order";
+import ViewReportPage from "./pages/stocks/view-report";
+import UserListPage from "./pages/users/list";
+import UserSettingsPage from "./pages/users/settings";
+import ProductStockDetails from "./pages/products/stock";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -66,6 +71,9 @@ const App: React.FC = () => (
         ProductMediaProvider,
         ProductFolderProvider,
         ProductFolderMediaProvider,
+        ProductEventProvider,
+        ProductStockLogProvider,
+        ProductStockProvider,
       ]}>
       <AlertComponent />
       <BrowserRouter>
@@ -98,14 +106,19 @@ const App: React.FC = () => (
                 path="/products/categories"
                 element={<CategoryListPage />}
               />
+              <Route
+                path="/products/stock/:productId"
+                element={<ProductStockDetails />}
+              />
 
               {/* Stock */}
               <Route path="/stocks/overview" element={<StockOverviewPage />} />
               <Route path="/stocks/all" element={<StockAllProductPage />} />
+              <Route path='/stocks/events' element={<StockAllProductEventPage />} />
               <Route path="/stocks/reports" element={<StockReportPage />} />
-              <Route path="/stocks/report/create/:productId?" element={<CreateReportPage />} />
+              <Route path="/stocks/report/create/:productId?/:productEventId?" element={<CreateReportPage />} />
               <Route path="/stocks/report/:reportId" element={<ViewReportPage />} />
-              <Route path="/stocks/purchase-orders/create/:productId?" element={<CreatePurchaseOrderPage />} />
+              <Route path="/stocks/purchase-orders/create/:productId?/:productEventId?" element={<CreatePurchaseOrderPage />} />
               <Route path="/stocks/purchase-orders/:purchaseOrderId" element={<ViewPurchaseOrderPage />} />
             </Route>
 

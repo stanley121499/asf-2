@@ -245,6 +245,55 @@ export type Database = {
           },
         ]
       }
+      product_events: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          purchase_order_id: string | null
+          report_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          purchase_order_id?: string | null
+          report_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          purchase_order_id?: string | null
+          report_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_events_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "product_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_events_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "product_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_folder_medias: {
         Row: {
           created_at: string
@@ -411,7 +460,8 @@ export type Database = {
           id: string
           order_date: string | null
           order_no: string | null
-          product_id: string | null
+          product_event: string
+          product_id: string
           purchase_order_no: string | null
           salesman_no: string | null
           shipping_date: string | null
@@ -427,7 +477,8 @@ export type Database = {
           id?: string
           order_date?: string | null
           order_no?: string | null
-          product_id?: string | null
+          product_event: string
+          product_id: string
           purchase_order_no?: string | null
           salesman_no?: string | null
           shipping_date?: string | null
@@ -443,7 +494,8 @@ export type Database = {
           id?: string
           order_date?: string | null
           order_no?: string | null
-          product_id?: string | null
+          product_event?: string
+          product_id?: string
           purchase_order_no?: string | null
           salesman_no?: string | null
           shipping_date?: string | null
@@ -457,6 +509,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_purchase_orders_product_event_fkey"
+            columns: ["product_event"]
+            isOneToOne: false
+            referencedRelation: "product_events"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_reports: {
@@ -468,6 +527,7 @@ export type Database = {
           oc_department: string | null
           oc_name: string | null
           person_in_charge: string | null
+          product_event: string
           product_id: string
           reason: string | null
         }
@@ -479,6 +539,7 @@ export type Database = {
           oc_department?: string | null
           oc_name?: string | null
           person_in_charge?: string | null
+          product_event: string
           product_id: string
           reason?: string | null
         }
@@ -490,6 +551,7 @@ export type Database = {
           oc_department?: string | null
           oc_name?: string | null
           person_in_charge?: string | null
+          product_event?: string
           product_id?: string
           reason?: string | null
         }
@@ -499,6 +561,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reports_product_event_fkey"
+            columns: ["product_event"]
+            isOneToOne: false
+            referencedRelation: "product_events"
             referencedColumns: ["id"]
           },
         ]
@@ -733,6 +802,7 @@ export type Database = {
       fetch_purchase_orders: {
         Args: Record<PropertyKey, never>
         Returns: {
+          id: string
           customer_no: string
           brand: string
           order_no: string
@@ -744,6 +814,8 @@ export type Database = {
           delivery_date: string
           shipping_date: string
           cancel_date: string
+          created_at: string
+          product_id: string
           items: Json
         }[]
       }

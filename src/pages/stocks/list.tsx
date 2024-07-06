@@ -9,11 +9,11 @@ import {
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
+import { useNavigate } from "react-router-dom";
 
 const StockAllProductPage: React.FC = function () {
   const { products, loading } = useProductContext();
   const [searchValue, setSearchValue] = React.useState("");
-  const [productData, setProductData] = React.useState<Product | null>(null);
 
   if (loading) {
     return <LoadingPage />;
@@ -45,6 +45,12 @@ const StockAllProductPage: React.FC = function () {
                 href="/stocks/reports"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Reports
+              </a>
+              {/* Product Events */}
+              <a
+                href="/stocks/events"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Product Events
               </a>
             </div>
           </div>
@@ -79,7 +85,6 @@ const StockAllProductPage: React.FC = function () {
                       .toLowerCase()
                       .includes(searchValue.toLowerCase())
                   )}
-                  setProductData={setProductData}
                 />
               ) : (
                 <>
@@ -102,15 +107,11 @@ const StockAllProductPage: React.FC = function () {
 
 interface ProductsTableProps {
   products: Product[];
-  setProductData?: React.Dispatch<React.SetStateAction<Product | null>>;
 }
 
-const ProductsTable: React.FC<ProductsTableProps> = function ({
-  products,
-  setProductData,
-}) {
+const ProductsTable: React.FC<ProductsTableProps> = function ({ products }) {
   const { productMedias } = useProductMediaContext();
-  const { deleteProduct } = useProductContext();
+  const navigate = useNavigate();
 
   return (
     <div>
@@ -123,7 +124,10 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
                 <div
                   key={`${product.id}-${index}`}
                   style={{ height: `calc((100vh - 167px) / 8)` }}
-                  onClick={() => setProductData && setProductData(product)}
+                  onClick={() => {
+                    // Navigate to ProductStockDetails page
+                    navigate(`/products/stock/${product.id}`);
+                  }}
                   className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                   <div className="flex items-center gap-4">
                     <img

@@ -1,35 +1,34 @@
 import React from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
-import LoadingPage from "../pages/loading";
-import {
-  useProductContext,
-  Products,
-  Product,
-} from "../../context/product/ProductContext";
 import { useParams } from "react-router-dom";
 import {
   useProductReportContext,
   ProductReportInsert,
 } from "../../context/product/ProductReportContext";
-import { Button, Datepicker, Label, TextInput, Textarea } from "flowbite-react";
+import { Button, Label, TextInput, Textarea } from "flowbite-react";
+import { useProductEventContext } from "../../context/product/ProductEventContext";
 
 const CreateReportPage: React.FC = function () {
-  const { products, loading } = useProductContext();
-  const [searchValue, setSearchValue] = React.useState("");
-  const [productData, setProductData] = React.useState<Product | null>(null);
   const { createProductReport } = useProductReportContext();
-  const { productId } = useParams();
+  const { productId, productEventId } = useParams();
+  const { updateProductEvent } = useProductEventContext();
   const [formData, setFormData] = React.useState<ProductReportInsert>({
     product_id: productId || "",
-    company: "",
+    product_event: productEventId || "",
   });
 
-  if (loading) {
-    return <LoadingPage />;
-  }
-
   const saveReport = async () => {
-    await createProductReport(formData);
+    await createProductReport(formData).then((data) => {
+      if (data) {
+        updateProductEvent({
+          id: formData.product_event || "",
+          report_id: data.id,
+        }).then(() => {
+          // Redirect to the user back to the previous page
+          window.history.back();
+        });
+      }
+    });
   };
 
   return (
@@ -56,6 +55,12 @@ const CreateReportPage: React.FC = function () {
                 href="/stocks/reports"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Reports
+              </a>
+              {/* Product Events */}
+              <a
+                href="/stocks/events"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Product Events
               </a>
             </div>
           </div>
@@ -167,10 +172,7 @@ const CreateReportPage: React.FC = function () {
                   />
                 </div>
 
-                <Button
-                  className="mt-4"
-                  onClick={saveReport}
-                  color="primary">
+                <Button className="mt-4" onClick={saveReport} color="primary">
                   Save
                 </Button>
               </div>
