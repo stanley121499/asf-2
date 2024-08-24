@@ -1,11 +1,9 @@
 import React from "react";
 // import BottomNav from "../components/bottom-nav";
 import NavbarHome from "../../components/navbar-home";
-import OriginalFooterOfFlowbite from "../../components/home/original-footer-of-Flowbite";
 import { useHomePageElementContext } from "../../context/HomePageElementContext";
 import HomePageProductComponent from "./components/Product";
 import HomePageCategoryComponent from "./components/Category";
-import BackgroundImageCards from "../../components/home/background-image-cards";
 
 const HomePage: React.FC = () => {
   const { elements } = useHomePageElementContext();
@@ -48,7 +46,7 @@ const HomePage: React.FC = () => {
             })}
         </div>
       </section>
-      <OriginalFooterOfFlowbite />
+      {/* <OriginalFooterOfFlowbite /> */}
     </>
   );
 };

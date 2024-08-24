@@ -34,7 +34,7 @@ const HomePageCategoryComponent: React.FC<HomePageCategoryComponentProps> = ({
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3  rounded-lg shadow-lg my-4 max-w-7xl mx-auto">
+    <div className="grid grid-cols-3 gap-4 md:grid-cols-3 lg:grid-cols-3  rounded-lg shadow-lg my-4 max-w-7xl mx-auto">
       {productsByCategory.map((product) => (
         <div
           key={product.id}
