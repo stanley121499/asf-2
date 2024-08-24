@@ -5,7 +5,6 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import {
   useProductContext,
-  Products,
   Product,
 } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";

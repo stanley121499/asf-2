@@ -1,7 +1,7 @@
 // src/components/DraggableElement.tsx
 
 import React from "react";
-import { useDrop, useDrag, DropTargetMonitor } from "react-dnd";
+import { useDrop, useDrag } from "react-dnd";
 import { XYCoord } from "dnd-core";
 import { BsChevronRight } from "react-icons/bs";
 import { ElementProps } from "../../types/dnd";
