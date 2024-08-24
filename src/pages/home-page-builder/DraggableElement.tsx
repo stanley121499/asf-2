@@ -160,11 +160,18 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
                   backgroundPosition: "center",
                 }}></div>
               <div className="space-y-2 flex justify-between items-center">
-                <div>
-                  <p className="text-lg font-semibold text-black">{product.name}</p>
-                  <p className="text-sm text-gray-500">{product.description}</p>
+                {/* Left Side: Name and Description */}
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-black truncate">
+                    {product?.name || "Product Name"}
+                  </h3>
+                  <p className="mt-2 text-sm text-black line-clamp-2">
+                    {product?.description || "No description available."}
+                  </p>
+                  <span className="text-md font-bold text-indigo-600">
+                    RM {product?.price?.toFixed(2) || "0.00"}
+                  </span>
                 </div>
-                <p className="text-md font-bold text-black">RM {product.price.toFixed(2)}</p>
               </div>
             </div>
           )}
@@ -180,7 +187,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}>
-                  <p className="text-white p-2">{category.name}</p>
+                  {/* <p className="text-white p-2">{category.name}</p> */}
                 </div>
               ))}
               <BsChevronRight className="text-gray-400 ml-auto" />
