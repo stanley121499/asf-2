@@ -295,6 +295,32 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   </flowbiteReact.Select>
                 </div>
 
+                {/* Font Family */}
+                <div className="mt-4">
+                  <flowbiteReact.Label>Font Family</flowbiteReact.Label>
+                  <flowbiteReact.Select
+                    id="font_family"
+                    name="font_family"
+                    value={postData?.font_family || "DEFAULT"}
+                    onChange={(e) =>
+                      setPostData({ ...postData, font_family: e.target.value })
+                    }>
+                    <option value="DEFAULT">Default</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Tahoma">Tahoma</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Open Sans">Open Sans</option>
+                    <option value="Montserrat">Montserrat</option>
+                    <option value="Lobster">Lobster</option>
+                    <option value="Dancing Script">Dancing Script</option>
+                  </flowbiteReact.Select>
+                </div>
+
                 {/* Create a divider here */}
                 <div className="border-t border-gray-200 dark:border-gray-800 my-4"></div>
 
@@ -329,6 +355,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                     ctaText={postData.cta_text || ""}
                     photoSize={postData.photo_size || ""}
                     previewMedia={previewMedia}
+                    fontFamily={postData.font_family || ""}
                   />
                 </div>
               </div>

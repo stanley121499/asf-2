@@ -16,6 +16,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { FaChevronDown } from "react-icons/fa6";
 import "../customDatePickerWidth.css";
+import { useParams } from "react-router-dom";
 
 const SchedulePostListPage: React.FC = function () {
   const { posts, loading, updatePost } = usePostContext();
@@ -25,6 +26,13 @@ const SchedulePostListPage: React.FC = function () {
   const { postMedias } = usePostMediaContext();
   const [postTime, setPostTime] = React.useState("");
   const { showAlert } = useAlertContext();
+  const { postId } = useParams();
+
+  useEffect(() => {
+    if (postId) {
+      setSelectedPost(posts.find((post) => post.id === postId) || null);
+    }
+  }, [postId, posts]);
 
   useEffect(() => {
     if (selectedPost) {
@@ -66,7 +74,7 @@ const SchedulePostListPage: React.FC = function () {
                 href="/posts/schedule"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Schedule
-              </a>
+              </a>w
             </div>
             <Button href="/posts/create" className="btn btn-primary">
               <HiPlus className="text-xl" />
@@ -102,6 +110,7 @@ const SchedulePostListPage: React.FC = function () {
                           captionPosition={selectedPost.caption_position || ""}
                           ctaText={selectedPost.cta_text || ""}
                           photoSize={selectedPost.photo_size || ""}
+                          fontFamily={selectedPost.font_family || ""}
                         />
                       </div>
                     </div>

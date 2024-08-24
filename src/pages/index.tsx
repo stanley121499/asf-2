@@ -2,6 +2,7 @@
 import React from "react";
 import NavbarSidebarLayout from "../layouts/navbar-sidebar";
 import { Button } from "flowbite-react";
+
 const DashboardPage: React.FC = function () {
   return (
     <NavbarSidebarLayout>

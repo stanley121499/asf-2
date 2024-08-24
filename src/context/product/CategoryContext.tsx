@@ -3,7 +3,7 @@ import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../../database.types";
 import { useAlertContext } from "../AlertContext";
 
-export type Category = Database["public"]["Tables"]["categories"]["Row"];
+export type Category = Database["public"]["Tables"]["categories"]["Row"] & { children?: Category[] };
 export type Categories = { categories: Category[] };
 export type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"];
 export type CategoryUpdate = Database["public"]["Tables"]["categories"]["Update"];
@@ -43,6 +43,7 @@ export function CategoryProvider({ children }: PropsWithChildren) {
     fetchCategories();
 
     const handleChanges = (payload: any) => {
+      console.log(payload.eventType);
       if (payload.eventType === "INSERT") {
         setCategories((prev) => [...prev, payload.new]);
       }

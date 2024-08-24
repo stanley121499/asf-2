@@ -15,6 +15,7 @@ import { useProductMediaContext } from "../../context/product/ProductMediaContex
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { FaChevronDown } from "react-icons/fa6";
+import { useParams } from "react-router-dom";
 
 const ScheduleProductListPage: React.FC = function () {
   const { products, loading, updateProductTimePost } = useProductContext();
@@ -26,6 +27,15 @@ const ScheduleProductListPage: React.FC = function () {
   const { productMedias } = useProductMediaContext();
   const [productTime, setProductTime] = React.useState("");
   const { showAlert } = useAlertContext();
+  const { productId } = useParams<{ productId: string }>();
+
+  useEffect(() => {
+    if (productId) {
+      setSelectedProduct(
+        products.find((product) => product.id === productId) || null
+      );
+    }
+  }, [productId, products]);
 
   useEffect(() => {
     if (selectedProduct) {

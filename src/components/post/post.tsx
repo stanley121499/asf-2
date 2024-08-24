@@ -7,6 +7,7 @@ interface PostProps {
   ctaText: string;
   photoSize: string; // Optional photo size (e.g., 'h-96 w-full')
   previewMedia?: string;
+  fontFamily?: string;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -16,6 +17,7 @@ const PostComponent: React.FC<PostProps> = ({
   ctaText,
   photoSize,
   previewMedia,
+  fontFamily,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -67,18 +69,26 @@ const PostComponent: React.FC<PostProps> = ({
       {(medias.length > 0 || previewMedia) && (
         <div
           className={`bg-cover bg-center ${getPhotoSizeClasses()}`}
-          style={{ backgroundImage: `${previewMedia ? `url(${previewMedia})` : `url(${medias[currentIndex]})`}` }}>
+          style={{
+            backgroundImage: `${
+              previewMedia
+                ? `url(${previewMedia})`
+                : `url(${medias[currentIndex]})`
+            }`,
+          }}>
           {/* Dimmed background overlay */}
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
           {/* Caption overlay with dimmed background */}
           <div className={`text-white p-4 ${getCaptionClasses()}`}>
-            <p className="text-lg">{caption}</p>
+            <p className="text-lg" style={{ fontFamily }}>
+              {caption}
+            </p>
             {/* <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             {ctaText}
           </button> */}
             {ctaText && (
-              <p className="text-sm underline">
+              <p className="text-sm underline" style={{ fontFamily }}>
                 {ctaText} {">"}
               </p>
             )}

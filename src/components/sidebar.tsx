@@ -9,6 +9,7 @@ import { useSidebarContext } from "../context/SidebarContext";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
 import { FaBoxes } from "react-icons/fa";
+import { CiMobile3 } from "react-icons/ci";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
@@ -91,6 +92,18 @@ const ExampleSidebar: React.FC = function () {
                   : ""
               }>
               Stocks
+            </Sidebar.Item>
+
+            {/* Home Page Builder */}
+            <Sidebar.Item
+              icon={CiMobile3}
+              href="/home-page-builder"
+              className={
+                "/home-page-builder" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Home Page Builder
             </Sidebar.Item>
 
             {/* <Sidebar.Collapse

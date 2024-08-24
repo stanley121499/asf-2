@@ -50,6 +50,10 @@ import ViewReportPage from "./pages/stocks/view-report";
 import UserListPage from "./pages/users/list";
 import UserSettingsPage from "./pages/users/settings";
 import ProductStockDetails from "./pages/products/stock";
+import HomePageBuilder from "./pages/home-page-builder";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { HomePageElementProvider } from "./context/HomePageElementContext";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -74,67 +78,91 @@ const App: React.FC = () => (
         ProductEventProvider,
         ProductStockLogProvider,
         ProductStockProvider,
-      ]}>
+        HomePageElementProvider,
+      ]}
+    >
       <AlertComponent />
       <BrowserRouter>
-        <Routes>
-          <Route element={<FlowbiteWrapper />}>
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/users/list" element={<UserListPage />} />
-              <Route path="/users/settings" element={<UserSettingsPage />} />
-              <Route path="/posts/list" element={<PostListPage />} />
-              <Route
-                path="/posts/create/:folderId?/:postId?"
-                element={<CreatePostPage />}
-              />
-              <Route
-                path="/posts/schedule"
-                element={<SchedulePostListPage />}
-              />
-              <Route path="/products/list" element={<ProductListPage />} />
-              <Route
-                path="/products/create/:folderId?/:productId?"
-                element={<CreateProductPage />}
-              />
-              <Route
-                path="/products/schedule"
-                element={<ScheduleProductListPage />}
-              />
-              <Route
-                path="/products/categories"
-                element={<CategoryListPage />}
-              />
-              <Route
-                path="/products/stock/:productId"
-                element={<ProductStockDetails />}
-              />
+        <DndProvider backend={HTML5Backend}>
+          <Routes>
+            <Route element={<FlowbiteWrapper />}>
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/users/list" element={<UserListPage />} />
+                <Route path="/users/settings" element={<UserSettingsPage />} />
+                <Route path="/posts/list" element={<PostListPage />} />
+                <Route
+                  path="/posts/create/:folderId?/:postId?"
+                  element={<CreatePostPage />}
+                />
+                <Route
+                  path="/posts/schedule/:postId?"
+                  element={<SchedulePostListPage />}
+                />
+                <Route path="/products/list" element={<ProductListPage />} />
+                <Route
+                  path="/products/create/:folderId?/:productId?"
+                  element={<CreateProductPage />}
+                />
+                <Route
+                  path="/products/schedule/:productId?"
+                  element={<ScheduleProductListPage />}
+                />
+                <Route
+                  path="/products/categories"
+                  element={<CategoryListPage />}
+                />
+                <Route
+                  path="/products/stock/:productId"
+                  element={<ProductStockDetails />}
+                />
 
-              {/* Stock */}
-              <Route path="/stocks/overview" element={<StockOverviewPage />} />
-              <Route path="/stocks/all" element={<StockAllProductPage />} />
-              <Route path='/stocks/events' element={<StockAllProductEventPage />} />
-              <Route path="/stocks/reports" element={<StockReportPage />} />
-              <Route path="/stocks/report/create/:productId?/:productEventId?" element={<CreateReportPage />} />
-              <Route path="/stocks/report/:reportId" element={<ViewReportPage />} />
-              <Route path="/stocks/purchase-orders/create/:productId?/:productEventId?" element={<CreatePurchaseOrderPage />} />
-              <Route path="/stocks/purchase-orders/:purchaseOrderId" element={<ViewPurchaseOrderPage />} />
+                {/* Stock */}
+                <Route path="/stocks/overview" element={<StockOverviewPage />} />
+                <Route path="/stocks/all" element={<StockAllProductPage />} />
+                <Route
+                  path="/stocks/events"
+                  element={<StockAllProductEventPage />}
+                />
+                <Route path="/stocks/reports" element={<StockReportPage />} />
+                <Route
+                  path="/stocks/report/create/:productId?/:productEventId?"
+                  element={<CreateReportPage />}
+                />
+                <Route
+                  path="/stocks/report/:reportId"
+                  element={<ViewReportPage />}
+                />
+                <Route
+                  path="/stocks/purchase-orders/create/:productId?/:productEventId?"
+                  element={<CreatePurchaseOrderPage />}
+                />
+                <Route
+                  path="/stocks/purchase-orders/:purchaseOrderId"
+                  element={<ViewPurchaseOrderPage />}
+                />
+                {/* Home Page Builder */}
+                <Route
+                  path="/home-page-builder"
+                  element={<HomePageBuilder />}
+                />
+              </Route>
+
+              {/* Public Routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/pages/maintenance" element={<MaintenancePage />} />
+              <Route path="/authentication/sign-in" element={<SignInPage />} />
+
+              {/* Legal Pages */}
+              <Route path="/legal/privacy" element={<PrivacyPage />} />
+
+              {/* Error Handling Routes */}
+              <Route path="/500" element={<ServerErrorPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-
-            {/* Public Routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/pages/maintenance" element={<MaintenancePage />} />
-            <Route path="/authentication/sign-in" element={<SignInPage />} />
-
-            {/* Legal Pages */}
-            <Route path="/legal/privacy" element={<PrivacyPage />} />
-
-            {/* Error Handling Routes */}
-            <Route path="/500" element={<ServerErrorPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
+          </Routes>
+        </DndProvider>
       </BrowserRouter>
     </ProviderComposer>
   </AlertProvider>

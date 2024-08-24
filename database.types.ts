@@ -17,6 +17,7 @@ export type Database = {
           id: string
           media_url: string
           name: string
+          parent: string | null
           updated_at: string
         }
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           id?: string
           media_url: string
           name: string
+          parent?: string | null
           updated_at?: string
         }
         Update: {
@@ -35,7 +37,46 @@ export type Database = {
           id?: string
           media_url?: string
           name?: string
+          parent?: string | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_fkey"
+            columns: ["parent"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_elements: {
+        Row: {
+          amount: number | null
+          arrangement: number
+          contentType: string | null
+          created_at: string
+          id: string
+          targetId: string
+          type: string
+        }
+        Insert: {
+          amount?: number | null
+          arrangement: number
+          contentType?: string | null
+          created_at?: string
+          id?: string
+          targetId: string
+          type: string
+        }
+        Update: {
+          amount?: number | null
+          arrangement?: number
+          contentType?: string | null
+          created_at?: string
+          id?: string
+          targetId?: string
+          type?: string
         }
         Relationships: []
       }
@@ -130,6 +171,7 @@ export type Database = {
           caption_position: string
           created_at: string
           cta_text: string | null
+          font_family: string | null
           id: string
           name: string
           photo_size: string
@@ -142,6 +184,7 @@ export type Database = {
           caption_position?: string
           created_at?: string
           cta_text?: string | null
+          font_family?: string | null
           id?: string
           name: string
           photo_size?: string
@@ -154,6 +197,7 @@ export type Database = {
           caption_position?: string
           created_at?: string
           cta_text?: string | null
+          font_family?: string | null
           id?: string
           name?: string
           photo_size?: string

@@ -67,6 +67,7 @@ const PostListPage: React.FC = function () {
                         captionPosition={postData?.caption_position || ""}
                         ctaText={postData?.cta_text || ""}
                         photoSize={postData?.photo_size || ""}
+                        fontFamily={postData.font_family || ""}
                       />
                     </div>
                   </div>
@@ -163,7 +164,7 @@ const PostsTable: React.FC<PostsTableProps> = function ({
                     <Button
                       className="w-40"
                       color={"info"}
-                      href={`/posts/edit/${post.id}`}>
+                      href={`/posts/create/${post.post_folder_id}/${post.id}`}>
                       Edit
                     </Button>
                     <Button

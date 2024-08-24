@@ -20,6 +20,7 @@ import ReactDropzone from "react-dropzone";
 import ProductEditor from "./product-editor";
 import { useParams } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa6";
+import { useNavigate } from "react-router-dom";
 
 const CreateProductPage: React.FC = () => {
   const { productFolders, createProductFolder } = useProductFolderContext();
@@ -32,6 +33,7 @@ const CreateProductPage: React.FC = () => {
     null
   );
   const { folderId, productId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (folderId) {
@@ -218,7 +220,7 @@ const CreateProductPage: React.FC = () => {
                     <Card
                       key={`${product.id}-${index}`}
                       onClick={() => setSelectedProduct(product)}
-                      style={{ height: `calc((100vh - 9rem) / 8)` }}
+                      style={{ height: `calc((100vh - 9rem) / 6)` }}
                       className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
                       <div className="flex flex-col items-start justify-center h-full">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -228,6 +230,14 @@ const CreateProductPage: React.FC = () => {
                           Created: {product.created_at.split("T")[0]}{" "}
                           {product.created_at.split("T")[1].split(".")[0]}
                         </p>
+                        {/* Schedule Button */}
+                        <Button
+                          className="btn btn-primary mt-2"
+                          onClick={() => {
+                            navigate(`/products/schedule/${product.id}`);
+                          }}>
+                          Schedule
+                        </Button>
                       </div>
                     </Card>
                   ))
