@@ -1,6 +1,7 @@
 import { useProductContext } from "../../../context/product/ProductContext";
 import { useProductMediaContext } from "../../../context/product/ProductMediaContext";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 interface HomePageProductComponentProps {
   targetId: string;
@@ -15,6 +16,7 @@ const HomePageProductComponent: React.FC<HomePageProductComponentProps> = ({
 }) => {
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
+  const navigate = useNavigate();
 
   // Find the product by targetId
   const product = products.find((prod) => prod.id === targetId);
@@ -37,14 +39,18 @@ const HomePageProductComponent: React.FC<HomePageProductComponentProps> = ({
     );
 
   return (
-    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg my-4 max-w-7xl mx-auto">
+    <div
+      className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg my-4 max-w-7xl mx-auto"
+      onClick={() => {
+        navigate(`/product-details/${product.id}`);
+      }}>
       {/* Image Section */}
       <div className="relative overflow-hidden rounded-lg h-96">
         <img
           src={productMedia[0]?.media_url || "/default-image.jpg"} // Fallback image
           alt={product?.name}
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ display: 'block' }} // Ensure block display for proper object-fit
+          style={{ display: "block" }} // Ensure block display for proper object-fit
         />
       </div>
 

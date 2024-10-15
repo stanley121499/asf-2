@@ -54,6 +54,11 @@ import HomePageBuilder from "./pages/home-page-builder";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { HomePageElementProvider } from "./context/HomePageElementContext";
+import CartPage from "./pages/landing/CartPage";
+import OrderSuccess from "./components/stripe/OrderSuccess";
+import OrderCancel from "./components/stripe/OrderCancel";
+import ProductSection from "./pages/landing/ProductSection";
+import ProductDetails from "./pages/landing/ProductDetails";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -79,8 +84,7 @@ const App: React.FC = () => (
         ProductStockLogProvider,
         ProductStockProvider,
         HomePageElementProvider,
-      ]}
-    >
+      ]}>
       <AlertComponent />
       <BrowserRouter>
         <DndProvider backend={HTML5Backend}>
@@ -119,7 +123,10 @@ const App: React.FC = () => (
                 />
 
                 {/* Stock */}
-                <Route path="/stocks/overview" element={<StockOverviewPage />} />
+                <Route
+                  path="/stocks/overview"
+                  element={<StockOverviewPage />}
+                />
                 <Route path="/stocks/all" element={<StockAllProductPage />} />
                 <Route
                   path="/stocks/events"
@@ -148,6 +155,14 @@ const App: React.FC = () => (
                   element={<HomePageBuilder />}
                 />
               </Route>
+
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/order-success" element={<OrderSuccess />} />
+              <Route path="/order-cancel" element={<OrderCancel />} />
+              <Route path="/product-section/:categoryId?" element={<ProductSection />} />
+              <Route path="/product-details/:productId?" element={<ProductDetails />} />
+
+
 
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />

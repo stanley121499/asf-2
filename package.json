@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@stripe/stripe-js": "^4.6.0",
     "@supabase/supabase-js": "^2.40.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -14,6 +15,7 @@
     "autoprefixer": "^10.4.2",
     "axios": "^1.6.8",
     "flowbite-react": "0.7.5",
+    "my-app": "file:",
     "papaparse": "^5.4.1",
     "postcss": "^8.4.12",
     "react": "^18.2.0",
