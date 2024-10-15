@@ -94,7 +94,7 @@ const OrderSuccess: React.FC = () => {
           you by email once your order has been shipped.
         </p>
 
-        <div className="space-y-4 sm:space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800 mb-6 md:mb-8">
+        <div className="space-y-4 sm:space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800 mb-6 md:mb-8 max-w-full mx-auto">
           <dl className="sm:flex items-center justify-between gap-4">
             <dt className="font-normal mb-1 sm:mb-0 text-gray-500 dark:text-gray-400">
               Date
