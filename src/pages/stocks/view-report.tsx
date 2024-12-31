@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useProductReportContext } from "../../context/product/ProductReportContext";
 import LoadingPage from "../pages/loading";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
-import { useNavigate } from "react-router-dom";
 import { Button } from "flowbite-react";
 
 const ViewReportPage: React.FC = function () {

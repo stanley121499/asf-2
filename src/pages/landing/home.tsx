@@ -1,9 +1,8 @@
 import React from "react";
-// import BottomNav from "../components/bottom-nav";
 import NavbarHome from "../../components/navbar-home";
 import { useHomePageElementContext } from "../../context/HomePageElementContext";
-import HomePageProductComponent from "./components/Product";
 import HomePageCategoryComponent from "./components/Category";
+import HomePageProductComponent from "./components/Product";
 
 const HomePage: React.FC = () => {
   const { elements } = useHomePageElementContext();
@@ -11,11 +10,6 @@ const HomePage: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      {/* <BackgroundImageCards /> */}
-      {/* <CardsWithGridLayoutAndCTA />
-      <HeadingWithCTAButton />
-      <OverlayCardsWithZoomEffect /> */}
-      {/* <BottomNav /> */}
       <section className="bg-white dark:bg-gray-900">
         <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
           {elements &&
@@ -46,7 +40,6 @@ const HomePage: React.FC = () => {
             })}
         </div>
       </section>
-      {/* <OriginalFooterOfFlowbite /> */}
     </>
   );
 };

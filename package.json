@@ -14,6 +14,7 @@
     "@types/react-dom": "^18.2.22",
     "autoprefixer": "^10.4.2",
     "axios": "^1.6.8",
+    "emoji-picker-react": "^4.12.0",
     "flowbite-react": "0.7.5",
     "my-app": "file:",
     "papaparse": "^5.4.1",
@@ -24,6 +25,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
+    "react-modal-image": "^2.6.0",
     "react-router-dom": "^6.22.3",
     "react-scripts": "^5.0.1",
     "react-sortablejs": "^6.1.4",
@@ -32,6 +34,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
+    "@types/react-modal-image": "^2.6.3",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.28.0",

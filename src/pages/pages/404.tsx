@@ -14,7 +14,7 @@ const NotFoundPage: FC = function () {
         Oops! Looks like you followed a bad link. If you think this is a problem
         with us, please tell us.
       </p>
-      <Button href="/dashboard">
+      <Button href="/">
         <div className="mr-1 flex items-center gap-x-2">
           <HiChevronLeft className="text-xl" /> Go back home
         </div>

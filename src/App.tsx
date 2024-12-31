@@ -59,6 +59,9 @@ import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
 import ProductSection from "./pages/landing/ProductSection";
 import ProductDetails from "./pages/landing/ProductDetails";
+import GoalPage from "./pages/landing/Goal";
+import ProfileSettingsPage from "./pages/landing/Settings";
+import ChatWindow from "./pages/landing/Chat";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -159,10 +162,17 @@ const App: React.FC = () => (
               <Route path="/cart" element={<CartPage />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/order-cancel" element={<OrderCancel />} />
-              <Route path="/product-section/:categoryId?" element={<ProductSection />} />
-              <Route path="/product-details/:productId?" element={<ProductDetails />} />
-
-
+              <Route path="/goal" element={<GoalPage />} />
+              <Route path="/settings" element={<ProfileSettingsPage />} />
+              <Route path="/support-chat" element={<ChatWindow />} />
+              <Route
+                path="/product-section/:categoryId?"
+                element={<ProductSection />}
+              />
+              <Route
+                path="/product-details/:productId?"
+                element={<ProductDetails />}
+              />
 
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />

@@ -9,6 +9,67 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      add_to_cart_logs: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "add_to_cart_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      add_to_carts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "add_to_cart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           active: boolean
@@ -50,6 +111,27 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       homepage_elements: {
         Row: {
           amount: number | null
@@ -79,6 +161,41 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          direction: string
+          id: string
+          media_url: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          media_url: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          media_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_folder_medias: {
         Row: {
@@ -440,6 +557,7 @@ export type Database = {
           id: string
           product_purchase_order_id: string | null
           quantity: number | null
+          remarks: string | null
           set: number | null
           size_id: string | null
           supplier_article: string | null
@@ -452,6 +570,7 @@ export type Database = {
           id?: string
           product_purchase_order_id?: string | null
           quantity?: number | null
+          remarks?: string | null
           set?: number | null
           size_id?: string | null
           supplier_article?: string | null
@@ -464,6 +583,7 @@ export type Database = {
           id?: string
           product_purchase_order_id?: string | null
           quantity?: number | null
+          remarks?: string | null
           set?: number | null
           size_id?: string | null
           supplier_article?: string | null
@@ -498,7 +618,6 @@ export type Database = {
           brand: string | null
           cancel_date: string | null
           created_at: string
-          customer_no: string | null
           delivery_address: string | null
           delivery_date: string | null
           id: string
@@ -515,7 +634,6 @@ export type Database = {
           brand?: string | null
           cancel_date?: string | null
           created_at?: string
-          customer_no?: string | null
           delivery_address?: string | null
           delivery_date?: string | null
           id?: string
@@ -532,7 +650,6 @@ export type Database = {
           brand?: string | null
           cancel_date?: string | null
           created_at?: string
-          customer_no?: string | null
           delivery_address?: string | null
           delivery_date?: string | null
           id?: string
@@ -791,28 +908,204 @@ export type Database = {
           },
         ]
       }
-      user_details: {
+      promotion_folder_medias: {
         Row: {
+          created_at: string
           id: string
-          role: string
+          media_url: string
+          promotion_folder_id: string
         }
         Insert: {
-          id: string
-          role?: string
+          created_at?: string
+          id?: string
+          media_url: string
+          promotion_folder_id: string
         }
         Update: {
+          created_at?: string
           id?: string
-          role?: string
+          media_url?: string
+          promotion_folder_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_details_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
+            foreignKeyName: "promotion_folder_medias_promotion_folder_id_fkey"
+            columns: ["promotion_folder_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_folders"
             referencedColumns: ["id"]
           },
         ]
+      }
+      promotion_folders: {
+        Row: {
+          created_at: string
+          id: string
+          image_count: number
+          name: string
+          video_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name: string
+          video_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          name?: string
+          video_count?: number
+        }
+        Relationships: []
+      }
+      promotion_product: {
+        Row: {
+          auto_apply: boolean
+          created_at: string
+          expiry: string | null
+          id: string
+          product_id: string
+          promotion_id: string
+        }
+        Insert: {
+          auto_apply?: boolean
+          created_at?: string
+          expiry?: string | null
+          id?: string
+          product_id: string
+          promotion_id: string
+        }
+        Update: {
+          auto_apply?: boolean
+          created_at?: string
+          expiry?: string | null
+          id?: string
+          product_id?: string
+          promotion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_product_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_product_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          amount: number
+          auto_apply: boolean
+          code: string
+          created_at: string
+          end_date: string | null
+          id: string
+          minimum_purchase_amount: number
+          start_date: string
+          status: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          auto_apply?: boolean
+          code: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          minimum_purchase_amount?: number
+          start_date: string
+          status?: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          auto_apply?: boolean
+          code?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          minimum_purchase_amount?: number
+          start_date?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      sales_logs: {
+        Row: {
+          city: string | null
+          created_at: string
+          id: string
+          price: number
+          product_id: string
+          state: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          price: number
+          product_id: string
+          state?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          price?: number
+          product_id?: string
+          state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_details: {
+        Row: {
+          birthdate: string | null
+          city: string | null
+          id: string
+          lifetime_val: number
+          race: string | null
+          role: string
+          state: string | null
+        }
+        Insert: {
+          birthdate?: string | null
+          city?: string | null
+          id: string
+          lifetime_val?: number
+          race?: string | null
+          role?: string
+          state?: string | null
+        }
+        Update: {
+          birthdate?: string | null
+          city?: string | null
+          id?: string
+          lifetime_val?: number
+          race?: string | null
+          role?: string
+          state?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -953,4 +1246,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
