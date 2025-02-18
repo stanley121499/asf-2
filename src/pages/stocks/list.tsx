@@ -35,6 +35,12 @@ const StockAllProductPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Overview
               </a>
+              {/* Good stock */}
+              <a
+                href="/stocks/good"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Good Stock
+              </a>
               <a
                 href="/stocks/all"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
@@ -47,11 +53,11 @@ const StockAllProductPage: React.FC = function () {
                 Reports
               </a>
               {/* Product Events */}
-              <a
+              {/* <a
                 href="/stocks/events"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Product Events
-              </a>
+              </a> */}
             </div>
           </div>
         </div>

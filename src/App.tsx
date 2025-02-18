@@ -62,6 +62,14 @@ import ProductDetails from "./pages/landing/ProductDetails";
 import GoalPage from "./pages/landing/Goal";
 import ProfileSettingsPage from "./pages/landing/Settings";
 import ChatWindow from "./pages/landing/Chat";
+import UserAnalyticsPage from "./pages/analytics/users";
+import ProductAnalyticsPage from "./pages/analytics/products";
+import CategoriesAnalyticsPage from "./pages/analytics/categories";
+import CategoriesInnerAnalyticsPage from "./pages/analytics/categories-inner";
+import ProductInnerAnalyticsPage from "./pages/analytics/products-inner";
+import { ConversationProvider } from "./context/ConversationContext";
+import SupportPage from "./pages/support";
+import GoodStockPage from "./pages/stocks/good-stocks";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -87,6 +95,7 @@ const App: React.FC = () => (
         ProductStockLogProvider,
         ProductStockProvider,
         HomePageElementProvider,
+        ConversationProvider,
       ]}>
       <AlertComponent />
       <BrowserRouter>
@@ -124,6 +133,7 @@ const App: React.FC = () => (
                   path="/products/stock/:productId"
                   element={<ProductStockDetails />}
                 />
+                <Route path="/stocks/good" element={<GoodStockPage />} />
 
                 {/* Stock */}
                 <Route
@@ -156,6 +166,31 @@ const App: React.FC = () => (
                 <Route
                   path="/home-page-builder"
                   element={<HomePageBuilder />}
+                />
+
+                {/* Support */} 
+                <Route path="/support" element={<SupportPage />} />
+
+                {/* Analytics */}
+                <Route
+                  path="/analytics/users"
+                  element={<UserAnalyticsPage />}
+                />
+                <Route
+                  path="/analytics/products"
+                  element={<ProductAnalyticsPage />}
+                />
+                <Route
+                  path="/analytics/products-inner/:productId"
+                  element={<ProductInnerAnalyticsPage />}
+                />
+                <Route
+                  path="/analytics/categories"
+                  element={<CategoriesAnalyticsPage />}
+                />
+                <Route
+                  path="/analytics/categories-inner/:categoryId"
+                  element={<CategoriesInnerAnalyticsPage />}
                 />
               </Route>
 

@@ -10,7 +10,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { useNavigate } from "react-router-dom";
 
-const StockOverviewPage: React.FC = function () {
+const GoodStockPage: React.FC = function () {
   const { products, loading } = useProductContext();
   const { productEvents } = useProductEventContext();
   const { productMedias } = useProductMediaContext();
@@ -27,7 +27,7 @@ const StockOverviewPage: React.FC = function () {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-x-3">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-                Stock Overview
+                Good Stock
               </h1>
               <a
                 href="/stocks/overview"
@@ -68,11 +68,11 @@ const StockOverviewPage: React.FC = function () {
             <div className="col-span-2">
               <div className="overflow-auto scrollbar-hide">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
-                  Stock Running Low
+                  Fast Moving Stock
                 </h1>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
                   {productEvents
-                    .filter((productEvent) => productEvent.type === "Low")
+                    .filter((productEvent) => productEvent.type === "Fast")
                     .flatMap((productEvent) =>
                       Array(10)
                         .fill(null)
@@ -146,12 +146,12 @@ const StockOverviewPage: React.FC = function () {
             <div className="col-span-2">
               <div className="overflow-auto scrollbar-hide">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
-                  Stock Hold For Too Long
+                  Normal Stock
                 </h1>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
                   {productEvents
                     .filter(
-                      (productEvent) => productEvent.type === "Keep Stock"
+                      (productEvent) => productEvent.type === "Normal"
                     )
                     .flatMap((productEvent) =>
                       Array(10)
@@ -211,4 +211,4 @@ const StockOverviewPage: React.FC = function () {
   );
 };
 
-export default StockOverviewPage;
+export default GoodStockPage;

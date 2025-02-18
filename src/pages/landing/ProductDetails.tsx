@@ -1,4 +1,5 @@
 import React from "react";
+import { useParams } from "react-router-dom";
 import NavbarHome from "../../components/navbar-home";
 import CheckoutButton from "../../components/stripe/CheckoutButton";
 import {
@@ -9,12 +10,13 @@ import {
   ProductMedia,
   useProductMediaContext,
 } from "../../context/product/ProductMediaContext";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
+  const navigate = useNavigate();
   const product: Product | undefined = products.find(
     (prod) => prod.id === productId
   );
@@ -23,6 +25,7 @@ const ProductDetails: React.FC = () => {
   const productMedia: ProductMedia[] = productMedias.filter(
     (media) => media.product_id === product?.id
   );
+
   if (!product || !productMedia)
     return (
       <div className="animate-pulse space-y-4">
@@ -34,7 +37,20 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
     );
+    
+  const tempAddToCart = () => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.push({
+      ...product,
+      quantity: 1,
+      media_url: productMedia[0].media_url,
+      price: product.price * 100,
+    });
 
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    navigate("/cart");
+  };
   return (
     <>
       <NavbarHome />
@@ -72,14 +88,11 @@ const ProductDetails: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="mt-6 sm:gap-4 sm:items-center sm:flex sm:mt-8">
-                {/* <a
-                  href="#"
-                  title="Add to favorites"
-                  className="flex items-center justify-center py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                  role="button">
+                <button
+                  className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0"
+                  onClick={tempAddToCart}>
                   Add to Cart
-                </a> */}
-
+                </button>
                 <CheckoutButton
                   items={[
                     {

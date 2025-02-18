@@ -10,6 +10,8 @@ import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
 import { FaBoxes } from "react-icons/fa";
 import { CiMobile3 } from "react-icons/ci";
+import { GrAnalytics } from "react-icons/gr";
+import { MdOutlineSupportAgent } from "react-icons/md";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
@@ -104,6 +106,30 @@ const ExampleSidebar: React.FC = function () {
                   : ""
               }>
               Home Page Builder
+            </Sidebar.Item>
+
+            {/* Support */}
+            <Sidebar.Item
+              icon={MdOutlineSupportAgent}
+              href="/support"
+              className={
+                "/support" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Support
+            </Sidebar.Item>
+
+            {/* Analytics */}
+            <Sidebar.Item
+              icon={GrAnalytics}
+              href="/analytics/users"
+              className={
+                "/analytics/users" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Analytics
             </Sidebar.Item>
 
             {/* <Sidebar.Collapse

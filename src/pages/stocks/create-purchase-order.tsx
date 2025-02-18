@@ -136,19 +136,6 @@ const CreatePurchaseOrderPage: React.FC = function () {
                 style={{ maxHeight: "calc(100vh - 4rem)" }}>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="col-span-1">
-                    {/* Customer No */}
-                    <div>
-                      <Label className="mt-4">Customer No</Label>
-                      <TextInput
-                        value={formData.customer_no || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            customer_no: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
 
                     {/* Brand */}
                     <div>

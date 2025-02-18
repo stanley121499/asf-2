@@ -3,25 +3,19 @@ import { Button, Label, TextInput } from "flowbite-react";
 import React from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import { useProductContext } from "../../context/product/ProductContext";
-import { useProductMediaContext } from "../../context/product/ProductMediaContext";
 import { IoIosSearch } from "react-icons/io";
 import { useProductPurchaseOrderContext } from "../../context/product/ProductPurchaseOrderContext";
 import { useProductReportContext } from "../../context/product/ProductReportContext";
 import { useProductEventContext } from "../../context/product/ProductEventContext";
-import { useNavigate } from "react-router-dom";
 
 const StockReportPage: React.FC = function () {
-  const { products, loading } = useProductContext();
-  const { productMedias } = useProductMediaContext();
   const [searchPurchaseOrder, setSearchPurchaseOrder] = React.useState("");
   const [searchReport, setSearchReport] = React.useState("");
   const { product_purchase_orders } = useProductPurchaseOrderContext();
   const { product_reports } = useProductReportContext();
   const { productEvents } = useProductEventContext();
-  const navigate = useNavigate();
 
-  if (loading || !productEvents || productEvents.length === 0) {
+  if (!productEvents || productEvents.length === 0) {
     return <LoadingPage />;
   }
 
@@ -32,12 +26,18 @@ const StockReportPage: React.FC = function () {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-x-3">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-                Stock Overview
+                 Reports & Purchase Orders
               </h1>
               <a
                 href="/stocks/overview"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Overview
+              </a>
+              {/* Good stock */}
+              <a
+                href="/stocks/good"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Good Stock
               </a>
               <a
                 href="/stocks/all"
@@ -51,100 +51,16 @@ const StockReportPage: React.FC = function () {
                 Reports
               </a>
               {/* Product Events */}
-              <a
+              {/* <a
                 href="/stocks/events"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Product Events
-              </a>
+              </a> */}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col p-4 ">
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle grid grid-cols-4 gap-4">
-            <div className="col-span-4">
-              <div className="overflow-auto scrollbar-hide">
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
-                  Stock Selling Fast
-                </h1>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-137px)] overflow-y-auto hide-scrollbar">
-                  {productEvents
-                    .filter((productEvent) => productEvent.type === "Fast")
-                    .flatMap((productEvent) =>
-                      Array(10)
-                        .fill(null)
-                        .map((_, index) => (
-                          <div
-                            key={`${productEvent.id}-${index}`}
-                            style={{ height: `calc((100vh - 167px) / 8)` }}
-                            onClick={() => {
-                              // Navigate to ProductStockDetails page
-                              navigate(`/products/stock/${productEvent.product.id}`);
-                            }}
-                            className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                            <div className="flex items-center gap-4">
-                              <img
-                                src={
-                                  productMedias.find(
-                                    (media) =>
-                                      media.product_id ===
-                                      productEvent.product.id
-                                  )?.media_url
-                                }
-                                alt={productEvent.product.name}
-                                className="w-16 h-16 object-cover rounded-md"
-                              />
-                              <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                {productEvent.product.name}
-                              </h2>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              {!productEvent.purchase_order_id &&
-                              !productEvent.report_id ? (
-                                <>
-                                  <Button
-                                    color="info"
-                                    className="w-40"
-                                    href={`/stocks/purchase-orders/create/${productEvent.product.id}/${productEvent.id}`}>
-                                    Create PO
-                                  </Button>
-                                  <Button
-                                    className="w-40"
-                                    color="red"
-                                    href={`/stocks/report/create/${productEvent.product.id}/${productEvent.id}`}>
-                                    Create Report
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  {productEvent.purchase_order_id && (
-                                    <Button
-                                      color="success"
-                                      href={`/stocks/purchase-orders/${productEvent.purchase_order_id}`}>
-                                      View PO
-                                    </Button>
-                                  )}
-                                  {productEvent.report_id && (
-                                    <Button
-                                      color="success"
-                                      href={`/stocks/report/${productEvent.report_id}`}>
-                                      View Report
-                                    </Button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                    )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       <div className="flex flex-col p-4 ">
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full align-middle grid grid-cols-4 gap-4">
@@ -170,7 +86,7 @@ const StockReportPage: React.FC = function () {
                     />
                   </div>
                 </form>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-137px)] overflow-y-auto hide-scrollbar">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
                   {product_reports
                     .filter((report) => {
                       // Only Get those that are with the product Event where the type is "Fast"
@@ -236,7 +152,7 @@ const StockReportPage: React.FC = function () {
                     />
                   </div>
                 </form>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-137px)] overflow-y-auto hide-scrollbar">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
                   {product_purchase_orders
                     .filter((purchase_order) => {
                       // Only Get those that are with the product Event where the type is "Fast"

@@ -82,13 +82,6 @@ const ViewPurchaseOrderPage: React.FC = function () {
                 style={{ maxHeight: "calc(100vh - 4rem)" }}>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="col-span-1">
-                    {/* Customer No */}
-                    <div>
-                      <p className="text-md text-gray-600 dark:text-gray-400">
-                        <strong>Customer No</strong> {purchaseOrder.customer_no}
-                      </p>
-                    </div>
-
                     {/* Brand */}
                     <div>
                       <p className="text-md text-gray-600 dark:text-gray-400">

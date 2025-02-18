@@ -1,20 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CheckoutButton from "../../components/stripe/CheckoutButton";
 import NavbarHome from "../../components/navbar-home";
+import { useAuthContext } from "../../context/AuthContext";
+import LoadingPage from "../pages/loading";
 
 interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  media_url: string;
+  id: string;
 }
 
 const CartPage: React.FC = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    { name: "Product 1", price: 1000, quantity: 1 },
-    { name: "Product 2", price: 1500, quantity: 2 },
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(
+    JSON.parse(localStorage.getItem("cart") || "[]")
+  );
+  const { user } = useAuthContext();
 
-  const customerId = "customer-id-placeholder"; // Replace with actual customer ID
 
   const handleIncrement = (index: number) => {
     setCartItems((prevCartItems) =>
@@ -22,6 +25,11 @@ const CartPage: React.FC = () => {
         i === index ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
+    // Temp: use localStorage to store cart items
+    const updatedCart = cartItems.map((item, i) =>
+      i === index ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
   const handleDecrement = (index: number) => {
@@ -32,18 +40,32 @@ const CartPage: React.FC = () => {
           : item
       )
     );
+    // Temp: use localStorage to store cart items
+    const updatedCart = cartItems.map((item, i) =>
+      i === index && item.quantity > 1
+        ? { ...item, quantity: item.quantity - 1 }
+        : item
+    );
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
   const handleRemove = (index: number) => {
     setCartItems((prevCartItems) =>
       prevCartItems.filter((_, i) => i !== index)
     );
+    // Temp: use localStorage to store cart items
+    const updatedCart = cartItems.filter((_, i) => i !== index);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  if ( !user ) {
+    return <LoadingPage />;
+  }
 
   return (
     <>
@@ -63,14 +85,13 @@ const CartPage: React.FC = () => {
                     <tr key={index}>
                       <td className="w-96 min-w-56 whitespace-nowrap py-4">
                         <a
-                          href="#"
+                          href={`/product-details/${item.id}`}
                           className="flex items-center gap-4 font-medium hover:underline">
-                          <div className="aspect-square h-10 w-10 shrink-0 bg-gray-200 rounded-md flex items-center justify-center">
-                            {/* Replace with your product image if available */}
-                            <span className="text-sm font-semibold text-gray-700 dark:text-white">
-                              IMG
-                            </span>
-                          </div>
+                          <img
+                            src={item.media_url}
+                            alt="product"
+                            className="w-16 h-16 rounded-lg"
+                          />
                           {item.name}
                         </a>
                       </td>
@@ -125,7 +146,7 @@ const CartPage: React.FC = () => {
                       </td>
 
                       <td className="p-4 text-end text-base font-bold text-gray-900 dark:text-white">
-                        ${(item.price / 100) * item.quantity}
+                        ${(item.price /100) * item.quantity}
                       </td>
 
                       <td className="py-4">
@@ -169,7 +190,7 @@ const CartPage: React.FC = () => {
                     Total
                   </dt>
                   <dd className="text-base font-bold text-gray-900 dark:text-white">
-                    ${(totalPrice / 100).toFixed(2)}
+                    ${(totalPrice /100).toFixed(2)}
                   </dd>
                 </dl>
               </div>
@@ -180,7 +201,7 @@ const CartPage: React.FC = () => {
                 Continue Shopping
               </button>
               <div className="mt-4 flex w-full items-center justify-center sm:mt-0">
-                <CheckoutButton items={cartItems} customerId={customerId} />
+                <CheckoutButton items={cartItems} customerId={user.id} />
               </div>
             </div>
           </div>

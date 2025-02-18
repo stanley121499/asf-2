@@ -4,6 +4,7 @@ import React from "react";
 // import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import { SidebarProvider, useSidebarContext } from "../context/SidebarContext";
+import { Navbar } from "flowbite-react";
 
 interface NavbarSidebarLayoutProps {
   isFooter?: boolean;

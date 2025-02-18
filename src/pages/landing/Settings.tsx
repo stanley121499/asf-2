@@ -31,6 +31,16 @@ const ProfileSettingsPage: React.FC = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               john.doe@example.com
             </p>
+
+            {/* Points */}
+            <div className="flex items-center mt-4 space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Points:
+              </span>
+              <span className="text-sm text-gray-800 dark:text-white font-semibold">
+                1000
+              </span>
+            </div>
           </div>
 
           {/* Settings Options */}
@@ -43,11 +53,11 @@ const ProfileSettingsPage: React.FC = () => {
             </Link>
 
             {/* Change Profile Information */}
-            <Link to="/profile-info">
+            {/* <Link to="/profile-info">
               <Button size="lg" fullSized color="gray">
                 Change Profile Information
               </Button>
-            </Link>
+            </Link> */}
 
             {/* Chat with Support */}
             <Link to="/support-chat">
@@ -57,12 +67,7 @@ const ProfileSettingsPage: React.FC = () => {
             </Link>
 
             {/* Logout */}
-            <Button
-              size="lg"
-              fullSized
-              color="red"
-              onClick={handleLogout}
-            >
+            <Button size="lg" fullSized color="red" onClick={handleLogout}>
               Logout
             </Button>
           </div>
