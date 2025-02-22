@@ -13,7 +13,7 @@ import { HiPlus } from "react-icons/hi";
 import ProductComponent from "../../components/product/product";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 
-const ProductListPage: React.FC = function () {
+const PromotionListPage: React.FC = function () {
   const { products, loading } = useProductContext();
   const [searchValue, setSearchValue] = React.useState("");
   const [productData, setProductData] = React.useState<Product | null>(null);
@@ -37,11 +37,7 @@ const ProductListPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 All Products
               </a>
-              <a
-                href="/products/categories"
-                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
-                Category
-              </a>
+      
               {/* Schedule */}
               <a
                 href="/products/schedule"
@@ -255,4 +251,4 @@ const getBadgeColor = (status: string) => {
   }
 };
 
-export default ProductListPage;
+export default PromotionListPage;

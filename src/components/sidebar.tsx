@@ -12,6 +12,8 @@ import { FaBoxes } from "react-icons/fa";
 import { CiMobile3 } from "react-icons/ci";
 import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
+import { DarkThemeToggle } from "flowbite-react";
+import { MdOutlineLocalOffer } from "react-icons/md";
 
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens } =
@@ -96,6 +98,18 @@ const ExampleSidebar: React.FC = function () {
               Stocks
             </Sidebar.Item>
 
+            {/* Promotion */}
+            {/* <Sidebar.Item
+              icon={MdOutlineLocalOffer}
+              href="/promotions/list"
+              className={
+                "/promotions/list" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Promotions
+            </Sidebar.Item> */}
+
             {/* Home Page Builder */}
             <Sidebar.Item
               icon={CiMobile3}
@@ -113,9 +127,7 @@ const ExampleSidebar: React.FC = function () {
               icon={MdOutlineSupportAgent}
               href="/support"
               className={
-                "/support" === currentPage
-                  ? "bg-gray-100 dark:bg-gray-700"
-                  : ""
+                "/support" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
               }>
               Support
             </Sidebar.Item>
@@ -132,6 +144,7 @@ const ExampleSidebar: React.FC = function () {
               Analytics
             </Sidebar.Item>
 
+            <DarkThemeToggle />
             {/* <Sidebar.Collapse
                   icon={BsFillFilePostFill}
                   label="Posts"

@@ -1,10 +1,18 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../../database.types";
 import { useAlertContext } from "../AlertContext";
 import { PostMedia } from "./PostMediaContext";
 
-export type Post = Database["public"]["Tables"]["posts"]["Row"] & { medias: PostMedia[] };
+export type Post = Database["public"]["Tables"]["posts"]["Row"] & {
+  medias: PostMedia[];
+};
 export type Posts = { posts: Post[] };
 export type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
 export type PostUpdate = Database["public"]["Tables"]["posts"]["Update"];
@@ -28,9 +36,7 @@ export function PostProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     const fetchPosts = async () => {
-      const { data: posts, error } = await supabase
-        .from("posts")
-        .select("*");
+      const { data: posts, error } = await supabase.from("posts").select("*");
 
       if (error) {
         showAlert(error.message, "error");
@@ -60,9 +66,13 @@ export function PostProvider({ children }: PropsWithChildren) {
 
     const subscription = supabase
       .channel("posts")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, payload => {
-        handleChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        (payload) => {
+          handleChanges(payload);
+        }
+      )
       .subscribe();
 
     setLoading(false);
@@ -72,16 +82,11 @@ export function PostProvider({ children }: PropsWithChildren) {
     };
   }, [showAlert]);
 
-
-
   const createPost = async (post: PostInsert) => {
-    const { data, error } = await supabase
-      .from("posts")
-      .insert(post)
-      .select();
+    const { data, error } = await supabase.from("posts").insert(post).select();
 
     if (error) {
-      showAlert(error.message, "error")
+      showAlert(error.message, "error");
     }
 
     return data?.[0];
@@ -95,19 +100,23 @@ export function PostProvider({ children }: PropsWithChildren) {
       .single();
 
     if (error) {
+      console.log(error);
       showAlert(error.message, "error");
     }
   };
 
   const deletePost = async (postId: string) => {
-    await supabase
-      .from("posts")
-      .delete()
-      .eq("id", postId);
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+    if (error) {
+      console.log(error);
+      showAlert(error.message, "error");
+    }
   };
 
   return (
-    <PostContext.Provider value={{ posts, createPost, updatePost, deletePost, loading }}>
+    <PostContext.Provider
+      value={{ posts, createPost, updatePost, deletePost, loading }}>
       {children}
     </PostContext.Provider>
   );

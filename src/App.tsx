@@ -70,6 +70,7 @@ import ProductInnerAnalyticsPage from "./pages/analytics/products-inner";
 import { ConversationProvider } from "./context/ConversationContext";
 import SupportPage from "./pages/support";
 import GoodStockPage from "./pages/stocks/good-stocks";
+import PromotionListPage from "./pages/promotions/list";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -133,9 +134,14 @@ const App: React.FC = () => (
                   path="/products/stock/:productId"
                   element={<ProductStockDetails />}
                 />
-                <Route path="/stocks/good" element={<GoodStockPage />} />
+
+                {/* Promotion */}
+                <Route path="/promotions/list" element={<PromotionListPage />} />
 
                 {/* Stock */}
+
+                <Route path="/stocks/good" element={<GoodStockPage />} />
+
                 <Route
                   path="/stocks/overview"
                   element={<StockOverviewPage />}

@@ -47,7 +47,7 @@ const SchedulePostListPage: React.FC = function () {
   const handleUpdatePost = async (post: PostUpdate) => {
     // Add time to post
     if (postTime) {
-      post.time_post = `${post.time_post}T${postTime}`;
+      post.time_post = `${dateInput?.toISOString().split("T")[0]}T${postTime}`;
     }
 
     await updatePost(post);
@@ -74,7 +74,7 @@ const SchedulePostListPage: React.FC = function () {
                 href="/posts/schedule"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Schedule
-              </a>w
+              </a>
             </div>
             <Button href="/posts/create" className="btn btn-primary">
               <HiPlus className="text-xl" />
@@ -224,6 +224,9 @@ const SchedulePostListPage: React.FC = function () {
                           .toLowerCase()
                           .includes(searchValue.toLowerCase())
                       )
+                      .sort((a, b) =>
+                        (a.time_post ?? "") < (b.time_post ?? "") ? 1 : -1
+                      )
                       .flatMap((post) =>
                         Array(10)
                           .fill(null)
@@ -246,12 +249,12 @@ const SchedulePostListPage: React.FC = function () {
                                   className="w-[20vw]"
                                   style={{ maxWidth: "50%" }}>
                                   <div className="flex items-center gap-x-5">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2">
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2 truncate">
                                       {post.name}
                                     </h2>
                                   </div>
                                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {post.caption}
+                                    {formatDate(post.time_post)}
                                   </p>
                                 </div>
                                 {getBadge(post)}
@@ -351,3 +354,18 @@ const getBadge = (post: Post) => {
 };
 
 export default SchedulePostListPage;
+
+const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return "Not scheduled";
+
+  const dateObj = date instanceof Date ? date : new Date(date);
+
+  return dateObj.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true, // Ensures 24-hour format
+  });
+};

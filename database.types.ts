@@ -274,7 +274,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "post_images_post_id_fkey"
+            foreignKeyName: "post_medias_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
@@ -628,6 +628,7 @@ export type Database = {
           purchase_order_no: string | null
           salesman_no: string | null
           shipping_date: string | null
+          status: string
           terms: number | null
         }
         Insert: {
@@ -644,6 +645,7 @@ export type Database = {
           purchase_order_no?: string | null
           salesman_no?: string | null
           shipping_date?: string | null
+          status?: string
           terms?: number | null
         }
         Update: {
@@ -660,6 +662,7 @@ export type Database = {
           purchase_order_no?: string | null
           salesman_no?: string | null
           shipping_date?: string | null
+          status?: string
           terms?: number | null
         }
         Relationships: [
@@ -691,6 +694,7 @@ export type Database = {
           product_event: string
           product_id: string
           reason: string | null
+          status: string
         }
         Insert: {
           company?: string | null
@@ -703,6 +707,7 @@ export type Database = {
           product_event: string
           product_id: string
           reason?: string | null
+          status?: string
         }
         Update: {
           company?: string | null
@@ -715,6 +720,7 @@ export type Database = {
           product_event?: string
           product_id?: string
           reason?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -1140,7 +1146,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           id: string
-          customer_no: string
           brand: string
           order_no: string
           salesman_no: string

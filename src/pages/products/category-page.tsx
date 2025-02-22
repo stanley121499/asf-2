@@ -78,7 +78,12 @@ const CategoryListPage: React.FC = function () {
       category.media_url = media_url;
     }
 
-    await updateCategory(category);
+    // Remove children property before updating
+    const tempCategory = { ...category } as CategoryUpdate & { children?: any };
+
+    delete tempCategory.children;
+
+    await updateCategory(tempCategory);
     setSelectedCategory(null);
     setFile(null);
     showAlert("Category updated successfully", "success");
@@ -91,7 +96,6 @@ const CategoryListPage: React.FC = function () {
     // Use Resulting Categories to find the category and its parent and its children
     // note: resultingCategories is a hierarchy of categories with multiple levels
     const { category, parent } = findCategory(categoryId, resultingCategories)!;
-    const children = category.children || [];
 
     // Up and down changes the arrangement of the category (by changing category.arrangement)
     if (direction === "up" || direction === "down") {
@@ -211,7 +215,7 @@ const CategoryListPage: React.FC = function () {
           width: `calc(100% - ${level * 20}px)`,
         }} // Indent based on hierarchy level
       >
-        <div className="flex items-center gap-4">
+        <div className="flex space-between items-center gap-4">
           <img
             src={category.media_url}
             alt={category.name}
@@ -222,22 +226,7 @@ const CategoryListPage: React.FC = function () {
           </h2>
         </div>
         <div className="flex items-center gap-4">
-          <Button
-            className="w-20"
-            color={"info"}
-            onClick={() => setSelectedCategory(category)}>
-            Edit
-          </Button>
-          <Button
-            className="w-20"
-            color={"red"}
-            onClick={() => {
-              deleteCategory(category.id);
-              showAlert("Category deleted successfully", "success");
-            }}>
-            Delete
-          </Button>
-          <Button
+        <Button
             className="w-20"
             color={"warning"}
             onClick={() => handleChangeArrangement(category.id, "up")}>
@@ -261,6 +250,24 @@ const CategoryListPage: React.FC = function () {
             onClick={() => handleChangeArrangement(category.id, "right")}>
             Right
           </Button>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button
+            className="w-20"
+            color={"info"}
+            onClick={() => setSelectedCategory(category)}>
+            Edit
+          </Button>
+          <Button
+            className="w-20"
+            color={"red"}
+            onClick={() => {
+              deleteCategory(category.id);
+              showAlert("Category deleted successfully", "success");
+            }}>
+            Delete
+          </Button>
+          
         </div>
       </div>
 

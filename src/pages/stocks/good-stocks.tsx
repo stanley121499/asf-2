@@ -70,7 +70,7 @@ const GoodStockPage: React.FC = function () {
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
                   Fast Moving Stock
                 </h1>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-83px)] overflow-y-auto hide-scrollbar">
                   {productEvents
                     .filter((productEvent) => productEvent.type === "Fast")
                     .flatMap((productEvent) =>
@@ -148,7 +148,7 @@ const GoodStockPage: React.FC = function () {
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-lg mb-2">
                   Normal Stock
                 </h1>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-83px)] overflow-y-auto hide-scrollbar">
                   {productEvents
                     .filter(
                       (productEvent) => productEvent.type === "Normal"

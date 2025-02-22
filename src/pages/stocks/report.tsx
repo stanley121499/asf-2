@@ -19,6 +19,8 @@ const StockReportPage: React.FC = function () {
     return <LoadingPage />;
   }
 
+  console.log("product_reports", product_reports);
+  console.log("product_purchase_orders", product_purchase_orders);
   return (
     <NavbarSidebarLayout>
       <div className="block items-center justify-between border-b border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:flex">
@@ -26,18 +28,12 @@ const StockReportPage: React.FC = function () {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-x-3">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-                 Reports & Purchase Orders
+                Reports & Purchase Orders
               </h1>
               <a
                 href="/stocks/overview"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Overview
-              </a>
-              {/* Good stock */}
-              <a
-                href="/stocks/good"
-                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
-                Good Stock
               </a>
               <a
                 href="/stocks/all"
@@ -77,7 +73,7 @@ const StockReportPage: React.FC = function () {
                     <TextInput
                       id="posts-search"
                       name="posts-search"
-                      placeholder="Search for Posts"
+                      placeholder="Search for Reports"
                       className="w-full mb-4"
                       style={{ background: "transparent" }}
                       value={searchReport}
@@ -88,14 +84,6 @@ const StockReportPage: React.FC = function () {
                 </form>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
                   {product_reports
-                    .filter((report) => {
-                      // Only Get those that are with the product Event where the type is "Fast"
-                      const productEvent = productEvents.find(
-                        (event) => event.report_id === report.id
-                      );
-
-                      return productEvent?.type === "Fast";
-                    })
                     .flatMap((report) =>
                       Array(10)
                         .fill(null)
@@ -107,7 +95,7 @@ const StockReportPage: React.FC = function () {
                             <div className="flex items-center gap-4">
                               <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                  {report.id}
+                                  {report.company}
                                 </h2>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
                                   {new Date(
@@ -123,6 +111,24 @@ const StockReportPage: React.FC = function () {
                                 href={`/stocks/report/${report.id}`}>
                                 View
                               </Button>
+
+                              {report.status === "PENDING" && (
+                                <Button
+                                  color={"green"}
+                                  className="w-40"
+                                  href={`/stocks/report/${report.id}/edit`}>
+                                  Approve
+                                </Button>
+                              )}
+
+                              {report.status === "PENDING" && (
+                                <Button
+                                  color={"red"}
+                                  className="w-40"
+                                  href={`/stocks/report/${report.id}/edit`}>
+                                  Reject
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))
@@ -189,6 +195,24 @@ const StockReportPage: React.FC = function () {
                                 href={`/stocks/purchase-orders/${purchase_order.id}`}>
                                 View
                               </Button>
+
+                              {purchase_order.status === "PENDING" && (
+                                <Button
+                                  color={"green"}
+                                  className="w-40"
+                                  href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
+                                  Approve
+                                </Button>
+                              )}
+
+                              {purchase_order.status === "PENDING" && (
+                                <Button
+                                  color={"red"}
+                                  className="w-40"
+                                  href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
+                                  Reject
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))

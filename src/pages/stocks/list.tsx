@@ -35,12 +35,6 @@ const StockAllProductPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Overview
               </a>
-              {/* Good stock */}
-              <a
-                href="/stocks/good"
-                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
-                Good Stock
-              </a>
               <a
                 href="/stocks/all"
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">

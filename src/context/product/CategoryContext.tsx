@@ -79,6 +79,8 @@ export function CategoryProvider({ children }: PropsWithChildren) {
   };
 
   const updateCategory = async (category: CategoryUpdate) => {
+
+    
     const { error } = await supabase.from("categories").update(category).eq("id", category.id);
     if (error) { showAlert(error.message, "error"); console.log(error.message); return; }
   };

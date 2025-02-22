@@ -8,6 +8,7 @@ import { usePostMediaContext } from "../../context/post/PostMediaContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import PostComponent from "../../components/post/post";
+import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 
 const PostListPage: React.FC = function () {
   const { posts, loading } = usePostContext();
@@ -133,6 +134,7 @@ const PostsTable: React.FC<PostsTableProps> = function ({
 }) {
   const { postMedias } = usePostMediaContext();
   const { deletePost } = usePostContext();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
 
   return (
     <div>
@@ -147,6 +149,17 @@ const PostsTable: React.FC<PostsTableProps> = function ({
                   style={{ height: `calc((100vh - 167px) / 8)` }}
                   onClick={() => setPostData && setPostData(post)}
                   className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  {/* Delete Confirmation Modal */}
+                  <ConfirmDeleteModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={() => {
+                      deletePost(post.id);
+                      setIsDeleteModalOpen(false);
+                    }}
+                  />
+
+                  {/* Post Content */}
                   <div className="flex items-center gap-4">
                     <img
                       src={
@@ -160,7 +173,12 @@ const PostsTable: React.FC<PostsTableProps> = function ({
                       {post.name}
                     </h2>
                   </div>
-                  <div className="flex items-center gap-4">
+
+                  {/* Action Buttons - Wrapped in a separate div to stop propagation */}
+                  <div
+                    className="flex items-center gap-4"
+                    onClick={(e: any) => e.stopPropagation()} // ✅ Stops clicks inside this div from bubbling
+                  >
                     <Button
                       className="w-40"
                       color={"info"}
@@ -170,7 +188,7 @@ const PostsTable: React.FC<PostsTableProps> = function ({
                     <Button
                       className="w-40"
                       color={"red"}
-                      onClick={() => deletePost(post.id)}>
+                      onClick={() => setIsDeleteModalOpen(true)}>
                       Delete
                     </Button>
                   </div>

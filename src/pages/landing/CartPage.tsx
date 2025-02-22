@@ -17,7 +17,7 @@ const CartPage: React.FC = () => {
     JSON.parse(localStorage.getItem("cart") || "[]")
   );
   const { user } = useAuthContext();
-
+  const [promoCodeInput, setPromoCodeInput] = useState("");
 
   const handleIncrement = (index: number) => {
     setCartItems((prevCartItems) =>
@@ -63,7 +63,7 @@ const CartPage: React.FC = () => {
     0
   );
 
-  if ( !user ) {
+  if (!user) {
     return <LoadingPage />;
   }
 
@@ -146,7 +146,7 @@ const CartPage: React.FC = () => {
                       </td>
 
                       <td className="p-4 text-end text-base font-bold text-gray-900 dark:text-white">
-                        ${(item.price /100) * item.quantity}
+                        ${(item.price / 100) * item.quantity}
                       </td>
 
                       <td className="py-4">
@@ -190,9 +190,35 @@ const CartPage: React.FC = () => {
                     Total
                   </dt>
                   <dd className="text-base font-bold text-gray-900 dark:text-white">
-                    ${(totalPrice /100).toFixed(2)}
+                    ${(totalPrice / 100).toFixed(2)}
                   </dd>
                 </dl>
+              </div>
+            </div>
+
+            {/* Promotion code area */}
+
+            <div className="mt-6">
+              <label
+                htmlFor="promo_code"
+                className="block text-sm font-medium text-gray-900 dark:text-white">
+                Promotion code
+              </label>
+              <div className="mt-1.5 relative rounded-md shadow-sm">
+                <input
+                  type="text"
+                  name="promo_code"
+                  id="promo_code"
+                  value={promoCodeInput}
+                  onChange={(e) => setPromoCodeInput(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 px-3 py-2 text-sm font-medium text-gray-900 dark:text-white"
+                  onClick={() => setPromoCodeInput("")}>
+                  Apply
+                </button>
               </div>
             </div>
 
