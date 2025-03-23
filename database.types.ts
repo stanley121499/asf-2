@@ -170,6 +170,7 @@ export type Database = {
           direction: string
           id: string
           media_url: string
+          sender: string | null
         }
         Insert: {
           content: string
@@ -178,6 +179,7 @@ export type Database = {
           direction: string
           id?: string
           media_url: string
+          sender?: string | null
         }
         Update: {
           content?: string
@@ -186,6 +188,7 @@ export type Database = {
           direction?: string
           id?: string
           media_url?: string
+          sender?: string | null
         }
         Relationships: [
           {
@@ -1158,6 +1161,7 @@ export type Database = {
           cancel_date: string
           created_at: string
           product_id: string
+          status: string
           items: Json
         }[]
       }

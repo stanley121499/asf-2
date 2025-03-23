@@ -109,19 +109,7 @@ const ExampleSidebar: React.FC = function () {
               }>
               Promotions
             </Sidebar.Item> */}
-
-            {/* Home Page Builder */}
-            <Sidebar.Item
-              icon={CiMobile3}
-              href="/home-page-builder"
-              className={
-                "/home-page-builder" === currentPage
-                  ? "bg-gray-100 dark:bg-gray-700"
-                  : ""
-              }>
-              Home Page Builder
-            </Sidebar.Item>
-
+      
             {/* Support */}
             <Sidebar.Item
               icon={MdOutlineSupportAgent}

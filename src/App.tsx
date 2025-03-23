@@ -62,6 +62,7 @@ import ProductDetails from "./pages/landing/ProductDetails";
 import GoalPage from "./pages/landing/Goal";
 import ProfileSettingsPage from "./pages/landing/Settings";
 import ChatWindow from "./pages/landing/Chat";
+import CheckoutPage from "./pages/landing/Checkout";
 import UserAnalyticsPage from "./pages/analytics/users";
 import ProductAnalyticsPage from "./pages/analytics/products";
 import CategoriesAnalyticsPage from "./pages/analytics/categories";
@@ -201,6 +202,7 @@ const App: React.FC = () => (
               </Route>
 
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/order-cancel" element={<OrderCancel />} />
               <Route path="/goal" element={<GoalPage />} />

@@ -11,6 +11,7 @@ import { IoIosSearch } from "react-icons/io";
 import { useAlertContext } from "../../context/AlertContext";
 import { supabase } from "../../utils/supabaseClient";
 import AddCategoryModal from "./create-category-modal";
+import CategoryPreviewSidebar from "../../components/product/CategoryPreviewSidebar";
 
 const CategoryListPage: React.FC = function () {
   const { categories, loading, updateCategory, deleteCategory } =
@@ -435,93 +436,15 @@ const CategoryListPage: React.FC = function () {
             )}
 
             {/* Preview */}
-            <div className="col-span-1 border-l border-gray-200 dark:border-gray-500 p-2 h-[calc(100vh-7rem)] flex items-center justify-center">
-              {/* Create a div with contrasting white background and rounded corners */}
-              <div className="rounded-lg bg-white p-4 h-[calc(100vh-9rem)] w-full overflow-y-auto">
-                {/* Create a row where the name of the category sits on top with the media as the background with slight dark overlay */}
-                {resultingCategories.map((category) => (
-                  <React.Fragment key={category.id}>
-                    <div
-                      className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${
-                        category.id === selectedCategory?.id
-                          ? "border-4 border-red-500"
-                          : ""
-                      }`}
-                      style={{ paddingLeft: `0px` }} // Root level categories
-                      onClick={() => setSelectedCategory(category)}>
-                      <img
-                        src={category.media_url}
-                        alt={category.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
-                        <h2 className="text-white text-2xl font-semibold">
-                          {category.name}
-                        </h2>
-                      </div>
-                    </div>
-
-                    {/* Render children recursively */}
-                    {category.children &&
-                      category.children.map((child) => (
-                        <React.Fragment key={child.id}>
-                          <div
-                            className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${
-                              child.id === selectedCategory?.id
-                                ? "border-4 border-red-500"
-                                : ""
-                            }`}
-                            style={{
-                              marginLeft: `20px`,
-                              width: `calc(100% - 20px)`,
-                            }} // Indent children categories
-                            onClick={() => setSelectedCategory(child)}>
-                            <img
-                              src={child.media_url}
-                              alt={child.name}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
-                              <h2 className="text-white text-2xl font-semibold">
-                                {child.name}
-                              </h2>
-                            </div>
-                          </div>
-
-                          {/* Render sub-children recursively */}
-                          {child.children &&
-                            child.children.map((subChild) => (
-                              <React.Fragment key={subChild.id}>
-                                <div
-                                  className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${
-                                    subChild.id === selectedCategory?.id
-                                      ? "border-4 border-red-500"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    marginLeft: `40px`,
-                                    width: `calc(100% - 40px)`,
-                                  }} // Further indent sub-children categories
-                                  onClick={() => setSelectedCategory(subChild)}>
-                                  <img
-                                    src={subChild.media_url}
-                                    alt={subChild.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
-                                    <h2 className="text-white text-2xl font-semibold">
-                                      {subChild.name}
-                                    </h2>
-                                  </div>
-                                </div>
-                                {/* Continue this pattern for deeper levels if needed */}
-                              </React.Fragment>
-                            ))}
-                        </React.Fragment>
-                      ))}
-                  </React.Fragment>
-                ))}
-              </div>
+            <div className="col-span-1 border-l border-gray-200 dark:border-gray-500">
+              <CategoryPreviewSidebar 
+                categories={resultingCategories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={(category) => setSelectedCategory(category)}
+                shouldRedirect={false}
+                slideFromLeft={false}
+                fullWidth={false}
+              />
             </div>
           </div>
         </div>
