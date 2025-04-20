@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaBoxes, FaHome, FaShoppingCart, FaUser } from "react-icons/fa";
+import { FaBoxes, FaHome, FaShoppingCart, FaUser, FaTrophy } from "react-icons/fa";
 import { GoGoal } from "react-icons/go";
 import { MdLocalOffer } from "react-icons/md";
 
@@ -49,12 +49,12 @@ const BottomNavbar: React.FC = () => (
 
       <div className="flex items-center justify-center">
         <Link
-          to="/product-section"
+          to="/highlights"
           className="inline-flex items-center justify-center w-10 h-10 font-medium bg-blue-600 rounded-full hover:bg-blue-700 group focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800"
           style={{ transform: "scale(2)" }}
         >
-          <MdLocalOffer className="w-4 h-4 text-white" />
-          <span className="sr-only">New item</span>
+          <FaTrophy className="w-4 h-4 text-white" />
+          <span className="sr-only">Highlights</span>
         </Link>
       </div>
 

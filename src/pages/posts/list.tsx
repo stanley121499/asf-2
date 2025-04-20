@@ -141,7 +141,7 @@ const PostsTable: React.FC<PostsTableProps> = function ({
       {posts.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
           {posts.flatMap((post) =>
-            Array(10)
+            Array(1)
               .fill(null)
               .map((_, index) => (
                 <div

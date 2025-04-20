@@ -28,6 +28,7 @@ import "./index.css";
 import DashboardPage from "./pages";
 import SignInPage from "./pages/authentication/sign-in";
 import HomePage from "./pages/landing/home";
+import HighlightsPage from "./pages/landing/Highlights";
 import PrivacyPage from "./pages/legal/privacy";
 import NotFoundPage from "./pages/pages/404";
 import ServerErrorPage from "./pages/pages/500";
@@ -72,6 +73,8 @@ import { ConversationProvider } from "./context/ConversationContext";
 import SupportPage from "./pages/support";
 import GoodStockPage from "./pages/stocks/good-stocks";
 import PromotionListPage from "./pages/promotions/list";
+import InternalChat from "./pages/internal-chat";
+import SupportAnalyticsPage from "./pages/analytics/support";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -199,6 +202,10 @@ const App: React.FC = () => (
                   path="/analytics/categories-inner/:categoryId"
                   element={<CategoriesInnerAnalyticsPage />}
                 />
+                <Route
+                  path="/analytics/support"
+                  element={<SupportAnalyticsPage />}
+                />
               </Route>
 
               <Route path="/cart" element={<CartPage />} />
@@ -208,6 +215,7 @@ const App: React.FC = () => (
               <Route path="/goal" element={<GoalPage />} />
               <Route path="/settings" element={<ProfileSettingsPage />} />
               <Route path="/support-chat" element={<ChatWindow />} />
+              <Route path="/internal-chat" element={<InternalChat />} />
               <Route
                 path="/product-section/:categoryId?"
                 element={<ProductSection />}
@@ -216,6 +224,7 @@ const App: React.FC = () => (
                 path="/product-details/:productId?"
                 element={<ProductDetails />}
               />
+              <Route path="/highlights" element={<HighlightsPage />} />
 
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />

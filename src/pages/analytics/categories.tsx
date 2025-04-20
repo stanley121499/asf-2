@@ -38,6 +38,11 @@ const CategoriesAnalyticsPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Category
               </a>
+              <a
+                href="/analytics/support"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Support
+              </a>
             </div>
           </div>
         </div>

@@ -1,5 +1,4 @@
-import React, { useRef } from "react";
-import NavbarHome from "../../components/navbar-home";
+import React, { useRef, useMemo } from "react";
 import { useAuthContext } from "../../context/AuthContext";
 import { usePostContext } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
@@ -7,7 +6,9 @@ import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
-import { FaQrcode, FaHome, FaTags, FaBullseye, FaUser } from "react-icons/fa";
+import { FaQrcode } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { LandingLayout } from "../../layouts";
 
 /**
  * Horizontal scrollable section component for reuse across different content types
@@ -17,24 +18,37 @@ interface ScrollableSectionProps {
   viewAllLink?: string;
   items: any[];
   renderItem: (item: any, index: number) => React.ReactNode;
+  isHighlightSection?: boolean;
 }
 
-const ScrollableSection: React.FC<ScrollableSectionProps> = ({ title, viewAllLink, items, renderItem }) => {
+const ScrollableSection: React.FC<ScrollableSectionProps> = ({ title, viewAllLink, items, renderItem, isHighlightSection = false }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-4 px-4">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+    <div className="mb-10">
+      <div className="flex justify-between items-center mb-5 px-5">
+        <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h2>
         {viewAllLink && (
-          <button className="text-red-600 text-sm font-medium">
-            View All
-          </button>
+          isHighlightSection ? (
+            <Link to={viewAllLink} className="group bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm transform transition-all duration-300 hover:shadow-md hover:scale-105 hover:from-indigo-800 hover:to-purple-900 flex items-center space-x-1 hover:-translate-y-0.5">
+              <span>View All</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ) : (
+            <Link to={viewAllLink} className="text-indigo-700 text-sm font-medium hover:text-indigo-900 transition-colors duration-200 flex items-center space-x-1 group">
+              <span>View All</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )
         )}
       </div>
       <div 
         ref={scrollContainerRef}
-        className="flex overflow-x-auto hide-scrollbar space-x-4 px-4 pb-2"
+        className="flex overflow-x-auto hide-scrollbar space-x-5 px-5 pb-3"
         style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
       >
         {items.map((item, index) => renderItem(item, index))}
@@ -51,6 +65,46 @@ const HomePage: React.FC = () => {
   const { productCategories } = useProductCategoryContext();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
+
+  // Sort posts by latest (created_at or updated_at)
+  const sortedPosts = useMemo(() => {
+    return [...posts].sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+    });
+  }, [posts]);
+
+  // Sort categories alphabetically by name
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [categories]);
+
+  // Sort products by latest
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => {
+      const dateA = new Date(a.udpated_at || a.created_at || 0);
+      const dateB = new Date(b.udpated_at || b.created_at || 0);
+      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+    });
+  }, [products]);
+
+  // Create sorted mock promotions with dates (for demonstration)
+  const sortedPromotions = useMemo(() => {
+    return Array(6).fill(null).map((_, index) => ({
+      id: `promo-${index}`,
+      title: `Special Offer ${index + 1}`,
+      created_at: new Date(Date.now() - index * 86400000).toISOString(), // Create dates with most recent first
+      discount: "20%",
+      type: index % 2 === 0 ? "NEW" : "HOT"
+    })).sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+    });
+  }, []);
 
   // Mock user data for demonstration purposes
   const mockUserData = {
@@ -81,68 +135,72 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <NavbarHome />
-      
+    <LandingLayout>
       {/* User Information Card */}
-      <div className="bg-blue-600 text-white relative overflow-hidden">
-        <div className="px-6 pt-14 pb-4 relative">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium uppercase tracking-wide opacity-90">Wallet Balance</h2>
-            <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
-              <span className="text-xs font-semibold">Member</span>
+      <div className="p-5 pt-8">
+        <div className="bg-gradient-to-br from-indigo-800 via-indigo-700 to-purple-800 text-white relative overflow-hidden rounded-xl shadow-lg">
+          <div className="absolute inset-0 bg-pattern opacity-5"></div>
+          <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full bg-white bg-opacity-10 blur-xl"></div>
+          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white bg-opacity-5 blur-xl"></div>
+          
+          <div className="px-6 pt-6 pb-4 relative">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium uppercase tracking-wider opacity-90">Wallet Balance</h2>
+              <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-full px-3 py-1 shadow-inner">
+                <span className="text-xs font-semibold tracking-wide">Premium Member</span>
+              </div>
+            </div>
+            <div className="flex items-baseline mt-3">
+              <span className="text-sm mr-1 opacity-80">RM</span>
+              <span className="text-6xl font-bold tracking-tight">{user_detail?.lifetime_val?.toFixed(2) || "0.00"}</span>
             </div>
           </div>
-          <div className="flex items-baseline mt-2">
-            <span className="text-sm mr-1">RM</span>
-            <span className="text-6xl font-bold">{user_detail?.lifetime_val?.toFixed(2) || "0.00"}</span>
-          </div>
-        </div>
-        
-        <div className="px-6 pt-3 pb-8 relative">
-          <h1 className="text-2xl font-bold">{mockUserData.greeting} <span className="opacity-90">{user?.display_name || mockUserData.name}</span></h1>
-          <div className="flex justify-between items-center mt-5">
-            <div>
-              <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-4">
-                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd"></path>
-                  </svg>
-                </div>
-                <div>
-                  <div className="flex items-center">
-                    <span className="text-2xl font-bold mr-2">{mockUserData.points}</span>
-                    <span className="opacity-80">Points</span>
+          
+          <div className="px-6 pt-3 pb-10 relative z-10">
+            <h1 className="text-2xl font-bold tracking-tight">{mockUserData.greeting} <span className="opacity-90">{user?.display_name || mockUserData.name}</span></h1>
+            <div className="flex justify-between items-center mt-6">
+              <div>
+                <div className="flex items-center">
+                  <div className="h-12 w-12 rounded-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm flex items-center justify-center mr-4 shadow-lg">
+                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd"></path>
+                    </svg>
                   </div>
-                  <div className="flex items-center">
-                    <span className="font-semibold mr-1">{mockUserData.level}</span>
-                    <span className="text-xs opacity-80">level</span>
+                  <div>
+                    <div className="flex items-center">
+                      <span className="text-2xl font-bold mr-2 tracking-tight">{mockUserData.points}</span>
+                      <span className="opacity-80">Points</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-semibold mr-1 tracking-wide">{mockUserData.level}</span>
+                      <span className="text-xs opacity-80">level</span>
+                    </div>
                   </div>
                 </div>
               </div>
+              <button className="p-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg hover:bg-opacity-25 transition-all duration-300 transform hover:scale-105">
+                <FaQrcode size={24} className="text-white" />
+              </button>
             </div>
-            <button className="p-4 bg-white bg-opacity-10 backdrop-filter backdrop-blur-sm rounded-lg hover:bg-opacity-20 transition-all duration-300">
-              <FaQrcode size={24} className="text-white" />
-            </button>
+            
+            {!user && (
+              <div className="mt-6 py-4 px-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg border border-white border-opacity-20">
+                <p className="text-sm uppercase tracking-wider font-medium">LOG IN / REGISTER</p>
+                <p className="text-xs mt-1 opacity-80 leading-relaxed">Login to check your progress and redeem exclusive rewards</p>
+              </div>
+            )}
           </div>
-          
-          {!user && (
-            <div className="mt-5 py-3 px-4 bg-white bg-opacity-10 rounded-lg backdrop-filter backdrop-blur-sm">
-              <p className="text-sm uppercase tracking-wide font-medium">LOG IN / REGISTER</p>
-              <p className="text-xs mt-1 opacity-80">Login to check your progress and redeem rewards</p>
-            </div>
-          )}
         </div>
       </div>
       
       {/* Main Content */}
-      <div className="flex-grow">
+      <div className="pt-4">
         {/* Highlights Section */}
         <div className="py-6">
           <ScrollableSection
             title="Highlights"
             viewAllLink="/highlights"
-            items={posts.slice(0, 10)}
+            items={sortedPosts.slice(0, 10)}
             renderItem={(post, index) => {
               // Find media for this post
               const postMedia = post.medias?.[0]?.media_url || 
@@ -152,35 +210,45 @@ const HomePage: React.FC = () => {
               return (
                 <div 
                   key={`post-${post.id || index}`} 
-                  className="flex-shrink-0 w-64 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
+                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group"
+                  style={{ width: "17rem" }}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-xl"></div>
+                  <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                    FEATURED
+                  </div>
                   <div className="h-48 bg-gray-100 relative">
                     <img 
                       src={postMedia} 
                       alt={post.title || `Post ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
                   </div>
-                  <div className="p-4">
+                  <div className="p-5 relative">
                     <h3 className="font-bold text-gray-900 truncate">
                       {post.caption || `Featured Post ${index + 1}`}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-2 leading-relaxed">
                       {post.cta_text || "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
                     </p>
+                    <div className="mt-4 flex justify-end">
+                      <span className="text-xs text-indigo-700 font-medium">Discover More →</span>
+                    </div>
                   </div>
                 </div>
               );
             }}
+            isHighlightSection={true}
           />
         </div>
         
         {/* Categories Section */}
-        <div className="py-4">
+        <div className="py-6">
           <ScrollableSection
             title="Categories"
             viewAllLink="/categories"
-            items={categories.slice(0, 10)}
+            items={sortedCategories.slice(0, 10)}
             renderItem={(category, index) => {
               // Get the best possible image for this category
               const categoryImage = category.media_url || getCategoryProductImage(category.id) || 
@@ -195,32 +263,36 @@ const HomePage: React.FC = () => {
                   className="flex-shrink-0 w-28"
                 >
                   <div className="flex flex-col items-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                      <img 
-                        src={categoryImage} 
-                        alt={category.name || `Category ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-22 h-22 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
+                      <div className="rounded-xl overflow-hidden relative w-full h-full">
+                        <img 
+                          src={categoryImage} 
+                          alt={category.name || `Category ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
+                      </div>
                     </div>
                     <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">
                       {category.name || `${index === 0 ? "Energy" : index === 1 ? "Men" : index === 2 ? "Nike" : `Category ${index + 1}`}`}
                     </p>
                     {productCount > 0 && (
-                      <p className="text-xs text-gray-500">{productCount} products</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{productCount} products</p>
                     )}
                   </div>
                 </div>
               );
             }}
+            isHighlightSection={false}
           />
         </div>
         
         {/* Products Section */}
-        <div className="py-4">
+        <div className="py-6">
           <ScrollableSection
             title="Products"
             viewAllLink="/products"
-            items={products.slice(0, 10)}
+            items={sortedProducts.slice(0, 10)}
             renderItem={(product, index) => {
               const productMedia = productMedias.find(media => media.product_id === product.id);
               
@@ -237,71 +309,86 @@ const HomePage: React.FC = () => {
               return (
                 <div 
                   key={`product-${product.id || index}`} 
-                  className="flex-shrink-0 w-40 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
+                  className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-1 group"
                 >
-                  <div className="h-40 bg-gray-100 relative">
+                  <div className="h-44 bg-gray-100 relative">
                     <img 
                       src={productMedia?.media_url || `https://via.placeholder.com/160?text=Product+${index + 1}`} 
                       alt={product.name || `Product ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     {productCategoryNames && (
-                      <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
                         {productCategoryNames}
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
                   </div>
-                  <div className="p-3">
+                  <div className="p-4">
                     <h3 className="font-medium text-gray-900 truncate">
                       {product.name || `Product ${index + 1}`}
                     </h3>
-                    <p className="text-sm font-bold text-red-700 mt-1">
-                      RM {product.price?.toFixed(2) || (Math.random() * 100).toFixed(2)}
-                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-sm font-bold text-indigo-800">
+                        RM {product.price?.toFixed(2) || (Math.random() * 100).toFixed(2)}
+                      </p>
+                      <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-indigo-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             }}
+            isHighlightSection={false}
           />
         </div>
         
         {/* Promotions Section */}
-        <div className="py-4 pb-20">
+        {/* <div className="py-6 pb-24">
           <ScrollableSection
             title="Promotions"
             viewAllLink="/promotions"
-            items={Array(6).fill(null)}
-            renderItem={(_, index) => (
+            items={sortedPromotions}
+            renderItem={(promotion, index) => (
               <div 
-                key={`promotion-${index}`} 
-                className="flex-shrink-0 w-64 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
+                key={`promotion-${promotion.id || index}`} 
+                className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+                style={{ width: "17rem" }}
               >
-                <div className="h-40 bg-gray-100 relative">
+                <div className="h-44 bg-gray-100 relative">
                   <img 
                     src={`https://via.placeholder.com/300x200?text=Promotion+${index + 1}`} 
                     alt={`Promotion ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
-                    {index % 2 === 0 ? "NEW" : "HOT"}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+                  <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                    {promotion.type}
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-gray-900">Special Offer {index + 1}</h3>
-                  <p className="text-sm text-gray-600 mb-2">Limited time promotion</p>
-                  <div className="flex justify-between items-center">
-                    <p className="text-red-700 font-bold">Save 20%</p>
-                    <button className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors duration-300">
-                      View
+                <div className="p-5">
+                  <h3 className="font-bold text-gray-900">{promotion.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">Limited time offer</p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <p className="text-indigo-800 font-bold flex items-center">
+                      <span className="text-xs mr-1">SAVE</span>
+                      <span>{promotion.discount}</span>
+                    </p>
+                    <button className="px-4 py-1.5 bg-gradient-to-r from-indigo-700 to-purple-800 text-white rounded-full text-sm font-medium hover:from-indigo-800 hover:to-purple-900 transition-colors duration-300 shadow-sm hover:shadow">
+                      View Details
                     </button>
                   </div>
                 </div>
               </div>
             )}
+            isHighlightSection={false}
           />
-        </div>
+        </div> */}
       </div>
-    </div>
+    </LandingLayout>
   );
 };
 

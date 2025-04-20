@@ -146,18 +146,22 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         status: selectedProduct.status,
       });
 
-      setSelectedCategories(selectedProduct.product_categories);
+      setSelectedCategories(selectedProduct.product_categories || []);
       // For color and size only use those that are active
       setSelectedColors(
-        selectedProduct.product_colors
-          .filter((color) => color.active)
-          .map((color) => color.color)
+        selectedProduct.product_colors?.filter((color) => color.active)
+          .map((color) => color.color) || []
       );
       setSelectedSizes(
-        selectedProduct.product_sizes
-          .filter((size) => size.active)
-          .map((size) => size.size)
+        selectedProduct.product_sizes?.filter((size) => size.active)
+          .map((size) => size.size) || []
       );
+      
+      // Ensure medias is initialized as an array
+      if (!selectedProduct.medias) {
+        selectedProduct.medias = [];
+      }
+      
       selectedProduct.medias = productMedias.filter(
         (media) => media.product_id === selectedProduct.id
       );

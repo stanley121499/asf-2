@@ -15,6 +15,7 @@ import LoadingPage from "../pages/loading";
 interface ChatWindowProps {
   conversation: Conversation;
   messages: Message[];
+  onSendMessage?: (content: string) => void;
 }
 
 type FileType = "image" | "video" | "document";
@@ -26,7 +27,7 @@ interface AttachmentFile {
   type: FileType;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendMessage }) => {
   const [input, setInput] = React.useState("");
   const { createMessage } = useConversationContext();
   const [openEmoji, setOpenEmoji] = useState(false);
@@ -51,7 +52,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages }) => {
       media_url: mediaUrls,
     };
 
-    createMessage(newMessage);
+    // Use the provided onSendMessage callback if it exists, otherwise use default behavior
+    if (onSendMessage) {
+      onSendMessage(input);
+    } else {
+      createMessage(newMessage);
+    }
+    
     setInput("");
     setAttachments([]);
   };

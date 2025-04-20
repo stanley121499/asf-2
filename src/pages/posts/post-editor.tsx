@@ -180,48 +180,47 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 )}
                 {selectedFolder.medias.map((media) => (
                   // <Card key={media.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                  <>
-                    <div
-                      className="relative group cursor-pointer"
-                      key={media.id}
-                      onClick={() => {
-                        const isMediaSelected = selectedMedias.find(
-                          (m) => m.id === media.id
-                        );
-                        if (isMediaSelected) {
-                          setPreviewMedia(media.media_url);
-                        } else {
-                          setSelectedMedias((prev) => [...prev, media]);
-                          setPreviewMedia(media.media_url);
-                        }
-                      }}>
-                      <img
-                        src={media.media_url}
-                        alt="media"
-                        className="w-full object-cover rounded"
-                        style={{ height: `calc((100vh - 9rem) / 4)` }}
-                      />
-                      {/* Show a tick on top of the image if selected */}
-                      {(selectedMedias.find((m) => m.id === media.id) ||
-                        arrangedMedias.find((m) => m.id === media.id)) && (
-                        <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 text-green-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </>
+
+                  <div
+                    className="relative group cursor-pointer"
+                    key={media.id}
+                    onClick={() => {
+                      const isMediaSelected = selectedMedias.find(
+                        (m) => m.id === media.id
+                      );
+                      if (isMediaSelected) {
+                        setPreviewMedia(media.media_url);
+                      } else {
+                        setSelectedMedias((prev) => [...prev, media]);
+                        setPreviewMedia(media.media_url);
+                      }
+                    }}>
+                    <img
+                      src={media.media_url}
+                      alt="media"
+                      className="w-full object-cover rounded"
+                      style={{ height: `calc((100vh - 9rem) / 4)` }}
+                    />
+                    {/* Show a tick on top of the image if selected */}
+                    {(selectedMedias.find((m) => m.id === media.id) ||
+                      arrangedMedias.find((m) => m.id === media.id)) && (
+                      <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

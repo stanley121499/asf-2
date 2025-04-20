@@ -228,7 +228,7 @@ const SchedulePostListPage: React.FC = function () {
                         (a.time_post ?? "") < (b.time_post ?? "") ? 1 : -1
                       )
                       .flatMap((post) =>
-                        Array(10)
+                        Array(1)
                           .fill(null)
                           .map((_, index) => (
                             <div

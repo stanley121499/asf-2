@@ -165,7 +165,7 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
     // Create a grid of 3 columns and use card to display the product
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
       {products.flatMap((product) =>
-        Array(20)
+        Array(1)
           .fill(null)
           .map((_, index) => (
             <Card
@@ -202,7 +202,7 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
               />
               <div className="flex justify-between flex-col gap-2">
                 <div className="flex items-center gap-x-3">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl truncate overflow-hidden">
                     {product.name}
                   </h2>
                   <Badge color={getBadgeColor(product.status)}>
@@ -210,7 +210,7 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
                   </Badge>
                 </div>
                 {/* Description */}
-                <p className="text-sm text-gray-900 w-full pb-0 dark:text-gray-400">
+                <p className="text-sm text-gray-900 w-full pb-0 dark:text-gray-400 line-clamp-2 overflow-hidden">
                   {product.description}
                 </p>
                 {/* Price */}
