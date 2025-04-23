@@ -26,7 +26,7 @@ const ProductDetails: React.FC = () => {
     (media) => media.product_id === product?.id
   );
 
-  if (!product || !productMedia)
+  if (!product) {
     return (
       <div className="animate-pulse space-y-4">
         <div className="h-40 bg-gray-200 rounded-lg"></div>
@@ -37,20 +37,23 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
     );
+  }
     
   const tempAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const firstMedia = productMedia[0];
+    
     cart.push({
       ...product,
       quantity: 1,
-      media_url: productMedia[0].media_url,
+      media_url: firstMedia?.media_url || "/default-image.jpg",
       price: product.price * 100,
     });
 
     localStorage.setItem("cart", JSON.stringify(cart));
-
     navigate("/cart");
   };
+
   return (
     <>
       <NavbarHome />
@@ -61,7 +64,7 @@ const ProductDetails: React.FC = () => {
             <div className="shrink-0 max-w-md lg:max-w-lg mx-auto">
               <img
                 className="w-full rounded-lg"
-                src={productMedia[0].media_url}
+                src={productMedia[0]?.media_url || "/default-image.jpg"}
                 alt={`product`}
               />
             </div>

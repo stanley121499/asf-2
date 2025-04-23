@@ -40,7 +40,7 @@ const HighlightsPage: React.FC = () => {
       <div className="flex-grow">
         {/* Hero Banner */}
         {featuredPosts.length > 0 && (
-          <div className="relative">
+          <Link to="/product-section" className="relative">
             <img 
               src={featuredPosts[0].medias?.[0]?.media_url || 
                 postMedias.find(media => media.post_id === featuredPosts[0].id)?.media_url || 
@@ -58,12 +58,12 @@ const HighlightsPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </Link>
         )}
         
         {/* Festival Swirls Banner */}
         {featuredPosts.length > 1 && (
-          <div className="relative mt-2">
+          <Link to="/product-section" className="relative mt-2">
             <img 
               src={featuredPosts[1].medias?.[0]?.media_url || 
                 postMedias.find(media => media.post_id === featuredPosts[1].id)?.media_url || 
@@ -81,7 +81,7 @@ const HighlightsPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* In The Spotlight Section */}
@@ -90,7 +90,7 @@ const HighlightsPage: React.FC = () => {
           
           {/* Full-Width Spotlight Item */}
           {featuredPosts.length > 2 && (
-            <div className="relative mb-6">
+            <Link to="/product-section" className="relative mb-6">
               <img 
                 src={featuredPosts[2].medias?.[0]?.media_url || 
                   postMedias.find(media => media.post_id === featuredPosts[2].id)?.media_url || 
@@ -108,7 +108,7 @@ const HighlightsPage: React.FC = () => {
                   SHOP THE EDIT
                 </button>
               </div>
-            </div>
+            </Link>
           )}
           
           {/* Side-by-Side Spotlight Items */}
@@ -121,7 +121,7 @@ const HighlightsPage: React.FC = () => {
               const titles = ["CHIC THONGS", "BEACH ESSENTIALS"];
               
               return (
-                <div key={post.id || `spotlight-${index}`} className="w-1/2">
+                <Link to="/product-section" key={post.id || `spotlight-${index}`} className="w-1/2">
                   <div className="relative">
                     <img 
                       src={postMedia} 
@@ -134,7 +134,7 @@ const HighlightsPage: React.FC = () => {
                       </h3>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -161,7 +161,7 @@ const HighlightsPage: React.FC = () => {
                 `https://via.placeholder.com/400x400?text=Product+${index + 1}`;
               
               return (
-                <div key={post.id || `product-${index}`} className="flex-shrink-0 w-[60vw]">
+                <Link to="/product-section" key={post.id || `product-${index}`} className="flex-shrink-0 w-[60vw]">
                   <div className="relative">
                     <img 
                       src={postMedia} 
@@ -169,7 +169,7 @@ const HighlightsPage: React.FC = () => {
                       className="w-full aspect-square object-cover"
                     />
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -181,7 +181,7 @@ const HighlightsPage: React.FC = () => {
           
           {/* First Row - Full Width Image */}
           {featuredPosts.length > 8 && (
-            <div className="relative mb-2">
+            <Link to="/product-section" className="relative mb-2">
               <img 
                 src={featuredPosts[8].medias?.[0]?.media_url || 
                   postMedias.find(media => media.post_id === featuredPosts[8].id)?.media_url || 
@@ -199,7 +199,7 @@ const HighlightsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </div>
+            </Link>
           )}
           
           {/* Second Row - Two Side-by-Side Images */}
@@ -212,7 +212,7 @@ const HighlightsPage: React.FC = () => {
               const titles = ["BUILT TO BREAK THE RULES", "EFFORT MEETS EDGE"];
               
               return (
-                <div key={post.id || `collection-side-${index}`} className="w-1/2 relative">
+                <Link to="/product-section" key={post.id || `collection-side-${index}`} className="w-1/2 relative">
                   <img 
                     src={postMedia} 
                     alt={post.caption || titles[index]}
@@ -228,14 +228,14 @@ const HighlightsPage: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
           
           {/* Third Row - Full Width Image */}
           {featuredPosts.length > 11 && (
-            <div className="relative mt-2">
+            <Link to="/product-section" className="relative mt-2">
               <img 
                 src={featuredPosts[11].medias?.[0]?.media_url || 
                   postMedias.find(media => media.post_id === featuredPosts[11].id)?.media_url || 
@@ -253,13 +253,13 @@ const HighlightsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </div>
+            </Link>
           )}
         </div>
         
         {/* Texture Talks Section */}
         {featuredPosts.length > 12 && (
-          <div className="mt-12 px-0">
+          <Link to="/product-section" className="mt-12 px-0">
             <div className="relative">
               <img 
                 src={featuredPosts[12].medias?.[0]?.media_url || 
@@ -276,7 +276,7 @@ const HighlightsPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </Link>
         )}
         
         {/* All Posts Section - Display remaining posts */}
@@ -290,7 +290,7 @@ const HighlightsPage: React.FC = () => {
                 `https://via.placeholder.com/400x400?text=Item+${index + 1}`;
               
               return (
-                <div key={post.id || `all-item-${index}`} className="flex flex-col">
+                <Link to="/product-section" key={post.id || `all-item-${index}`} className="flex flex-col">
                   <div className="relative">
                     <img 
                       src={postMedia} 
@@ -308,7 +308,7 @@ const HighlightsPage: React.FC = () => {
                       SHOP NOW
                     </button>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

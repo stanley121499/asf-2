@@ -5,10 +5,11 @@ import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const ProductSection: React.FC = () => {
   const { categoryId } = useParams();
+  const navigate = useNavigate();
   const { categories } = useCategoryContext();
   const { products } = useProductContext();
   const { productCategories } = useProductCategoryContext();
@@ -18,23 +19,31 @@ const ProductSection: React.FC = () => {
     categories.find((category) => category.id === categoryId)
   );
   const [selectedSort, setSelectedSort] = useState("Newest First");
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilter, setSelectedFilter] = useState(
+    selectedCategory?.name || "All"
+  );
 
+  // Update selectedCategory when URL changes
   useEffect(() => {
-    setSelectedCategory(
-      categories.find((category) => category.id === categoryId)
-    );
+    const category = categories.find((category) => category.id === categoryId);
+    setSelectedCategory(category);
+    setSelectedFilter(category?.name || "All");
   }, [categories, categoryId]);
 
-  useEffect(() => {
-    if (selectedFilter === "All") {
+  // Handle filter changes
+  const handleFilterChange = (filterName: string) => {
+    setSelectedFilter(filterName);
+    if (filterName === "All") {
+      navigate("/product-section");
       setSelectedCategory(undefined);
     } else {
-      setSelectedCategory(
-        categories.find((category) => category.name === selectedFilter)
-      );
+      const category = categories.find((cat) => cat.name === filterName);
+      if (category) {
+        navigate(`/product-section/${category.id}`);
+        setSelectedCategory(category);
+      }
     }
-  }, [categories, selectedFilter]);
+  };
 
   return (
     <>
@@ -121,7 +130,7 @@ const ProductSection: React.FC = () => {
               {/* Filters Button */}
               <Select
                 value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
+                onChange={(e) => handleFilterChange(e.target.value)}
                 className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
                 <option value="All">All</option>
                 {categories.map((filter) => (

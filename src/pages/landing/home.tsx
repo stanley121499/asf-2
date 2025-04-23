@@ -6,7 +6,7 @@ import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
-import { FaQrcode } from "react-icons/fa";
+import { FaQrcode, FaBell } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { LandingLayout } from "../../layouts";
 
@@ -56,6 +56,9 @@ const ScrollableSection: React.FC<ScrollableSectionProps> = ({ title, viewAllLin
     </div>
   );
 };
+
+// Add this mock data near the top of the file, after imports
+const mockUnreadNotifications = 2;
 
 const HomePage: React.FC = () => {
   const { user, user_detail } = useAuthContext();
@@ -107,12 +110,41 @@ const HomePage: React.FC = () => {
   }, []);
 
   // Mock user data for demonstration purposes
+  type LevelType = "Bronze" | "Silver" | "Gold" | "Platinum" | "Diamond";
+  type LevelThresholds = Record<LevelType, number>;
+
   const mockUserData = {
     walletBalance: "1,250.00",
     name: "John Doe",
     points: 2850,
-    level: "Gold",
-    greeting: "Good Morning!"
+    level: "Gold" as LevelType,
+    greeting: "Good Morning!",
+    levelThresholds: {
+      Bronze: 0,
+      Silver: 1000,
+      Gold: 2500,
+      Platinum: 5000,
+      Diamond: 10000
+    } as LevelThresholds
+  };
+
+  // Helper function to get next level and progress
+  const getLevelProgress = () => {
+    const currentLevel = mockUserData.level;
+    const currentPoints = mockUserData.points;
+    const levels = Object.keys(mockUserData.levelThresholds) as LevelType[];
+    const currentLevelIndex = levels.indexOf(currentLevel);
+    const nextLevel = levels[currentLevelIndex + 1];
+    const currentThreshold = mockUserData.levelThresholds[currentLevel];
+    const nextThreshold = nextLevel ? mockUserData.levelThresholds[nextLevel] : currentThreshold;
+    const progress = ((currentPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+    const pointsToNextLevel = nextThreshold - currentPoints;
+
+    return {
+      progress: Math.min(100, Math.max(0, progress)),
+      pointsToNextLevel,
+      nextLevel
+    };
   };
 
   // Helper function to get a product image for a category
@@ -146,9 +178,17 @@ const HomePage: React.FC = () => {
           <div className="px-6 pt-6 pb-4 relative">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium uppercase tracking-wider opacity-90">Wallet Balance</h2>
-              <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-full px-3 py-1 shadow-inner">
-                <span className="text-xs font-semibold tracking-wide">Premium Member</span>
-              </div>
+              <Link 
+                to="/notifications" 
+                className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-full p-2 shadow-inner relative hover:bg-opacity-25 transition-all duration-300 transform hover:scale-105"
+              >
+                <FaBell size={20} className="text-white" />
+                {mockUnreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {mockUnreadNotifications}
+                  </span>
+                )}
+              </Link>
             </div>
             <div className="flex items-baseline mt-3">
               <span className="text-sm mr-1 opacity-80">RM</span>
@@ -157,23 +197,31 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="px-6 pt-3 pb-10 relative z-10">
-            <h1 className="text-2xl font-bold tracking-tight">{mockUserData.greeting} <span className="opacity-90">{user?.display_name || mockUserData.name}</span></h1>
+            <h1 className="text-2xl font-bold tracking-tight"> <span className="opacity-90">{user?.display_name || mockUserData.name}</span></h1>
             <div className="flex justify-between items-center mt-6">
               <div>
                 <div className="flex items-center">
-                  <div className="h-12 w-12 rounded-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm flex items-center justify-center mr-4 shadow-lg">
-                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </div>
-                  <div>
+                  <div className="flex flex-col space-y-3 w-full">
                     <div className="flex items-center">
-                      <span className="text-2xl font-bold mr-2 tracking-tight">{mockUserData.points}</span>
-                      <span className="opacity-80">Points</span>
+                      <span className="text-3xl font-bold tracking-tight">{mockUserData.points} Points</span>
+                      <span className="ml-3 px-3 py-1 text-xs font-semibold bg-yellow-500 bg-opacity-20 text-yellow-300 rounded-full border border-yellow-500 border-opacity-20">
+                        {mockUserData.level}
+                      </span>
                     </div>
-                    <div className="flex items-center">
-                      <span className="font-semibold mr-1 tracking-wide">{mockUserData.level}</span>
-                      <span className="text-xs opacity-80">level</span>
+                    <div className="w-full">
+                      <div className="relative">
+                        <div className="overflow-hidden h-1.5 flex rounded-full bg-white bg-opacity-20">
+                          <div
+                            style={{ width: `${getLevelProgress().progress}%` }}
+                            className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-white bg-opacity-50 transition-all duration-500 rounded-full"
+                          ></div>
+                        </div>
+                        <div className="mt-1.5">
+                          <span className="text-xs font-medium text-white text-opacity-80">
+                            {getLevelProgress().pointsToNextLevel} points to {getLevelProgress().nextLevel}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -208,7 +256,8 @@ const HomePage: React.FC = () => {
                 `https://via.placeholder.com/300x200?text=Post+${index + 1}`;
               
               return (
-                <div 
+                <Link 
+                  to="/product-section"
                   key={`post-${post.id || index}`} 
                   className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group"
                   style={{ width: "17rem" }}
@@ -236,7 +285,7 @@ const HomePage: React.FC = () => {
                       <span className="text-xs text-indigo-700 font-medium">Discover More →</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             }}
             isHighlightSection={true}
@@ -247,7 +296,7 @@ const HomePage: React.FC = () => {
         <div className="py-6">
           <ScrollableSection
             title="Categories"
-            viewAllLink="/categories"
+            viewAllLink="/product-section"
             items={sortedCategories.slice(0, 10)}
             renderItem={(category, index) => {
               // Get the best possible image for this category
@@ -258,7 +307,8 @@ const HomePage: React.FC = () => {
               const productCount = productCategories.filter(pc => pc.category_id === category.id).length;
 
               return (
-                <div 
+                <Link 
+                  to={`/product-section/${category.id}`}
                   key={`category-${category.id || index}`} 
                   className="flex-shrink-0 w-28"
                 >
@@ -280,7 +330,7 @@ const HomePage: React.FC = () => {
                       <p className="text-xs text-gray-500 mt-0.5">{productCount} products</p>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             }}
             isHighlightSection={false}

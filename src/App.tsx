@@ -75,6 +75,7 @@ import GoodStockPage from "./pages/stocks/good-stocks";
 import PromotionListPage from "./pages/promotions/list";
 import InternalChat from "./pages/internal-chat";
 import SupportAnalyticsPage from "./pages/analytics/support";
+import NotificationsPage from "./pages/landing/notifications";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -228,6 +229,7 @@ const App: React.FC = () => (
 
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/pages/maintenance" element={<MaintenancePage />} />
               <Route path="/authentication/sign-in" element={<SignInPage />} />
 
