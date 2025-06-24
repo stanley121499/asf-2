@@ -298,6 +298,11 @@ const CategoryListPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Category
               </a>
+              <a
+                href="/products/categories-v2"
+                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
+                Category V2
+              </a>
               {/* Schedule */}
               <a
                 href="/products/schedule"

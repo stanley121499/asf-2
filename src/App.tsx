@@ -37,6 +37,7 @@ import CreatePostPage from "./pages/posts/create-post-page";
 import PostListPage from "./pages/posts/list";
 import SchedulePostListPage from "./pages/posts/schedule-post-page";
 import CategoryListPage from "./pages/products/category-page";
+import CategoryV2Page from "./pages/products/category-v2-page";
 import CreateProductPage from "./pages/products/create-product-page";
 import ProductListPage from "./pages/products/list";
 import ScheduleProductListPage from "./pages/products/schedule-product-page";
@@ -134,6 +135,10 @@ const App: React.FC = () => (
                 <Route
                   path="/products/categories"
                   element={<CategoryListPage />}
+                />
+                <Route
+                  path="/products/categories-v2"
+                  element={<CategoryV2Page />}
                 />
                 <Route
                   path="/products/stock/:productId"

@@ -89,6 +89,25 @@ const ProductDetails: React.FC = () => {
                 {product.description}
               </p>
 
+              {/* Warranty Information */}
+              {(product.warranty_period || product.warranty_description) && (
+                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Warranty Information
+                  </h3>
+                  {product.warranty_period && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      <span className="font-medium">Warranty Period:</span> {product.warranty_period}
+                    </p>
+                  )}
+                  {product.warranty_description && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">Terms & Conditions:</span> {product.warranty_description}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="mt-6 sm:gap-4 sm:items-center sm:flex sm:mt-8">
                 <button

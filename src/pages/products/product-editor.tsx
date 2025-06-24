@@ -23,6 +23,18 @@ import {
 } from "../../context/product/ProductMediaContext";
 import { FaChevronDown } from "react-icons/fa6";
 
+/**
+ * Interface for category v2 items from localStorage
+ */
+interface CategoryV2Item {
+  id: string;
+  name: string;
+  description: string;
+  group: "department" | "brand" | "range" | "category";
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ProductEditorProps {
   selectedFolder: ProductFolder | null;
   setSelectedFolder: React.Dispatch<React.SetStateAction<ProductFolder | null>>;
@@ -62,6 +74,14 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [sizeInput, setSizeInput] = useState<string>("");
   const [filteredCategories, setFilteredCategories] = useState(categories);
+  
+  // Category V2 temporary fields (don't affect save)
+  const [categoryV2Items, setCategoryV2Items] = useState<CategoryV2Item[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
+  const [selectedRange, setSelectedRange] = useState<string>("");
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedCategoryV2, setSelectedCategoryV2] = useState<string>("");
+  
   const [productData, setProductData] = React.useState<ProductInsert>({
     name: selectedProduct?.name || "",
     product_folder_id: selectedFolder?.id,
@@ -72,6 +92,8 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
     stock_place: "",
     stock_code: "",
     description: "",
+    warranty_period: "",
+    warranty_description: "",
     status: "",
   });
 
@@ -131,6 +153,19 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
     }
   };
 
+  // Load Category V2 items from localStorage
+  useEffect(() => {
+    const savedItems = localStorage.getItem("categoryV2Items");
+    if (savedItems) {
+      try {
+        const parsedItems: CategoryV2Item[] = JSON.parse(savedItems);
+        setCategoryV2Items(parsedItems);
+      } catch (error) {
+        console.error("Error parsing Category V2 items:", error);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedProduct) {
       setProductData({
@@ -143,6 +178,8 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         stock_place: selectedProduct.stock_place,
         stock_code: selectedProduct.stock_code,
         description: selectedProduct.description,
+        warranty_period: selectedProduct.warranty_period,
+        warranty_description: selectedProduct.warranty_description,
         status: selectedProduct.status,
       });
 
@@ -191,6 +228,8 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         stock_place: "",
         stock_code: "",
         description: "",
+        warranty_period: "",
+        warranty_description: "",
         status: "",
       });
 
@@ -199,6 +238,11 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
       setSelectedCategories([]);
       setSelectedColors([]);
       setSelectedSizes([]);
+      // Reset Category V2 fields when no product is selected
+      setSelectedDepartment("");
+      setSelectedRange("");
+      setSelectedBrand("");
+      setSelectedCategoryV2("");
     }
   }, [productFolderMedias, productMedias, selectedFolder?.id, selectedProduct]);
 
@@ -397,6 +441,85 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                   </div>
                 </div>
 
+                {/* Category V2 Fields - Temporary, don't affect save */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    {/* Department */}
+                    <div>
+                      <Label htmlFor="department" className="text-sm">Department</Label>
+                      <flowbiteReact.Select
+                        id="department"
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                        className="mt-1">
+                        <option value="">Select Department</option>
+                        {categoryV2Items
+                          .filter((item) => item.group === "department")
+                          .map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                      </flowbiteReact.Select>
+                    </div>
+
+                    {/* Range */}
+                    <div>
+                      <Label htmlFor="range" className="text-sm">Range</Label>
+                      <flowbiteReact.Select
+                        id="range"
+                        value={selectedRange}
+                        onChange={(e) => setSelectedRange(e.target.value)}
+                        className="mt-1">
+                        <option value="">Select Range</option>
+                        {categoryV2Items
+                          .filter((item) => item.group === "range")
+                          .map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                      </flowbiteReact.Select>
+                    </div>
+
+                    {/* Brand */}
+                    <div>
+                      <Label htmlFor="brand" className="text-sm">Brand</Label>
+                      <flowbiteReact.Select
+                        id="brand"
+                        value={selectedBrand}
+                        onChange={(e) => setSelectedBrand(e.target.value)}
+                        className="mt-1">
+                        <option value="">Select Brand</option>
+                        {categoryV2Items
+                          .filter((item) => item.group === "brand")
+                          .map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                      </flowbiteReact.Select>
+                    </div>
+
+                    {/* Category V2 */}
+                    <div>
+                      <Label htmlFor="category-v2" className="text-sm">Category V2</Label>
+                      <flowbiteReact.Select
+                        id="category-v2"
+                        value={selectedCategoryV2}
+                        onChange={(e) => setSelectedCategoryV2(e.target.value)}
+                        className="mt-1">
+                        <option value="">Select Category V2</option>
+                        {categoryV2Items
+                          .filter((item) => item.group === "category")
+                          .map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                      </flowbiteReact.Select>
+                    </div>
+                  </div>
+
                 {/* Article Number */}
                 <div className="mt-4">
                   <flowbiteReact.Label>Article Number</flowbiteReact.Label>
@@ -575,6 +698,40 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     }
                   />
                 </div>
+                
+                {/* Warranty Period */}
+                <div className="mt-4">
+                  <flowbiteReact.Label>Warranty Period</flowbiteReact.Label>
+                  <flowbiteReact.TextInput
+                    id="warranty_period"
+                    name="warranty_period"
+                    placeholder="Enter warranty period (e.g., 1 year, 6 months)"
+                    value={productData?.warranty_period || ""}
+                    onChange={(e) =>
+                      setProductData({
+                        ...productData,
+                        warranty_period: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                
+                {/* Warranty Description */}
+                <div className="mt-4">
+                  <flowbiteReact.Label>Warranty Description</flowbiteReact.Label>
+                  <flowbiteReact.Textarea
+                    id="warranty_description"
+                    name="warranty_description"
+                    placeholder="Enter warranty terms and conditions"
+                    value={productData?.warranty_description || ""}
+                    onChange={(e) =>
+                      setProductData({
+                        ...productData,
+                        warranty_description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
                 {/* Status */}
                 {/* <div className="mt-4">
                   <flowbiteReact.Label>Status</flowbiteReact.Label>
@@ -646,6 +803,8 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                       productData.description ||
                       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus feugiat, molestie ipsum et, consequat nibh. Ut sit amet lacus ultrices, tincidunt metus in, maximus metus."
                     }
+                    warranty_period={productData.warranty_period || "1 Year"}
+                    warranty_description={productData.warranty_description || "Standard manufacturer warranty covering defects and malfunctions."}
                     previewMedia={previewMedia}
                   />
                 </div>

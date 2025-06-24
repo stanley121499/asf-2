@@ -8,6 +8,8 @@ interface PostProps {
   size: string[];
   medias: string[];
   description: string;
+  warranty_period?: string;
+  warranty_description?: string;
   previewMedia?: string;
 }
 
@@ -18,6 +20,8 @@ const ProductComponent: React.FC<PostProps> = ({
   size,
   medias,
   description,
+  warranty_period,
+  warranty_description,
   previewMedia,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -61,6 +65,22 @@ const ProductComponent: React.FC<PostProps> = ({
 
       {/* Description */}
       <p className="text-sm text-gray-900 w-full p-2 pb-0">{description}</p>
+
+      {/* Warranty Information */}
+      {(warranty_period || warranty_description) && (
+        <div className="p-2 pb-0">
+          {warranty_period && (
+            <p className="text-xs text-gray-600">
+              <span className="font-semibold">Warranty:</span> {warranty_period}
+            </p>
+          )}
+          {warranty_description && (
+            <p className="text-xs text-gray-600 mt-1">
+              {warranty_description}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Price */}
       {/* Show in two decimal place */}
