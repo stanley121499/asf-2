@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@types/react-modal-image": "^2.6.3",
+    "@types/uuid": "^10.0.0",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.28.0",

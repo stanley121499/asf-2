@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect, useState } from "react";
 import { useAuthContext } from "../../context/AuthContext";
 import { usePostContext } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
@@ -6,9 +6,11 @@ import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
+import { usePointsMembership } from "../../context/PointsMembershipContext";
 import { FaQrcode, FaBell } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { LandingLayout } from "../../layouts";
+import type { Tables } from "../../../database.types";
 
 /**
  * Horizontal scrollable section component for reuse across different content types
@@ -109,43 +111,117 @@ const HomePage: React.FC = () => {
     });
   }, []);
 
-  // Mock user data for demonstration purposes
-  type LevelType = "Bronze" | "Silver" | "Gold" | "Platinum" | "Diamond";
-  type LevelThresholds = Record<LevelType, number>;
+  // Points & Membership: fetch actual user points and membership tiers
+  const { listMembershipTiers, getUserPointsByUserId } = usePointsMembership();
+  const [points, setPoints] = useState<number>(0);
+  const [tiers, setTiers] = useState<Tables<"membership_tiers">[]>([]);
 
-  const mockUserData = {
-    walletBalance: "1,250.00",
-    name: "John Doe",
-    points: 2850,
-    level: "Gold" as LevelType,
-    greeting: "Good Morning!",
-    levelThresholds: {
-      Bronze: 0,
-      Silver: 1000,
-      Gold: 2500,
-      Platinum: 5000,
-      Diamond: 10000
-    } as LevelThresholds
-  };
-
-  // Helper function to get next level and progress
-  const getLevelProgress = () => {
-    const currentLevel = mockUserData.level;
-    const currentPoints = mockUserData.points;
-    const levels = Object.keys(mockUserData.levelThresholds) as LevelType[];
-    const currentLevelIndex = levels.indexOf(currentLevel);
-    const nextLevel = levels[currentLevelIndex + 1];
-    const currentThreshold = mockUserData.levelThresholds[currentLevel];
-    const nextThreshold = nextLevel ? mockUserData.levelThresholds[nextLevel] : currentThreshold;
-    const progress = ((currentPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
-    const pointsToNextLevel = nextThreshold - currentPoints;
-
-    return {
-      progress: Math.min(100, Math.max(0, progress)),
-      pointsToNextLevel,
-      nextLevel
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      try {
+        if (user?.id) {
+          const row = await getUserPointsByUserId(user.id);
+          if (isActive) {
+            setPoints(row?.amount ?? 0);
+          }
+        } else if (isActive) {
+          setPoints(0);
+        }
+      } catch {
+        if (isActive) {
+          setPoints(0);
+        }
+      }
     };
-  };
+    void load();
+    return () => { isActive = false; };
+  }, [user?.id, getUserPointsByUserId]);
+
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      try {
+        const rows = await listMembershipTiers(true);
+        if (isActive) {
+          setTiers(rows);
+        }
+      } catch {
+        if (isActive) {
+          setTiers([]);
+        }
+      }
+    };
+    void load();
+    return () => { isActive = false; };
+  }, [listMembershipTiers]);
+
+  const levelData = useMemo(() => {
+    if (tiers.length === 0) {
+      return { currentLevel: null as string | null, nextLevel: null as string | null, progress: 0, pointsToNextLevel: 0 };
+    }
+    const ordered = [...tiers].sort((a, b) => {
+      const aReq = a.point_required ?? 0;
+      const bReq = b.point_required ?? 0;
+      return aReq - bReq;
+    });
+    let currentIndex = -1;
+    for (let i = 0; i < ordered.length; i += 1) {
+      const req = ordered[i].point_required ?? 0;
+      if (points >= req) {
+        currentIndex = i;
+      }
+    }
+    const currentTier = currentIndex >= 0 ? ordered[currentIndex] : null;
+    const nextTier = currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
+    const currentThreshold = currentTier?.point_required ?? 0;
+    const nextThreshold = nextTier?.point_required ?? currentThreshold;
+    let progress = 100;
+    let pointsToNextLevel = 0;
+    if (nextTier) {
+      const denom = nextThreshold - currentThreshold === 0 ? 1 : nextThreshold - currentThreshold;
+      progress = ((points - currentThreshold) / denom) * 100;
+      progress = Math.min(100, Math.max(0, progress));
+      pointsToNextLevel = Math.max(0, (nextThreshold - points));
+    } else {
+      progress = 100;
+      pointsToNextLevel = 0;
+    }
+    return {
+      currentLevel: currentTier?.name ?? null,
+      nextLevel: nextTier?.name ?? null,
+      progress,
+      pointsToNextLevel
+    };
+  }, [tiers, points]);
+
+  // Resolve display name from Supabase user data; fallback to email username; otherwise "Guest"
+  const displayName = useMemo(() => {
+    const pickNameFromMetadata = (metadata: unknown): string | null => {
+      if (metadata && typeof metadata === "object") {
+        const m = metadata as Record<string, unknown>;
+        const candidates = [m["display_name"], m["full_name"], m["name"]];
+        for (const value of candidates) {
+          if (typeof value === "string" && value.trim().length > 0) {
+            return value;
+          }
+        }
+      }
+      return null;
+    };
+
+    const fromMeta = pickNameFromMetadata(user?.user_metadata);
+    if (fromMeta !== null) {
+      return fromMeta;
+    }
+    const emailVal: unknown = user?.email;
+    if (typeof emailVal === "string" && emailVal.includes("@")) {
+      return emailVal.split("@")[0];
+    }
+    return "Guest";
+  }, [user?.user_metadata, user?.email]);
+
+  
 
   // Helper function to get a product image for a category
   const getCategoryProductImage = (categoryId: string): string => {
@@ -197,28 +273,28 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="px-6 pt-3 pb-10 relative z-10">
-            <h1 className="text-2xl font-bold tracking-tight"> <span className="opacity-90">{user?.display_name || mockUserData.name}</span></h1>
+            <h1 className="text-2xl font-bold tracking-tight"> <span className="opacity-90">{displayName}</span></h1>
             <div className="flex justify-between items-center mt-6">
               <div>
                 <div className="flex items-center">
                   <div className="flex flex-col space-y-3 w-full">
                     <div className="flex items-center">
-                      <span className="text-3xl font-bold tracking-tight">{mockUserData.points} Points</span>
+                      <span className="text-3xl font-bold tracking-tight">{points} Points</span>
                       <span className="ml-3 px-3 py-1 text-xs font-semibold bg-yellow-500 bg-opacity-20 text-yellow-300 rounded-full border border-yellow-500 border-opacity-20">
-                        {mockUserData.level}
+                        {levelData.currentLevel || "Member"}
                       </span>
                     </div>
                     <div className="w-full">
                       <div className="relative">
                         <div className="overflow-hidden h-1.5 flex rounded-full bg-white bg-opacity-20">
                           <div
-                            style={{ width: `${getLevelProgress().progress}%` }}
+                            style={{ width: `${levelData.progress}%` }}
                             className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-white bg-opacity-50 transition-all duration-500 rounded-full"
                           ></div>
                         </div>
                         <div className="mt-1.5">
                           <span className="text-xs font-medium text-white text-opacity-80">
-                            {getLevelProgress().pointsToNextLevel} points to {getLevelProgress().nextLevel}
+                            {levelData.nextLevel ? `${levelData.pointsToNextLevel} points to ${levelData.nextLevel}` : "Max tier reached"}
                           </span>
                         </div>
                       </div>
