@@ -75,7 +75,18 @@ export function ProductProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      setProducts(data);
+      // The RPC returns a flattened shape without medias/colors/sizes arrays.
+      // Map into our extended Product type with safe defaults.
+      const mapped = (data ?? []).map((p: any) => ({
+        ...p,
+        medias: [],
+        product_categories: [],
+        product_colors: [],
+        product_sizes: [],
+        stock_status: p.stock_status ?? "",
+        stock_count: typeof p.stock_count === "number" ? p.stock_count : 0,
+      })) as Product[];
+      setProducts(mapped);
     };
 
     fetchProducts();
@@ -134,7 +145,7 @@ export function ProductProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    const newProduct = data?.[0] as Product;
+    const newProduct = data?.[0] as Database["public"]["Tables"]["products"]["Row"];
 
     selectedColors.forEach(async (color) => {
       await createProductColor({
@@ -159,7 +170,16 @@ export function ProductProvider({ children }: PropsWithChildren) {
       });
     });
 
-    return data?.[0];
+    if (!data?.[0]) return undefined;
+    return {
+      ...(data[0] as Database["public"]["Tables"]["products"]["Row"]),
+      medias: [],
+      product_categories: [],
+      product_colors: [],
+      product_sizes: [],
+      stock_status: "",
+      stock_count: 0,
+    } as Product;
   };
 
   const updateProduct = async (
@@ -168,6 +188,10 @@ export function ProductProvider({ children }: PropsWithChildren) {
     selectedSizes: string[],
     selectedCategories: Category[]
   ) => {
+    if (!product.id) {
+      showAlert("Missing product id for update.", "error");
+      return;
+    }
     const { error } = await supabase
       .from("products")
       .update(product)
@@ -294,7 +318,7 @@ export function ProductProvider({ children }: PropsWithChildren) {
   ) => {
     const { error } = await supabase
       .from("products")
-      .update({ updated_at: new Date() })
+      .update({ updated_at: new Date().toISOString() })
       .eq("id", productId);
     if (error) {
       showAlert(error.message, "error");

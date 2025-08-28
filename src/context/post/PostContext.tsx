@@ -36,14 +36,15 @@ export function PostProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     const fetchPosts = async () => {
-      const { data: posts, error } = await supabase.from("posts").select("*");
+      const { data, error } = await supabase.from("posts").select("*");
 
       if (error) {
         showAlert(error.message, "error");
         return;
       }
 
-      setPosts(posts);
+      const mapped = (data ?? []).map((p) => ({ ...p, medias: [] })) as Post[];
+      setPosts(mapped);
     };
 
     fetchPosts();
@@ -89,14 +90,16 @@ export function PostProvider({ children }: PropsWithChildren) {
       showAlert(error.message, "error");
     }
 
-    return data?.[0];
+    const row = data?.[0];
+    if (!row) return undefined;
+    return { ...row, medias: [] } as Post;
   };
 
   const updatePost = async (post: PostUpdate) => {
     const { error } = await supabase
       .from("posts")
       .update(post)
-      .eq("id", post.id)
+      .eq("id", post.id!)
       .single();
 
     if (error) {

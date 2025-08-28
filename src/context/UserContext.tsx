@@ -128,27 +128,6 @@ export function UserProvider({ children }: PropsWithChildren) {
       showAlert("Error deleting user details", "error");
     }
 
-    // Delete Account Balance
-    const { error: userError } = await supabase
-      .from("account_balances")
-      .delete()
-      .eq("user_id", user.id);
-
-    if (userError) {
-      console.error("Error deleting account balance:", userError);
-      showAlert("Error deleting account balance", "error");
-    }
-
-    // Delete Baki
-    const { error: bakiError } = await supabase
-      .from("bakis")
-      .delete()
-      .eq("user_id", user.id);
-
-    if (bakiError) {
-      console.error("Error deleting baki:", bakiError);
-      showAlert("Error deleting baki", "error");
-    }
 
     const { error } = await supabase.auth.admin.deleteUser(user.id);
 

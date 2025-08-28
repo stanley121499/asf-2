@@ -50,7 +50,7 @@ export function ProductEventProvider({ children }: PropsWithChildren) {
           showAlert(error.message, "error");
           console.error(error);
         }
-        setProductEvents(data || []);
+        setProductEvents(data as unknown as ProductEvent[]);
         setLoading(false);
       } catch (error) {
         showAlert("An error occurred while fetching product events", "error");
@@ -118,6 +118,10 @@ export function ProductEventProvider({ children }: PropsWithChildren) {
   const updateProductEvent = async (productEvent: ProductEventUpdate) => {
     try {
       setLoading(true);
+      if (!productEvent.id) {
+        showAlert("Missing product event id for update.", "error");
+        return;
+      }
       const { error } = await supabase
         .from("product_events")
         .update(productEvent)

@@ -24,6 +24,8 @@ import { ProductReportProvider } from "./context/product/ProductReportContext";
 import { ProductSizeProvider } from "./context/product/ProductSizeContext";
 import { ProductStockLogProvider } from "./context/product/ProductStockLogContext";
 import { ProductStockProvider } from "./context/product/ProductStockContext";
+import { AddToCartProvider } from "./context/product/CartContext";
+import { AddToCartLogProvider } from "./context/product/AddToCartLogContext";
 import "./index.css";
 import DashboardPage from "./pages";
 import SignInPage from "./pages/authentication/sign-in";
@@ -56,7 +58,7 @@ import HomePageBuilder from "./pages/home-page-builder";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { HomePageElementProvider } from "./context/HomePageElementContext";
-import CartPage from "./pages/landing/CartPage";
+import CartPage from "./pages/landing/Cart";
 import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
 import ProductSection from "./pages/landing/ProductSection";
@@ -103,6 +105,8 @@ const App: React.FC = () => (
         ProductEventProvider,
         ProductStockLogProvider,
         ProductStockProvider,
+        AddToCartLogProvider,
+        AddToCartProvider,
         HomePageElementProvider,
         ConversationProvider,
       ]}>

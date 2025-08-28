@@ -23,7 +23,24 @@ const HomePageBuilder: React.FC = () => {
   const { showAlert } = useAlertContext();
 
   useEffect(() => {
-
+    // Initialize elements from context when existingElements changes
+    if (existingElements && existingElements.length > 0) {
+      // Convert context elements to local state format
+      const localElements = existingElements
+        .filter((element): element is typeof element & { type: string; targetId: string } => 
+          element.type !== null && element.targetId !== null
+        )
+        .map((element) => ({
+          id: element.id,
+          type: element.type,
+          properties: {
+            targetId: element.targetId,
+            amount: element.amount || 0,
+            contentType: element.contentType || "",
+          },
+        }));
+      setElements(localElements);
+    }
   }, [existingElements]);
   const handleDrop = (item: ElementProps) => {
     setElements((prev) => [...prev, item]);

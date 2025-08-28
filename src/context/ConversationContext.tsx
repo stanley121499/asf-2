@@ -166,6 +166,10 @@ export function ConversationProvider({ children }: PropsWithChildren) {
   };
 
   const updateConversation = async (conversation: ConversationUpdate) => {
+    if (!conversation.id) {
+      showAlert("Missing conversation id for update.", "error");
+      return;
+    }
     const { data, error } = await supabase
       .from("conversations")
       .update(conversation)
@@ -201,6 +205,10 @@ export function ConversationProvider({ children }: PropsWithChildren) {
   };
 
   const updateMessage = async (message: MessageUpdate) => {
+    if (!message.id) {
+      showAlert("Missing message id for update.", "error");
+      return;
+    }
     const { error } = await supabase
       .from("messages")
       .update(message)

@@ -11,12 +11,18 @@ import {
   useProductMediaContext,
 } from "../../context/product/ProductMediaContext";
 import { useNavigate } from "react-router-dom";
+import { useAddToCartContext } from "../../context/product/CartContext";
+import { useAddToCartLogContext } from "../../context/product/AddToCartLogContext";
+import { useAuthContext } from "../../context/AuthContext";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
   const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const { createAddToCart } = useAddToCartContext();
+  const { createAddToCartLog } = useAddToCartLogContext();
   const product: Product | undefined = products.find(
     (prod) => prod.id === productId
   );
@@ -39,25 +45,36 @@ const ProductDetails: React.FC = () => {
     );
   }
     
-  const tempAddToCart = () => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const firstMedia = productMedia[0];
-    
-    cart.push({
-      ...product,
-      quantity: 1,
-      media_url: firstMedia?.media_url || "/default-image.jpg",
-      price: product.price * 100,
+  /**
+   * Add product to cart in Supabase and navigate to cart.
+   */
+  const handleAddToCart = async (): Promise<void> => {
+    if (!product) {
+      return;
+    }
+    if (!user?.id) {
+      navigate("/authentication/sign-in");
+      return;
+    }
+    await createAddToCart({
+      product_id: product.id,
+      user_id: user.id,
+      amount: 1,
+      color_id: null,
+      size_id: null,
     });
-
-    localStorage.setItem("cart", JSON.stringify(cart));
+    await createAddToCartLog({
+      product_id: product.id,
+      action_type: "add",
+      amount: 1,
+    });
     navigate("/cart");
   };
 
   return (
     <>
       <NavbarHome />
-      <section className="py-8 bg-white md:py-16 dark:bg-gray-900 antialiased">
+      <section className="pt-20 md:pt-24 pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
         <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-16">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
             {/* Product Image */}
@@ -112,7 +129,7 @@ const ProductDetails: React.FC = () => {
               <div className="mt-6 sm:gap-4 sm:items-center sm:flex sm:mt-8">
                 <button
                   className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0"
-                  onClick={tempAddToCart}>
+                  onClick={handleAddToCart}>
                   Add to Cart
                 </button>
                 <CheckoutButton

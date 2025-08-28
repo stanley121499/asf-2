@@ -40,11 +40,11 @@ export function ProductFolderProvider({ children }: PropsWithChildren) {
       }
 
       // Populate product folder medias
-      for (const productFolder of productFolders) {
+      for (const productFolder of productFolders as ProductFolder[]) {
         productFolder.medias = productFolderMedias.filter((media) => media.product_folder_id === productFolder.id);
       }
 
-      setProductFolders(productFolders);
+      setProductFolders(productFolders as ProductFolder[]);
     };
 
     fetchProductFolders();
@@ -89,7 +89,7 @@ export function ProductFolderProvider({ children }: PropsWithChildren) {
     console.log("Data", data);
 
     showAlert("Product folder created successfully", "success");
-    return data?.[0];
+    return data?.[0] as ProductFolder;
   };
 
   const updateProductFolder = async (productFolder: ProductFolderUpdate) => {

@@ -52,14 +52,19 @@ export function ProductStockProvider({ children }: PropsWithChildren) {
         setLoading(true);
         const { data, error } = await supabase
           .from("product_stock")
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select("*")
+          .order("created_at", { ascending: false });
 
         if (error) {
           showAlert(error.message, "error");
           console.error(error);
         }
-        setProductStocks(data || []);
+        const mapped = (data ?? []).map((ps) => ({
+          ...ps,
+          product: ({} as any) as Product,
+          product_stock: ps,
+        })) as ProductStock[];
+        setProductStocks(mapped);
         setLoading(false);
       } catch (error) {
         showAlert(
@@ -97,6 +102,10 @@ export function ProductStockProvider({ children }: PropsWithChildren) {
     productStockLog: ProductStockUpdate
   ): Promise<void> {
     try {
+      if (!productStockLog.id) {
+        showAlert("Missing product stock id for update.", "error");
+        return;
+      }
       const { error } = await supabase
         .from("product_stock")
         .update(productStockLog)

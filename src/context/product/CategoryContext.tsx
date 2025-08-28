@@ -79,8 +79,10 @@ export function CategoryProvider({ children }: PropsWithChildren) {
   };
 
   const updateCategory = async (category: CategoryUpdate) => {
-
-    
+    if (!category.id) {
+      showAlert("Missing category id for update.", "error");
+      return;
+    }
     const { error } = await supabase.from("categories").update(category).eq("id", category.id);
     if (error) { showAlert(error.message, "error"); console.log(error.message); return; }
   };

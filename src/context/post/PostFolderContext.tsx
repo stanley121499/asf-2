@@ -30,7 +30,7 @@ export function PostFolderProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     const fetchPostFolders = async () => {
-      const { data: postFolders, error } = await supabase
+      const { data, error } = await supabase
         .from("post_folders")
         .select("*");
 
@@ -39,12 +39,14 @@ export function PostFolderProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      // Populate post folder medias
-      for (const postFolder of postFolders) {
-        postFolder.medias = postFolderMedias.filter((media) => media.post_folder_id === postFolder.id);
-      }
+      const folders = (data ?? []).map((pf) => ({
+        ...pf,
+        medias: postFolderMedias.filter(
+          (media) => media.post_folder_id === pf.id
+        ),
+      })) as PostFolder[];
 
-      setPostFolders(postFolders);
+      setPostFolders(folders);
     };
 
     fetchPostFolders();
@@ -89,7 +91,9 @@ export function PostFolderProvider({ children }: PropsWithChildren) {
     console.log("Data", data);
 
     showAlert("Post folder created successfully", "success");
-    return data?.[0];
+
+    const row = data?.[0] && { ...data[0], medias: [] } as PostFolder;
+    return row;
   };
 
   const updatePostFolder = async (postFolder: PostFolderUpdate) => {

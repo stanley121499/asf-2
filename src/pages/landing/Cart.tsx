@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { Button, Card, TextInput, Alert, Badge, Tooltip } from "flowbite-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Button, Card, Badge } from "flowbite-react";
 import NavbarHome from "../../components/navbar-home";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  HiOutlineShoppingCart, 
-  HiOutlineTrash, 
-  HiOutlineHeart, 
-  HiOutlineArrowLeft, 
-  HiOutlineShieldCheck, 
+import {
+  HiOutlineShoppingCart,
+  HiOutlineTrash,
+  HiOutlineArrowLeft,
+  HiOutlineShieldCheck,
   HiOutlineCreditCard,
   HiOutlineTruck,
-  HiOutlineInformationCircle,
   HiPlus,
-  HiMinus
+  HiMinus,
 } from "react-icons/hi";
+import { useAuthContext } from "../../context/AuthContext";
+import { useAddToCartContext } from "../../context/product/CartContext";
+import { useAddToCartLogContext } from "../../context/product/AddToCartLogContext";
+import { supabase } from "../../utils/supabaseClient";
+import type { Database } from "../../../database.types";
+import CheckoutButton from "../../components/stripe/CheckoutButton";
 
-// Define TypeScript interfaces
-interface CartItem {
+/**
+ * View model for cart items displayed on the page.
+ */
+interface CartItemViewModel {
   id: string;
+  productId: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -37,136 +44,227 @@ interface PromoCode {
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
-  
-  // Mock data for cart items
-  const initialItems: CartItem[] = [
-    {
-      id: "p1",
-      name: "Wireless Noise-Cancelling Headphones",
-      price: 99.99,
-      originalPrice: 149.99,
-      quantity: 1,
-      image: "/images/products/product-1.jpg",
-      variant: "Black",
-      inStock: true,
-      maxQuantity: 5
-    },
-    {
-      id: "p2",
-      name: "Smart Watch Series 5",
-      price: 199.99,
-      quantity: 2,
-      image: "/images/products/product-2.jpg",
-      variant: "Silver",
-      inStock: true,
-      maxQuantity: 3
-    },
-    {
-      id: "p3",
-      name: "Premium Leather Wallet",
-      price: 49.99,
-      originalPrice: 59.99,
-      quantity: 1,
-      image: "/images/products/product-3.jpg",
-      variant: "Brown",
-      inStock: true,
-      maxQuantity: 10
-    }
-  ];
+  const { user } = useAuthContext();
+  const { add_to_carts, updateAddToCart, deleteAddToCart } = useAddToCartContext();
+  const { createAddToCartLog } = useAddToCartLogContext();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialItems);
-  const [promoCode, setPromoCode] = useState<string>("");
-  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
-  const [promoError, setPromoError] = useState<string | null>(null);
+  const [cartItems, setCartItems] = useState<CartItemViewModel[]>([]);
+  // Promo codes removed per requirements
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
 
-  // Calculate cart totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discount = appliedPromo ? (
-    appliedPromo.type === "percentage" 
-      ? subtotal * (appliedPromo.discount / 100) 
-      : appliedPromo.discount
-  ) : 0;
-  
-  // Fixed shipping cost for simplicity
-  const shipping = subtotal > 0 ? 5.99 : 0;
-  
-  // Estimated tax (for example, 8%)
-  const taxRate = 0.08;
-  const tax = (subtotal - discount) * taxRate;
-  
-  // Total
-  const total = subtotal - discount + shipping + tax;
+  /**
+   * Derive only current user's cart rows from the context (keeps in sync in real-time).
+   */
+  const userCartRows = useMemo(() => {
+    if (!user?.id) {
+      return [] as Database["public"]["Tables"]["add_to_carts"]["Row"][];
+    }
+    return add_to_carts.filter((row) => row.user_id === user.id);
+  }, [add_to_carts, user]);
 
-  // Handle item quantity change
-  const handleQuantityChange = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    
-    setCartItems(cartItems.map(item => {
-      if (item.id === id) {
-        // Don't allow exceeding max quantity
-        const quantity = Math.min(newQuantity, item.maxQuantity);
-        return { ...item, quantity };
+  /**
+   * Fetch product details, media, color and size labels for the user's cart rows
+   * and map them into the page view model.
+   */
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function hydrateCart(): Promise<void> {
+      // If not authenticated or no cart rows, clear items
+      if (!user?.id || userCartRows.length === 0) {
+        setCartItems([]);
+        return;
       }
-      return item;
-    }));
-  };
 
-  // Handle item removal
-  const handleRemoveItem = (id: string) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
+      // Collect ids to batch query
+      const productIds = Array.from(
+        new Set(userCartRows.map((r) => r.product_id))
+      );
+      const colorIds = Array.from(
+        new Set(
+          userCartRows
+            .map((r) => r.color_id)
+            .filter((v): v is string => typeof v === "string")
+        )
+      );
+      const sizeIds = Array.from(
+        new Set(
+          userCartRows
+            .map((r) => r.size_id)
+            .filter((v): v is string => typeof v === "string")
+        )
+      );
 
-  // Handle move to wishlist
-  const handleMoveToWishlist = (id: string) => {
-    // In a real app, this would add the item to the wishlist in your state management
-    console.log(`Moving item ${id} to wishlist`);
-    
-    // Remove from cart
-    handleRemoveItem(id);
-  };
+      // Parallel batched fetches from Supabase
+      const [productsRes, mediasRes, colorsRes, sizesRes] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id,name,price")
+          .in("id", productIds),
+        supabase
+          .from("product_medias")
+          .select("product_id,media_url,arrangement")
+          .in("product_id", productIds),
+        colorIds.length > 0
+          ? supabase
+              .from("product_colors")
+              .select("id,color")
+              .in("id", colorIds)
+          : Promise.resolve({ data: [], error: null } as const),
+        sizeIds.length > 0
+          ? supabase
+              .from("product_sizes")
+              .select("id,size")
+              .in("id", sizeIds)
+          : Promise.resolve({ data: [], error: null } as const),
+      ]);
 
-  // Apply promo code
-  const handleApplyPromoCode = () => {
-    // Reset previous error
-    setPromoError(null);
-    
-    // Simple validation
-    if (!promoCode.trim()) {
-      setPromoError("Please enter a promo code");
+      // Basic error handling for each response
+      if (productsRes.error) {
+        // Keep UI usable even if one query fails
+        // eslint-disable-next-line no-console
+        console.error(productsRes.error);
+      }
+      if (mediasRes.error) {
+        // eslint-disable-next-line no-console
+        console.error(mediasRes.error);
+      }
+      if (colorsRes && "error" in colorsRes && colorsRes.error) {
+        // eslint-disable-next-line no-console
+        console.error(colorsRes.error);
+      }
+      if (sizesRes && "error" in sizesRes && sizesRes.error) {
+        // eslint-disable-next-line no-console
+        console.error(sizesRes.error);
+      }
+
+      const products = (productsRes.data ?? []).reduce(
+        (acc: Record<string, { id: string; name: string; price: number }>, p) => {
+          acc[p.id] = p as { id: string; name: string; price: number };
+          return acc;
+        },
+        {}
+      );
+
+      // Choose the media with the smallest arrangement per product id
+      const firstMediaByProduct: Record<string, string> = {};
+      (mediasRes.data ?? [])
+        .sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0))
+        .forEach((m) => {
+          if (!firstMediaByProduct[m.product_id]) {
+            firstMediaByProduct[m.product_id] = m.media_url as string;
+          }
+        });
+
+      const colorLabelById: Record<string, string> = {};
+      if (colorsRes && "data" in colorsRes) {
+        (colorsRes.data as Array<{ id: string; color: string }>).forEach(
+          (c) => {
+            colorLabelById[c.id] = c.color;
+          }
+        );
+      }
+      const sizeLabelById: Record<string, string> = {};
+      if (sizesRes && "data" in sizesRes) {
+        (sizesRes.data as Array<{ id: string; size: string }>).forEach((s) => {
+          sizeLabelById[s.id] = s.size;
+        });
+      }
+
+      const hydrated: CartItemViewModel[] = userCartRows.map((row) => {
+        const product = products[row.product_id];
+        const imageUrl = firstMediaByProduct[row.product_id] || "/images/products/product-1.jpg";
+        const colorText = row.color_id ? colorLabelById[row.color_id] : "";
+        const sizeText = row.size_id ? sizeLabelById[row.size_id] : "";
+        const variant = [colorText, sizeText].filter((t) => t && t.length > 0).join(" / ");
+
+        return {
+          id: row.id,
+          productId: row.product_id,
+          name: product?.name ?? "Product",
+          price: typeof product?.price === "number" ? product.price : 0,
+          originalPrice: undefined,
+          quantity: typeof row.amount === "number" ? row.amount : 1,
+          image: imageUrl,
+          variant: variant,
+          inStock: true,
+          maxQuantity: 99,
+        };
+      });
+
+      if (!isCancelled) {
+        setCartItems(hydrated);
+      }
+    }
+
+    hydrateCart();
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, userCartRows]);
+
+  // Calculate cart totals
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  // Total equals subtotal (no promo code, shipping, or estimated tax)
+  const total = subtotal;
+
+  /**
+   * Update quantity for a cart item. Persists to DB and logs the action.
+   */
+  const handleQuantityChange = async (
+    id: string,
+    newQuantity: number
+  ): Promise<void> => {
+    if (newQuantity < 1) {
       return;
     }
-    
-    // Check if code is valid (mock validation)
-    if (promoCode.toUpperCase() === "DISCOUNT20") {
-      setAppliedPromo({
-        code: "DISCOUNT20",
-        discount: 20,
-        type: "percentage",
-        valid: true
+    const current = cartItems.find((i) => i.id === id);
+    const clamped = current
+      ? Math.min(newQuantity, current.maxQuantity)
+      : newQuantity;
+
+    // Optimistic UI update
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: clamped } : item))
+    );
+
+    // Persist to DB
+    await updateAddToCart({ id, amount: clamped });
+
+    // Log the update
+    const productId = current?.productId ?? "";
+    if (productId) {
+      await createAddToCartLog({
+        product_id: productId,
+        action_type: "update",
+        amount: clamped,
       });
-      setPromoCode("");
-    } else if (promoCode.toUpperCase() === "SAVE10") {
-      setAppliedPromo({
-        code: "SAVE10",
-        discount: 10,
-        type: "fixed",
-        valid: true
-      });
-      setPromoCode("");
-    } else {
-      setPromoError("Invalid promo code. Please try again.");
     }
   };
 
-  // Remove applied promo code
-  const handleRemovePromoCode = () => {
-    setAppliedPromo(null);
+  /**
+   * Remove a cart item. Persists to DB and logs the action.
+   */
+  const handleRemoveItem = async (id: string): Promise<void> => {
+    const current = cartItems.find((i) => i.id === id);
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    await deleteAddToCart(id);
+    if (current?.productId) {
+      await createAddToCartLog({
+        product_id: current.productId,
+        action_type: "delete",
+        amount: 0,
+      });
+    }
   };
+
+  // Wishlist and promo features removed per requirements
 
   // Proceed to checkout
   const handleCheckout = () => {
-    // Navigate directly to the checkout page
     navigate("/checkout");
   };
 
@@ -178,10 +276,33 @@ const CartPage: React.FC = () => {
     }).format(amount);
   };
 
+  // If user not logged in, prompt to sign in
+  if (!user) {
+    return (
+      <>
+        <NavbarHome />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24">
+          <div className="max-w-3xl mx-auto">
+            <Card className="mb-6">
+              <div className="text-center py-10">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Please sign in to view your cart
+                </h3>
+                <Link to="/authentication/sign-in">
+                  <Button color="blue">Sign In</Button>
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <NavbarHome />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <Link to="/product-section" className="inline-flex items-center text-blue-600 hover:underline">
@@ -226,7 +347,7 @@ const CartPage: React.FC = () => {
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex flex-col md:flex-row border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
                         <div className="w-full md:w-32 h-32 flex-shrink-0 mb-4 md:mb-0">
-                          <Link to={`/product-details/${item.id}`}>
+                          <Link to={`/product-details/${item.productId}`}>
                             <img 
                               src={item.image} 
                               alt={item.name} 
@@ -237,11 +358,11 @@ const CartPage: React.FC = () => {
                         <div className="flex-grow md:ml-4">
                           <div className="flex flex-col md:flex-row justify-between">
                             <div>
-                              <Link to={`/product-details/${item.id}`} className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600">
+                              <Link to={`/product-details/${item.productId}`} className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600">
                                 {item.name}
                               </Link>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Variant: {item.variant}
+                                Variant: {item.variant || "Default"}
                               </p>
                               
                               {/* Price */}
@@ -271,7 +392,7 @@ const CartPage: React.FC = () => {
                               <Button 
                                 size="xs" 
                                 color="light"
-                                onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                onClick={() => void handleQuantityChange(item.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <HiMinus className="h-3 w-3" />
@@ -282,7 +403,7 @@ const CartPage: React.FC = () => {
                               <Button 
                                 size="xs" 
                                 color="light"
-                                onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                                onClick={() => void handleQuantityChange(item.id, item.quantity + 1)}
                                 disabled={item.quantity >= item.maxQuantity}
                               >
                                 <HiPlus className="h-3 w-3" />
@@ -298,15 +419,7 @@ const CartPage: React.FC = () => {
                               <Button 
                                 size="xs" 
                                 color="light"
-                                onClick={() => handleMoveToWishlist(item.id)}
-                              >
-                                <HiOutlineHeart className="mr-1 h-4 w-4" />
-                                Save
-                              </Button>
-                              <Button 
-                                size="xs" 
-                                color="light"
-                                onClick={() => handleRemoveItem(item.id)}
+                                onClick={() => void handleRemoveItem(item.id)}
                               >
                                 <HiOutlineTrash className="mr-1 h-4 w-4" />
                                 Remove
@@ -360,66 +473,7 @@ const CartPage: React.FC = () => {
                     Order Summary
                   </h2>
                   
-                  {/* Promo Code Section */}
-                  <div className="mb-6">
-                    {appliedPromo ? (
-                      <div className="bg-green-50 dark:bg-green-900 border border-green-100 dark:border-green-800 rounded-lg p-3 mb-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-medium text-green-800 dark:text-green-100">
-                              {appliedPromo.code}
-                              {appliedPromo.type === "percentage" 
-                                ? ` (${appliedPromo.discount}% off)` 
-                                : ` ($${appliedPromo.discount.toFixed(2)} off)`}
-                            </p>
-                            <p className="text-xs text-green-700 dark:text-green-200">
-                              Promo code applied successfully!
-                            </p>
-                          </div>
-                          <Button 
-                            size="xs" 
-                            color="light"
-                            onClick={handleRemovePromoCode}
-                          >
-                            <HiOutlineTrash className="mr-1 h-4 w-4" />
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Have a promo code?
-                        </p>
-                        <div className="flex">
-                          <TextInput
-                            type="text"
-                            placeholder="Enter promo code"
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value)}
-                            className="flex-grow"
-                          />
-                          <Button 
-                            color="light"
-                            className="ml-2"
-                            onClick={handleApplyPromoCode}
-                          >
-                            Apply
-                          </Button>
-                        </div>
-                        {promoError && (
-                          <p className="text-xs text-red-600 mt-1">
-                            {promoError}
-                          </p>
-                        )}
-                        <div className="mt-2">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Try codes: &quot;DISCOUNT20&quot; for 20% off or &quot;SAVE10&quot; for $10 off
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  {/* Promo code UI removed */}
                   
                   {/* Price Details */}
                   <div className="space-y-3">
@@ -427,25 +481,7 @@ const CartPage: React.FC = () => {
                       <span className="text-gray-700 dark:text-gray-300">Subtotal</span>
                       <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
                     </div>
-                    {discount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount</span>
-                        <span>-{formatCurrency(discount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-700 dark:text-gray-300">Shipping</span>
-                      <span className="text-gray-900 dark:text-white">{formatCurrency(shipping)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="flex items-center text-gray-700 dark:text-gray-300">
-                        Estimated Tax
-                        <Tooltip content="Tax calculated based on your shipping address">
-                          <HiOutlineInformationCircle className="ml-1 h-4 w-4 text-gray-400" />
-                        </Tooltip>
-                      </span>
-                      <span className="text-gray-900 dark:text-white">{formatCurrency(tax)}</span>
-                    </div>
+                    
                     
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                       <div className="flex justify-between font-bold">
@@ -455,34 +491,19 @@ const CartPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Checkout Button */}
+                  {/* Checkout Button (Stripe) */}
                   <div className="mt-6">
-                    <Button 
-                      onClick={handleCheckout} 
-                      color="blue" 
-                      className="w-full mb-2 py-3 font-medium text-base"
-                      disabled={cartItems.length === 0 || isCheckingOut}
-                    >
-                      {isCheckingOut ? (
-                        <>
-                          <div className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-t-transparent" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <HiOutlineCreditCard className="mr-2 h-5 w-5" />
-                          Proceed to Checkout
-                        </>
-                      )}
-                    </Button>
+                    <CheckoutButton
+                      items={cartItems.map((i) => ({
+                        name: i.name,
+                        quantity: i.quantity,
+                        price: Math.round(i.price * 100),
+                      }))}
+                      customerId={user.id}
+                      buttonTitle="Proceed to Checkout"
+                    />
                     
-                    <div className="flex items-center justify-center mt-4">
-                      <img 
-                        src="/images/payment-methods.png" 
-                        alt="Payment Methods" 
-                        className="h-6"
-                      />
-                    </div>
+                    {/* Payment methods image removed */}
                   </div>
                 </Card>
               </div>

@@ -90,8 +90,8 @@ const HomePage: React.FC = () => {
   // Sort products by latest
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => {
-      const dateA = new Date(a.udpated_at || a.created_at || 0);
-      const dateB = new Date(b.udpated_at || b.created_at || 0);
+      const dateA = new Date(a.updated_at || a.created_at || 0);
+      const dateB = new Date(b.updated_at || b.created_at || 0);
       return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
     });
   }, [products]);

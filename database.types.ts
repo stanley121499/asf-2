@@ -960,7 +960,7 @@ export type Database = {
           stock_code: string | null
           stock_place: string | null
           time_post: string | null
-          udpated_at: string
+          updated_at: string
           warranty_description: string | null
           warranty_period: string | null
         }
@@ -982,7 +982,7 @@ export type Database = {
           stock_code?: string | null
           stock_place?: string | null
           time_post?: string | null
-          udpated_at?: string
+          updated_at?: string
           warranty_description?: string | null
           warranty_period?: string | null
         }
@@ -1004,7 +1004,7 @@ export type Database = {
           stock_code?: string | null
           stock_place?: string | null
           time_post?: string | null
-          udpated_at?: string
+          updated_at?: string
           warranty_description?: string | null
           warranty_period?: string | null
         }
