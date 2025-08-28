@@ -59,7 +59,8 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
           showAlert(error.message, "error");
           console.error(error);
         }
-        setProductStockLogs(data || []);
+        
+        // setProductStockLogs(data || []);
         setLoading(false);
       } catch (error) {
         showAlert(
@@ -152,7 +153,7 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
       const { error } = await supabase
         .from("product_stock_logs")
         .update(productStockLog)
-        .eq("id", productStockLog.id);
+        .eq("id", productStockLog.id!);
       if (error) {
         showAlert(error.message, "error");
         console.error(error);

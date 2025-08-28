@@ -4,7 +4,6 @@ import {
   Card,
   TextInput,
   Label,
-  Radio,
   Checkbox,
   Select,
   Accordion,
@@ -15,15 +14,11 @@ import NavbarHome from "../../components/navbar-home";
 import { Link, useNavigate } from "react-router-dom";
 import {
   HiOutlineShoppingCart,
-  HiOutlineCreditCard,
-  HiOutlineCash,
   HiOutlineLocationMarker,
   HiOutlineDocumentText,
   HiOutlineCurrencyDollar,
   HiOutlineChevronLeft,
   HiOutlineShieldCheck,
-  HiOutlineExclamationCircle,
-  HiOutlineTruck,
 } from "react-icons/hi";
 
 // TypeScript interfaces
@@ -48,15 +43,8 @@ interface CartItem {
   variant: string;
 }
 
-interface PaymentMethod {
-  id: string;
-  type: "credit_card" | "paypal" | "apple_pay";
-  details: string;
-}
-
 enum CheckoutStep {
   Shipping = "shipping",
-  Payment = "payment",
   Review = "review",
   Confirmation = "confirmation",
 }
@@ -92,20 +80,6 @@ const CheckoutPage: React.FC = () => {
     },
   ];
 
-  // Sample payment methods
-  const savedPaymentMethods: PaymentMethod[] = [
-    {
-      id: "cc1",
-      type: "credit_card",
-      details: "Visa ending in 4242",
-    },
-    {
-      id: "pp1",
-      type: "paypal",
-      details: "john.doe@example.com",
-    },
-  ];
-
   // Checkout state
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(
     CheckoutStep.Shipping
@@ -127,19 +101,7 @@ const CheckoutPage: React.FC = () => {
   const [useAsBilling, setUseAsBilling] = useState<boolean>(true);
   const [billingAddress, setBillingAddress] =
     useState<Address>(shippingAddress);
-  const [shippingMethod, setShippingMethod] = useState<string>("standard");
-
-  // Payment details
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
-    savedPaymentMethods[0].id
-  );
-  const [addNewCard, setAddNewCard] = useState<boolean>(false);
-  const [newCardDetails, setNewCardDetails] = useState({
-    cardNumber: "",
-    cardName: "",
-    expDate: "",
-    cvv: "",
-  });
+  // Payment step and methods removed
 
   // Order details
   const [orderNotes, setOrderNotes] = useState<string>("");
@@ -153,10 +115,7 @@ const CheckoutPage: React.FC = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = shippingMethod === "express" ? 14.99 : 5.99;
-  const taxRate = 0.08;
-  const tax = subtotal * taxRate;
-  const total = subtotal + shipping + tax;
+  const total = subtotal;
 
   // Format currency
   const formatCurrency = (amount: number): string => {
@@ -172,18 +131,10 @@ const CheckoutPage: React.FC = () => {
     if (!useAsBilling) {
       // In a real app, validate billing address here
     }
-    setCurrentStep(CheckoutStep.Payment);
-    window.scrollTo(0, 0);
-  };
-
-  const handlePaymentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (addNewCard) {
-      // In a real app, validate card details here
-    }
     setCurrentStep(CheckoutStep.Review);
     window.scrollTo(0, 0);
   };
+  
 
   const handlePlaceOrder = async () => {
     if (!agreeToTerms) {
@@ -218,10 +169,8 @@ const CheckoutPage: React.FC = () => {
 
   // Handle navigation between steps
   const goToPreviousStep = () => {
-    if (currentStep === CheckoutStep.Payment) {
+    if (currentStep === CheckoutStep.Review) {
       setCurrentStep(CheckoutStep.Shipping);
-    } else if (currentStep === CheckoutStep.Review) {
-      setCurrentStep(CheckoutStep.Payment);
     }
     window.scrollTo(0, 0);
   };
@@ -410,88 +359,7 @@ const CheckoutPage: React.FC = () => {
     );
   };
 
-  // Render card form for new credit card
-  const renderCardForm = () => {
-    return (
-      <div className="mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <div className="mb-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <TextInput
-                id="cardNumber"
-                type="text"
-                placeholder="1234 5678 9012 3456"
-                value={newCardDetails.cardNumber}
-                onChange={(e) =>
-                  setNewCardDetails({
-                    ...newCardDetails,
-                    cardNumber: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-          </div>
-          <div className="md:col-span-2">
-            <div className="mb-2">
-              <Label htmlFor="cardName">Name on Card</Label>
-              <TextInput
-                id="cardName"
-                type="text"
-                placeholder="John Doe"
-                value={newCardDetails.cardName}
-                onChange={(e) =>
-                  setNewCardDetails({
-                    ...newCardDetails,
-                    cardName: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <div className="mb-2">
-              <Label htmlFor="expDate">Expiration Date</Label>
-              <TextInput
-                id="expDate"
-                type="text"
-                placeholder="MM/YY"
-                value={newCardDetails.expDate}
-                onChange={(e) =>
-                  setNewCardDetails({
-                    ...newCardDetails,
-                    expDate: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <div className="mb-2">
-              <Label htmlFor="cvv">Security Code (CVV)</Label>
-              <TextInput
-                id="cvv"
-                type="text"
-                placeholder="123"
-                value={newCardDetails.cvv}
-                onChange={(e) =>
-                  setNewCardDetails({ ...newCardDetails, cvv: e.target.value })
-                }
-                required
-              />
-            </div>
-          </div>
-        </div>
-        <div className="mt-4">
-          <Checkbox id="saveCard" className="mr-2" />
-          <Label htmlFor="saveCard">Save this card for future purchases</Label>
-        </div>
-      </div>
-    );
-  };
+  // Payment method capture removed
 
   // Render order summary for sidebar
   const renderOrderSummary = () => {
@@ -520,18 +388,6 @@ const CheckoutPage: React.FC = () => {
             <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
             <span className="text-gray-900 dark:text-white">
               {formatCurrency(subtotal)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Shipping</span>
-            <span className="text-gray-900 dark:text-white">
-              {formatCurrency(shipping)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Tax</span>
-            <span className="text-gray-900 dark:text-white">
-              {formatCurrency(tax)}
             </span>
           </div>
         </div>
@@ -585,54 +441,7 @@ const CheckoutPage: React.FC = () => {
               </Card>
             )}
 
-            <Card className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <HiOutlineTruck className="mr-2 h-6 w-6" />
-                Shipping Method
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <Radio
-                    id="shipping-standard"
-                    name="shipping"
-                    value="standard"
-                    checked={shippingMethod === "standard"}
-                    onChange={() => setShippingMethod("standard")}
-                    className="mr-2"
-                  />
-                  <div>
-                    <Label htmlFor="shipping-standard" className="font-medium">
-                      Standard Shipping
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Delivery in 3-5 business days
-                    </p>
-                    <p className="text-sm font-medium">$5.99</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <Radio
-                    id="shipping-express"
-                    name="shipping"
-                    value="express"
-                    checked={shippingMethod === "express"}
-                    onChange={() => setShippingMethod("express")}
-                    className="mr-2"
-                  />
-                  <div>
-                    <Label htmlFor="shipping-express" className="font-medium">
-                      Express Shipping
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Delivery in 1-2 business days
-                    </p>
-                    <p className="text-sm font-medium">$14.99</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            
 
             <div className="flex justify-end">
               <Button type="submit" color="blue">
@@ -642,72 +451,7 @@ const CheckoutPage: React.FC = () => {
           </form>
         );
 
-      case CheckoutStep.Payment:
-        return (
-          <form onSubmit={handlePaymentSubmit}>
-            <Card className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <HiOutlineCreditCard className="mr-2 h-6 w-6" />
-                Payment Method
-              </h2>
-
-              <div className="space-y-4">
-                {savedPaymentMethods.map((method) => (
-                  <div key={method.id} className="flex items-center">
-                    <Radio
-                      id={method.id}
-                      name="paymentMethod"
-                      value={method.id}
-                      checked={
-                        selectedPaymentMethod === method.id && !addNewCard
-                      }
-                      onChange={() => {
-                        setSelectedPaymentMethod(method.id);
-                        setAddNewCard(false);
-                      }}
-                      className="mr-2"
-                    />
-                    <div className="flex items-center">
-                      {method.type === "credit_card" ? (
-                        <HiOutlineCreditCard className="mr-2 h-5 w-5 text-gray-600" />
-                      ) : (
-                        <HiOutlineCash className="mr-2 h-5 w-5 text-gray-600" />
-                      )}
-                      <Label htmlFor={method.id} className="font-medium">
-                        {method.details}
-                      </Label>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex items-center">
-                  <Radio
-                    id="newCard"
-                    name="paymentMethod"
-                    checked={addNewCard}
-                    onChange={() => setAddNewCard(true)}
-                    className="mr-2"
-                  />
-                  <Label htmlFor="newCard" className="font-medium">
-                    Add a new credit card
-                  </Label>
-                </div>
-
-                {addNewCard && renderCardForm()}
-              </div>
-            </Card>
-
-            <div className="flex justify-between">
-              <Button type="button" color="light" onClick={goToPreviousStep}>
-                <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
-                Back to Shipping
-              </Button>
-              <Button type="submit" color="blue">
-                Continue to Review
-              </Button>
-            </div>
-          </form>
-        );
+      
 
       case CheckoutStep.Review:
         return (
@@ -739,16 +483,7 @@ const CheckoutPage: React.FC = () => {
                         <p>{shippingAddress.phone}</p>
                       </div>
 
-                      <div className="mt-4">
-                        <p className="font-medium">Shipping Method:</p>
-                        <p>
-                          {shippingMethod === "standard"
-                            ? "Standard"
-                            : "Express"}{" "}
-                          Shipping (
-                          {shippingMethod === "standard" ? "$5.99" : "$14.99"})
-                        </p>
-                      </div>
+                      
                     </Accordion.Content>
                   </Accordion.Panel>
 
@@ -773,31 +508,7 @@ const CheckoutPage: React.FC = () => {
                     </Accordion.Content>
                   </Accordion.Panel>
 
-                  <Accordion.Panel key="payment">
-                    <Accordion.Title>Payment Method</Accordion.Title>
-                    <Accordion.Content>
-                      {addNewCard ? (
-                        <div>
-                          <p className="font-medium">New Credit Card</p>
-                          <p>
-                            Card ending in {newCardDetails.cardNumber.slice(-4)}
-                          </p>
-                          <p>Name: {newCardDetails.cardName}</p>
-                          <p>Expires: {newCardDetails.expDate}</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p>
-                            {
-                              savedPaymentMethods.find(
-                                (m) => m.id === selectedPaymentMethod
-                              )?.details
-                            }
-                          </p>
-                        </div>
-                      )}
-                    </Accordion.Content>
-                  </Accordion.Panel>
+                  
 
                   <Accordion.Panel key="items">
                     <Accordion.Title>Order Items</Accordion.Title>
@@ -877,7 +588,7 @@ const CheckoutPage: React.FC = () => {
             <div className="flex justify-between">
               <Button type="button" color="light" onClick={goToPreviousStep}>
                 <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
-                Back to Payment
+                Back to Shipping
               </Button>
               <Button
                 type="button"
@@ -963,17 +674,13 @@ const CheckoutPage: React.FC = () => {
         <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
           {[
             { key: CheckoutStep.Shipping, label: "Shipping" },
-            { key: CheckoutStep.Payment, label: "Payment" },
             { key: CheckoutStep.Review, label: "Review" },
             { key: CheckoutStep.Confirmation, label: "Confirmation" },
           ].map((step, index) => {
             const isActive = currentStep === step.key;
             const isPassed =
-              (currentStep === CheckoutStep.Payment &&
-                step.key === CheckoutStep.Shipping) ||
               (currentStep === CheckoutStep.Review &&
-                (step.key === CheckoutStep.Shipping ||
-                  step.key === CheckoutStep.Payment)) ||
+                step.key === CheckoutStep.Shipping) ||
               currentStep === CheckoutStep.Confirmation;
 
             return (

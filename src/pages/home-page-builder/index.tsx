@@ -23,17 +23,7 @@ const HomePageBuilder: React.FC = () => {
   const { showAlert } = useAlertContext();
 
   useEffect(() => {
-    setElements(
-      existingElements.map((element) => ({
-        id: element.id,
-        type: element.type,
-        properties: {
-          targetId: element.targetId,
-          amount: element.amount || 0,
-          contentType: element.contentType || "",
-        },
-      }))
-    );
+    
   }, [existingElements]);
   const handleDrop = (item: ElementProps) => {
     setElements((prev) => [...prev, item]);

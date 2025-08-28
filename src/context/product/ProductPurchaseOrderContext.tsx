@@ -67,7 +67,12 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
         showAlert(error.message, "error");
         console.error(error);
       } else {
-        setProductPurchaseOrders(data!);
+        const mapped = (data ?? []) as Array<
+          Database["public"]["Functions"]["fetch_purchase_orders"]["Returns"][number]
+        >;
+        // The RPC return type does not include product_event property in our extended type.
+        // Map only known fields to our context's ProductPurchaseOrder by casting minimally.
+        setProductPurchaseOrders(mapped as unknown as ProductPurchaseOrder[]);
         setLoading(false);
       }
     };
@@ -166,6 +171,10 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
   async function updateProductPurchaseOrder(
     product_purchase_order: ProductPurchaseOrderUpdate
   ) {
+    if (!product_purchase_order.id) {
+      showAlert("Missing purchase order id for update.", "error");
+      return;
+    }
     const { error } = await supabase
       .from("product_purchase_orders")
       .update(product_purchase_order)
