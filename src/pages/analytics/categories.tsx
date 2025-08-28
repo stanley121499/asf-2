@@ -1,9 +1,35 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useProductContext } from "../../context/product/ProductContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import LineChart from "../../components/analytics/LineChart";
+import { FiMessageCircle } from "react-icons/fi";
+
+/**
+ * Floating Chat Button component specifically for analytics pages
+ * Positioned to avoid conflict with mobile sidebar menu button
+ */
+const FloatingChatButton: React.FC = function () {
+  const navigate = useNavigate();
+
+  const handleChatClick = () => {
+    navigate("/internal-chat");
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleChatClick}
+      className="fixed bottom-20 right-6 lg:bottom-6 z-40 p-4 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110"
+      aria-label="Open team chat"
+      title="Team Chat"
+    >
+      <FiMessageCircle className="w-6 h-6" />
+    </button>
+  );
+};
 
 const CategoriesAnalyticsPage: React.FC = function () {
   const { products, loading } = useProductContext();
@@ -402,6 +428,8 @@ const CategoriesAnalyticsPage: React.FC = function () {
           </div>
         </div>
       </div>
+
+      <FloatingChatButton />
     </NavbarSidebarLayout>
   );
 };
