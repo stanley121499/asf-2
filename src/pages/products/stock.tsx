@@ -119,7 +119,7 @@ const ProductStockDetails: React.FC = () => {
                     key={category.id}
                     color="info"
                     className="mr-2 mb-1 flex items-center">
-                    {category.name}
+                    {/* {category.name} */}
                   </Badge>
                 ))}
               </div>

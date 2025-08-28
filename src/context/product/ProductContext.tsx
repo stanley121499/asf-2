@@ -11,14 +11,17 @@ import { useAlertContext } from "../AlertContext";
 import { ProductMedia } from "./ProductMediaContext";
 import { Category } from "./CategoryContext";
 import { useProductCategoryContext } from "./ProductCategoryContext";
+import { ProductCategory } from "./ProductCategoryContext";
 import { useProductSizeContext } from "./ProductSizeContext";
 import { useProductColorContext } from "./ProductColorContext";
 import { ProductColor } from "./ProductColorContext";
 import { ProductSize } from "./ProductSizeContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
+/** Product with computed client-side fields */
 export type Product = Database["public"]["Tables"]["products"]["Row"] & {
   medias: ProductMedia[];
-  product_categories: any[];
+  product_categories: ProductCategory[];
   product_colors: ProductColor[];
   product_sizes: ProductSize[];
   stock_status: string;
@@ -46,11 +49,11 @@ interface ProductContextProps {
   loading: boolean;
   updateProductTimePost: (
     productId: string,
-    productTimePost: string
+    _productTimePost: string
   ) => Promise<void>;
 }
 
-const ProductContext = createContext<ProductContextProps>(undefined!);
+const ProductContext = createContext<ProductContextProps | undefined>(undefined);
 
 export function ProductProvider({ children }: PropsWithChildren) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -65,9 +68,8 @@ export function ProductProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     const fetchProducts = async () => {
-      const { data, error } = await supabase.rpc(
-        "fetch_products_with_computed_attributes"
-      );
+      type RpcReturnedProduct = Database["public"]["Functions"]["fetch_products_with_computed_attributes"]["Returns"][number];
+      const { data, error } = await supabase.rpc("fetch_products_with_computed_attributes");
 
       if (error) {
         showAlert(error.message, "error");
@@ -75,51 +77,78 @@ export function ProductProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      // The RPC returns a flattened shape without medias/colors/sizes arrays.
-      // Map into our extended Product type with safe defaults.
-      const mapped = (data ?? []).map((p: any) => ({
-        ...p,
-        medias: [],
-        product_categories: [],
-        product_colors: [],
-        product_sizes: [],
-        stock_status: p.stock_status ?? "",
-        stock_count: typeof p.stock_count === "number" ? p.stock_count : 0,
-      })) as Product[];
+      // Map RPC result to Product with safe defaults.
+      // Merge base rows to include classification ids that RPC omits
+      const ids: string[] = (data ?? []).map((p) => (p as { id: string }).id);
+      let rowsById: Record<string, Database["public"]["Tables"]["products"]["Row"]> = {};
+      if (ids.length > 0) {
+        const { data: baseRows } = await supabase
+          .from("products")
+          .select("*")
+          .in("id", ids);
+        if (baseRows) {
+          rowsById = Object.fromEntries(baseRows.map((r) => [r.id, r]));
+        }
+      }
+
+      const mapped: Product[] = (data ?? []).map((p: RpcReturnedProduct) => {
+        const id = (p as { id: string }).id;
+        const base = rowsById[id];
+        const row: Database["public"]["Tables"]["products"]["Row"] = base
+          ? { ...base }
+          : (p as unknown as Database["public"]["Tables"]["products"]["Row"]);
+
+        return {
+          ...row,
+          medias: [],
+          product_categories: [],
+          product_colors: [],
+          product_sizes: [],
+          stock_status: (p as { stock_status?: string }).stock_status ?? "",
+          stock_count: typeof (p as { stock_count?: number }).stock_count === "number" ? (p as { stock_count?: number }).stock_count as number : 0,
+        };
+      });
       setProducts(mapped);
     };
 
     fetchProducts();
 
-    const handleChanges = (payload: any) => {
+    const mapRowToProduct = (
+      row: Database["public"]["Tables"]["products"]["Row"]
+    ): Product => ({
+      ...row,
+      medias: [],
+      product_categories: [],
+      product_colors: [],
+      product_sizes: [],
+      stock_status: "",
+      stock_count: 0,
+    });
+
+    const handleChanges = (
+      payload: RealtimePostgresChangesPayload<Database["public"]["Tables"]["products"]["Row"]>
+    ) => {
       if (payload.eventType === "INSERT") {
-        setProducts((prev) => [...prev, payload.new]);
+        const inserted = payload.new as Database["public"]["Tables"]["products"]["Row"];
+        setProducts((prev) => [...prev, mapRowToProduct(inserted)]);
       }
 
       if (payload.eventType === "UPDATE") {
-        setProducts((prev) =>
-          prev.map((product) =>
-            product.id === payload.new.id ? payload.new : product
-          )
-        );
+        const updated = payload.new as Database["public"]["Tables"]["products"]["Row"];
+        setProducts((prev) => prev.map((product) => (product.id === updated.id ? mapRowToProduct(updated) : product)));
       }
 
       if (payload.eventType === "DELETE") {
-        setProducts((prev) =>
-          prev.filter((product) => product.id !== payload.old.id)
-        );
+        const removed = payload.old as Database["public"]["Tables"]["products"]["Row"];
+        setProducts((prev) => prev.filter((product) => product.id !== removed.id));
       }
     };
 
     const subscription = supabase
       .channel("products")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        (payload) => {
-          handleChanges(payload);
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, (payload: RealtimePostgresChangesPayload<Database["public"]["Tables"]["products"]["Row"]>) => {
+        handleChanges(payload);
+      })
       .subscribe();
 
     setLoading(false);
@@ -196,6 +225,7 @@ export function ProductProvider({ children }: PropsWithChildren) {
       .from("products")
       .update(product)
       .eq("id", product.id)
+      .select()
       .single();
     if (error) {
       showAlert(error.message, "error");

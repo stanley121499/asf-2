@@ -2,7 +2,9 @@ import React, { createContext, useContext, useEffect, useState, PropsWithChildre
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../../database.types";
 import { useAlertContext } from "../AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
+/** Category row type with optional nested children (client-only). */
 export type Category = Database["public"]["Tables"]["categories"]["Row"] & { children?: Category[] };
 export type Categories = { categories: Category[] };
 export type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"];
@@ -16,7 +18,7 @@ interface CategoryContextProps {
   loading: boolean;
 }
 
-const CategoryContext = createContext<CategoryContextProps>(undefined!);
+const CategoryContext = createContext<CategoryContextProps | undefined>(undefined);
 
 export function CategoryProvider({ children }: PropsWithChildren) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -30,6 +32,7 @@ export function CategoryProvider({ children }: PropsWithChildren) {
       const { data: categories, error } = await supabase
         .from("categories")
         .select("*")
+        .eq("active", true)
         .order("arrangement", { ascending: true });
 
       if (error) {
@@ -42,28 +45,27 @@ export function CategoryProvider({ children }: PropsWithChildren) {
 
     fetchCategories();
 
-    const handleChanges = (payload: any) => {
-      console.log(payload.eventType);
+    const handleChanges = (payload: RealtimePostgresChangesPayload<Category>) => {
       if (payload.eventType === "INSERT") {
-        setCategories((prev) => [...prev, payload.new]);
+        setCategories((prev) => [...prev, payload.new as Category]);
       }
-
       if (payload.eventType === "UPDATE") {
-        setCategories((prev) =>
-          prev.map((category) => (category.id === payload.new.id ? payload.new : category))
-        );
+        const updated = payload.new as Category;
+        if ((updated as { active?: boolean }).active === false) {
+          setCategories((prev) => prev.filter((c) => c.id !== updated.id));
+        } else {
+          setCategories((prev) => prev.map((category) => (category.id === updated.id ? updated : category)));
+        }
       }
-
       if (payload.eventType === "DELETE") {
-        setCategories((prev) => prev.filter((category) => category.id !== payload.old.id));
+        const removed = payload.old as Category;
+        setCategories((prev) => prev.filter((category) => category.id !== removed.id));
       }
     };
 
     const subscription = supabase
-      .channel('categories')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
-        handleChanges(payload);
-      })
+      .channel("categories")
+      .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, (payload: RealtimePostgresChangesPayload<Category>) => handleChanges(payload))
       .subscribe();
 
     setLoading(false);
@@ -73,11 +75,13 @@ export function CategoryProvider({ children }: PropsWithChildren) {
     };
   }, [showAlert]);
 
+  /** Create a category */
   const createCategory = async (category: CategoryInsert) => {
     const { error } = await supabase.from("categories").insert(category);
     if (error) { showAlert(error.message, "error"); console.log(error.message); return; }
   };
 
+  /** Update a category by id */
   const updateCategory = async (category: CategoryUpdate) => {
     if (!category.id) {
       showAlert("Missing category id for update.", "error");
@@ -87,8 +91,9 @@ export function CategoryProvider({ children }: PropsWithChildren) {
     if (error) { showAlert(error.message, "error"); console.log(error.message); return; }
   };
 
+  /** Delete a category by id */
   const deleteCategory = async (categoryId: string) => {
-    const { error } = await supabase.from("categories").delete().match({ id: categoryId });
+    const { error } = await supabase.from("categories").update({ active: false }).match({ id: categoryId });
     if (error) { showAlert(error.message, "error"); console.log(error.message); return; }
   };
 
