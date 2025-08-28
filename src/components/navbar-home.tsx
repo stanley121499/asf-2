@@ -14,7 +14,7 @@ const NavbarHome: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   // Build hierarchy from flat categories array
-  useEffect(() => {
+useEffect(() => {
     if (!loading && categories.length > 0) {
       // Helper function to build the hierarchy
       const buildHierarchy = (parentCategory: Category) => {
