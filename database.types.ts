@@ -103,18 +103,21 @@ export type Database = {
           active: boolean | null
           created_at: string
           id: string
+          media_url: string | null
           name: string | null
         }
         Insert: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Update: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Relationships: []
@@ -175,18 +178,21 @@ export type Database = {
           active: boolean | null
           created_at: string
           id: string
+          media_url: string | null
           name: string | null
         }
         Insert: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Update: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Relationships: []
@@ -282,6 +288,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          discount_type: string | null
+          discounted_amount: number | null
+          id: number
+          shipping_address: string | null
+          status: string | null
+          total_amount: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_type?: string | null
+          discounted_amount?: number | null
+          id?: number
+          shipping_address?: string | null
+          status?: string | null
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_type?: string | null
+          discounted_amount?: number | null
+          id?: number
+          shipping_address?: string | null
+          status?: string | null
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       post_folder_medias: {
         Row: {
@@ -1185,18 +1224,21 @@ export type Database = {
           active: boolean | null
           created_at: string
           id: string
+          media_url: string | null
           name: string | null
         }
         Insert: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Update: {
           active?: boolean | null
           created_at?: string
           id?: string
+          media_url?: string | null
           name?: string | null
         }
         Relationships: []
@@ -1345,7 +1387,7 @@ export type Database = {
           stock_place: string
           stock_status: string
           time_post: string
-          udpated_at: string
+          updated_at: string
         }[]
       }
       fetch_purchase_orders: {

@@ -2,33 +2,47 @@ import { Select } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import NavbarHome from "../../components/navbar-home";
 import { useCategoryContext } from "../../context/product/CategoryContext";
-import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
+import { useDepartmentContext } from "../../context/product/DepartmentContext";
+import { useRangeContext } from "../../context/product/RangeContext";
+import { useBrandContext } from "../../context/product/BrandContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 const ProductSection: React.FC = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories } = useCategoryContext();
+  const { departments } = useDepartmentContext();
+  const { ranges } = useRangeContext();
+  const { brands } = useBrandContext();
   const { products } = useProductContext();
-  const { productCategories } = useProductCategoryContext();
   const { productMedias } = useProductMediaContext();
   
   const [selectedCategory, setSelectedCategory] = useState(
     categories.find((category) => category.id === categoryId)
   );
   const [selectedSort, setSelectedSort] = useState("Newest First");
+  const query = new URLSearchParams(location.search);
+  const departmentId = query.get("department");
+  const rangeId = query.get("range");
+  const brandId = query.get("brand");
   const [selectedFilter, setSelectedFilter] = useState(
     selectedCategory?.name || "All"
   );
 
-  // Update selectedCategory when URL changes
+  // Update selected classification when URL changes
   useEffect(() => {
-    const category = categories.find((category) => category.id === categoryId);
+    const category = categories.find((c) => c.id === categoryId);
     setSelectedCategory(category);
-    setSelectedFilter(category?.name || "All");
-  }, [categories, categoryId]);
+    // When query params are present, keep filter shown as "All" to avoid mismatch
+    if (departmentId || rangeId || brandId) {
+      setSelectedFilter("All");
+    } else {
+      setSelectedFilter(category?.name || "All");
+    }
+  }, [categories, categoryId, departmentId, rangeId, brandId]);
 
   // Handle filter changes
   const handleFilterChange = (filterName: string) => {
@@ -128,17 +142,19 @@ const ProductSection: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               {/* Filters Button */}
-              <Select
-                value={selectedFilter}
-                onChange={(e) => handleFilterChange(e.target.value)}
-                className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
-                <option value="All">All</option>
-                {categories.map((filter) => (
-                  <option key={filter.id} value={filter.name}>
-                    {filter.name}
-                  </option>
-                ))}
-              </Select>
+              {!departmentId && !rangeId && !brandId && (
+                <Select
+                  value={selectedFilter}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
+                  <option value="All">All</option>
+                  {categories.map((filter) => (
+                    <option key={filter.id} value={filter.name}>
+                      {filter.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
               {/* Sort Button */}
               <Select
                 value={selectedSort}
@@ -155,12 +171,18 @@ const ProductSection: React.FC = () => {
           <div className="mb-4 grid gap-4 grid-cols-2">
             {products
               .filter((product) => {
+                // Filter strictly by direct foreign keys
                 if (selectedCategory) {
-                  return productCategories.some(
-                    (pc) =>
-                      pc.product_id === product.id &&
-                      pc.category_id === selectedCategory.id
-                  );
+                  return product.category_id === selectedCategory.id;
+                }
+                if (departmentId && departmentId !== "all") {
+                  return product.department_id === departmentId;
+                }
+                if (rangeId && rangeId !== "all") {
+                  return product.range_id === rangeId;
+                }
+                if (brandId && brandId !== "all") {
+                  return product.brand_id === brandId;
                 }
                 return true;
               })

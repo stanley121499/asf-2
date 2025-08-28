@@ -24,6 +24,9 @@ import { ProductReportProvider } from "./context/product/ProductReportContext";
 import { ProductSizeProvider } from "./context/product/ProductSizeContext";
 import { ProductStockLogProvider } from "./context/product/ProductStockLogContext";
 import { ProductStockProvider } from "./context/product/ProductStockContext";
+import { BrandProvider } from "./context/product/BrandContext";
+import { DepartmentProvider } from "./context/product/DepartmentContext";
+import { RangeProvider } from "./context/product/RangeContext";
 import { AddToCartProvider } from "./context/product/CartContext";
 import { AddToCartLogProvider } from "./context/product/AddToCartLogContext";
 import "./index.css";
@@ -39,7 +42,6 @@ import CreatePostPage from "./pages/posts/create-post-page";
 import PostListPage from "./pages/posts/list";
 import SchedulePostListPage from "./pages/posts/schedule-post-page";
 import CategoryListPage from "./pages/products/category-page";
-import CategoryV2Page from "./pages/products/category-v2-page";
 import CreateProductPage from "./pages/products/create-product-page";
 import ProductListPage from "./pages/products/list";
 import ScheduleProductListPage from "./pages/products/schedule-product-page";
@@ -94,6 +96,9 @@ const App: React.FC = () => (
         PostFolderProvider,
         PostFolderMediaProvider,
         PostMediaProvider,
+        BrandProvider,
+        DepartmentProvider,
+        RangeProvider,
         CategoryProvider,
         ProductProvider,
         ProductCategoryProvider,
@@ -142,10 +147,7 @@ const App: React.FC = () => (
                   path="/products/categories"
                   element={<CategoryListPage />}
                 />
-                <Route
-                  path="/products/categories-v2"
-                  element={<CategoryV2Page />}
-                />
+                
                 <Route
                   path="/products/stock/:productId"
                   element={<ProductStockDetails />}

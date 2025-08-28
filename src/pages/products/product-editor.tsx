@@ -7,6 +7,9 @@ import {
   Category,
   useCategoryContext,
 } from "../../context/product/CategoryContext";
+import { useDepartmentContext } from "../../context/product/DepartmentContext";
+import { useRangeContext } from "../../context/product/RangeContext";
+import { useBrandContext } from "../../context/product/BrandContext";
 import {
   Product,
   ProductInsert,
@@ -22,18 +25,12 @@ import {
   useProductMediaContext,
 } from "../../context/product/ProductMediaContext";
 import { FaChevronDown } from "react-icons/fa6";
+import { supabase } from "../../utils/supabaseClient";
 
 /**
  * Interface for category v2 items from localStorage
  */
-interface CategoryV2Item {
-  id: string;
-  name: string;
-  description: string;
-  group: "department" | "brand" | "range" | "category";
-  createdAt: string;
-  updatedAt: string;
-}
+// Deprecated Category V2 interface removed
 
 interface ProductEditorProps {
   selectedFolder: ProductFolder | null;
@@ -56,6 +53,9 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
   const { createProduct, updateProduct } = useProductContext();
   const { showAlert } = useAlertContext();
   const { categories } = useCategoryContext();
+  const { departments } = useDepartmentContext();
+  const { ranges } = useRangeContext();
+  const { brands } = useBrandContext();
   const { productFolderMedias } = useProductFolderMediaContext();
   const [productDetailToggle, setProductDetailToggle] = React.useState(false);
   const [selectedMedias, setSelectedMedias] = React.useState<
@@ -68,19 +68,19 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
   const [selectedCategories, setSelectedCategories] = React.useState<
     Category[]
   >([]);
-  const [categoryInput, setCategoryInput] = useState<string>("");
+  // legacy inputs removed
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [colorInput, setColorInput] = useState<string>("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [sizeInput, setSizeInput] = useState<string>("");
-  const [filteredCategories, setFilteredCategories] = useState(categories);
+  // legacy filtered categories removed
   
-  // Category V2 temporary fields (don't affect save)
-  const [categoryV2Items, setCategoryV2Items] = useState<CategoryV2Item[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-  const [selectedRange, setSelectedRange] = useState<string>("");
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
-  const [selectedCategoryV2, setSelectedCategoryV2] = useState<string>("");
+  // New category system
+  const [categoryMode, setCategoryMode] = useState<"category" | "set">("category");
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
+  const [selectedRangeId, setSelectedRangeId] = useState<string>("");
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   
   const [productData, setProductData] = React.useState<ProductInsert>({
     name: selectedProduct?.name || "",
@@ -104,9 +104,17 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
       return;
     }
 
+    const payload: ProductInsert = {
+      ...productData,
+      category_id: selectedCategoryId ? selectedCategoryId : null,
+      department_id: selectedDepartmentId ? selectedDepartmentId : null,
+      range_id: selectedRangeId ? selectedRangeId : null,
+      brand_id: selectedBrandId ? selectedBrandId : null,
+    };
+
     if (selectedProduct) {
       updateProduct(
-        { ...productData, id: selectedProduct.id },
+        { ...payload, id: selectedProduct.id },
         selectedColors,
         selectedSizes,
         selectedCategories
@@ -129,7 +137,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
       });
     } else {
       createProduct(
-        productData,
+        payload,
         selectedColors,
         selectedSizes,
         selectedCategories
@@ -153,21 +161,41 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
     }
   };
 
-  // Load Category V2 items from localStorage
+  // Initialize selection values based on selectedProduct
   useEffect(() => {
-    const savedItems = localStorage.getItem("categoryV2Items");
-    if (savedItems) {
-      try {
-        const parsedItems: CategoryV2Item[] = JSON.parse(savedItems);
-        setCategoryV2Items(parsedItems);
-      } catch (error) {
-        console.error("Error parsing Category V2 items:", error);
+    if (selectedProduct) {
+      if (selectedProduct.category_id) {
+        setCategoryMode("category");
+        setSelectedCategoryId(selectedProduct.category_id || "");
+        setSelectedDepartmentId("");
+        setSelectedRangeId("");
+        setSelectedBrandId("");
+      } else if (selectedProduct.department_id || selectedProduct.range_id || selectedProduct.brand_id) {
+        setCategoryMode("set");
+        setSelectedDepartmentId(selectedProduct.department_id || "");
+        setSelectedRangeId(selectedProduct.range_id || "");
+        setSelectedBrandId(selectedProduct.brand_id || "");
+        setSelectedCategoryId("");
       }
     }
-  }, []);
+  }, [selectedProduct]);
 
   useEffect(() => {
     if (selectedProduct) {
+      // Ensure classification ids (category/department/range/brand) are loaded from base table
+      (async () => {
+        const { data } = await supabase
+          .from("products")
+          .select("category_id, department_id, range_id, brand_id")
+          .eq("id", selectedProduct.id)
+          .single();
+        if (data) {
+          setSelectedCategoryId(data.category_id || "");
+          setSelectedDepartmentId(data.department_id || "");
+          setSelectedRangeId(data.range_id || "");
+          setSelectedBrandId(data.brand_id || "");
+        }
+      })();
       setProductData({
         name: selectedProduct.name,
         product_folder_id: selectedProduct.product_folder_id,
@@ -183,7 +211,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         status: selectedProduct.status,
       });
 
-      setSelectedCategories(selectedProduct.product_categories || []);
+      // setSelectedCategories(selectedProduct.product_categories || []);
       // For color and size only use those that are active
       setSelectedColors(
         selectedProduct.product_colors?.filter((color) => color.active)
@@ -238,36 +266,16 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
       setSelectedCategories([]);
       setSelectedColors([]);
       setSelectedSizes([]);
-      // Reset Category V2 fields when no product is selected
-      setSelectedDepartment("");
-      setSelectedRange("");
-      setSelectedBrand("");
-      setSelectedCategoryV2("");
+      // Reset new selection fields when no product is selected
+      setCategoryMode("category");
+      setSelectedDepartmentId("");
+      setSelectedRangeId("");
+      setSelectedBrandId("");
+      setSelectedCategoryId("");
     }
   }, [productFolderMedias, productMedias, selectedFolder?.id, selectedProduct]);
 
-  const handleInputChange = (e: { target: { value: any } }) => {
-    const value = e.target.value;
-    setFilteredCategories(
-      categories.filter(
-        (category) =>
-          category.name.toLowerCase().includes(value.toLowerCase()) &&
-          !selectedCategories.find((c) => c.id === category.id)
-      )
-    );
-    setCategoryInput(value);
-  };
-
-  const handleCategoryClick = (category: any) => {
-    setSelectedCategories((prevState) => [...prevState, category]);
-    setCategoryInput("");
-  };
-
-  const removeCategory = (category: string) => {
-    setSelectedCategories((prevState) =>
-      prevState.filter((c) => c.id !== category)
-    );
-  };
+  // legacy handlers removed
 
   const handleColorInputChange = (e: { target: { value: any } }) => {
     const value = e.target.value;
@@ -397,128 +405,45 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                   />
                 </div>
 
-                {/* Category */}
-                {/* Create a text input where if they type it will show a drop down of what they search, they can then click on it to select the category, the text input will have badges of selected category */}
-                <div className="mt-4">
-                  <Label htmlFor="category">Category</Label>
-                  <div className="relative">
-                    <div className="custom-input flex items-center flex-wrap block w-full border disabled:cursor-not-allowed disabled:opacity-50 bg-gray-50 border-gray-300 text-gray-900 focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-500 dark:focus:ring-cyan-500 p-2.5 text-sm rounded-lg">
-                      {selectedCategories.map((category, index) => (
-                        <Badge
-                          key={"Card" + category + index}
-                          color="info"
-                          className="mr-2 mb-1 flex items-center">
-                          {category.name}
-                          <span
-                            className="ml-1 cursor-pointer"
-                            onClick={() => removeCategory(category.id)}>
-                            &times;
-                          </span>
-                        </Badge>
+                {/* Category selection (2x2 dropdowns) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  <div>
+                    <Label htmlFor="category" className="text-sm">Category</Label>
+                    <flowbiteReact.Select id="category" value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="mt-1">
+                      <option value="">Select Category</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
-                      <input
-                        id="category"
-                        name="category"
-                        placeholder="Enter category"
-                        value={categoryInput}
-                        onChange={handleInputChange}
-                        autoComplete="off"
-                        className="flex-grow border-none focus:ring-0 focus:outline-none dark:bg-gray-700 bg-gray-50"
-                      />
-                    </div>
-                    {categoryInput && (
-                      <ul className="absolute left-0 right-0 bg-white border border-gray-200 z-10 max-h-60 overflow-y-auto mt-1 dark:border-gray-800 dark:bg-gray-800">
-                        {filteredCategories.map((category) => (
-                          <li
-                            key={category.id}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => handleCategoryClick(category)}>
-                            {category.name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    </flowbiteReact.Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="department" className="text-sm">Department</Label>
+                    <flowbiteReact.Select id="department" value={selectedDepartmentId} onChange={(e) => setSelectedDepartmentId(e.target.value)} className="mt-1">
+                      <option value="">Select Department</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </flowbiteReact.Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="range" className="text-sm">Range</Label>
+                    <flowbiteReact.Select id="range" value={selectedRangeId} onChange={(e) => setSelectedRangeId(e.target.value)} className="mt-1">
+                      <option value="">Select Range</option>
+                      {ranges.map((r) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </flowbiteReact.Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="brand" className="text-sm">Brand</Label>
+                    <flowbiteReact.Select id="brand" value={selectedBrandId} onChange={(e) => setSelectedBrandId(e.target.value)} className="mt-1">
+                      <option value="">Select Brand</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </flowbiteReact.Select>
                   </div>
                 </div>
-
-                {/* Category V2 Fields - Temporary, don't affect save */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                    {/* Department */}
-                    <div>
-                      <Label htmlFor="department" className="text-sm">Department</Label>
-                      <flowbiteReact.Select
-                        id="department"
-                        value={selectedDepartment}
-                        onChange={(e) => setSelectedDepartment(e.target.value)}
-                        className="mt-1">
-                        <option value="">Select Department</option>
-                        {categoryV2Items
-                          .filter((item) => item.group === "department")
-                          .map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                      </flowbiteReact.Select>
-                    </div>
-
-                    {/* Range */}
-                    <div>
-                      <Label htmlFor="range" className="text-sm">Range</Label>
-                      <flowbiteReact.Select
-                        id="range"
-                        value={selectedRange}
-                        onChange={(e) => setSelectedRange(e.target.value)}
-                        className="mt-1">
-                        <option value="">Select Range</option>
-                        {categoryV2Items
-                          .filter((item) => item.group === "range")
-                          .map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                      </flowbiteReact.Select>
-                    </div>
-
-                    {/* Brand */}
-                    <div>
-                      <Label htmlFor="brand" className="text-sm">Brand</Label>
-                      <flowbiteReact.Select
-                        id="brand"
-                        value={selectedBrand}
-                        onChange={(e) => setSelectedBrand(e.target.value)}
-                        className="mt-1">
-                        <option value="">Select Brand</option>
-                        {categoryV2Items
-                          .filter((item) => item.group === "brand")
-                          .map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                      </flowbiteReact.Select>
-                    </div>
-
-                    {/* Category V2 */}
-                    <div>
-                      <Label htmlFor="category-v2" className="text-sm">Category V2</Label>
-                      <flowbiteReact.Select
-                        id="category-v2"
-                        value={selectedCategoryV2}
-                        onChange={(e) => setSelectedCategoryV2(e.target.value)}
-                        className="mt-1">
-                        <option value="">Select Category V2</option>
-                        {categoryV2Items
-                          .filter((item) => item.group === "category")
-                          .map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                      </flowbiteReact.Select>
-                    </div>
-                  </div>
 
                 {/* Article Number */}
                 <div className="mt-4">

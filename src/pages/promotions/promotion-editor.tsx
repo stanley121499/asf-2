@@ -146,7 +146,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         status: selectedProduct.status,
       });
 
-      setSelectedCategories(selectedProduct.product_categories);
+      // setSelectedCategories(selectedProduct.product_categories);
       // For color and size only use those that are active
       setSelectedColors(
         selectedProduct.product_colors

@@ -3,6 +3,9 @@ import { useAuthContext } from "../../context/AuthContext";
 import { usePostContext } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
 import { useCategoryContext } from "../../context/product/CategoryContext";
+import { useDepartmentContext } from "../../context/product/DepartmentContext";
+import { useRangeContext } from "../../context/product/RangeContext";
+import { useBrandContext } from "../../context/product/BrandContext";
 import { useProductCategoryContext } from "../../context/product/ProductCategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
@@ -67,6 +70,9 @@ const HomePage: React.FC = () => {
   const { posts } = usePostContext();
   const { postMedias } = usePostMediaContext();
   const { categories } = useCategoryContext();
+  const { departments } = useDepartmentContext();
+  const { ranges } = useRangeContext();
+  const { brands } = useBrandContext();
   const { productCategories } = useProductCategoryContext();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
@@ -86,6 +92,24 @@ const HomePage: React.FC = () => {
       return (a.name || "").localeCompare(b.name || "");
     });
   }, [categories]);
+
+  const sortedDepartments = useMemo(() => {
+    return [...departments].sort((a, b) => {
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [departments]);
+
+  const sortedRanges = useMemo(() => {
+    return [...ranges].sort((a, b) => {
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [ranges]);
+
+  const sortedBrands = useMemo(() => {
+    return [...brands].sort((a, b) => {
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [brands]);
 
   // Sort products by latest
   const sortedProducts = useMemo(() => {
@@ -242,6 +266,15 @@ const HomePage: React.FC = () => {
     return "";
   };
 
+  const getClassificationImage = (key: "department_id" | "range_id" | "brand_id", id: string): string => {
+    const product = products.find(p => (p as any)[key] === id);
+    if (product) {
+      const media = productMedias.find(m => m.product_id === product.id);
+      if (media?.media_url) return media.media_url;
+    }
+    return "";
+  };
+
   return (
     <LandingLayout>
       {/* User Information Card */}
@@ -389,7 +422,7 @@ const HomePage: React.FC = () => {
                   className="flex-shrink-0 w-28"
                 >
                   <div className="flex flex-col items-center">
-                    <div className="w-22 h-22 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
+                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
                       <div className="rounded-xl overflow-hidden relative w-full h-full">
                         <img 
                           src={categoryImage} 
@@ -402,9 +435,84 @@ const HomePage: React.FC = () => {
                     <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">
                       {category.name || `${index === 0 ? "Energy" : index === 1 ? "Men" : index === 2 ? "Nike" : `Category ${index + 1}`}`}
                     </p>
-                    {productCount > 0 && (
-                      <p className="text-xs text-gray-500 mt-0.5">{productCount} products</p>
-                    )}
+                  </div>
+                </Link>
+              );
+            }}
+            isHighlightSection={false}
+          />
+        </div>
+
+        {/* Departments Section */}
+        <div className="py-6">
+          <ScrollableSection
+            title="Departments"
+            viewAllLink="/product-section?department=all"
+            items={sortedDepartments.slice(0, 10)}
+            renderItem={(dept, index) => {
+              const img = dept.media_url || getClassificationImage("department_id", dept.id) || `https://via.placeholder.com/80?text=D${index + 1}`;
+              return (
+                <Link to={`/product-section?department=${dept.id}`} key={`dept-${dept.id || index}`} className="flex-shrink-0 w-28">
+                  <div className="flex flex-col items-center">
+                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
+                      <div className="rounded-xl overflow-hidden relative w-full h-full">
+                        <img src={img} alt={dept.name || `Department ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{dept.name || `Department ${index + 1}`}</p>
+                  </div>
+                </Link>
+              );
+            }}
+            isHighlightSection={false}
+          />
+        </div>
+
+        {/* Ranges Section */}
+        <div className="py-6">
+          <ScrollableSection
+            title="Ranges"
+            viewAllLink="/product-section?range=all"
+            items={sortedRanges.slice(0, 10)}
+            renderItem={(range, index) => {
+              const img = range.media_url || getClassificationImage("range_id", range.id) || `https://via.placeholder.com/80?text=R${index + 1}`;
+              return (
+                <Link to={`/product-section?range=${range.id}`} key={`range-${range.id || index}`} className="flex-shrink-0 w-28">
+                  <div className="flex flex-col items-center">
+                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
+                      <div className="rounded-xl overflow-hidden relative w-full h-full">
+                        <img src={img} alt={range.name || `Range ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{range.name || `Range ${index + 1}`}</p>
+                  </div>
+                </Link>
+              );
+            }}
+            isHighlightSection={false}
+          />
+        </div>
+
+        {/* Brands Section */}
+        <div className="py-6">
+          <ScrollableSection
+            title="Brands"
+            viewAllLink="/product-section?brand=all"
+            items={sortedBrands.slice(0, 10)}
+            renderItem={(brand, index) => {
+              const img = brand.media_url || getClassificationImage("brand_id", brand.id) || `https://via.placeholder.com/80?text=B${index + 1}`;
+              return (
+                <Link to={`/product-section?brand=${brand.id}`} key={`brand-${brand.id || index}`} className="flex-shrink-0 w-28">
+                  <div className="flex flex-col items-center">
+                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
+                      <div className="rounded-xl overflow-hidden relative w-full h-full">
+                        <img src={img} alt={brand.name || `Brand ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{brand.name || `Brand ${index + 1}`}</p>
                   </div>
                 </Link>
               );
@@ -433,8 +541,9 @@ const HomePage: React.FC = () => {
                 .join(", ");
 
               return (
-                <div 
-                  key={`product-${product.id || index}`} 
+                <Link
+                  to={`/product-details/${product.id}`}
+                  key={`product-${product.id || index}`}
                   className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-1 group"
                 >
                   <div className="h-44 bg-gray-100 relative">
@@ -465,7 +574,7 @@ const HomePage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             }}
             isHighlightSection={false}
