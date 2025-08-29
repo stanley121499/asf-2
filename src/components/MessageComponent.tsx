@@ -70,7 +70,7 @@ const MessageComponent: React.FC<MessageComponentProps> = ({
             <img
               src={media}
               alt="media"
-              className="w-full h-40 object-cover rounded-xl cursor-pointer"
+              className="max-w-[280px] max-h-[360px] w-auto h-auto object-contain rounded-xl cursor-pointer"
               onClick={() => openMediaViewer("image", media)}
             />
           )}
@@ -78,7 +78,7 @@ const MessageComponent: React.FC<MessageComponentProps> = ({
             <video
               src={media}
               controls
-              className="w-full h-40 object-cover rounded-xl cursor-pointer"
+              className="max-w-[280px] max-h-[360px] w-auto h-auto object-contain rounded-xl cursor-pointer"
               onClick={() => openMediaViewer("video", media)}
             />
           )}

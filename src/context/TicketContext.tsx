@@ -75,12 +75,20 @@ export const TicketProvider: React.FC<React.PropsWithChildren> = ({ children }) 
         return data as TicketRow;
       },
       async updateTicket(id: string, payload: TicketUpdate) {
-        const { data, error } = await supabase.from("tickets").update(payload).eq("id", id).select("*").single();
+        const { data, error } = await supabase
+          .from("tickets")
+          .update(payload)
+          .eq("id", id)
+          .select("*")
+          .single();
         if (error) {
           showAlert(error.message, "error");
           return undefined;
         }
-        return data as TicketRow;
+        const updated = data as TicketRow;
+        // Optimistically update local state so UI reflects immediately without waiting for realtime
+        setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        return updated;
       },
       async deleteTicket(id: string) {
         const { error } = await supabase.from("tickets").delete().eq("id", id);

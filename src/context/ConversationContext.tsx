@@ -153,11 +153,13 @@ export function ConversationProvider({ children }: PropsWithChildren) {
         const inserted = payload.new as ChatMessageRow;
         console.log("[ConversationContext] realtime message INSERT", inserted);
         setConversations((prev) =>
-          prev.map((c) =>
-            c.id === inserted.conversation_id
-              ? { ...c, messages: [...c.messages, inserted] }
-              : c
-          )
+          prev.map((c) => {
+            if (c.id !== inserted.conversation_id) return c;
+            // Deduplicate by id to avoid optimistic + realtime double insert
+            const alreadyExists = c.messages.some((m) => m.id === inserted.id);
+            if (alreadyExists) return c;
+            return { ...c, messages: [...c.messages, inserted] };
+          })
         );
       }
       if (payload.eventType === "UPDATE") {
@@ -356,14 +358,15 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       return undefined;
     }
     const created = data as ChatMessageRow;
-    // Optimistically update local state to reflect immediately
+    // Optimistically update local state, but guard against duplicates by id
     if (created.conversation_id) {
       setConversations((prev) =>
-        prev.map((c) =>
-          c.id === created.conversation_id
-            ? { ...c, messages: [...c.messages, created] }
-            : c
-        )
+        prev.map((c) => {
+          if (c.id !== created.conversation_id) return c;
+          const exists = c.messages.some((m) => m.id === created.id);
+          if (exists) return c;
+          return { ...c, messages: [...c.messages, created] };
+        })
       );
     }
     return created;
