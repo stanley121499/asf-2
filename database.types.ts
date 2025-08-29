@@ -466,6 +466,41 @@ export type Database = {
           },
         ]
       }
+      order_status_logs: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_status: string | null
+          old_status: string | null
+          order_id: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
@@ -475,6 +510,7 @@ export type Database = {
           points_earned: number | null
           points_spent: number | null
           shipping_address: string | null
+          status: string | null
           total_amount: number | null
           user_id: string | null
         }
@@ -486,6 +522,7 @@ export type Database = {
           points_earned?: number | null
           points_spent?: number | null
           shipping_address?: string | null
+          status?: string | null
           total_amount?: number | null
           user_id?: string | null
         }
@@ -497,6 +534,7 @@ export type Database = {
           points_earned?: number | null
           points_spent?: number | null
           shipping_address?: string | null
+          status?: string | null
           total_amount?: number | null
           user_id?: string | null
         }
@@ -1690,7 +1728,9 @@ export type Database = {
         Row: {
           birthdate: string | null
           city: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           lifetime_val: number
           profile_image: string | null
           race: string | null
@@ -1700,7 +1740,9 @@ export type Database = {
         Insert: {
           birthdate?: string | null
           city?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
           lifetime_val?: number
           profile_image?: string | null
           race?: string | null
@@ -1710,7 +1752,9 @@ export type Database = {
         Update: {
           birthdate?: string | null
           city?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           lifetime_val?: number
           profile_image?: string | null
           race?: string | null
