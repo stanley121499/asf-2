@@ -42,6 +42,8 @@ interface OrderContextProps {
     },
     items: CartLineInput[]
   ) => Promise<{ order: OrderRow; orderItems: OrderItemRow[] } | undefined>;
+  updateOrderStatus: (orderId: string, newStatus: string, changedBy?: string) => Promise<boolean>;
+  refreshOrders: () => Promise<void>;
   loading: boolean;
 }
 
@@ -59,31 +61,45 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { showAlert } = useAlertContext();
 
+  /**
+   * Fetch orders from database
+   */
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        throw error;
+      }
+      setOrders(data ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      showAlert(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Refresh orders data
+   */
+  const refreshOrders = async () => {
+    await fetchOrders();
+  };
+
   useEffect(() => {
     let isMounted = true;
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (error) {
-          throw error;
-        }
-        if (isMounted) {
-          setOrders(data ?? []);
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        showAlert(message, "error");
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    const loadOrders = async () => {
+      await fetchOrders();
     };
-    fetchOrders();
+    
+    if (isMounted) {
+      loadOrders();
+    }
+    
     return () => {
       isMounted = false;
     };
@@ -232,9 +248,72 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   };
 
+  /**
+   * Update order status and log the change
+   * @param orderId - Order ID to update
+   * @param newStatus - New status value
+   * @param changedBy - User ID of who made the change (optional)
+   * @returns Promise<boolean> - Success status
+   */
+  const updateOrderStatus = async (
+    orderId: string, 
+    newStatus: string, 
+    changedBy?: string
+  ): Promise<boolean> => {
+    try {
+      // Get current order to track old status
+      const currentOrder = orders.find(o => o.id === orderId);
+      if (!currentOrder) {
+        showAlert("Order not found", "error");
+        return false;
+      }
+
+      // Update order status
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      // TODO: Log status change once order_status_logs table is available
+      // For now, just log to console
+      console.log("Status change:", {
+        order_id: orderId,
+        old_status: currentOrder.status,
+        new_status: newStatus,
+        changed_by: changedBy || "admin",
+        user_id: currentOrder.user_id,
+      });
+
+      // Update local state
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { ...order, status: newStatus }
+          : order
+      ));
+
+      showAlert("Order status updated successfully", "success");
+      return true;
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to update order status";
+      showAlert(message, "error");
+      return false;
+    }
+  };
+
   const value = useMemo<OrderContextProps>(
-    () => ({ orders, createOrderWithItemsAndStock, loading }),
-    [orders, createOrderWithItemsAndStock, loading]
+    () => ({ 
+      orders, 
+      createOrderWithItemsAndStock, 
+      updateOrderStatus, 
+      refreshOrders, 
+      loading 
+    }),
+    [orders, loading]
   );
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
