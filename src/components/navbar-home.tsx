@@ -5,11 +5,17 @@ import { Link } from "react-router-dom";
 import BottomNavbar from "./home/bottom-nav";
 import CategoryPreviewSidebar from "./product/CategoryPreviewSidebar";
 import { useCategoryContext, Category } from "../context/product/CategoryContext";
+import { useDepartmentContext } from "../context/product/DepartmentContext";
+import { useRangeContext } from "../context/product/RangeContext";
+import { useBrandContext } from "../context/product/BrandContext";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 
 const NavbarHome: React.FC = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const { categories, loading } = useCategoryContext();
+  const { departments } = useDepartmentContext();
+  const { ranges } = useRangeContext();
+  const { brands } = useBrandContext();
   const [resultingCategories, setResultingCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
@@ -75,6 +81,9 @@ useEffect(() => {
       {/* Category Sidebar */}
       {!loading && (
         <CategoryPreviewSidebar
+          departments={departments}
+          ranges={ranges}
+          brands={brands}
           categories={resultingCategories}
           selectedCategory={selectedCategory}
           onSelectCategory={(category) => {
@@ -84,7 +93,12 @@ useEffect(() => {
           onClose={() => setIsSidebarVisible(false)}
           isMobile={true}
           shouldRedirect={true}
-          redirectUrlFormatter={(category) => `/products/category/${category.id}`}
+          redirectUrlFormatter={(tab, item) => {
+            if (tab === "department") return `/product-section?department=${item.id}`;
+            if (tab === "range") return `/product-section?range=${item.id}`;
+            if (tab === "brand") return `/product-section?brand=${item.id}`;
+            return `/product-section/${(item as Category).id}`;
+          }}
           slideFromLeft={true}
           fullWidth={true}
         />

@@ -1,18 +1,41 @@
-import React, { useState, useEffect } from "react";
-import { Button, Card, Avatar, Badge, Tooltip, Tabs } from "flowbite-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Button, Card, Avatar, Badge, Tooltip } from "flowbite-react";
 import NavbarHome from "../../components/navbar-home";
 import { Link, useNavigate } from "react-router-dom";
-import { HiOutlineShoppingBag, HiOutlineHeart, HiOutlineCog, HiOutlineUser, HiOutlineQuestionMarkCircle, HiOutlineLogout, HiOutlineLocationMarker, HiOutlineCreditCard } from "react-icons/hi";
+import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineQuestionMarkCircle, HiOutlineLogout } from "react-icons/hi";
 import OrdersList from "./components/OrdersList";
 import { useAuthContext } from "../../context/AuthContext";
 import { usePointsMembership } from "../../context/PointsMembershipContext";
+import { supabase } from "../../utils/supabaseClient";
+
+/**
+ * Basic runtime validators to satisfy strict typing without using `any` or non-null assertions.
+ */
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function getFileContentType(file: File): string {
+  return isNonEmptyString(file.type) ? file.type : "application/octet-stream";
+}
 
 const ProfileSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("account");
   const [userPoints, setUserPoints] = useState<number>(0);
-  const { user } = useAuthContext();
+  const { user, user_detail, signOut } = useAuthContext();
   const pointsAPI = usePointsMembership();
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [pwCurrent, setPwCurrent] = useState<string>("");
+  const [pwNew, setPwNew] = useState<string>("");
+  const [pwConfirm, setPwConfirm] = useState<string>("");
+  const [pwSaving, setPwSaving] = useState<boolean>(false);
 
   // Fetch user points
   useEffect(() => {
@@ -30,10 +53,156 @@ const ProfileSettingsPage: React.FC = () => {
     fetchUserPoints();
   }, [user, pointsAPI]);
 
-  const handleLogout = () => {
-    console.log("Logging out...");
-    // Add your logout functionality here
-    navigate("/authentication/sign-in"); // Redirect to sign-in page
+  // Initialize profile form fields from context without overriding user edits
+  useEffect(() => {
+    const initialEmail: string = typeof user?.email === "string" ? user.email : "";
+    setEmail(initialEmail);
+
+    const meta: Record<string, unknown> = (user?.user_metadata as Record<string, unknown>) || {};
+    const metaPhone: string = isNonEmptyString(meta["phone"]) ? String(meta["phone"]) : "";
+    if (!isNonEmptyString(phone) && isNonEmptyString(metaPhone)) {
+      setPhone(metaPhone);
+    }
+
+    if (!isNonEmptyString(firstName) && isNonEmptyString(user_detail?.first_name)) {
+      setFirstName(String(user_detail?.first_name));
+    }
+    if (!isNonEmptyString(lastName) && isNonEmptyString(user_detail?.last_name)) {
+      setLastName(String(user_detail?.last_name));
+    }
+    if (!isNonEmptyString(avatarUrl) && isNonEmptyString(user_detail?.profile_image)) {
+      setAvatarUrl(String(user_detail?.profile_image));
+    }
+  }, [user?.id, user?.email, user_detail?.first_name, user_detail?.last_name, user_detail?.profile_image]);
+
+  const displayName = useMemo(() => {
+    const joined = `${firstName} ${lastName}`.trim();
+    return joined.length > 0 ? joined : (email || "");
+  }, [firstName, lastName, email]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/authentication/sign-in");
+  };
+
+  // Handle avatar file selection
+  const onAvatarChange: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      return;
+    }
+    const file = e.target.files[0];
+    setAvatarFile(file);
+  };
+
+  // Upload avatar to Supabase storage and update profile_image
+  const handleUploadAvatar = async () => {
+    if (!user?.id) {
+      return;
+    }
+    if (avatarFile === null) {
+      return;
+    }
+    try {
+      const timestamp = Date.now();
+      const sanitized = avatarFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `users/${user.id}/${timestamp}-${sanitized}`;
+      const { error: uploadError } = await supabase.storage
+        .from("medias")
+        .upload(path, avatarFile, { contentType: getFileContentType(avatarFile), upsert: false });
+      if (uploadError) {
+        console.error("Avatar upload error:", uploadError.message);
+        return;
+      }
+      const { data: publicData } = supabase.storage.from("medias").getPublicUrl(path);
+      const publicUrl: string = publicData?.publicUrl ?? "";
+      if (publicUrl.length === 0) {
+        return;
+      }
+      const { error: updateError } = await supabase
+        .from("user_details")
+        .update({ profile_image: publicUrl })
+        .eq("id", user.id)
+        .single();
+      if (updateError) {
+        console.error("Updating profile image failed:", updateError.message);
+        return;
+      }
+      setAvatarUrl(publicUrl);
+      setAvatarFile(null);
+    } catch (err) {
+      console.error("Unexpected avatar upload error:", err);
+    }
+  };
+
+  // Save name and phone changes; also update display_name in auth.users user_metadata
+  const handleSaveProfile = async () => {
+    if (!user?.id) {
+      return;
+    }
+    if (!isNonEmptyString(firstName) || !isNonEmptyString(lastName)) {
+      // Minimal validation to avoid blank display names
+      return;
+    }
+    setSaving(true);
+    try {
+      const fullDisplayName = `${firstName} ${lastName}`.trim();
+      const { error: detailErr } = await supabase
+        .from("user_details")
+        .update({ first_name: firstName, last_name: lastName })
+        .eq("id", user.id)
+        .single();
+      if (detailErr) {
+        console.error("Updating user_details failed:", detailErr.message);
+        setSaving(false);
+        return;
+      }
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: {
+          display_name: fullDisplayName,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+        },
+      });
+      if (authErr) {
+        console.error("Updating auth user metadata failed:", authErr.message);
+        setSaving(false);
+        return;
+      }
+      // Ensure form reflects saved values immediately
+      setFirstName(firstName);
+      setLastName(lastName);
+      setPhone(phone);
+    } catch (err) {
+      console.error("Unexpected save profile error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Update password using Supabase auth
+  const handleUpdatePassword = async () => {
+    if (!isNonEmptyString(pwNew) || !isNonEmptyString(pwConfirm)) {
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pwNew });
+      if (error) {
+        console.error("Password update error:", error.message);
+      } else {
+        setPwCurrent("");
+        setPwNew("");
+        setPwConfirm("");
+      }
+    } catch (err) {
+      console.error("Unexpected password update error:", err);
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   return (
@@ -46,17 +215,17 @@ const ProfileSettingsPage: React.FC = () => {
             <div className="md:w-1/3 p-6 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
               <div className="flex flex-col items-center mb-6">
                 <Avatar
-                  img="/images/users/roberta-casas-2x.png"
+                  img={isNonEmptyString(avatarUrl) ? avatarUrl : undefined}
                   alt="Profile Picture"
                   rounded={true}
                   size="xl"
                   className="mb-4"
                 />
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  John Doe
+                  {displayName || "User"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  john.doe@example.com
+                  {email || ""}
                 </p>
                 <div className="flex items-center mt-1 mb-4">
                   <Badge color="info" className="px-3 py-1.5">
@@ -95,30 +264,7 @@ const ProfileSettingsPage: React.FC = () => {
                   <HiOutlineShoppingBag className="mr-2 h-5 w-5" />
                   Orders
                 </Button>
-                <Button 
-                  color={activeTab === "wishlist" ? "blue" : "gray"}
-                  className="justify-start"
-                  onClick={() => setActiveTab("wishlist")}
-                >
-                  <HiOutlineHeart className="mr-2 h-5 w-5" />
-                  Wishlist
-                </Button>
-                <Button 
-                  color={activeTab === "addresses" ? "blue" : "gray"}
-                  className="justify-start"
-                  onClick={() => setActiveTab("addresses")}
-                >
-                  <HiOutlineLocationMarker className="mr-2 h-5 w-5" />
-                  Addresses
-                </Button>
-                <Button 
-                  color={activeTab === "payment" ? "blue" : "gray"}
-                  className="justify-start"
-                  onClick={() => setActiveTab("payment")}
-                >
-                  <HiOutlineCreditCard className="mr-2 h-5 w-5" />
-                  Payment Methods
-                </Button>
+
                 <Button 
                   color={activeTab === "support" ? "blue" : "gray"}
                   className="justify-start"
@@ -141,7 +287,7 @@ const ProfileSettingsPage: React.FC = () => {
             {/* Right content area */}
             <div className="md:w-2/3 p-6">
               {activeTab === "account" && (
-                <div className="space-y-6">
+                <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                     Account Information
                   </h3>
@@ -152,8 +298,9 @@ const ProfileSettingsPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        defaultValue="John"
                       />
                     </div>
                     <div>
@@ -162,8 +309,9 @@ const ProfileSettingsPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        defaultValue="Doe"
                       />
                     </div>
                     <div>
@@ -172,8 +320,9 @@ const ProfileSettingsPage: React.FC = () => {
                       </label>
                       <input
                         type="email"
+                        value={email}
+                        readOnly
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        defaultValue="john.doe@example.com"
                       />
                     </div>
                     <div>
@@ -182,13 +331,14 @@ const ProfileSettingsPage: React.FC = () => {
                       </label>
                       <input
                         type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        defaultValue="+1 (555) 123-4567"
                       />
                     </div>
                   </div>
-                  <Button color="blue">
-                    Save Changes
+                  <Button color="blue" onClick={handleSaveProfile} disabled={saving}>
+                    {saving ? "Saving..." : "Save Changes"}
                   </Button>
 
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
@@ -202,6 +352,8 @@ const ProfileSettingsPage: React.FC = () => {
                         </label>
                         <input
                           type="password"
+                          value={pwCurrent}
+                          onChange={(e) => setPwCurrent(e.target.value)}
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                       </div>
@@ -211,6 +363,8 @@ const ProfileSettingsPage: React.FC = () => {
                         </label>
                         <input
                           type="password"
+                          value={pwNew}
+                          onChange={(e) => setPwNew(e.target.value)}
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                       </div>
@@ -220,13 +374,32 @@ const ProfileSettingsPage: React.FC = () => {
                         </label>
                         <input
                           type="password"
+                          value={pwConfirm}
+                          onChange={(e) => setPwConfirm(e.target.value)}
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
                       </div>
                     </div>
-                    <Button color="blue" className="mt-4">
-                      Update Password
+                    <Button color="blue" className="mt-4" onClick={handleUpdatePassword} disabled={pwSaving}>
+                      {pwSaving ? "Updating..." : "Update Password"}
                     </Button>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Profile Picture
+                    </h3>
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={onAvatarChange}
+                        className="w-full text-sm text-gray-700 dark:text-gray-300"
+                      />
+                      <Button color="blue" onClick={handleUploadAvatar} disabled={!avatarFile}>
+                        Upload Avatar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -240,145 +413,7 @@ const ProfileSettingsPage: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === "wishlist" && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                    My Wishlist
-                  </h3>
-                  {/* Wishlist items */}
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex items-center space-x-4">
-                        <img src="/images/products/product-1.jpg" alt="Product" className="w-16 h-16 object-cover rounded-md" />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white">Wireless Headphones</h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">$99.99</p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button size="xs" color="blue">Add to Cart</Button>
-                          <Button size="xs" color="light">Remove</Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex items-center space-x-4">
-                        <img src="/images/products/product-2.jpg" alt="Product" className="w-16 h-16 object-cover rounded-md" />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white">Smart Watch</h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">$199.99</p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button size="xs" color="blue">Add to Cart</Button>
-                          <Button size="xs" color="light">Remove</Button>
-                        </div>
-                      </div>
-                    </div>
-                    <Link to="/wishlist" className="text-blue-600 hover:underline flex items-center justify-center mt-2">
-                      View full wishlist
-                    </Link>
-                  </div>
-                </div>
-              )}
-              
-              {activeTab === "addresses" && (
-                <div>
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      My Addresses
-                    </h3>
-                    <Button size="sm" color="blue">Add New Address</Button>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white mb-1">Home</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">John Doe</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">123 Main Street, Apt 4B</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">New York, NY 10001</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">United States</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">+1 (555) 123-4567</p>
-                        </div>
-                        <div>
-                          <Badge color="blue" className="mb-2">Default</Badge>
-                          <div className="flex flex-col space-y-2">
-                            <Button size="xs">Edit</Button>
-                            <Button size="xs" color="light">Remove</Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white mb-1">Work</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">John Doe</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">456 Business Ave, Floor 12</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">New York, NY 10002</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">United States</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">+1 (555) 987-6543</p>
-                        </div>
-                        <div>
-                          <div className="flex flex-col space-y-2">
-                            <Button size="xs">Edit</Button>
-                            <Button size="xs" color="light">Remove</Button>
-                            <Button size="xs" color="light">Set as Default</Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {activeTab === "payment" && (
-                <div>
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Payment Methods
-                    </h3>
-                    <Button size="sm" color="blue">Add Payment Method</Button>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-md mr-3">
-                            <HiOutlineCreditCard className="h-6 w-6 text-blue-600 dark:text-blue-300" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">Visa ending in 4242</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Expires 05/2025</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge color="blue">Default</Badge>
-                          <Button size="xs">Edit</Button>
-                          <Button size="xs" color="light">Remove</Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="bg-red-100 dark:bg-red-900 p-2 rounded-md mr-3">
-                            <HiOutlineCreditCard className="h-6 w-6 text-red-600 dark:text-red-300" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">Mastercard ending in 8888</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Expires 08/2026</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button size="xs">Edit</Button>
-                          <Button size="xs" color="light">Remove</Button>
-                          <Button size="xs" color="light">Set Default</Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
               {activeTab === "support" && (
                 <div>

@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Category } from "../../context/product/CategoryContext";
+import type { Department } from "../../context/product/DepartmentContext";
+import type { Range } from "../../context/product/RangeContext";
+import type { Brand } from "../../context/product/BrandContext";
 import { useNavigate } from "react-router-dom";
 
 /**
@@ -17,7 +20,12 @@ import { useNavigate } from "react-router-dom";
  * @param slideFromLeft - Whether the sidebar should slide in from the left (default: false, slides from right)
  * @param fullWidth - Whether the sidebar should take up the full screen width in mobile mode
  */
+type SidebarTab = "department" | "range" | "brand" | "category";
+
 interface CategoryPreviewSidebarProps {
+  departments: Department[];
+  ranges: Range[];
+  brands: Brand[];
   categories: Category[];
   selectedCategory?: Category | null;
   onSelectCategory: (category: Category) => void;
@@ -25,12 +33,15 @@ interface CategoryPreviewSidebarProps {
   onClose?: () => void;
   isMobile?: boolean;
   shouldRedirect?: boolean;
-  redirectUrlFormatter?: (category: Category) => string;
+  redirectUrlFormatter?: (tab: SidebarTab, item: Department | Range | Brand | Category) => string;
   slideFromLeft?: boolean;
   fullWidth?: boolean;
 }
 
 const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
+  departments,
+  ranges,
+  brands,
   categories,
   selectedCategory,
   onSelectCategory,
@@ -38,21 +49,50 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
   onClose,
   isMobile = false,
   shouldRedirect = false,
-  redirectUrlFormatter = (category) => `/products/category/${category.id}`,
+  redirectUrlFormatter = (tab, item) => {
+    if (tab === "department") return `/product-section?department=${item.id}`;
+    if (tab === "range") return `/product-section?range=${item.id}`;
+    if (tab === "brand") return `/product-section?brand=${item.id}`;
+    return `/product-section/${(item as Category).id}`;
+  },
   slideFromLeft = false,
   fullWidth = false,
 }) => {
   const navigate = useNavigate();
+  // Remove activeTab since we're showing all sections
+
+  const sortedDepartments = useMemo(() => {
+    return [...departments].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [departments]);
+  const sortedRanges = useMemo(() => {
+    return [...ranges].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [ranges]);
+  const sortedBrands = useMemo(() => {
+    return [...brands].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [brands]);
+  const sortedCategories = useMemo(() => {
+    return [...categories];
+  }, [categories]);
 
   // Handle category selection with optional redirection
   const handleCategorySelect = (category: Category) => {
     onSelectCategory(category);
     
     if (shouldRedirect) {
-      const redirectUrl = redirectUrlFormatter(category);
+      const redirectUrl = redirectUrlFormatter("category", category);
       navigate(redirectUrl);
       
       // Close the sidebar if it's mobile
+      if (isMobile && onClose) {
+        onClose();
+      }
+    }
+  };
+
+  const handleFlatSelect = (tab: SidebarTab, item: Department | Range | Brand) => {
+    if (shouldRedirect) {
+      const redirectUrl = redirectUrlFormatter(tab, item);
+      navigate(redirectUrl);
       if (isMobile && onClose) {
         onClose();
       }
@@ -94,6 +134,25 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
     );
   };
 
+  const renderFlatItem = (tab: SidebarTab, item: Department | Range | Brand) => {
+    const label = item.name || "";
+    const image = item.media_url || "";
+    return (
+      <div
+        key={item.id}
+        className="relative w-full h-16 rounded-lg overflow-hidden mb-2"
+        onClick={() => handleFlatSelect(tab, item)}
+      >
+        {image && (
+          <img src={image} alt={label} className="w-full h-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
+          <h2 className="text-white text-2xl font-semibold">{label}</h2>
+        </div>
+      </div>
+    );
+  };
+
   const sidebarClasses = `
     ${isMobile 
       ? `fixed inset-y-0 ${slideFromLeft ? "left-0" : "right-0"} z-50 transform transition-transform duration-300 ease-in-out` 
@@ -120,7 +179,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
       <div className={sidebarClasses}>
         {isMobile && (
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Browse Categories</h2>
+            <h2 className="text-lg font-semibold">Browse</h2>
             <button
               type="button"
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -133,7 +192,37 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
 
         <div className={`${isMobile ? "p-4" : "p-2 h-[calc(100vh-7rem)] flex items-center justify-center"}`}>
           <div className={`rounded-lg bg-white dark:bg-gray-800 p-4 ${isMobile && !fullWidth ? "h-[calc(100vh-9rem)]" : ""} w-full overflow-y-auto`}>
-            {categories.map((category) => renderCategory(category, 0))}
+            {/* Departments */}
+            {sortedDepartments.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Department</h3>
+                {sortedDepartments.map((d) => renderFlatItem("department", d))}
+              </div>
+            )}
+
+            {/* Ranges */}
+            {sortedRanges.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Range</h3>
+                {sortedRanges.map((r) => renderFlatItem("range", r))}
+              </div>
+            )}
+
+            {/* Brands */}
+            {sortedBrands.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Brand</h3>
+                {sortedBrands.map((b) => renderFlatItem("brand", b))}
+              </div>
+            )}
+
+            {/* Categories */}
+            {sortedCategories.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Category</h3>
+                {sortedCategories.map((category) => renderCategory(category, 0))}
+              </div>
+            )}
           </div>
         </div>
       </div>
