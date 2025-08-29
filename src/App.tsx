@@ -63,6 +63,7 @@ import { HomePageElementProvider } from "./context/HomePageElementContext";
 import CartPage from "./pages/landing/Cart";
 import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
+import CustomerOrderDetailPage from "./pages/landing/OrderDetail";
 import ProductSection from "./pages/landing/ProductSection";
 import ProductDetails from "./pages/landing/ProductDetails";
 import GoalPage from "./pages/landing/Goal";
@@ -87,6 +88,9 @@ import InternalChat from "./pages/internal-chat";
 import SupportAnalyticsPage from "./pages/analytics/support";
 import NotificationsPage from "./pages/landing/notifications";
 import { PointsMembershipProvider } from "./context/PointsMembershipContext";
+import { OrderProvider } from "./context/product/OrderContext";
+import OrderListPage from "./pages/orders/list";
+import OrderDetailPage from "./pages/orders/detail";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -117,6 +121,7 @@ const App: React.FC = () => (
         ProductStockProvider,
         AddToCartLogProvider,
         AddToCartProvider,
+        OrderProvider,
         HomePageElementProvider,
         CommunityProvider,
         GroupProvider,
@@ -202,6 +207,10 @@ const App: React.FC = () => (
                   element={<HomePageBuilder />}
                 />
 
+                {/* Orders */}
+                <Route path="/orders" element={<OrderListPage />} />
+                <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+
                 {/* Support */} 
                 <Route path="/support" element={<SupportPage />} />
 
@@ -236,6 +245,7 @@ const App: React.FC = () => (
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/order-cancel" element={<OrderCancel />} />
+              <Route path="/order-details/:orderId" element={<CustomerOrderDetailPage />} />
               <Route path="/goal" element={<GoalPage />} />
               <Route path="/settings" element={<ProfileSettingsPage />} />
               <Route path="/support-chat" element={<ChatWindow />} />

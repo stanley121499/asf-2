@@ -502,6 +502,157 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_events: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          payment_id: string | null
+          stripe_event_id: string
+          stripe_event_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: Json
+          payment_id?: string | null
+          stripe_event_id: string
+          stripe_event_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          payment_id?: string | null
+          stripe_event_id?: string
+          stripe_event_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_discount: number | null
+          amount_shipping: number | null
+          amount_subtotal: number | null
+          amount_tax: number | null
+          amount_total: number
+          attempt_count: number
+          created_at: string
+          currency: string
+          email: string | null
+          error_type: string | null
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          idempotency_key: string | null
+          latest_charge_id: string | null
+          livemode: boolean
+          metadata: Json
+          name: string | null
+          order_id: string | null
+          payment_method_id: string | null
+          payment_method_type: string | null
+          phone: string | null
+          provider: string
+          receipt_url: string | null
+          refund_status: Database["public"]["Enums"]["refund_status"]
+          refunded_amount: number
+          shipping_address: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_discount?: number | null
+          amount_shipping?: number | null
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total: number
+          attempt_count?: number
+          created_at?: string
+          currency: string
+          email?: string | null
+          error_type?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          latest_charge_id?: string | null
+          livemode?: boolean
+          metadata?: Json
+          name?: string | null
+          order_id?: string | null
+          payment_method_id?: string | null
+          payment_method_type?: string | null
+          phone?: string | null
+          provider?: string
+          receipt_url?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
+          refunded_amount?: number
+          shipping_address?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_discount?: number | null
+          amount_shipping?: number | null
+          amount_subtotal?: number | null
+          amount_tax?: number | null
+          amount_total?: number
+          attempt_count?: number
+          created_at?: string
+          currency?: string
+          email?: string | null
+          error_type?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          latest_charge_id?: string | null
+          livemode?: boolean
+          metadata?: Json
+          name?: string | null
+          order_id?: string | null
+          payment_method_id?: string | null
+          payment_method_type?: string | null
+          phone?: string | null
+          provider?: string
+          receipt_url?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
+          refunded_amount?: number
+          shipping_address?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_folder_medias: {
         Row: {
           created_at: string
@@ -1672,7 +1823,16 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      payment_status:
+        | "created"
+        | "requires_payment_method"
+        | "requires_action"
+        | "processing"
+        | "succeeded"
+        | "canceled"
+        | "failed"
+        | "expired"
+      refund_status: "not_refunded" | "partially_refunded" | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1799,6 +1959,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_status: [
+        "created",
+        "requires_payment_method",
+        "requires_action",
+        "processing",
+        "succeeded",
+        "canceled",
+        "failed",
+        "expired",
+      ],
+      refund_status: ["not_refunded", "partially_refunded", "refunded"],
+    },
   },
 } as const

@@ -18,6 +18,8 @@ import { useAddToCartLogContext } from "../../context/product/AddToCartLogContex
 import { supabase } from "../../utils/supabaseClient";
 import type { Database } from "../../../database.types";
 import CheckoutButton from "../../components/stripe/CheckoutButton";
+import { usePointsMembership } from "../../context/PointsMembershipContext";
+import { formatCurrency, pointsToRM, rmToPoints, calculatePointsEarned } from "../../utils/pointsConfig";
 
 /**
  * View model for cart items displayed on the page.
@@ -47,10 +49,28 @@ const CartPage: React.FC = () => {
   const { user } = useAuthContext();
   const { add_to_carts, updateAddToCart, deleteAddToCart } = useAddToCartContext();
   const { createAddToCartLog } = useAddToCartLogContext();
+  const pointsAPI = usePointsMembership();
 
   const [cartItems, setCartItems] = useState<CartItemViewModel[]>([]);
-  // Promo codes removed per requirements
+  const [pointsToUse, setPointsToUse] = useState<number>(0);
+  const [userPoints, setUserPoints] = useState<number>(0);
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
+
+  // Fetch user points
+  useEffect(() => {
+    const fetchUserPoints = async () => {
+      if (user?.id) {
+        try {
+          const pointsRecord = await pointsAPI.getUserPointsByUserId(user.id);
+          setUserPoints(pointsRecord?.amount || 0);
+        } catch (err) {
+          console.error("Error fetching user points:", err);
+          setUserPoints(0);
+        }
+      }
+    };
+    fetchUserPoints();
+  }, [user, pointsAPI]);
 
   /**
    * Derive only current user's cart rows from the context (keeps in sync in real-time).
@@ -208,8 +228,16 @@ const CartPage: React.FC = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  // Total equals subtotal (no promo code, shipping, or estimated tax)
-  const total = subtotal;
+  
+  // Use fetched user points
+  const availablePoints = userPoints;
+  
+  // Calculate discount from points
+  const pointsDiscount = pointsToRM(pointsToUse);
+  const total = Math.max(0, subtotal - pointsDiscount);
+  
+  // Calculate points that will be earned (only if not using points for discount)
+  const pointsEarned = pointsToUse > 0 ? 0 : calculatePointsEarned(total);
 
   /**
    * Update quantity for a cart item. Persists to DB and logs the action.
@@ -268,12 +296,67 @@ const CartPage: React.FC = () => {
     navigate("/checkout");
   };
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD"
-    }).format(amount);
+  /**
+   * Create a fake Stripe-like session and local cart, then navigate to success page.
+   */
+  const handleTestPayNow = (): void => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+
+    const fakeId = `cs_test_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+    // Persist a minimal fake session for the success page to render
+    const fakeSession = {
+      id: fakeId,
+      customer_details: {
+        name: "Test User",
+        email: "test@example.com",
+        phone: "+60123456789",
+        address: {
+          line1: "123 Test Street",
+          line2: "Unit 4A",
+          city: "Test City",
+          state: "Selangor",
+          postal_code: "43000",
+          country: "MY",
+        },
+      },
+      payment_method_details: { type: "card" },
+      created: Math.floor(Date.now() / 1000),
+    } as const;
+
+    // For OrderSuccess to compute totals, store a compatible cart in localStorage (prices in cents for Stripe)
+    const localCart = cartItems.map((i) => ({
+      id: i.productId,
+      price: Math.round(i.price * 100),
+      quantity: i.quantity,
+      color_id: null as string | null,
+      size_id: null as string | null,
+    }));
+    
+    // Store points usage information for order processing
+    const orderMetadata = {
+      pointsUsed: pointsToUse,
+      pointsDiscount: pointsDiscount,
+      pointsEarned: pointsEarned,
+      originalSubtotal: subtotal,
+      finalTotal: total,
+    };
+    localStorage.setItem("order_metadata", JSON.stringify(orderMetadata));
+    localStorage.setItem("cart", JSON.stringify(localCart));
+    localStorage.setItem(`fake_checkout_session_${fakeId}`, JSON.stringify(fakeSession));
+
+    navigate(`/order-success?session_id=${encodeURIComponent(fakeId)}&mode=fake`);
+  };
+
+  /**
+   * Handle points usage input
+   */
+  const handlePointsChange = (points: number): void => {
+    const maxUsablePoints = Math.min(availablePoints, rmToPoints(subtotal));
+    setPointsToUse(Math.max(0, Math.min(points, maxUsablePoints)));
   };
 
   // If user not logged in, prompt to sign in
@@ -473,7 +556,31 @@ const CartPage: React.FC = () => {
                     Order Summary
                   </h2>
                   
-                  {/* Promo code UI removed */}
+                  {/* Points Usage Section */}
+                  {availablePoints > 0 && (
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        Use Points (Available: {availablePoints.toLocaleString()})
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max={Math.min(availablePoints, rmToPoints(subtotal))}
+                          value={pointsToUse}
+                          onChange={(e) => handlePointsChange(parseInt(e.target.value) || 0)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          placeholder="Points to use"
+                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          = {formatCurrency(pointsToRM(pointsToUse))}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Max usable: {Math.min(availablePoints, rmToPoints(subtotal)).toLocaleString()} points
+                      </p>
+                    </div>
+                  )}
                   
                   {/* Price Details */}
                   <div className="space-y-3">
@@ -482,6 +589,19 @@ const CartPage: React.FC = () => {
                       <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
                     </div>
                     
+                    {pointsToUse > 0 && (
+                      <div className="flex justify-between text-green-600 dark:text-green-400">
+                        <span>Points Discount ({pointsToUse.toLocaleString()} points)</span>
+                        <span>-{formatCurrency(pointsDiscount)}</span>
+                      </div>
+                    )}
+                    
+                    {pointsEarned > 0 && (
+                      <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                        <span>Points Earned</span>
+                        <span>+{pointsEarned.toLocaleString()} points</span>
+                      </div>
+                    )}
                     
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                       <div className="flex justify-between font-bold">
@@ -502,6 +622,11 @@ const CartPage: React.FC = () => {
                       customerId={user.id}
                       buttonTitle="Proceed to Checkout"
                     />
+                    <div className="mt-3">
+                      <Button color="success" onClick={handleTestPayNow}>
+                        Test Pay Now (Skip Stripe)
+                      </Button>
+                    </div>
                     
                     {/* Payment methods image removed */}
                   </div>

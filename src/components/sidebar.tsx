@@ -8,7 +8,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
-import { FaBoxes } from "react-icons/fa";
+import { FaBoxes, FaClipboardList } from "react-icons/fa";
 import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
@@ -138,6 +138,18 @@ const ExampleSidebar: React.FC = function () {
                 : ""
             }>
             Stocks
+          </Sidebar.Item>
+
+          <Sidebar.Item
+            icon={FaClipboardList}
+            href="/orders"
+            onClick={onItemClick}
+            className={
+              "/orders" === currentPage || currentPage.startsWith("/orders/")
+                ? "bg-gray-100 dark:bg-gray-700"
+                : ""
+            }>
+            Orders
           </Sidebar.Item>
 
           <Sidebar.Item
