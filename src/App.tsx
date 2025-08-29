@@ -89,7 +89,9 @@ import SupportAnalyticsPage from "./pages/analytics/support";
 import NotificationsPage from "./pages/landing/notifications";
 import { PointsMembershipProvider } from "./context/PointsMembershipContext";
 import { OrderProvider } from "./context/product/OrderContext";
+import { PaymentProvider } from "./context/PaymentContext";
 import OrderListPage from "./pages/orders/list";
+import { PaymentListPage, PaymentDetailPage } from "./pages/payments";
 import OrderDetailPage from "./pages/orders/detail";
 
 const App: React.FC = () => (
@@ -122,6 +124,7 @@ const App: React.FC = () => (
         AddToCartLogProvider,
         AddToCartProvider,
         OrderProvider,
+        PaymentProvider,
         HomePageElementProvider,
         CommunityProvider,
         GroupProvider,
@@ -210,6 +213,10 @@ const App: React.FC = () => (
                 {/* Orders */}
                 <Route path="/orders" element={<OrderListPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+
+                {/* Payments */}
+                <Route path="/payments" element={<PaymentListPage />} />
+                <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
 
                 {/* Support */} 
                 <Route path="/support" element={<SupportPage />} />

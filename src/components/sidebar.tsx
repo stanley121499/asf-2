@@ -14,6 +14,7 @@ import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
 import { FiMessageCircle } from "react-icons/fi";
 import { HiX, HiMenu } from "react-icons/hi";
+import { MdPayment } from "react-icons/md";
 
 /**
  * Mobile responsive sidebar component that adapts its behavior based on screen size
@@ -150,6 +151,18 @@ const ExampleSidebar: React.FC = function () {
                 : ""
             }>
             Orders
+          </Sidebar.Item>
+
+          <Sidebar.Item
+            icon={MdPayment}
+            href="/payments"
+            onClick={onItemClick}
+            className={
+              "/payments" === currentPage || currentPage.startsWith("/payments/")
+                ? "bg-gray-100 dark:bg-gray-700"
+                : ""
+            }>
+            Payments
           </Sidebar.Item>
 
           <Sidebar.Item
