@@ -1,13 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
-import {
-  Conversation,
-  useConversationContext,
-  Message
-} from "../../context/ConversationContext";
+import { Conversation, useConversationContext } from "../../context/ConversationContext";
 import LoadingPage from "../pages/loading";
 import { useUserContext } from "../../context/UserContext";
+import { useTicketContext } from "../../context/TicketContext";
 import { 
   FiHeadphones, 
   FiSearch, 
@@ -16,101 +13,56 @@ import {
   FiCheckCircle 
 } from "react-icons/fi";
 import ChatWindow from "./chat-window";
-import { v4 as uuidv4 } from "uuid";
 
 // Define types for our messaging system
 type SupportTicketStatus = "open" | "closed";
 
-interface SupportTicket {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  timestamp?: string;
-  unreadCount?: number;
-  avatar?: string;
-  status: SupportTicketStatus;
-}
-
 const SupportPage: React.FC = function () {
   const { conversations, loading } = useConversationContext();
   const { users } = useUserContext();
+  const { tickets, updateTicket } = useTicketContext();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   
   // Navigation state
   const [activeTicketTab, setActiveTicketTab] = useState<SupportTicketStatus>("open");
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Sample support tickets based on the existing conversations
-  const supportTickets = conversations.map(conv => ({
-    id: conv.id,
-    name: users.find(user => user.id === conv.customer_id)?.email || "Unknown User",
-    lastMessage: conv.messages[0]?.content || "No messages",
-    timestamp: conv.created_at ? new Date(conv.created_at).toLocaleString() : "Unknown time",
-    unreadCount: 0,
-    status: Math.random() > 0.5 ? "open" : "closed" as SupportTicketStatus, // Randomly assign status for demo
-    avatar: "/images/users/default-avatar.png",
-  }));
+  // Real support tickets
+  const supportTickets = useMemo(() => {
+    return tickets.map((t) => {
+      const conv = conversations.find((c) => c.ticket_id === t.id);
+      const participantUserId = conv?.participants.find((p) => p.user_id)?.user_id ?? null;
+      const name = users.find((u) => u.id === participantUserId)?.email || "Customer";
+      return {
+        id: t.id,
+        name,
+        lastMessage: conv?.messages.at(-1)?.content || "No messages",
+        timestamp: t.created_at ? new Date(t.created_at).toLocaleString() : "",
+        unreadCount: 0,
+        status: (t.status === "closed" ? "closed" : "open") as SupportTicketStatus,
+        avatar: "/images/users/default-avatar.png",
+      };
+    });
+  }, [tickets, conversations, users]);
   
-  // Mock data for additional tickets (for testing UI)
-  const [mockTickets, setMockTickets] = useState<SupportTicket[]>([
-    {
-      id: `support-${Date.now() - 100000}`,
-      name: "Jane Smith",
-      lastMessage: "When will my order arrive?",
-      timestamp: "2 hours ago",
-      unreadCount: 2,
-      status: "open",
-      avatar: "/images/users/default-avatar.png"
-    },
-    {
-      id: `support-${Date.now() - 200000}`,
-      name: "Mike Johnson",
-      lastMessage: "Thanks for your help!",
-      timestamp: "Yesterday",
-      unreadCount: 0,
-      status: "closed",
-      avatar: "/images/users/default-avatar.png"
-    }
-  ]);
-  
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   
   // Function to create a support ticket
   const handleCreateSupportTicket = () => {
-    // In a real implementation, this would create a new support ticket
-    const newTicket: SupportTicket = {
-      id: `support-${Date.now()}`,
-      name: "New Support Ticket",
-      lastMessage: "Ticket created - awaiting response",
-      timestamp: new Date().toISOString(),
-      unreadCount: 0,
-      status: "open",
-      avatar: "/images/users/default-avatar.png"
-    };
-    
-    setMockTickets(prev => [...prev, newTicket]);
-    setSelectedTicket(newTicket);
-    setActiveTicketTab("open");
+    // Creation handled on customer side; support manages existing tickets only.
   };
 
   // Function to create a mock conversation object for tickets without actual conversations
   const createMockConversation = (ticketId: string): Conversation => {
     return {
       id: ticketId,
-      customer_id: "mock-customer",
-      status: "active",
       created_at: new Date().toISOString(),
-      messages: [
-        {
-          id: `system-${ticketId}`,
-          conversation_id: ticketId,
-          content: "Support ticket created. An agent will respond shortly.",
-          created_at: new Date().toISOString(),
-          direction: "system",
-          media_url: "",
-          sender: "System"
-        }
-      ]
+      active: true,
+      group_id: null,
+      ticket_id: ticketId,
+      type: "support",
+      messages: [],
+      participants: [],
     };
   };
 
@@ -119,7 +71,7 @@ const SupportPage: React.FC = function () {
   }
 
   // Filter tickets based on active tab and search query
-  const filteredTickets = [...mockTickets, ...supportTickets].filter(ticket => {
+  const filteredTickets = supportTickets.filter(ticket => {
     const matchesStatus = ticket.status === activeTicketTab;
     const matchesSearch = !searchQuery || 
                         ticket.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,67 +81,33 @@ const SupportPage: React.FC = function () {
 
   // Calculate unread counts
   const unreadCounts = {
-    open: [...mockTickets, ...supportTickets]
+    open: supportTickets
       .filter(ticket => ticket.status === "open" && ticket.unreadCount && ticket.unreadCount > 0)
       .reduce((sum, ticket) => sum + (ticket.unreadCount || 0), 0),
-    closed: [...mockTickets, ...supportTickets]
+    closed: supportTickets
       .filter(ticket => ticket.status === "closed" && ticket.unreadCount && ticket.unreadCount > 0)
       .reduce((sum, ticket) => sum + (ticket.unreadCount || 0), 0)
   };
 
   // Handle ticket selection
-  const handleTicketSelect = (ticket: SupportTicket) => {
-    setSelectedTicket(ticket);
-    
-    // Find real conversation if it exists
-    const supportConversation = conversations.find(conv => conv.id === ticket.id);
-    if (supportConversation) {
-      setSelectedConversation(supportConversation);
-    } else {
-      setSelectedConversation(null);
-    }
+  const handleTicketSelect = (ticketId: string) => {
+    setSelectedTicketId(ticketId);
+    const supportConversation = conversations.find(conv => conv.ticket_id === ticketId);
+    setSelectedConversation(supportConversation ?? null);
   };
   
   // Function to close a ticket
-  const handleCloseTicket = () => {
-    if (!selectedTicket) return;
-    
-    // Update ticket status
-    if (selectedTicket.status === "open") {
-      const updatedTicket = {...selectedTicket, status: "closed" as SupportTicketStatus};
-      
-      // Update in mockTickets if it exists there
-      const mockIndex = mockTickets.findIndex(t => t.id === selectedTicket.id);
-      if (mockIndex >= 0) {
-        const updatedMockTickets = [...mockTickets];
-        updatedMockTickets[mockIndex] = updatedTicket;
-        setMockTickets(updatedMockTickets);
-      }
-      
-      setSelectedTicket(updatedTicket);
-      // In a real app, you would also update the status in the backend
-    }
+  const handleCloseTicket = async () => {
+    if (!selectedTicketId) return;
+    await updateTicket(selectedTicketId, { status: "closed" });
+    setActiveTicketTab("closed");
   };
   
   // Function to reopen a ticket
-  const handleReopenTicket = () => {
-    if (!selectedTicket) return;
-    
-    // Update ticket status
-    if (selectedTicket.status === "closed") {
-      const updatedTicket = {...selectedTicket, status: "open" as SupportTicketStatus};
-      
-      // Update in mockTickets if it exists there
-      const mockIndex = mockTickets.findIndex(t => t.id === selectedTicket.id);
-      if (mockIndex >= 0) {
-        const updatedMockTickets = [...mockTickets];
-        updatedMockTickets[mockIndex] = updatedTicket;
-        setMockTickets(updatedMockTickets);
-      }
-      
-      setSelectedTicket(updatedTicket);
-      // In a real app, you would also update the status in the backend
-    }
+  const handleReopenTicket = async () => {
+    if (!selectedTicketId) return;
+    await updateTicket(selectedTicketId, { status: "open" });
+    setActiveTicketTab("open");
   };
 
   return (
@@ -263,9 +181,9 @@ const SupportPage: React.FC = function () {
                 <div
                   key={ticket.id}
                   className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer ${
-                    selectedTicket?.id === ticket.id ? "bg-gray-50 dark:bg-gray-600" : ""
+                    selectedTicketId === ticket.id ? "bg-gray-50 dark:bg-gray-600" : ""
                   }`}
-                  onClick={() => handleTicketSelect(ticket)}
+                  onClick={() => handleTicketSelect(ticket.id)}
                 >
                   <div className="flex items-center space-x-4">
                     <div className="relative">
@@ -316,7 +234,7 @@ const SupportPage: React.FC = function () {
         
         {/* Chat Window Area */}
         <div className="col-span-3 h-full">
-          {selectedTicket ? (
+          {selectedTicketId ? (
             <div className="h-full flex flex-col">
               {/* Ticket Header */}
               <div className="p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between">
@@ -324,15 +242,15 @@ const SupportPage: React.FC = function () {
                   <div className="relative">
                     <img
                       className="w-10 h-10 rounded-full mr-3"
-                      src={selectedTicket.avatar || "/images/users/default-avatar.png"}
-                      alt={selectedTicket.name}
+                      src={"/images/users/default-avatar.png"}
+                      alt={selectedTicketId}
                     />
-                    {selectedTicket.status === "open" && (
+                    {activeTicketTab === "open" && (
                       <div className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-1">
                         <FiHeadphones size={10} className="text-white" />
                       </div>
                     )}
-                    {selectedTicket.status === "closed" && (
+                    {activeTicketTab === "closed" && (
                       <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1">
                         <FiCheckCircle size={10} className="text-white" />
                       </div>
@@ -340,17 +258,17 @@ const SupportPage: React.FC = function () {
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {selectedTicket.name}
+                      {supportTickets.find(t => t.id === selectedTicketId)?.name ?? "Customer"}
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Support Ticket #{selectedTicket.id.substring(0, 8)} - {selectedTicket.status.toUpperCase()}
+                      Support Ticket #{selectedTicketId.substring(0, 8)} - {activeTicketTab.toUpperCase()}
                     </p>
                   </div>
                 </div>
                 
                 {/* Ticket Actions */}
                 <div className="flex space-x-2">
-                  {selectedTicket.status === "open" ? (
+                  {activeTicketTab === "open" ? (
                     <button
                       onClick={handleCloseTicket}
                       className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700"
@@ -379,8 +297,8 @@ const SupportPage: React.FC = function () {
                 />
               ) : (
                 <ChatWindow
-                  conversation={createMockConversation(selectedTicket.id)}
-                  messages={createMockConversation(selectedTicket.id).messages}
+                  conversation={createMockConversation(selectedTicketId)}
+                  messages={createMockConversation(selectedTicketId).messages}
                 />
               )}
             </div>

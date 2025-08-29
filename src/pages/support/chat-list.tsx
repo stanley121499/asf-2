@@ -37,11 +37,11 @@ const ChatList: React.FC<ChatListProps> = ({
       </div>
       <ul className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto flex-grow">
         {conversations
-        .filter((conversation) =>
-          users.find((user) => user.id === conversation.customer_id)?.email
-          .toLowerCase()
-          .includes(search.toLowerCase())
-        )
+        .filter((conversation) => {
+          const customerUserId = conversation.participants.find((p) => p.user_id)?.user_id;
+          const email = users.find((u) => u.id === customerUserId)?.email ?? "";
+          return email.toLowerCase().includes(search.toLowerCase());
+        })
         .map((conversation, index) => (
           <li
             key={index}
@@ -51,7 +51,10 @@ const ChatList: React.FC<ChatListProps> = ({
               <div className="flex space-x-4 xl:mb-4 2xl:mb-0 w-full items-center">
                 <div className="min-w-0 flex-1 w-fit">
                   <p className="mb-0.5 truncate text-base font-semibold leading-none text-gray-900 dark:text-white flex items-center gap-x-2">
-                    {users.find((user) => user.id === conversation.customer_id)?.email}
+                    {(() => {
+                      const customerUserId = conversation.participants.find((p) => p.user_id)?.user_id;
+                      return users.find((u) => u.id === customerUserId)?.email;
+                    })()}
                   </p>
                   {conversation.messages.length > 0 && (
                     <>

@@ -4,17 +4,13 @@ import React, { useEffect, useState, useRef } from "react";
 import Picker from "emoji-picker-react";
 import { MdOutlineEmojiEmotions } from "react-icons/md";
 import { FiPlus, FiFile, FiImage, FiVideo, FiX } from "react-icons/fi";
-import {
-  Conversation,
-  Message,
-  MessageInsert,
-} from "../../context/ConversationContext";
-import { useConversationContext } from "../../context/ConversationContext";
+import { Conversation, ChatMessageRow, useConversationContext } from "../../context/ConversationContext";
 import LoadingPage from "../pages/loading";
+import { useAuthContext } from "../../context/AuthContext";
 
 interface ChatWindowProps {
   conversation: Conversation;
-  messages: Message[];
+  messages: ChatMessageRow[];
   onSendMessage?: (content: string) => void;
 }
 
@@ -35,9 +31,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuthContext();
 
   const handleSubmit = async () => {
-    if (!conversation.id) return;
+    if (!conversation.id || !user) return;
 
     // Create media_url from attachments
     let mediaUrls = "";
@@ -45,18 +42,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
       mediaUrls = attachments.map(att => att.preview).join(",");
     }
 
-    const newMessage: MessageInsert = {
+    const payload = {
       conversation_id: conversation.id,
       content: input,
-      direction: "inbound",
+      created_at: new Date().toISOString(),
       media_url: mediaUrls,
-    };
+      user_id: user.id,
+      type: attachments.length > 0 ? "media" : "text",
+    } as const;
 
-    // Use the provided onSendMessage callback if it exists, otherwise use default behavior
     if (onSendMessage) {
       onSendMessage(input);
     } else {
-      createMessage(newMessage);
+      await createMessage(payload);
     }
     
     setInput("");
@@ -80,7 +78,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const onEmojiClick = (emojiObject: any, e: any) => {
+  const onEmojiClick = (emojiObject: any) => {
     setInput(input + emojiObject.emoji);
   };
 
@@ -165,11 +163,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
     <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-700">
       {/* Chat Messages */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
-        {[...messages].map((message, index) => (
-          <div key={message.id} id={message.id.toString()}>
-            {generateMessage(message)}
-          </div>
-        ))}
+        {[...messages].map((message) => {
+          const isOutbound = user ? message.user_id === user.id : false;
+          return (
+            <div key={message.id} id={message.id.toString()}>
+              {generateMessage(message, isOutbound)}
+            </div>
+          );
+        })}
         <div ref={messageEndRef} />
       </div>
 
@@ -302,7 +303,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
   );
 };
 
-const generateMessage = (message: Message) => {
+const generateMessage = (message: ChatMessageRow, isOutbound: boolean) => {
   const formattedDate = new Date(message.created_at || "").toLocaleString(
     "en-US",
     {
@@ -314,25 +315,10 @@ const generateMessage = (message: Message) => {
       hour12: true,
     }
   );
-
-  const isOutbound = message.direction === "inbound";
   
   // Check if the message contains media
-  const hasMedia = message.media_url && message.media_url.trim() !== "";
-  const mediaUrls = hasMedia ? message.media_url.split(",") : [];
-
-  // For system messages (like "This conversation started today")
-  if (message.direction === "system") {
-    return (
-      <div className="flex justify-center my-4">
-        <div className="bg-gray-200 dark:bg-gray-600 rounded-lg px-4 py-2 max-w-[80%]">
-          <p className="text-sm text-gray-700 dark:text-gray-200">
-            {message.content}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const hasMedia = typeof message.media_url === "string" && message.media_url.trim() !== "";
+  const mediaUrls = hasMedia ? (message.media_url as string).split(",") : [];
 
   // For regular chat messages (outbound or inbound)
   return (
@@ -348,11 +334,7 @@ const generateMessage = (message: Message) => {
       
       <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'} ${isOutbound ? 'max-w-[85%]' : 'max-w-[75%]'}`}>
         {/* Sender name - only for incoming messages */}
-        {!isOutbound && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 ml-1">
-            {message.sender || "Agent"}
-          </span>
-        )}
+        {/* Optionally show sender info here if you enrich the message with joined user profile */}
         
         {/* Message bubble */}
         <div 
