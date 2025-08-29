@@ -18,7 +18,9 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  // Subject/description are not tracked in DB for tickets
+  const [subject, setSubject] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("general");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -35,7 +37,7 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
   const selectedUser = users.find((user) => user.id === selectedUserId);
 
   const handleCreateTicket = async () => {
-    if (!selectedUserId || !currentUser) {
+    if (!selectedUserId || !currentUser || !subject.trim() || !description.trim()) {
       return;
     }
 
@@ -47,6 +49,9 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
         user_id: selectedUserId,
         status: "open",
         priority,
+        subject: subject.trim(),
+        description: description.trim(),
+        type,
         created_at: new Date().toISOString(),
       });
 
@@ -79,7 +84,7 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
       ]);
 
       // Create an initial message with the ticket details
-      const ticketContent = `New support ticket created.\n\nPriority: ${priority.toUpperCase()}`;
+      const ticketContent = `New support ticket created.\n\nSubject: ${subject}\nType: ${type.charAt(0).toUpperCase() + type.slice(1)}\nPriority: ${priority.toUpperCase()}\n\n${description}`;
       
       await createMessage({
         conversation_id: conversation.id,
@@ -92,6 +97,9 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
       // Reset form
       setSelectedUserId(null);
       setSearchTerm("");
+      setSubject("");
+      setDescription("");
+      setType("general");
       setPriority("medium");
 
       // Notify parent and close modal
@@ -237,6 +245,55 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
           {/* Ticket Details */}
           {selectedUserId && (
             <>
+              {/* Type */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Type of Issue
+                </label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                >
+                  <option value="general">General Inquiry</option>
+                  <option value="technical">Technical Issue</option>
+                  <option value="billing">Billing Question</option>
+                  <option value="feature">Feature Request</option>
+                  <option value="bug">Bug Report</option>
+                  <option value="account">Account Issue</option>
+                </select>
+              </div>
+
+              {/* Subject */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  placeholder="Brief description of the issue"
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  placeholder="Please provide detailed information about the issue..."
+                  required
+                />
+              </div>
+
               {/* Priority */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -276,7 +333,7 @@ const CreateSupportTicketModal: React.FC<CreateSupportTicketModalProps> = ({
           </button>
           <button
             onClick={handleCreateTicket}
-            disabled={!selectedUserId || isCreating}
+            disabled={!selectedUserId || !subject.trim() || !description.trim() || isCreating}
             className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {isCreating ? "Creating..." : "Create Ticket"}

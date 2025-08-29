@@ -1500,28 +1500,37 @@ export type Database = {
         Row: {
           assigned_agent_id: string | null
           created_at: string
+          description: string | null
           id: string
           priority: string | null
           rating: number | null
           status: string | null
+          subject: string | null
+          type: string | null
           user_id: string | null
         }
         Insert: {
           assigned_agent_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           priority?: string | null
           rating?: number | null
           status?: string | null
+          subject?: string | null
+          type?: string | null
           user_id?: string | null
         }
         Update: {
           assigned_agent_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           priority?: string | null
           rating?: number | null
           status?: string | null
+          subject?: string | null
+          type?: string | null
           user_id?: string | null
         }
         Relationships: []

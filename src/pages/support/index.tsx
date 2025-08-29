@@ -16,6 +16,7 @@ import {
 import ChatWindow from "./chat-window";
 import CreateSupportTicketModal from "../../components/CreateSupportTicketModal";
 
+
 // Define types for our messaging system
 type SupportTicketStatus = "open" | "closed";
 
@@ -79,6 +80,11 @@ const SupportPage: React.FC = function () {
         status: (t.status === "closed" ? "closed" : "open") as SupportTicketStatus,
         avatar: typeof avatarCandidate === "string" ? avatarCandidate : null,
         assignedAgentId: t.assigned_agent_id ?? null,
+        subject: t.subject ?? "No Subject",
+        description: t.description ?? "",
+        type: t.type ?? "general",
+        priority: t.priority ?? "medium",
+        rating: t.rating ?? null,
       };
     });
   }, [tickets, conversations, users]);
@@ -126,6 +132,9 @@ const SupportPage: React.FC = function () {
     const matchesStatus = ticket.status === activeTicketTab;
     const matchesSearch = !searchQuery || 
                         ticket.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        ticket.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         (ticket.lastMessage && ticket.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesAssignee = !showAssignedToMe || (authUser && ticket.assignedAgentId === authUser.id);
     return matchesStatus && matchesSearch && matchesAssignee;
@@ -153,6 +162,8 @@ const SupportPage: React.FC = function () {
   // Function to close a ticket
   const handleCloseTicket = async () => {
     if (!selectedTicketId) return;
+    
+    // Close the ticket (no rating for support agents)
     await updateTicket(selectedTicketId, { status: "closed" });
     setActiveTicketTab("closed");
   };
@@ -277,12 +288,22 @@ const SupportPage: React.FC = function () {
                         <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
                           {ticket.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {ticket.timestamp}
-                        </p>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            ticket.priority === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                            ticket.priority === "medium" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                            "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          }`}>
+                            {ticket.priority}
+                          </span>
+                          <span>{ticket.timestamp}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                        {ticket.lastMessage}
+                      <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                        {ticket.subject}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate dark:text-gray-400 capitalize">
+                        {ticket.type} • {ticket.lastMessage}
                       </p>
                     </div>
                     {ticket.unreadCount && ticket.unreadCount > 0 && (
@@ -331,13 +352,60 @@ const SupportPage: React.FC = function () {
                       </div>
                     )}
                   </div>
-                  <div className="ml-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {supportTickets.find(t => t.id === selectedTicketId)?.name ?? "Customer"}
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Support Ticket #{selectedTicketId.substring(0, 8)} - {activeTicketTab.toUpperCase()}
-                    </p>
+                  <div className="ml-4 flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {supportTickets.find(t => t.id === selectedTicketId)?.subject ?? "No Subject"}
+                      </h2>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        #{selectedTicketId?.substring(0, 8)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-gray-600 dark:text-gray-300">
+                        {supportTickets.find(t => t.id === selectedTicketId)?.name ?? "Customer"}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                        (() => {
+                          const ticket = supportTickets.find(t => t.id === selectedTicketId);
+                          const priority = ticket?.priority;
+                          return priority === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                                 priority === "medium" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                 "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+                        })()
+                      }`}>
+                        {supportTickets.find(t => t.id === selectedTicketId)?.priority ?? "medium"} priority
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 capitalize">
+                        {supportTickets.find(t => t.id === selectedTicketId)?.type ?? "general"}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        activeTicketTab === "open" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                        "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                      }`}>
+                        {activeTicketTab}
+                      </span>
+                      {supportTickets.find(t => t.id === selectedTicketId)?.rating && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Rating:</span>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span key={star} className={`text-sm ${
+                                (supportTickets.find(t => t.id === selectedTicketId)?.rating ?? 0) >= star 
+                                  ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"
+                              }`}>
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {supportTickets.find(t => t.id === selectedTicketId)?.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                        {supportTickets.find(t => t.id === selectedTicketId)?.description}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
