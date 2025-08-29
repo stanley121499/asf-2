@@ -206,7 +206,7 @@ const PaymentListPage: React.FC = function () {
   const [searchValue, setSearchValue] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [refundFilter, setRefundFilter] = useState<string>("all");
-  const [timeFilter, setTimeFilter] = useState<string>("last_month");
+  const [timeFilter, setTimeFilter] = useState<string>("all");
 
   /**
    * Filter payments based on search term, status, and time range
