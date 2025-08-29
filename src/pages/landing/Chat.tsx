@@ -1,54 +1,158 @@
-import Picker from "emoji-picker-react";
 import React, { useState, useEffect } from "react";
-import { IoAddOutline, IoChevronBack } from "react-icons/io5";
-import { MdOutlineEmojiEmotions } from "react-icons/md";
+import { IoChevronBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import MessageComponent from "../../components/MessageComponent";
-import { ChatMessageRow, useConversationContext } from "../../context/ConversationContext";
+import { Conversation, useConversationContext } from "../../context/ConversationContext";
 import { useAuthContext } from "../../context/AuthContext";
 import LoadingPage from "../pages/loading";
 import { useTicketContext } from "../../context/TicketContext";
 import { useRef } from "react";
-import { uploadToMedias } from "../../utils/upload";
+import ChatWindow from "../support/chat-window";
+import { Button, TextInput, Textarea, Select } from "flowbite-react";
+import TicketRatingModal from "../../components/TicketRatingModal";
 
-const ChatWindow: React.FC = () => {
+/**
+ * Form for collecting ticket details before starting chat
+ */
+interface TicketFormProps {
+  formData: {
+    subject: string;
+    description: string;
+    type: string;
+  };
+  onChange: (data: { subject: string; description: string; type: string }) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  loading: boolean;
+}
+
+const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, onSubmit, onCancel, loading }) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    onChange({ ...formData, [field]: value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.subject.trim() && formData.description.trim()) {
+      onSubmit();
+    }
+  };
+
+  return (
+    <div className="flex-grow flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          Start a Support Request
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Please provide some details about your issue to help us assist you better.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Type of Issue
+            </label>
+            <Select
+              id="type"
+              value={formData.type}
+              onChange={(e) => handleInputChange("type", e.target.value)}
+              required
+            >
+              <option value="general">General Inquiry</option>
+              <option value="technical">Technical Issue</option>
+              <option value="billing">Billing Question</option>
+              <option value="feature">Feature Request</option>
+              <option value="bug">Bug Report</option>
+              <option value="account">Account Issue</option>
+            </Select>
+          </div>
+
+          <div>
+            <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Subject
+            </label>
+            <TextInput
+              id="subject"
+              type="text"
+              value={formData.subject}
+              onChange={(e) => handleInputChange("subject", e.target.value)}
+              placeholder="Brief description of your issue"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <Textarea
+              id="description"
+              rows={4}
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              placeholder="Please provide more details about your issue..."
+              required
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" disabled={loading || !formData.subject.trim() || !formData.description.trim()}>
+              {loading ? "Starting Chat..." : "Start Chat"}
+            </Button>
+            <Button color="gray" onClick={onCancel} disabled={loading}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const LandingSupportChat: React.FC = () => {
   const {
     loading,
     conversations,
     createConversation,
-    createMessage,
     addParticipant,
     listMessagesByConversationId,
   } = useConversationContext();
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [input, setInput] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [openEmoji, setOpenEmoji] = useState(false);
+  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const [showTicketForm, setShowTicketForm] = useState<boolean>(false);
+  const [ticketFormData, setTicketFormData] = useState({
+    subject: "",
+    description: "",
+    type: "general" as string,
+  });
+  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [closedTicketForRating, setClosedTicketForRating] = useState<{
+    id: string;
+    subject: string;
+  } | null>(null);
   const navigate = useNavigate();
   const { user } = useAuthContext();
   const { createTicket, tickets, loading: ticketsLoading } = useTicketContext();
   const creatingRef = useRef<boolean>(false);
-  // Conversation + local message state must be declared before any early returns
-  const conversation = conversations.find((c) => c.id === conversationId);
-  const [messagesLocal, setMessagesLocal] = useState<ChatMessageRow[]>([]);
-
-  // Seed local messages from context when conversation changes
-  useEffect(() => {
-    if (conversation) {
-      setMessagesLocal(conversation.messages ?? []);
-      console.log("[Chat] Seed local messages from context", { count: conversation.messages?.length ?? 0 });
-    }
-  }, [conversation]);
 
   // Poll as a fail-safe to keep messages fresh if realtime misses
   useEffect(() => {
     if (!conversationId) return;
     const interval = setInterval(async () => {
-      const rows = await listMessagesByConversationId(conversationId);
-      setMessagesLocal(rows);
+      await listMessagesByConversationId(conversationId);
     }, 3000);
     return () => clearInterval(interval);
   }, [conversationId, listMessagesByConversationId]);
+
+  // Always pick the freshest conversation reference to ensure instant UI updates
+  useEffect(() => {
+    if (!conversationId) {
+      setActiveConversation(null);
+      return;
+    }
+    const latest = conversations.find((c) => c.id === conversationId) ?? null;
+    setActiveConversation(latest);
+  }, [conversationId, conversations]);
 
   useEffect(() => {
     if (!user || loading || ticketsLoading) {
@@ -80,82 +184,100 @@ const ChatWindow: React.FC = () => {
     if (existing) {
       console.log("[Chat] Using existing support conversation", { conversationId: existing.id, ticketId: existing.ticket_id, messages: existing.messages?.length ?? 0 });
       setConversationId(existing.id);
+      setShowTicketForm(false);
       return;
     }
 
-    const init = async () => {
-      creatingRef.current = true;
-      try {
-        const ticket = openTicket ?? (await createTicket({ user_id: user.id, status: "open" }));
-        const created = await createConversation({ type: "support", active: true, ticket_id: ticket?.id ?? null });
-        if (!created?.id) return;
-        await addParticipant({ conversation_id: created.id, user_id: user.id });
-        console.log("[Chat] Created support conversation", { conversationId: created.id, ticketId: ticket?.id });
-        setConversationId(created.id);
-      } finally {
-        creatingRef.current = false;
-      }
-    };
+    // If we have an open ticket without required details, show the form to complete it
+    if (openTicket && (!openTicket.subject || !openTicket.description)) {
+      setShowTicketForm(true);
+      return;
+    }
 
-    void init();
+    // If no existing ticket, show the form for new ticket
+    if (!openTicket) {
+      setShowTicketForm(true);
+      return;
+    }
   }, [tickets, ticketsLoading, conversations, createConversation, addParticipant, loading, user, createTicket]);
 
+  // Monitor ticket status changes to show rating modal when closed
   useEffect(() => {
-    const run = async () => {
-      if (!conversationId) return;
-      console.log("[Chat] conversationId changed", { conversationId });
-      const rows = await listMessagesByConversationId(conversationId);
-      console.log("[Chat] listMessagesByConversationId result", { count: rows.length, sample: rows.slice(0, 3) });
-    };
-    void run();
-  }, [conversationId, listMessagesByConversationId]);
+    if (!user || !activeConversation?.ticket_id) return;
+
+    const currentTicket = tickets.find(t => t.id === activeConversation.ticket_id);
+    if (currentTicket && currentTicket.status === "closed" && !currentTicket.rating) {
+      // Only show rating modal if ticket is closed and hasn't been rated yet
+      setClosedTicketForRating({
+        id: currentTicket.id,
+        subject: currentTicket.subject || "Support Request"
+      });
+      setShowRatingModal(true);
+    }
+  }, [tickets, activeConversation, user]);
+
+  /**
+   * Handle ticket form submission
+   */
+  const handleTicketFormSubmit = async () => {
+    if (!user || !ticketFormData.subject.trim() || !ticketFormData.description.trim() || creatingRef.current) {
+      return;
+    }
+
+    creatingRef.current = true;
+    try {
+      // Create the ticket with form data
+      const ticket = await createTicket({ 
+        user_id: user.id, 
+        status: "open",
+        subject: ticketFormData.subject.trim(),
+        description: ticketFormData.description.trim(),
+        type: ticketFormData.type,
+        priority: "medium" // Default priority
+      });
+
+      if (!ticket?.id) {
+        console.error("Failed to create ticket");
+        return;
+      }
+
+      // Create conversation for the ticket
+      const created = await createConversation({ 
+        type: "support", 
+        active: true, 
+        ticket_id: ticket.id 
+      });
+
+      if (!created?.id) {
+        console.error("Failed to create conversation");
+        return;
+      }
+
+      // Add user as participant
+      await addParticipant({ 
+        conversation_id: created.id, 
+        user_id: user.id 
+      });
+
+      console.log("[Chat] Created support conversation", { 
+        conversationId: created.id, 
+        ticketId: ticket.id 
+      });
+      
+      setConversationId(created.id);
+      setShowTicketForm(false);
+    } catch (error) {
+      console.error("Error creating ticket and conversation:", error);
+    } finally {
+      creatingRef.current = false;
+    }
+  };
+
+  // Optional diagnostics removed for cleaner UI
 
   if (!user || loading) {
     return <LoadingPage />;
   }
-
-  const messages = messagesLocal;
-
-  const handleSubmit = async () => {
-    if (!conversationId || !user) return;
-    if (!input && !file) return;
-
-    let mediaUrl = "";
-    if (file) {
-      try {
-        mediaUrl = await uploadToMedias(file, "chat-messages");
-      } catch (e) {
-        console.error("[Chat] upload failed", e);
-      }
-    }
-
-    const payload = {
-      content: input,
-      conversation_id: conversationId,
-      created_at: new Date().toISOString(),
-      media_url: mediaUrl,
-      user_id: user.id,
-      type: file ? "media" : "text",
-    } as const;
-    console.log("[Chat] Sending message", payload);
-    const res = await createMessage(payload);
-    console.log("[Chat] Sent message result", res);
-
-    setInput("");
-    setFile(null);
-  };
-
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void handleSubmit();
-    }
-  };
-
-  type EmojiClick = { emoji: string };
-  const onEmojiClick = (emojiObject: EmojiClick) => {
-    setInput((prev) => `${prev}${emojiObject.emoji}`);
-  };
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
@@ -171,115 +293,37 @@ const ChatWindow: React.FC = () => {
         </h1>
       </div>
 
-      {/* Messages Section */}
-      <div className="flex-grow p-4 overflow-y-auto">
-        {!conversationId ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Starting chat...
-          </p>
+      {/* Messages + Input handled by shared ChatWindow to match internal/support UI */}
+      <div className="flex-grow min-h-0">
+        {showTicketForm ? (
+          <TicketForm 
+            formData={ticketFormData}
+            onChange={setTicketFormData}
+            onSubmit={handleTicketFormSubmit}
+            onCancel={() => navigate(-1)}
+            loading={creatingRef.current}
+          />
+        ) : activeConversation ? (
+          <ChatWindow conversation={activeConversation} messages={activeConversation.messages} />
         ) : (
-          [...messages].map((message) => {
-            const direction: "inbound" | "outbound" = message.user_id === user.id ? "outbound" : "inbound";
-            return (
-              <div key={message.id} id={message.id}>
-                {generateMessage(message, direction)}
-              </div>
-            );
-          })
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Starting chat...</div>
         )}
       </div>
 
-      {/* File Preview */}
-      {/* {file && (
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-700">
-          <div className="text-gray-500 truncate">{file.name}</div>
-          <button
-            className="text-gray-500 hover:text-red-500"
-            onClick={() => setFile(null)}>
-            Remove
-          </button>
-        </div>
-      )} */}
-
-      {/* Emoji Picker */}
-      {openEmoji && (
-        <div className="absolute bottom-20 left-4 right-4 z-10">
-          <Picker onEmojiClick={onEmojiClick} />
-        </div>
-      )}
-
-      {/* Input Section */}
-      <div className="bg-white dark:bg-gray-800 p-4 shadow-md flex items-center space-x-3">
-        {/* Add File */}
-        <label className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
-          <IoAddOutline size={24} />
-          <input
-            type="file"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-        </label>
-
-        {/* Emoji Picker */}
-        <button
-          type="button"
-          className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
-          onClick={() => setOpenEmoji(!openEmoji)}>
-          <MdOutlineEmojiEmotions size={24} />
-        </button>
-
-        {/* Input Field */}
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
-          className="flex-grow bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {/* Ticket Rating Modal */}
+      {closedTicketForRating && (
+        <TicketRatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setClosedTicketForRating(null);
+          }}
+          ticketId={closedTicketForRating.id}
+          customerName={user?.email || "Customer"}
+          ticketSubject={closedTicketForRating.subject}
         />
-
-        {/* Send Button */}
-        <button
-          type="button"
-          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2"
-          onClick={handleSubmit}>
-          <svg
-            className="w-5 h-5 rotate-90"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 18 20">
-            <path d="m17.914 18.594-8-18a1 1 0 0 0-1.828 0l-8 18a1 1 0 0 0 1.157 1.376L8 18.281V9a1 1 0 0 1 2 0v9.281l6.758 1.689a1 1 0 0 0 1.156-1.376Z" />
-          </svg>
-        </button>
-      </div>
+      )}
     </div>
   );
 };
-
-const generateMessage = (message: ChatMessageRow, direction: "inbound" | "outbound") => {
-  const formattedDate = new Date(message.created_at || "").toLocaleString(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hour12: true,
-    }
-  );
-
-  return (
-    <MessageComponent
-      message={message.content ?? ""}
-      media={message.media_url ?? undefined}
-      direction={direction}
-      date={formattedDate}
-      status=""
-      error=""
-    />
-  );
-};
-
-export default ChatWindow;
+export default LandingSupportChat;

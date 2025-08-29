@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiUser } from "react-icons/fi";
 
 export interface UserPickerProps {
   isOpen: boolean;
@@ -58,15 +58,27 @@ const UserPicker: React.FC<UserPickerProps> = ({
                   key={user.id}
                   onClick={() => onSelectUser(user.id, user.email)}
                   className="flex items-center p-3 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <img
-                    src="/images/users/default-avatar.png"
-                    alt={user.email}
-                    className="w-10 h-10 rounded-full mr-3"
-                  />
+                  <div className="relative mr-3">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.email}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          el.style.display = "none";
+                          el.nextElementSibling?.classList.remove("hidden");
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-500 dark:to-gray-600 ${user.avatar_url ? "hidden" : ""}`}>
+                      <FiUser className="text-gray-700 dark:text-gray-200" size={20} />
+                    </div>
+                  </div>
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{user.email}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {user.role || "User"}
+                      {(user.user_detail as any)?.role || "User"}
                     </p>
                   </div>
                 </div>
