@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useOrderContext } from "../../context/product/OrderContext";
+import { useAuthContext } from "../../context/AuthContext";
 
 interface Session {
   id: string;
@@ -25,11 +27,21 @@ interface Address {
   state?: string;
 }
 
+/**
+ * OrderSuccess
+ *
+ * Displays success details from Stripe session and idempotently persists the
+ * order into Supabase through OrderContext. The cart is cleared only once per
+ * Stripe session using a localStorage flag to prevent duplicates on refresh.
+ */
 const OrderSuccess: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const sessionId = new URLSearchParams(window.location.search).get(
     "session_id"
   );
+  const { user } = useAuthContext();
+  const { createOrderWithItemsAndStock } = useOrderContext();
+  const storageKey = useMemo(() => (sessionId ? `order_processed_${sessionId}` : undefined), [sessionId]);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -39,11 +51,56 @@ const OrderSuccess: React.FC = () => {
         );
         const data = await response.json();
         setSession(data);
+
+        // Persist order on first load only (idempotent via localStorage flag)
+        if (storageKey && !localStorage.getItem(storageKey)) {
+          try {
+            const rawCart = localStorage.getItem("cart") || "[]";
+            const cartItems: Array<{ id: string; price: number; quantity: number; color_id?: string | null; size_id?: string | null; name?: string; media_url?: string; }> = JSON.parse(rawCart);
+
+            const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const shippingAddress = data?.customer_details?.address
+              ? [
+                  data.customer_details.address.line1,
+                  data.customer_details.address.line2,
+                  data.customer_details.address.city,
+                  data.customer_details.address.state,
+                  data.customer_details.address.postal_code,
+                  data.customer_details.address.country,
+                ]
+                  .filter((p: string | undefined) => typeof p === "string" && p.trim() !== "")
+                  .join(", ")
+              : null;
+
+            if (user && cartItems.length > 0) {
+              await createOrderWithItemsAndStock(
+                {
+                  userId: user.id,
+                  shippingAddress,
+                  totalAmount,
+                },
+                cartItems.map((c) => ({
+                  id: c.id,
+                  price: c.price,
+                  quantity: c.quantity,
+                  color_id: c.color_id ?? null,
+                  size_id: c.size_id ?? null,
+                }))
+              );
+            }
+
+            // Clear cart only once
+            localStorage.removeItem("cart");
+            localStorage.setItem(storageKey, "true");
+          } catch (err) {
+            console.error(err);
+          }
+        }
       }
     };
 
     fetchSession();
-  }, [sessionId]);
+  }, [sessionId, storageKey, user, createOrderWithItemsAndStock]);
 
   if (!session) {
     return <div>Loading...</div>;

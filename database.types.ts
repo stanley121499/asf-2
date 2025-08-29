@@ -407,14 +407,74 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          amount: number | null
+          color_id: string | null
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string | null
+          size_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          color_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          size_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          color_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          size_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_color_id_fkey"
+            columns: ["color_id"]
+            isOneToOne: false
+            referencedRelation: "product_colors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_size_id_fkey"
+            columns: ["size_id"]
+            isOneToOne: false
+            referencedRelation: "product_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
           discount_type: string | null
           discounted_amount: number | null
-          id: number
+          id: string
+          points_earned: number | null
+          points_spent: number | null
           shipping_address: string | null
-          status: string | null
           total_amount: number | null
           user_id: string | null
         }
@@ -422,9 +482,10 @@ export type Database = {
           created_at?: string
           discount_type?: string | null
           discounted_amount?: number | null
-          id?: number
+          id?: string
+          points_earned?: number | null
+          points_spent?: number | null
           shipping_address?: string | null
-          status?: string | null
           total_amount?: number | null
           user_id?: string | null
         }
@@ -432,9 +493,10 @@ export type Database = {
           created_at?: string
           discount_type?: string | null
           discounted_amount?: number | null
-          id?: number
+          id?: string
+          points_earned?: number | null
+          points_spent?: number | null
           shipping_address?: string | null
-          status?: string | null
           total_amount?: number | null
           user_id?: string | null
         }
@@ -1467,6 +1529,7 @@ export type Database = {
           city: string | null
           id: string
           lifetime_val: number
+          profile_image: string | null
           race: string | null
           role: string
           state: string | null
@@ -1476,6 +1539,7 @@ export type Database = {
           city?: string | null
           id: string
           lifetime_val?: number
+          profile_image?: string | null
           race?: string | null
           role?: string
           state?: string | null
@@ -1485,6 +1549,7 @@ export type Database = {
           city?: string | null
           id?: string
           lifetime_val?: number
+          profile_image?: string | null
           race?: string | null
           role?: string
           state?: string | null

@@ -87,6 +87,7 @@ import InternalChat from "./pages/internal-chat";
 import SupportAnalyticsPage from "./pages/analytics/support";
 import NotificationsPage from "./pages/landing/notifications";
 import { PointsMembershipProvider } from "./context/PointsMembershipContext";
+import { OrderProvider } from "./context/product/OrderContext";
 
 const App: React.FC = () => (
   <AlertProvider>
@@ -117,6 +118,7 @@ const App: React.FC = () => (
         ProductStockProvider,
         AddToCartLogProvider,
         AddToCartProvider,
+        OrderProvider,
         HomePageElementProvider,
         CommunityProvider,
         GroupProvider,
