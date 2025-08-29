@@ -34,6 +34,8 @@ interface AddToCartContextProps {
   deleteAddToCart: (addToCartId: string) => Promise<void>;
   /** Fetch carts for a specific user id. */
   fetchByUser: (userId: string) => Promise<AddToCart[]>;
+  /** Delete all cart rows for a specific user id. */
+  clearCartByUser: (userId: string) => Promise<void>;
   /** Loading state for initial data load. */
   loading: boolean;
 }
@@ -177,6 +179,23 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
     setAddToCarts((prev) => prev.filter((row) => row.id !== addToCartId));
   };
 
+  /** Delete all cart rows for a given user id. */
+  const clearCartByUser = async (userId: string): Promise<void> => {
+    if (typeof userId !== "string" || userId.length === 0) {
+      showAlert("Invalid user id for clear cart.", "error");
+      return;
+    }
+    const { error } = await supabase
+      .from("add_to_carts")
+      .delete()
+      .eq("user_id", userId);
+    if (error) {
+      showAlert(error.message, "error");
+      return;
+    }
+    setAddToCarts((prev) => prev.filter((row) => row.user_id !== userId));
+  };
+
   /** Fetch all cart rows for a given user id. */
   const fetchByUser = async (userId: string): Promise<AddToCart[]> => {
     if (typeof userId !== "string" || userId.length === 0) {
@@ -202,6 +221,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       updateAddToCart,
       deleteAddToCart,
       fetchByUser,
+      clearCartByUser,
       loading,
     }),
     [add_to_carts, loading]

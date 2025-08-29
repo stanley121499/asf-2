@@ -1,7 +1,8 @@
 import React from "react";
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY!);
+const stripePublicKey: string | undefined = process.env.REACT_APP_STRIPE_PUBLIC_KEY as string | undefined;
+const stripePromise = loadStripe(stripePublicKey ?? "");
 
 interface CartItem {
   name: string;
@@ -20,6 +21,28 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   customerId,
   buttonTitle,
 }) => {
+  const getAppBaseUrl = (): string => {
+    const envRaw: string = (process.env.REACT_APP_ENV as string | undefined) ?? "";
+    const env: string = envRaw.toLowerCase().trim();
+    const appUrl: string | undefined = process.env.REACT_APP_APP_URL as string | undefined;
+    const portEnv: string | undefined = process.env.REACT_APP_PORT as string | undefined;
+    const isDev: boolean = env === "development" || env.startsWith("dev") || env.includes("local");
+
+    console.log(env, appUrl, portEnv, isDev);
+    console.log("Condition Check:", isDev);
+
+    if (isDev) {
+      const port: string = portEnv && /^\d+$/.test(portEnv) ? portEnv : "3000";
+      return `http://localhost:${port}`;
+    }
+
+    if (appUrl && appUrl.trim().length > 0) {
+      return appUrl.replace(/\/$/, "");
+    }
+
+    return window.location.origin;
+  };
+
   const handleCheckout = async () => {
     try {
       const stripe = await stripePromise;
@@ -28,6 +51,14 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
         throw new Error("Stripe has not loaded correctly.");
       }
 
+      if (!stripePublicKey) {
+        throw new Error("Missing Stripe public key environment variable.");
+      }
+
+      const baseUrl = getAppBaseUrl();
+      const successUrl = `${baseUrl}/order-success`;
+      const cancelUrl = `${baseUrl}/order-cancel`;
+      
       // Call the Vercel serverless function to create a checkout session
       const response = await fetch(
         "https://asf-serverless-2.vercel.app/api/create-checkout-session",
@@ -36,7 +67,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ items, customerId }),
+          body: JSON.stringify({ items, customerId, successUrl, cancelUrl }),
         }
       );
 

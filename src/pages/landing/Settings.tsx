@@ -1,12 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Card, Avatar, Badge, Tooltip, Tabs } from "flowbite-react";
 import NavbarHome from "../../components/navbar-home";
 import { Link, useNavigate } from "react-router-dom";
 import { HiOutlineShoppingBag, HiOutlineHeart, HiOutlineCog, HiOutlineUser, HiOutlineQuestionMarkCircle, HiOutlineLogout, HiOutlineLocationMarker, HiOutlineCreditCard } from "react-icons/hi";
+import OrdersList from "./components/OrdersList";
+import { useAuthContext } from "../../context/AuthContext";
+import { usePointsMembership } from "../../context/PointsMembershipContext";
 
 const ProfileSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("account");
+  const [userPoints, setUserPoints] = useState<number>(0);
+  const { user } = useAuthContext();
+  const pointsAPI = usePointsMembership();
+
+  // Fetch user points
+  useEffect(() => {
+    const fetchUserPoints = async () => {
+      if (user?.id) {
+        try {
+          const pointsRecord = await pointsAPI.getUserPointsByUserId(user.id);
+          setUserPoints(pointsRecord?.amount || 0);
+        } catch (err) {
+          console.error("Error fetching user points:", err);
+          setUserPoints(0);
+        }
+      }
+    };
+    fetchUserPoints();
+  }, [user, pointsAPI]);
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -49,7 +71,7 @@ const ProfileSettingsPage: React.FC = () => {
                   </span>
                   <Tooltip content="You can redeem these points for discounts">
                     <span className="text-sm text-gray-800 dark:text-white font-semibold">
-                      1,250
+                      {userPoints.toLocaleString()}
                     </span>
                   </Tooltip>
                 </div>
@@ -214,40 +236,7 @@ const ProfileSettingsPage: React.FC = () => {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                     Order History
                   </h3>
-                  {/* Orders list */}
-                  <div className="space-y-4">
-                    <Link to="/orders/123" className="block">
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">#ORD-2023-4567</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">May 15, 2023</p>
-                          </div>
-                          <Badge color="success">Delivered</Badge>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">3 items - $125.00</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link to="/orders/122" className="block">
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">#ORD-2023-4321</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">April 23, 2023</p>
-                          </div>
-                          <Badge color="info">Processing</Badge>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">1 item - $79.99</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link to="/orders/view-all" className="text-blue-600 hover:underline flex items-center justify-center mt-4">
-                      View all orders
-                    </Link>
-                  </div>
+                  <OrdersList />
                 </div>
               )}
 

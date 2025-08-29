@@ -63,6 +63,7 @@ import { HomePageElementProvider } from "./context/HomePageElementContext";
 import CartPage from "./pages/landing/Cart";
 import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
+import OrderDetailPage from "./pages/landing/OrderDetail";
 import ProductSection from "./pages/landing/ProductSection";
 import ProductDetails from "./pages/landing/ProductDetails";
 import GoalPage from "./pages/landing/Goal";
@@ -238,6 +239,7 @@ const App: React.FC = () => (
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/order-cancel" element={<OrderCancel />} />
+              <Route path="/order-details/:orderId" element={<OrderDetailPage />} />
               <Route path="/goal" element={<GoalPage />} />
               <Route path="/settings" element={<ProfileSettingsPage />} />
               <Route path="/support-chat" element={<ChatWindow />} />

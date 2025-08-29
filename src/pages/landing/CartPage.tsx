@@ -3,6 +3,7 @@ import CheckoutButton from "../../components/stripe/CheckoutButton";
 import NavbarHome from "../../components/navbar-home";
 import { useAuthContext } from "../../context/AuthContext";
 import LoadingPage from "../pages/loading";
+import { useNavigate } from "react-router-dom";
 
 interface CartItem {
   name: string;
@@ -18,6 +19,7 @@ const CartPage: React.FC = () => {
   );
   const { user } = useAuthContext();
   const [promoCodeInput, setPromoCodeInput] = useState("");
+  const navigate = useNavigate();
 
   const handleIncrement = (index: number) => {
     setCartItems((prevCartItems) =>
@@ -66,6 +68,40 @@ const CartPage: React.FC = () => {
   if (!user) {
     return <LoadingPage />;
   }
+
+  const handleTestCheckout = () => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+    const fakeId = `cs_test_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    const fakeSession = {
+      id: fakeId,
+      customer_details: {
+        name: "Test User",
+        email: "test@example.com",
+        phone: "+60123456789",
+        address: {
+          line1: "123 Test Street",
+          line2: "Unit 4A",
+          city: "Test City",
+          state: "Selangor",
+          postal_code: "43000",
+          country: "MY",
+        },
+      },
+      payment_method_details: {
+        type: "card",
+      },
+      created: Math.floor(Date.now() / 1000),
+      shipping: {
+        address: "123 Test Street, Test City",
+      },
+    };
+
+    localStorage.setItem(`fake_checkout_session_${fakeId}`, JSON.stringify(fakeSession));
+    navigate(`/order-success?session_id=${encodeURIComponent(fakeId)}&mode=fake`);
+  };
 
   return (
     <>
@@ -228,6 +264,14 @@ const CartPage: React.FC = () => {
               </button>
               <div className="mt-4 flex w-full items-center justify-center sm:mt-0">
                 <CheckoutButton items={cartItems} customerId={user.id} />
+              </div>
+              <div className="mt-4 flex w-full items-center justify-center sm:mt-0">
+                <button
+                  type="button"
+                  onClick={handleTestCheckout}
+                  className="w-full rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700">
+                  Test Pay Now (Skip Stripe)
+                </button>
               </div>
             </div>
           </div>

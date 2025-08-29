@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useOrderContext } from "../../context/product/OrderContext";
 import { useAuthContext } from "../../context/AuthContext";
+import { useAddToCartContext } from "../../context/product/CartContext";
+import { usePointsMembership } from "../../context/PointsMembershipContext";
 
 interface Session {
   id: string;
@@ -39,68 +41,171 @@ const OrderSuccess: React.FC = () => {
   const sessionId = new URLSearchParams(window.location.search).get(
     "session_id"
   );
+  const mode = new URLSearchParams(window.location.search).get("mode");
   const { user } = useAuthContext();
   const { createOrderWithItemsAndStock } = useOrderContext();
+  const { clearCartByUser } = useAddToCartContext();
+  const pointsAPI = usePointsMembership();
   const storageKey = useMemo(() => (sessionId ? `order_processed_${sessionId}` : undefined), [sessionId]);
+  const lockKey = useMemo(() => (sessionId ? `order_processing_${sessionId}` : undefined), [sessionId]);
 
   useEffect(() => {
     const fetchSession = async () => {
       if (sessionId) {
+        let sessionData: Session | null = null;
+        if (mode === "fake") {
+          const local = localStorage.getItem(`fake_checkout_session_${sessionId}`);
+          if (local) {
+            try {
+              sessionData = JSON.parse(local) as Session;
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        } else {
         const response = await fetch(
           `https://asf-serverless-2.vercel.app/api/get-checkout-session?session_id=${sessionId}`
         );
-        const data = await response.json();
-        setSession(data);
+          const respData = (await response.json()) as Session;
+          sessionData = respData;
+        }
 
-        // Persist order on first load only (idempotent via localStorage flag)
-        if (storageKey && !localStorage.getItem(storageKey)) {
-          try {
-            const rawCart = localStorage.getItem("cart") || "[]";
-            const cartItems: Array<{ id: string; price: number; quantity: number; color_id?: string | null; size_id?: string | null; name?: string; media_url?: string; }> = JSON.parse(rawCart);
+        if (sessionData) {
+          setSession(sessionData);
 
-            const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const shippingAddress = data?.customer_details?.address
-              ? [
-                  data.customer_details.address.line1,
-                  data.customer_details.address.line2,
-                  data.customer_details.address.city,
-                  data.customer_details.address.state,
-                  data.customer_details.address.postal_code,
-                  data.customer_details.address.country,
-                ]
-                  .filter((p: string | undefined) => typeof p === "string" && p.trim() !== "")
-                  .join(", ")
-              : null;
+          // Persist order on first load only (idempotent via localStorage flag)
+          if (storageKey) {
+            const alreadyProcessed = Boolean(localStorage.getItem(storageKey));
+            const alreadyProcessing = lockKey ? Boolean(localStorage.getItem(lockKey)) : false;
+            if (!alreadyProcessed && !alreadyProcessing) {
+              if (lockKey) {
+                localStorage.setItem(lockKey, "true");
+              }
+              try {
+                const rawCart = localStorage.getItem("cart") || "[]";
+                const cartItems: Array<{ id: string; price: number; quantity: number; color_id?: string | null; size_id?: string | null; name?: string; media_url?: string; }> = JSON.parse(rawCart);
+                
+                // Get order metadata (points info)
+                const orderMetadata = JSON.parse(localStorage.getItem("order_metadata") || "{}") as {
+                  pointsUsed?: number;
+                  pointsDiscount?: number;
+                  pointsEarned?: number;
+                  originalSubtotal?: number;
+                  finalTotal?: number;
+                };
 
-            if (user && cartItems.length > 0) {
-              await createOrderWithItemsAndStock(
-                {
-                  userId: user.id,
-                  shippingAddress,
-                  totalAmount,
-                },
-                cartItems.map((c) => ({
-                  id: c.id,
-                  price: c.price,
-                  quantity: c.quantity,
-                  color_id: c.color_id ?? null,
-                  size_id: c.size_id ?? null,
-                }))
-              );
+                const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) / 100;
+                const finalTotal = orderMetadata.finalTotal || totalAmount;
+                const shippingAddress = sessionData.customer_details?.address
+                  ? [
+                      sessionData.customer_details?.address?.line1,
+                      sessionData.customer_details?.address?.line2,
+                      sessionData.customer_details?.address?.city,
+                      sessionData.customer_details?.address?.state,
+                      sessionData.customer_details?.address?.postal_code,
+                      sessionData.customer_details?.address?.country,
+                    ]
+                      .filter((p: string | undefined) => typeof p === "string" && p.trim() !== "")
+                      .join(", ")
+                  : null;
+
+                if (user && cartItems.length > 0) {
+                  await createOrderWithItemsAndStock(
+                    {
+                      userId: user.id,
+                      shippingAddress,
+                      totalAmount: finalTotal,
+                      pointsEarned: orderMetadata.pointsEarned || 0,
+                      pointsSpent: orderMetadata.pointsUsed || 0,
+                      discountType: orderMetadata.pointsUsed ? "points" : null,
+                      discountedAmount: orderMetadata.pointsDiscount || 0,
+                    },
+                    cartItems.map((c) => ({
+                      id: c.id,
+                      price: c.price,
+                      quantity: c.quantity,
+                      color_id: c.color_id ?? null,
+                      size_id: c.size_id ?? null,
+                    }))
+                  );
+
+                  // Handle points updates
+                  let currentUserPoints = await pointsAPI.getUserPointsByUserId(user.id);
+                  
+                  // Create user_points record if it doesn't exist
+                  if (!currentUserPoints) {
+                    try {
+                      currentUserPoints = await pointsAPI.createUserPoints({
+                        user_id: user.id,
+                        amount: 0,
+                      });
+                    } catch (createError) {
+                      // If creation fails (e.g., due to race condition), try fetching again
+                      console.warn("Failed to create user_points, attempting to fetch again:", createError);
+                      currentUserPoints = await pointsAPI.getUserPointsByUserId(user.id);
+                      if (!currentUserPoints) {
+                        throw new Error("Unable to create or fetch user_points record");
+                      }
+                    }
+                  }
+                  
+                  let newPointsAmount = currentUserPoints.amount || 0;
+                  
+                  // Deduct points if used for discount
+                  if (orderMetadata.pointsUsed) {
+                    newPointsAmount -= orderMetadata.pointsUsed;
+                  }
+                  
+                  // Add points if earned
+                  if (orderMetadata.pointsEarned) {
+                    newPointsAmount += orderMetadata.pointsEarned;
+                  }
+                  
+                  // Update user points
+                  await pointsAPI.updateUserPoints(currentUserPoints.id, {
+                    amount: newPointsAmount,
+                  });
+                  
+                  // Log the points transaction
+                  if (orderMetadata.pointsUsed || orderMetadata.pointsEarned) {
+                    const pointsUsed = orderMetadata.pointsUsed || 0;
+                    const pointsEarned = orderMetadata.pointsEarned || 0;
+                    
+                    await pointsAPI.createUserPointsLog({
+                      point_id: currentUserPoints.id,
+                      amount: pointsEarned > 0 ? pointsEarned : -pointsUsed,
+                      type: pointsUsed > 0 ? "order_discount" : "order_earned",
+                    });
+                  }
+
+                  // Clear DB-backed cart rows for this user
+                  await clearCartByUser(user.id);
+                  
+                  // Also clear localStorage cart
+                  localStorage.removeItem("cart");
+                }
+
+                // Clear local cart and order metadata only once
+                localStorage.removeItem("cart");
+                localStorage.removeItem("order_metadata");
+              } catch (err) {
+                console.error(err);
+              } finally {
+                if (storageKey) {
+                  localStorage.setItem(storageKey, "true");
+                }
+                if (lockKey) {
+                  localStorage.removeItem(lockKey);
+                }
+              }
             }
-
-            // Clear cart only once
-            localStorage.removeItem("cart");
-            localStorage.setItem(storageKey, "true");
-          } catch (err) {
-            console.error(err);
           }
         }
       }
     };
 
     fetchSession();
-  }, [sessionId, storageKey, user, createOrderWithItemsAndStock]);
+  }, [sessionId, mode, storageKey, lockKey, user, createOrderWithItemsAndStock, clearCartByUser, pointsAPI]);
 
   if (!session) {
     return <div>Loading...</div>;
