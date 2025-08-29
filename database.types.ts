@@ -152,26 +152,141 @@ export type Database = {
         }
         Relationships: []
       }
-      conversations: {
+      chat_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          media_url: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communities: {
         Row: {
           created_at: string
-          customer_id: string
+          created_by: string | null
+          description: string | null
           id: string
-          status: string
+          media_url: string | null
+          name: string | null
         }
         Insert: {
           created_at?: string
-          customer_id: string
+          created_by?: string | null
+          description?: string | null
           id?: string
-          status?: string
+          media_url?: string | null
+          name?: string | null
         }
         Update: {
           created_at?: string
-          customer_id?: string
+          created_by?: string | null
+          description?: string | null
           id?: string
-          status?: string
+          media_url?: string | null
+          name?: string | null
         }
         Relationships: []
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          group_id: string | null
+          id: string
+          ticket_id: string | null
+          type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          ticket_id?: string | null
+          type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          ticket_id?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       departments: {
         Row: {
@@ -196,6 +311,47 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      groups: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          media_url: string | null
+          name: string | null
+          type: string | null
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          name?: string | null
+          type?: string | null
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          name?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       homepage_elements: {
         Row: {
@@ -250,44 +406,6 @@ export type Database = {
           point_required?: number | null
         }
         Relationships: []
-      }
-      messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          direction: string
-          id: string
-          media_url: string
-          sender: string | null
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          direction: string
-          id?: string
-          media_url: string
-          sender?: string | null
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          direction?: string
-          id?: string
-          media_url?: string
-          sender?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       orders: {
         Row: {
@@ -1277,6 +1395,71 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ticket_status_change_logs: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_status: string | null
+          old_status: string | null
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_status_change_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          assigned_agent_id: string | null
+          created_at: string
+          id: string
+          priority: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          assigned_agent_id?: string | null
+          created_at?: string
+          id?: string
+          priority?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          assigned_agent_id?: string | null
+          created_at?: string
+          id?: string
+          priority?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_details: {
         Row: {

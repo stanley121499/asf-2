@@ -75,6 +75,11 @@ import CategoriesAnalyticsPage from "./pages/analytics/categories";
 import CategoriesInnerAnalyticsPage from "./pages/analytics/categories-inner";
 import ProductInnerAnalyticsPage from "./pages/analytics/products-inner";
 import { ConversationProvider } from "./context/ConversationContext";
+import { CommunityProvider } from "./context/CommunityContext";
+import { GroupProvider } from "./context/GroupContext";
+import { ConversationParticipantProvider } from "./context/ConversationParticipantContext";
+import { TicketProvider } from "./context/TicketContext";
+import { TicketStatusLogProvider } from "./context/TicketStatusLogContext";
 import SupportPage from "./pages/support";
 import GoodStockPage from "./pages/stocks/good-stocks";
 import PromotionListPage from "./pages/promotions/list";
@@ -113,6 +118,11 @@ const App: React.FC = () => (
         AddToCartLogProvider,
         AddToCartProvider,
         HomePageElementProvider,
+        CommunityProvider,
+        GroupProvider,
+        ConversationParticipantProvider,
+        TicketProvider,
+        TicketStatusLogProvider,
         ConversationProvider,
       ]}>
       <AlertComponent />
