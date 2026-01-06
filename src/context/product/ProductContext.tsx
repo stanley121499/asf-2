@@ -64,6 +64,22 @@ export function ProductProvider({ children }: PropsWithChildren) {
   const { createProductCategory, deleteProductCategory } =
     useProductCategoryContext();
 
+  /**
+   * Converts an unknown caught error to a safe human-readable message.
+   *
+   * @param error - The caught error value.
+   * @returns A safe string message for logging/alerts.
+   */
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    return "Unknown error";
+  };
+
   useEffect(() => {
     setLoading(true);
 
@@ -158,50 +174,97 @@ export function ProductProvider({ children }: PropsWithChildren) {
     };
   }, [showAlert]);
 
+  /**
+   * Creates a product and all related variant records (colors, sizes, categories).
+   *
+   * IMPORTANT: Variant creation uses `Promise.all(map(...))` to ensure we await completion.
+   *
+   * @param product - Base product row to insert.
+   * @param selectedColors - Selected color names to create.
+   * @param selectedSizes - Selected size names to create.
+   * @param selectedCategories - Selected categories to attach to the product.
+   * @returns The created product (with empty client-side arrays) or `undefined` (never on success).
+   * @throws Error when base insert or any variant creation fails.
+   */
   const createProduct = async (
     product: ProductInsert,
     selectedColors: string[],
     selectedSizes: string[],
     selectedCategories: Category[]
   ) => {
-    const { data, error } = await supabase
-      .from("products")
-      .insert(product)
-      .select();
+    // Step 1: Create the base product row
+    const { data, error } = await supabase.from("products").insert(product).select();
     if (error) {
+      // Fail fast: surface the DB error to the user and caller
       showAlert(error.message, "error");
       console.error(error);
-      return;
+      throw new Error(error.message);
     }
 
-    const newProduct = data?.[0] as Database["public"]["Tables"]["products"]["Row"];
+    // Step 2: Validate we received a created row back before using its ID
+    const createdRow = data?.[0];
+    if (!createdRow) {
+      const message = "Product creation returned no created row.";
+      showAlert(message, "error");
+      throw new Error(message);
+    }
 
-    selectedColors.forEach(async (color) => {
-      await createProductColor({
-        product_id: newProduct.id,
-        color: color,
-        active: true,
-      });
-    });
+    const productId = createdRow.id;
 
-    selectedSizes.forEach(async (size) => {
-      await createProductSize({
-        product_id: newProduct.id,
-        size: size,
-        active: true,
-      });
-    });
+    // Step 3: Create all variant relations in parallel (and await completion)
+    try {
+      await Promise.all(
+        selectedColors.map((color) =>
+          createProductColor({
+            product_id: productId,
+            color: color,
+            active: true,
+          })
+        )
+      );
+    } catch (error: unknown) {
+      const message = `Failed to create product colors: ${getErrorMessage(error)}`;
+      showAlert(message, "error");
+      console.error(error);
+      throw error instanceof Error ? error : new Error(message);
+    }
 
-    selectedCategories.forEach(async (category) => {
-      await createProductCategory({
-        product_id: newProduct.id,
-        category_id: category.id,
-      });
-    });
+    try {
+      await Promise.all(
+        selectedSizes.map((size) =>
+          createProductSize({
+            product_id: productId,
+            size: size,
+            active: true,
+          })
+        )
+      );
+    } catch (error: unknown) {
+      const message = `Failed to create product sizes: ${getErrorMessage(error)}`;
+      showAlert(message, "error");
+      console.error(error);
+      throw error instanceof Error ? error : new Error(message);
+    }
 
-    if (!data?.[0]) return undefined;
+    try {
+      await Promise.all(
+        selectedCategories.map((category) =>
+          createProductCategory({
+            product_id: productId,
+            category_id: category.id,
+          })
+        )
+      );
+    } catch (error: unknown) {
+      const message = `Failed to create product categories: ${getErrorMessage(error)}`;
+      showAlert(message, "error");
+      console.error(error);
+      throw error instanceof Error ? error : new Error(message);
+    }
+
+    // Step 4: Return a normalized Product shape with client-side arrays defaulted
     return {
-      ...(data[0] as Database["public"]["Tables"]["products"]["Row"]),
+      ...(createdRow as Database["public"]["Tables"]["products"]["Row"]),
       medias: [],
       product_categories: [],
       product_colors: [],
@@ -211,6 +274,19 @@ export function ProductProvider({ children }: PropsWithChildren) {
     } as Product;
   };
 
+  /**
+   * Updates a product and synchronizes its variants (colors, sizes, categories).
+   *
+   * IMPORTANT: All async operations over arrays use `Promise.all(map(...))` so we
+   * reliably await completion and properly surface failures.
+   *
+   * @param product - Partial product update; must include `id`.
+   * @param selectedColors - Desired active colors for the product.
+   * @param selectedSizes - Desired active sizes for the product.
+   * @param selectedCategories - Desired categories for the product.
+   * @returns Promise resolving when updates are complete.
+   * @throws Error when base update or any variant sync operation fails.
+   */
   const updateProduct = async (
     product: ProductUpdate,
     selectedColors: string[],
@@ -218,18 +294,23 @@ export function ProductProvider({ children }: PropsWithChildren) {
     selectedCategories: Category[]
   ) => {
     if (!product.id) {
-      showAlert("Missing product id for update.", "error");
-      return;
+      const message = "Missing product id for update.";
+      showAlert(message, "error");
+      throw new Error(message);
     }
+    const productId = product.id;
+
+    // Step 1: Update the base product row
     const { error } = await supabase
       .from("products")
       .update(product)
-      .eq("id", product.id)
+      .eq("id", productId)
       .select()
       .single();
     if (error) {
       showAlert(error.message, "error");
       console.error(error);
+      throw new Error(error.message);
     }
 
     // Check if there are any colors to update
@@ -237,34 +318,52 @@ export function ProductProvider({ children }: PropsWithChildren) {
       const { data: colors, error: colorError } = await supabase
         .from("product_colors")
         .select("id,color")
-        .eq("product_id", product.id);
+        .eq("product_id", productId);
       if (colorError) {
         showAlert(colorError.message, "error");
         console.error(colorError);
-        return;
+        throw new Error(colorError.message);
       }
 
-      // Update colors that are not in selectedColors
-      colors?.forEach(async (color) => {
-        if (selectedColors.findIndex((c) => c === color.color) === -1) {
-          await updateProductColor({ id: color.id, active: false });
-        } else {
-          await updateProductColor({ id: color.id, active: true });
-        }
-      });
+      const existingColors = colors ?? [];
+      const selectedColorSet = new Set(selectedColors);
 
-      // Create new colors
-      selectedColors
-        .filter((color) => colors?.findIndex((c) => c.color === color) === -1)
-        .forEach(async (color) => {
-          if (product.id) {
-            await createProductColor({
-              product_id: product.id,
+      // Step 2a: Update active flags for all existing colors in parallel
+      try {
+        await Promise.all(
+          existingColors.map((colorRow) =>
+            updateProductColor({
+              id: colorRow.id,
+              active: selectedColorSet.has(colorRow.color),
+            })
+          )
+        );
+      } catch (error: unknown) {
+        const message = `Failed to update product colors: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
+
+      // Step 2b: Create missing colors (those selected but not present in DB)
+      const existingColorSet = new Set(existingColors.map((c) => c.color));
+      const colorsToCreate = selectedColors.filter((color) => !existingColorSet.has(color));
+      try {
+        await Promise.all(
+          colorsToCreate.map((color) =>
+            createProductColor({
+              product_id: productId,
               color: color,
               active: true,
-            });
-          }
-        });
+            })
+          )
+        );
+      } catch (error: unknown) {
+        const message = `Failed to create product colors: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
     }
 
     // Check if there are any sizes to update
@@ -272,34 +371,52 @@ export function ProductProvider({ children }: PropsWithChildren) {
       const { data: sizes, error: sizeError } = await supabase
         .from("product_sizes")
         .select("id,size")
-        .eq("product_id", product.id);
+        .eq("product_id", productId);
       if (sizeError) {
         showAlert(sizeError.message, "error");
         console.error(sizeError);
-        return;
+        throw new Error(sizeError.message);
       }
 
-      // Update sizes that are not in selectedSizes
-      sizes?.forEach(async (size) => {
-        if (selectedSizes.findIndex((s) => s === size.size) === -1) {
-          await updateProductSize({ id: size.id, active: false });
-        } else {
-          await updateProductSize({ id: size.id, active: true });
-        }
-      });
+      const existingSizes = sizes ?? [];
+      const selectedSizeSet = new Set(selectedSizes);
 
-      // Create new sizes
-      selectedSizes
-        .filter((size) => sizes?.findIndex((s) => s.size === size) === -1)
-        .forEach(async (size) => {
-          if (product.id) {
-            await createProductSize({
-              product_id: product.id,
+      // Step 3a: Update active flags for all existing sizes in parallel
+      try {
+        await Promise.all(
+          existingSizes.map((sizeRow) =>
+            updateProductSize({
+              id: sizeRow.id,
+              active: selectedSizeSet.has(sizeRow.size),
+            })
+          )
+        );
+      } catch (error: unknown) {
+        const message = `Failed to update product sizes: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
+
+      // Step 3b: Create missing sizes (those selected but not present in DB)
+      const existingSizeSet = new Set(existingSizes.map((s) => s.size));
+      const sizesToCreate = selectedSizes.filter((size) => !existingSizeSet.has(size));
+      try {
+        await Promise.all(
+          sizesToCreate.map((size) =>
+            createProductSize({
+              product_id: productId,
               size: size,
               active: true,
-            });
-          }
-        });
+            })
+          )
+        );
+      } catch (error: unknown) {
+        const message = `Failed to create product sizes: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
     }
 
     // Check if there are any categories to update
@@ -307,27 +424,43 @@ export function ProductProvider({ children }: PropsWithChildren) {
       const { data: categories, error: categoryError } = await supabase
         .from("product_categories")
         .select("id")
-        .eq("product_id", product.id);
+        .eq("product_id", productId);
       if (categoryError) {
         showAlert(categoryError.message, "error");
         console.error(categoryError);
-        return;
+        throw new Error(categoryError.message);
       }
 
-      // Delete existing categories
-      categories?.forEach(async (category) => {
-        await deleteProductCategory(category.id);
-      });
+      const existingCategories = categories ?? [];
 
-      // Create new categories
-      selectedCategories.forEach(async (category) => {
-        if (product.id) {
-          await createProductCategory({
-            product_id: product.id,
-            category_id: category.id,
-          });
-        }
-      });
+      // Step 4a: Delete all existing category links in parallel
+      try {
+        await Promise.all(
+          existingCategories.map((categoryRow) => deleteProductCategory(categoryRow.id))
+        );
+      } catch (error: unknown) {
+        const message = `Failed to delete existing product categories: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
+
+      // Step 4b: Create the desired category links in parallel
+      try {
+        await Promise.all(
+          selectedCategories.map((category) =>
+            createProductCategory({
+              product_id: productId,
+              category_id: category.id,
+            })
+          )
+        );
+      } catch (error: unknown) {
+        const message = `Failed to create product categories: ${getErrorMessage(error)}`;
+        showAlert(message, "error");
+        console.error(error);
+        throw error instanceof Error ? error : new Error(message);
+      }
     }
   };
 

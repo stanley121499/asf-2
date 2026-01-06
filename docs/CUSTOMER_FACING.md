@@ -15,7 +15,7 @@ Customer-facing pages are located in `src/pages/landing/` and provide the shoppi
 
 ### 1. Landing Page / Home Page
 
-**Location**: `src/pages/landing/LandingPage.tsx`
+**Location**: `src/pages/landing/home.tsx`
 
 **Route**: `/`
 

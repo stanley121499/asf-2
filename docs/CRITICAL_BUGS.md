@@ -579,7 +579,45 @@ const updateProduct = async (id, data) => {
 
 ## 🔴 Other Critical Issues
 
-### 8. Category V2 Page - Uses localStorage Instead of Database
+### 8. Foreign Key Constraint Errors - Need Soft Delete
+
+**Problem**: Deleting products causes foreign key constraint violations
+
+**Error Message**:
+```
+ERROR: update or delete on table "products" violates foreign key constraint
+DETAIL: Key (id)=(xxx) is still referenced from table "order_items"
+```
+
+**Root Cause**: Products are referenced by:
+- `order_items` (historical orders)
+- `add_to_carts` (user carts)
+- `product_stock` (inventory records)
+- `product_media` (images)
+- `product_colors`, `product_sizes` (variants)
+- `product_categories` (categorization)
+
+**Impact**:
+- Cannot delete products that have been ordered
+- Cannot delete products in user carts
+- Database errors when attempting deletion
+- Risk of data corruption if forced
+
+**Solution**: Implement Soft Delete
+
+Instead of removing records, mark them as deleted:
+1. Add `deleted_at` timestamp column to tables
+2. Filter queries to exclude `deleted_at IS NOT NULL`
+3. Preserve all relationships and historical data
+4. Enable "restore" functionality
+
+**Fix Priority**: 🔴 CRITICAL - Must implement before production
+
+**Implementation**: See full guide in [SOFT_DELETE_STRATEGY.md](./SOFT_DELETE_STRATEGY.md)
+
+---
+
+### 9. Category V2 Page - Uses localStorage Instead of Database
 
 **Location**: `src/pages/products/category-v2-page.tsx`
 
@@ -589,7 +627,7 @@ Uses `localStorage` for persistence, creating a **parallel system** that doesn't
 
 ---
 
-### 9. Wishlist - Implemented But No Route
+### 10. Wishlist - Implemented But No Route
 
 **Location**: `src/pages/landing/Wishlist.tsx`
 
@@ -605,7 +643,7 @@ Fully implemented with mock data but:
 
 ---
 
-### 10. Checkout Page - Uses Mock Data
+### 11. Checkout Page - Uses Mock Data
 
 **Location**: `src/pages/landing/Checkout.tsx`
 
@@ -618,7 +656,7 @@ Payment section is **commented out**, cart uses **mock data**.
 
 ---
 
-### 11. Product Scheduling - Incomplete
+### 12. Product Scheduling - Incomplete
 
 **Location**: `src/pages/products/schedule-product-page.tsx`
 

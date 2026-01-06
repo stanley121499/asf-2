@@ -14,24 +14,31 @@ import { FaQrcode, FaBell } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { LandingLayout } from "../../layouts";
 import type { Tables } from "../../../database.types";
+import { HomeHighlightsCard } from "../../components/home/HomeHighlightsCard";
 
 /**
  * Horizontal scrollable section component for reuse across different content types
  */
-interface ScrollableSectionProps {
+interface ScrollableSectionProps<TItem> {
   title: string;
   viewAllLink?: string;
-  items: any[];
-  renderItem: (item: any, index: number) => React.ReactNode;
+  items: readonly TItem[];
+  renderItem: (item: TItem, index: number) => React.ReactNode;
   isHighlightSection?: boolean;
 }
 
-const ScrollableSection: React.FC<ScrollableSectionProps> = ({ title, viewAllLink, items, renderItem, isHighlightSection = false }) => {
+const ScrollableSection = <TItem,>({
+  title,
+  viewAllLink,
+  items,
+  renderItem,
+  isHighlightSection = false,
+}: ScrollableSectionProps<TItem>): JSX.Element => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="mb-10">
-      <div className="flex justify-between items-center mb-5 px-5">
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4 px-5">
         <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h2>
         {viewAllLink && (
           isHighlightSection ? (
@@ -53,7 +60,7 @@ const ScrollableSection: React.FC<ScrollableSectionProps> = ({ title, viewAllLin
       </div>
       <div 
         ref={scrollContainerRef}
-        className="flex overflow-x-auto hide-scrollbar space-x-5 px-5 pb-3"
+        className="flex overflow-x-auto hide-scrollbar space-x-4 px-5 pb-2"
         style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
       >
         {items.map((item, index) => renderItem(item, index))}
@@ -76,6 +83,22 @@ const HomePage: React.FC = () => {
   const { productCategories } = useProductCategoryContext();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
+
+  /**
+   * Build placeholder image URLs for cards that don't have a usable image.
+   * Using `encodeURIComponent` prevents broken URLs when text contains spaces.
+   */
+  const makePlaceholderImageUrl = (text: string): string => {
+    return `https://via.placeholder.com/300x200?text=${encodeURIComponent(text)}`;
+  };
+
+  /**
+   * Formats product counts into a human-readable subtitle.
+   * Example: "1 product" / "12 products"
+   */
+  const formatProductCount = (count: number): string => {
+    return `${count} product${count === 1 ? "" : "s"}`;
+  };
 
   // Sort posts by latest (created_at or updated_at)
   const sortedPosts = useMemo(() => {
@@ -120,20 +143,76 @@ const HomePage: React.FC = () => {
     });
   }, [products]);
 
-  // Create sorted mock promotions with dates (for demonstration)
-  const sortedPromotions = useMemo(() => {
-    return Array(6).fill(null).map((_, index) => ({
-      id: `promo-${index}`,
-      title: `Special Offer ${index + 1}`,
-      created_at: new Date(Date.now() - index * 86400000).toISOString(), // Create dates with most recent first
-      discount: "20%",
-      type: index % 2 === 0 ? "NEW" : "HOT"
-    })).sort((a, b) => {
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
-    });
-  }, []);
+  /**
+   * Memoized lookup maps for product counts per classification.
+   * These avoid O(n*m) `.filter()` calls inside render loops.
+   */
+  const categoryProductCountById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const pc of productCategories) {
+      // `product_categories.category_id` is nullable in DB types; guard to keep map keys strict.
+      const categoryId = pc.category_id;
+      if (typeof categoryId === "string" && categoryId.trim().length > 0) {
+        const prev = map.get(categoryId) ?? 0;
+        map.set(categoryId, prev + 1);
+      }
+    }
+    return map;
+  }, [productCategories]);
+
+  /**
+   * Some environments rely on the direct `products.category_id` foreign key (not product_categories).
+   * Build a fallback map so homepage counts reflect reality even when `product_categories` is incomplete.
+   */
+  const categoryProductCountByProductFk = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const product of products) {
+      const categoryId = product.category_id;
+      if (typeof categoryId === "string" && categoryId.trim().length > 0) {
+        const prev = map.get(categoryId) ?? 0;
+        map.set(categoryId, prev + 1);
+      }
+    }
+    return map;
+  }, [products]);
+
+  const productCountByDepartmentId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const product of products) {
+      const departmentId = product.department_id;
+      if (typeof departmentId === "string" && departmentId.trim().length > 0) {
+        const prev = map.get(departmentId) ?? 0;
+        map.set(departmentId, prev + 1);
+      }
+    }
+    return map;
+  }, [products]);
+
+  const productCountByRangeId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const product of products) {
+      const rangeId = product.range_id;
+      if (typeof rangeId === "string" && rangeId.trim().length > 0) {
+        const prev = map.get(rangeId) ?? 0;
+        map.set(rangeId, prev + 1);
+      }
+    }
+    return map;
+  }, [products]);
+
+  const productCountByBrandId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const product of products) {
+      const brandId = product.brand_id;
+      if (typeof brandId === "string" && brandId.trim().length > 0) {
+        const prev = map.get(brandId) ?? 0;
+        map.set(brandId, prev + 1);
+      }
+    }
+    return map;
+  }, [products]);
+
+  // Note: Promotions section is currently commented out below, so we avoid building unused mock data here.
 
   // Points & Membership: fetch actual user points and membership tiers
   const { listMembershipTiers, getUserPointsByUserId } = usePointsMembership();
@@ -266,10 +345,16 @@ const HomePage: React.FC = () => {
     return "";
   };
 
-  const getClassificationImage = (key: "department_id" | "range_id" | "brand_id", id: string): string => {
-    const product = products.find(p => (p as any)[key] === id);
+  /**
+   * Finds an image for a given product classification (department/range/brand) by selecting
+   * the first matching product that has media.
+   */
+  type ProductClassificationKey = "department_id" | "range_id" | "brand_id";
+
+  const getClassificationImage = (key: ProductClassificationKey, id: string): string => {
+    const product = products.find((p) => p[key] === id);
     if (product) {
-      const media = productMedias.find(m => m.product_id === product.id);
+      const media = productMedias.find((m) => m.product_id === product.id);
       if (media?.media_url) return media.media_url;
     }
     return "";
@@ -353,7 +438,7 @@ const HomePage: React.FC = () => {
       {/* Main Content */}
       <div className="pt-4">
         {/* Highlights Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Highlights"
             viewAllLink="/highlights"
@@ -378,7 +463,7 @@ const HomePage: React.FC = () => {
                   <div className="h-48 bg-gray-100 relative">
                     <img 
                       src={postMedia} 
-                      alt={post.title || `Post ${index + 1}`}
+                      alt={post.caption || `Post ${index + 1}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
@@ -402,127 +487,130 @@ const HomePage: React.FC = () => {
         </div>
         
         {/* Categories Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Categories"
             viewAllLink="/product-section"
             items={sortedCategories.slice(0, 10)}
             renderItem={(category, index) => {
-              // Get the best possible image for this category
-              const categoryImage = category.media_url || getCategoryProductImage(category.id) || 
-                `https://via.placeholder.com/80?text=C${index + 1}`;
-              
-              // Count the number of products in this category
-              const productCount = productCategories.filter(pc => pc.category_id === category.id).length;
+              // Step 1: Determine the best image we can show for this category.
+              const placeholder = makePlaceholderImageUrl(`Category ${index + 1}`);
+              const categoryImage = category.media_url || getCategoryProductImage(category.id);
 
+              // Step 2: Compute product count subtitle (via product_categories mapping).
+              // Prefer many-to-many counts (product_categories), but fall back to products.category_id counts.
+              const countFromJoin = categoryProductCountById.get(category.id) ?? 0;
+              const countFromProductFk = categoryProductCountByProductFk.get(category.id) ?? 0;
+              const count = Math.max(countFromJoin, countFromProductFk);
+
+              // Step 3: Render the Highlights-style card (large, consistent with Highlights section).
               return (
-                <Link 
+                <HomeHighlightsCard
+                  key={`category-${category.id}`}
                   to={`/product-section/${category.id}`}
-                  key={`category-${category.id || index}`} 
-                  className="flex-shrink-0 w-28"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
-                      <div className="rounded-xl overflow-hidden relative w-full h-full">
-                        <img 
-                          src={categoryImage} 
-                          alt={category.name || `Category ${index + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">
-                      {category.name || `${index === 0 ? "Energy" : index === 1 ? "Men" : index === 2 ? "Nike" : `Category ${index + 1}`}`}
-                    </p>
-                  </div>
-                </Link>
+                  imageUrl={categoryImage}
+                  fallbackImageUrl={placeholder}
+                  title={category.name}
+                  subtitle={formatProductCount(count)}
+                />
               );
             }}
-            isHighlightSection={false}
+            isHighlightSection={true}
           />
         </div>
 
         {/* Departments Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Departments"
             viewAllLink="/product-section?department=all"
             items={sortedDepartments.slice(0, 10)}
             renderItem={(dept, index) => {
-              const img = dept.media_url || getClassificationImage("department_id", dept.id) || `https://via.placeholder.com/80?text=D${index + 1}`;
+              // Step 1: Determine image for this department.
+              const placeholder = makePlaceholderImageUrl(`Department ${index + 1}`);
+              const img = dept.media_url || getClassificationImage("department_id", dept.id);
+
+              // Step 2: Compute product count subtitle (via products foreign key).
+              const count = productCountByDepartmentId.get(dept.id) ?? 0;
+
+              // Step 3: Render Highlights-style card.
               return (
-                <Link to={`/product-section?department=${dept.id}`} key={`dept-${dept.id || index}`} className="flex-shrink-0 w-28">
-                  <div className="flex flex-col items-center">
-                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
-                      <div className="rounded-xl overflow-hidden relative w-full h-full">
-                        <img src={img} alt={dept.name || `Department ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{dept.name || `Department ${index + 1}`}</p>
-                  </div>
-                </Link>
+                <HomeHighlightsCard
+                  key={`dept-${dept.id}`}
+                  to={`/product-section?department=${dept.id}`}
+                  imageUrl={img}
+                  fallbackImageUrl={placeholder}
+                  title={dept.name ?? `Department ${index + 1}`}
+                  subtitle={formatProductCount(count)}
+                />
               );
             }}
-            isHighlightSection={false}
+            isHighlightSection={true}
           />
         </div>
 
         {/* Ranges Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Ranges"
             viewAllLink="/product-section?range=all"
             items={sortedRanges.slice(0, 10)}
             renderItem={(range, index) => {
-              const img = range.media_url || getClassificationImage("range_id", range.id) || `https://via.placeholder.com/80?text=R${index + 1}`;
+              // Step 1: Determine image for this range.
+              const placeholder = makePlaceholderImageUrl(`Range ${index + 1}`);
+              const img = range.media_url || getClassificationImage("range_id", range.id);
+
+              // Step 2: Compute product count subtitle.
+              const count = productCountByRangeId.get(range.id) ?? 0;
+
+              // Step 3: Render Highlights-style card.
               return (
-                <Link to={`/product-section?range=${range.id}`} key={`range-${range.id || index}`} className="flex-shrink-0 w-28">
-                  <div className="flex flex-col items-center">
-                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
-                      <div className="rounded-xl overflow-hidden relative w-full h-full">
-                        <img src={img} alt={range.name || `Range ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{range.name || `Range ${index + 1}`}</p>
-                  </div>
-                </Link>
+                <HomeHighlightsCard
+                  key={`range-${range.id}`}
+                  to={`/product-section?range=${range.id}`}
+                  imageUrl={img}
+                  fallbackImageUrl={placeholder}
+                  title={range.name ?? `Range ${index + 1}`}
+                  subtitle={formatProductCount(count)}
+                />
               );
             }}
-            isHighlightSection={false}
+            isHighlightSection={true}
           />
         </div>
 
         {/* Brands Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Brands"
             viewAllLink="/product-section?brand=all"
             items={sortedBrands.slice(0, 10)}
             renderItem={(brand, index) => {
-              const img = brand.media_url || getClassificationImage("brand_id", brand.id) || `https://via.placeholder.com/80?text=B${index + 1}`;
+              // Step 1: Determine image for this brand.
+              const placeholder = makePlaceholderImageUrl(`Brand ${index + 1}`);
+              const img = brand.media_url || getClassificationImage("brand_id", brand.id);
+
+              // Step 2: Compute product count subtitle.
+              const count = productCountByBrandId.get(brand.id) ?? 0;
+
+              // Step 3: Render Highlights-style card.
               return (
-                <Link to={`/product-section?brand=${brand.id}`} key={`brand-${brand.id || index}`} className="flex-shrink-0 w-28">
-                  <div className="flex flex-col items-center">
-                    <div className="w-24 h-24 bg-white rounded-2xl mb-3 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 p-0.5 transform hover:-translate-y-1 group">
-                      <div className="rounded-xl overflow-hidden relative w-full h-full">
-                        <img src={img} alt={brand.name || `Brand ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-20"></div>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-center text-gray-900 px-1 truncate w-full">{brand.name || `Brand ${index + 1}`}</p>
-                  </div>
-                </Link>
+                <HomeHighlightsCard
+                  key={`brand-${brand.id}`}
+                  to={`/product-section?brand=${brand.id}`}
+                  imageUrl={img}
+                  fallbackImageUrl={placeholder}
+                  title={brand.name ?? `Brand ${index + 1}`}
+                  subtitle={formatProductCount(count)}
+                />
               );
             }}
-            isHighlightSection={false}
+            isHighlightSection={true}
           />
         </div>
         
         {/* Products Section */}
-        <div className="py-6">
+        <div className="py-4">
           <ScrollableSection
             title="Products"
             viewAllLink="/products"

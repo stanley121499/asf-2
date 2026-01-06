@@ -60,8 +60,8 @@ useEffect(() => {
           {/* Logo */}
           <Navbar.Brand as={Link} href="https://flowbite-react.com">
             <img alt="Logo" src="../../images/logo.svg" className="mr-3 h-10" />
-            <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
-              ASF
+            <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
+              SYSTEM APP FORMULA
             </span>
           </Navbar.Brand>
           

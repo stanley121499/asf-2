@@ -34,6 +34,8 @@ This documentation serves as the **source of truth** for the ASF-2 project. All 
 16. **[PERFORMANCE_ISSUES.md](./PERFORMANCE_ISSUES.md)** - Detailed analysis of performance problems
 17. **[UNUSED_CODE.md](./UNUSED_CODE.md)** - Unused components, files, and dependencies
 18. **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Testing strategy and test coverage
+19. **[SOFT_DELETE_STRATEGY.md](./SOFT_DELETE_STRATEGY.md)** - Soft delete implementation to prevent foreign key errors
+20. **[AI_AGENT_PROMPTS.md](./AI_AGENT_PROMPTS.md)** - Ready-to-use AI prompts for fixing all issues
 
 ---
 
@@ -42,8 +44,10 @@ This documentation serves as the **source of truth** for the ASF-2 project. All 
 Before continuing development, please review:
 
 1. **[CRITICAL_BUGS.md](./CRITICAL_BUGS.md)** - Immediate fixes required
-2. **[PERFORMANCE_ISSUES.md](./PERFORMANCE_ISSUES.md)** - Re-rendering and state management problems
-3. **[CUSTOMER_FACING.md](./CUSTOMER_FACING.md)** - Incomplete customer-facing pages
+2. **[SOFT_DELETE_STRATEGY.md](./SOFT_DELETE_STRATEGY.md)** - Must implement to prevent deletion errors
+3. **[PERFORMANCE_ISSUES.md](./PERFORMANCE_ISSUES.md)** - Re-rendering and state management problems
+4. **[CUSTOMER_FACING.md](./CUSTOMER_FACING.md)** - Incomplete customer-facing pages
+5. **[AI_AGENT_PROMPTS.md](./AI_AGENT_PROMPTS.md)** - Execute these prompts to fix everything
 
 ---
 
@@ -98,6 +102,7 @@ See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for detailed stack information.
 | **Customer UI** | 🟡 Incomplete | Product details missing data, see [CUSTOMER_FACING.md](./CUSTOMER_FACING.md) |
 | **Stock System** | 🟡 Partial | Backend ready, frontend incomplete, see [STOCK_MODULE.md](./STOCK_MODULE.md) |
 | **Promotions** | 🔴 Broken | Non-functional, see [FEATURES.md](./FEATURES.md#promotions-broken) |
+| **Soft Delete** | 🔴 Missing | Foreign key errors, see [SOFT_DELETE_STRATEGY.md](./SOFT_DELETE_STRATEGY.md) |
 | **Database** | 🟢 Good | Well-structured schema, see [DATABASE.md](./DATABASE.md) |
 | **Admin Panel** | 🟢 Good | Comprehensive functionality |
 
