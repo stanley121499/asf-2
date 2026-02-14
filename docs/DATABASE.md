@@ -944,3 +944,4 @@ Product: T-Shirt
 
 **For Schema Changes**: Always regenerate `database.types.ts` after database modifications!
 
+

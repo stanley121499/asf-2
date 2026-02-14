@@ -18,6 +18,65 @@ import { FaChevronDown } from "react-icons/fa6";
 import "../customDatePickerWidth.css";
 import { useParams } from "react-router-dom";
 
+/**
+ * Builds a validated ISO timestamp string for the `time_post` column.
+ *
+ * NOTE:
+ * - We store a full ISO string (`toISOString()`), so comparisons against
+ *   `new Date().toISOString()` are consistent.
+ *
+ * @param date - The selected date.
+ * @param timeHHMM - Time in `HH:MM` 24-hour format.
+ * @returns ISO timestamp string.
+ * @throws Error when the date or time is invalid.
+ */
+const buildIsoTimePost = (date: Date, timeHHMM: string): string => {
+  // Validate date input
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new Error("Please select a valid date.");
+  }
+
+  // Validate time format HH:MM
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match) {
+    throw new Error("Please select a valid time (HH:MM).");
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    throw new Error("Please select a valid time (HH:MM).");
+  }
+
+  // Use local time for the chosen date, then persist as UTC ISO
+  const scheduled = new Date(date);
+  scheduled.setHours(hours, minutes, 0, 0);
+  return scheduled.toISOString();
+};
+
+/**
+ * Converts an unknown caught error to a safe human-readable message.
+ *
+ * @param error - The caught error value.
+ * @returns A safe string message for alerts.
+ */
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "Unknown error";
+};
+
 const SchedulePostListPage: React.FC = function () {
   const { posts, loading, updatePost } = usePostContext();
   const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
@@ -36,7 +95,21 @@ const SchedulePostListPage: React.FC = function () {
 
   useEffect(() => {
     if (selectedPost) {
-      setPostTime(selectedPost.time_post?.split("T")[1] || "");
+      // When rescheduling, pre-populate both the date and time inputs.
+      if (selectedPost.time_post) {
+        const parsed = new Date(selectedPost.time_post);
+        if (!Number.isNaN(parsed.getTime())) {
+          setDateInput(parsed);
+          const hours = `${parsed.getHours()}`.padStart(2, "0");
+          const minutes = `${parsed.getMinutes()}`.padStart(2, "0");
+          setPostTime(`${hours}:${minutes}`);
+          return;
+        }
+      }
+
+      // If not scheduled (or invalid date in DB), clear inputs.
+      setDateInput(null);
+      setPostTime("");
     }
   }, [selectedPost]);
 
@@ -44,16 +117,50 @@ const SchedulePostListPage: React.FC = function () {
     return <LoadingPage />;
   }
 
-  const handleUpdatePost = async (post: PostUpdate) => {
-    // Add time to post
-    if (postTime) {
-      post.time_post = `${dateInput?.toISOString().split("T")[0]}T${postTime}`;
-    }
+  /**
+   * Saves (re)scheduling for a post by persisting `posts.time_post`.
+   *
+   * @param post - Post update object; must include `id`.
+   */
+  const handleSavePostSchedule = async (post: PostUpdate) => {
+    try {
+      // Scheduling requires a date + time.
+      if (!dateInput) {
+        throw new Error("Please select a date.");
+      }
+      if (!postTime) {
+        throw new Error("Please select a time.");
+      }
 
-    await updatePost(post);
-    setSelectedPost(null);
-    setPostTime("");
-    showAlert("Post updated successfully", "success");
+      const timePostIso = buildIsoTimePost(dateInput, postTime);
+      await updatePost({ ...post, time_post: timePostIso });
+
+      // Reset editor state on success only.
+      setSelectedPost(null);
+      setDateInput(null);
+      setPostTime("");
+      showAlert("Post updated successfully", "success");
+    } catch (error: unknown) {
+      const message = `Failed to update post schedule: ${getErrorMessage(error)}`;
+      console.error(error);
+      showAlert(message, "error");
+    }
+  };
+
+  /**
+   * Clears a post schedule by setting `posts.time_post` to `null`.
+   *
+   * @param postId - The post id to update.
+   */
+  const handleClearPostSchedule = async (postId: string) => {
+    try {
+      await updatePost({ id: postId, time_post: null });
+      showAlert("Post unpublished successfully", "success");
+    } catch (error: unknown) {
+      const message = `Failed to unpublish post: ${getErrorMessage(error)}`;
+      console.error(error);
+      showAlert(message, "error");
+    }
   };
 
   return (
@@ -182,7 +289,7 @@ const SchedulePostListPage: React.FC = function () {
 
                   <Button
                     color={"info"}
-                    onClick={() => handleUpdatePost(selectedPost)}
+                    onClick={() => handleSavePostSchedule(selectedPost)}
                     className="mb-4 w-full">
                     Save
                   </Button>
@@ -227,86 +334,77 @@ const SchedulePostListPage: React.FC = function () {
                       .sort((a, b) =>
                         (a.time_post ?? "") < (b.time_post ?? "") ? 1 : -1
                       )
-                      .flatMap((post) =>
-                        Array(1)
-                          .fill(null)
-                          .map((_, index) => (
-                            <div
-                              key={`${post.id}-${index}`}
-                              style={{ height: `calc((100vh - 11rem) / 8)` }}
-                              className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
-                              <div className="flex items-center gap-4">
-                                <img
-                                  src={
-                                    postMedias.find(
-                                      (media) => media.post_id === post.id
-                                    )?.media_url
-                                  }
-                                  alt={post.name}
-                                  className="w-16 h-16 object-cover rounded-md"
-                                />
-                                <div
-                                  className="w-[20vw]"
-                                  style={{ maxWidth: "50%" }}>
-                                  <div className="flex items-center gap-x-5">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2 truncate">
-                                      {post.name}
-                                    </h2>
-                                  </div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {formatDate(post.time_post)}
-                                  </p>
-                                </div>
-                                {getBadge(post)}
+                      .map((post) => (
+                        <div
+                          key={post.id}
+                          style={{ height: `calc((100vh - 11rem) / 8)` }}
+                          className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={
+                                postMedias.find(
+                                  (media) => media.post_id === post.id
+                                )?.media_url
+                              }
+                              alt={post.name}
+                              className="w-16 h-16 object-cover rounded-md"
+                            />
+                            <div className="w-[20vw]" style={{ maxWidth: "50%" }}>
+                              <div className="flex items-center gap-x-5">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2 truncate">
+                                  {post.name}
+                                </h2>
                               </div>
-                              <div className="flex items-center gap-4">
-                                {/* If no time post */}
-                                {!post.time_post && (
-                                  <Button
-                                    className="w-40"
-                                    color={"info"}
-                                    onClick={() => setSelectedPost(post)}>
-                                    Schedule
-                                  </Button>
-                                )}
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatDate(post.time_post)}
+                              </p>
+                            </div>
+                            {getBadge(post)}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {/* If no time post */}
+                            {!post.time_post && (
+                              <Button
+                                className="w-40"
+                                color={"info"}
+                                onClick={() => setSelectedPost(post)}>
+                                Schedule
+                              </Button>
+                            )}
 
-                                {/* If time post is in the future */}
-                                {post.time_post &&
-                                  post.time_post > new Date().toISOString() && (
-                                    <Button
-                                      className="w-40"
-                                      color={"info"}
-                                      onClick={() => setSelectedPost(post)}>
-                                      Reschedule
-                                    </Button>
-                                  )}
-
-                                {/* If time post is in the past */}
-                                {post.time_post &&
-                                  post.time_post < new Date().toISOString() && (
-                                    <Button
-                                      className="w-40"
-                                      color="failure"
-                                      onClick={() =>
-                                        handleUpdatePost({
-                                          ...post,
-                                          time_post: null,
-                                        })
-                                      }>
-                                      Unpublish
-                                    </Button>
-                                  )}
-
+                            {/* If time post is in the future */}
+                            {post.time_post &&
+                              post.time_post > new Date().toISOString() && (
                                 <Button
                                   className="w-40"
                                   color={"info"}
                                   onClick={() => setSelectedPost(post)}>
-                                  Preview
+                                  Reschedule
                                 </Button>
-                              </div>
-                            </div>
-                          ))
-                      )}
+                              )}
+
+                            {/* If time post is in the past */}
+                            {post.time_post &&
+                              post.time_post < new Date().toISOString() && (
+                                <Button
+                                  className="w-40"
+                                  color="failure"
+                                  onClick={() =>
+                                        handleClearPostSchedule(post.id)
+                                  }>
+                                  Unpublish
+                                </Button>
+                              )}
+
+                            <Button
+                              className="w-40"
+                              color={"info"}
+                              onClick={() => setSelectedPost(post)}>
+                              Preview
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <>

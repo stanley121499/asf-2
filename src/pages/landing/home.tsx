@@ -13,7 +13,7 @@ import { usePointsMembership } from "../../context/PointsMembershipContext";
 import { FaQrcode, FaBell } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { LandingLayout } from "../../layouts";
-import type { Tables } from "../../../database.types";
+import type { Tables } from "../../database.types";
 import { HomeHighlightsCard } from "../../components/home/HomeHighlightsCard";
 
 /**

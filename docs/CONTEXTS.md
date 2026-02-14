@@ -894,3 +894,4 @@ ProductContext, ProductColorContext, ProductSizeContext
 
 **For detailed performance issues**, see [PERFORMANCE_ISSUES.md](./PERFORMANCE_ISSUES.md).
 
+

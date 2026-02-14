@@ -1,13 +1,16 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export type HomePageElement =
   Database["public"]["Tables"]["homepage_elements"]["Row"];
@@ -25,20 +28,21 @@ interface HomePageElementContextProps {
   loading: boolean;
 }
 
-const HomePageElementContext = createContext<HomePageElementContextProps>(
-  undefined!
-);
+const HomePageElementContext = createContext<HomePageElementContextProps | undefined>(undefined);
 
 export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
   const [elements, setElements] = useState<HomePageElement[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all homepage elements ordered by arrangement.
+   */
+  const fetchElements = useCallback(async (): Promise<void> => {
     setLoading(true);
 
-    const fetchElements = async () => {
-      const { data: elements, error } = await supabase
+    try {
+      const { data, error } = await supabase
         .from("homepage_elements")
         .select("*")
         .order("arrangement", { ascending: true });
@@ -48,12 +52,17 @@ export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
         return;
       }
 
-      setElements(elements);
-    };
+      setElements(data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [showAlert]);
 
-    fetchElements();
-
-    const handleChanges = (payload: any) => {
+  /**
+   * Realtime handler for homepage elements changes.
+   */
+  const handleChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<HomePageElement>) => {
       if (payload.eventType === "INSERT") {
         setElements((prev) => [...prev, payload.new]);
       }
@@ -71,24 +80,34 @@ export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
           prev.filter((element) => element.id !== payload.old.id)
         );
       }
-    };
+    },
+    []
+  );
+
+  // Initial fetch + subscription setup.
+  useEffect(() => {
+    void fetchElements();
 
     const subscription = supabase
       .channel("homepage_elements")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "homepage_elements" },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<HomePageElement>) => {
           handleChanges(payload);
         }
       )
       .subscribe();
+
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchElements, handleChanges]);
 
-  const createElement = async (element: HomePageElementInsert) => {
+  /**
+   * Create a new homepage element.
+   */
+  const createElement = useCallback(async (element: HomePageElementInsert): Promise<void> => {
     const { error } = await supabase.from("homepage_elements").insert(element);
 
     if (error) {
@@ -97,9 +116,12 @@ export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
     }
 
     showAlert("Element created successfully", "success");
-  };
+  }, [showAlert]);
 
-  const updateElement = async (element: HomePageElementUpdate) => {
+  /**
+   * Update an existing homepage element.
+   */
+  const updateElement = useCallback(async (element: HomePageElementUpdate): Promise<void> => {
     const { error } = await supabase
       .from("homepage_elements")
       .update(element)
@@ -111,9 +133,12 @@ export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
     }
 
     showAlert("Element updated successfully", "success");
-  };
+  }, [showAlert]);
 
-  const deleteElement = async (elementId: string) => {
+  /**
+   * Delete a homepage element by id.
+   */
+  const deleteElement = useCallback(async (elementId: string): Promise<void> => {
     const { error } = await supabase
       .from("homepage_elements")
       .delete()
@@ -125,19 +150,22 @@ export function HomePageElementProvider({ children }: PropsWithChildren<{}>) {
     }
 
     showAlert("Element deleted successfully", "success");
-  };
+  }, [showAlert]);
+
+  // Memoize provider value to prevent unnecessary re-renders.
+  const value = useMemo<HomePageElementContextProps>(
+    () => ({
+      elements,
+      createElement,
+      updateElement,
+      deleteElement,
+      loading,
+    }),
+    [elements, createElement, updateElement, deleteElement, loading]
+  );
 
   return (
-    <HomePageElementContext.Provider
-      value={{
-        elements,
-        createElement,
-        updateElement,
-        deleteElement,
-        loading,
-      }}>
-      {children}
-    </HomePageElementContext.Provider>
+    <HomePageElementContext.Provider value={value}>{children}</HomePageElementContext.Provider>
   );
 }
 

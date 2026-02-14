@@ -8,7 +8,7 @@ import LoadingPage from "../pages/loading";
 import { supabase } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
 import { usePaymentContext } from "../../context/PaymentContext";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 type RefundStatus = Database["public"]["Enums"]["refund_status"];

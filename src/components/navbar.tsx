@@ -44,7 +44,10 @@ const ExampleNavbar: React.FC = function () {
 const UserDropdown: FC = function () {
   const { signOut, user } = useAuthContext();
   const navigate = useNavigate();
-  const username = user.email.split("@")[0];
+
+  // `user` can be null and `email` can be undefined. Derive safe display strings.
+  const email = user?.email ?? "";
+  const username = email.includes("@") ? email.split("@")[0] : (email || "Account");
   
   return (
     <Dropdown
@@ -75,7 +78,9 @@ const UserDropdown: FC = function () {
       >Settings</Dropdown.Item>
       <Dropdown.Divider />
       <Dropdown.Item
-      onClick={() => signOut()}
+      onClick={() => {
+        void signOut();
+      }}
       >Sign out</Dropdown.Item>
     </Dropdown>
   );

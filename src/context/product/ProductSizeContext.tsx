@@ -1,7 +1,19 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../../database.types";
+import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { restoreById, softDeleteById } from "../../utils/softDelete";
+import { isSoftDeletedRow } from "../../utils/softDeleteRuntime";
 
 export type ProductSize = Database["public"]["Tables"]["product_sizes"]["Row"];
 export type ProductSizeInsert = Database["public"]["Tables"]["product_sizes"]["Insert"];
@@ -12,40 +24,69 @@ interface ProductSizeContextProps {
   createProductSize: (productSize: ProductSizeInsert) => Promise<ProductSize | undefined>;
   updateProductSize: (productSize: ProductSizeUpdate) => Promise<void>;
   deleteProductSize: (productSizeId: string) => Promise<void>;
+  restoreProductSize: (productSizeId: string) => Promise<void>;
   loading: boolean;
 }
 
-const ProductSizeContext = createContext<ProductSizeContextProps>(undefined!);
+const ProductSizeContext = createContext<ProductSizeContextProps | undefined>(undefined);
 
 export function ProductSizeProvider({ children }: PropsWithChildren) {
   const [productSizes, setProductSizes] = useState<ProductSize[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
-    setLoading(true);
+  /**
+   * A ref wrapper for AlertContext's `showAlert` to avoid effect dependency loops.
+   * This keeps access to the latest function without re-subscribing on every render.
+   */
+  const showAlertRef = useRef<typeof showAlert | null>(null);
 
-    const fetchProductSizes = async () => {
-      const { data: productSizes, error } = await supabase
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
+  /**
+   * Fetch all product sizes from Supabase.
+   */
+  const fetchProductSizes = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
         .from("product_sizes")
         .select("*");
 
       if (error) {
-        showAlert(error.message, "error");
+        showAlertRef.current?.(error.message, "error");
         return;
       }
 
-      setProductSizes(productSizes);
-    };
+      setProductSizes((data ?? []).filter((s) => !isSoftDeletedRow(s)));
+    } catch (error: unknown) {
+      console.error("Failed to fetch product sizes:", error);
+      showAlertRef.current?.("Failed to fetch product sizes", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    fetchProductSizes();
-
-    const handleChanges = (payload: any) => {
+  /**
+   * Realtime handler for product size changes.
+   */
+  const handleRealtimeChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<ProductSize>): void => {
       if (payload.eventType === "INSERT") {
+        if (isSoftDeletedRow(payload.new)) {
+          return;
+        }
         setProductSizes((prev) => [...prev, payload.new]);
       }
 
       if (payload.eventType === "UPDATE") {
+        if (isSoftDeletedRow(payload.new)) {
+          setProductSizes((prev) => prev.filter((s) => s.id !== payload.new.id));
+          return;
+        }
+
         setProductSizes((prev) =>
           prev.map((productSize) => (productSize.id === payload.new.id ? payload.new : productSize))
         );
@@ -54,60 +95,147 @@ export function ProductSizeProvider({ children }: PropsWithChildren) {
       if (payload.eventType === "DELETE") {
         setProductSizes((prev) => prev.filter((productSize) => productSize.id !== payload.old.id));
       }
-    };
+    },
+    []
+  );
+
+  /**
+   * Fetch once on mount and subscribe to realtime changes.
+   */
+  useEffect(() => {
+    void fetchProductSizes();
 
     const subscription = supabase
-      .channel('product_sizes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'product_sizes' }, payload => {
-        handleChanges(payload);
-      })
+      .channel("product_sizes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "product_sizes" },
+        (payload: RealtimePostgresChangesPayload<ProductSize>) => {
+          handleRealtimeChanges(payload);
+        }
+      )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchProductSizes, handleRealtimeChanges]);
 
-  const createProductSize = async (productSize: ProductSizeInsert) => {
-    const { data, error } = await supabase
-      .from("product_sizes")
-      .insert(productSize)
-      .single();
+  /**
+   * Create a new product size row.
+   *
+   * @param productSize - Insert payload for `product_sizes`.
+   * @returns The created row, or undefined on error.
+   */
+  const createProductSize = useCallback(
+    async (productSize: ProductSizeInsert): Promise<ProductSize | undefined> => {
+      try {
+        const { data, error } = await supabase
+          .from("product_sizes")
+          .insert(productSize)
+          .select("*")
+          .single();
 
-    if (error) {
-      showAlert(error.message, "error");
+        if (error) {
+          showAlertRef.current?.(error.message, "error");
+          return undefined;
+        }
+
+        return data ?? undefined;
+      } catch (error: unknown) {
+        console.error("Failed to create product size:", error);
+        showAlertRef.current?.("Failed to create product size", "error");
+        return undefined;
+      }
+    },
+    []
+  );
+
+  /**
+   * Update an existing product size row.
+   *
+   * @param productSize - Update payload; must include an `id`.
+   */
+  const updateProductSize = useCallback(async (productSize: ProductSizeUpdate): Promise<void> => {
+    const id = productSize.id;
+    if (typeof id !== "string" || id.trim().length === 0) {
+      showAlertRef.current?.("Missing product size id for update.", "error");
       return;
     }
 
-    return data;
-  };
+    try {
+      const { error } = await supabase.from("product_sizes").update(productSize).eq("id", id);
 
-  const updateProductSize = async (productSize: ProductSizeUpdate) => {
-    const { error } = await supabase
-      .from("product_sizes")
-      .update(productSize)
-      .match({ id: productSize.id });
+      if (error) {
+        showAlertRef.current?.(error.message, "error");
+      }
+    } catch (error: unknown) {
+      console.error("Failed to update product size:", error);
+      showAlertRef.current?.("Failed to update product size", "error");
+    }
+  }, []);
 
-    if (error) {
-      showAlert(error.message, "error");
+  /**
+   * Delete a product size by id.
+   *
+   * @param productSizeId - ID of the product size to delete.
+   */
+  const deleteProductSize = useCallback(async (productSizeId: string): Promise<void> => {
+    if (productSizeId.trim().length === 0) {
+      showAlertRef.current?.("Product size ID is required to delete.", "error");
       return;
     }
-  };
 
-  const deleteProductSize = async (productSizeId: string) => {
-    const { error } = await supabase
-      .from("product_sizes")
-      .delete()
-      .match({ id: productSizeId });
+    try {
+      await softDeleteById("product_sizes", productSizeId, { setActive: true });
+      showAlertRef.current?.("Product size deleted successfully", "success");
+    } catch (error: unknown) {
+      console.error("Failed to delete product size:", error);
+      showAlertRef.current?.("Failed to delete product size", "error");
+    }
+  }, []);
 
-    if (error) {
-      showAlert(error.message, "error");
+  /**
+   * Restores a soft-deleted product size by clearing deleted_at and setting active=true.
+   *
+   * @param productSizeId - ID of the product size to restore.
+   */
+  const restoreProductSize = useCallback(async (productSizeId: string): Promise<void> => {
+    if (productSizeId.trim().length === 0) {
+      showAlertRef.current?.("Product size ID is required to restore.", "error");
       return;
     }
-  }
+
+    try {
+      await restoreById("product_sizes", productSizeId, { setActive: true });
+      showAlertRef.current?.("Product size restored successfully", "success");
+    } catch (error: unknown) {
+      console.error("Failed to restore product size:", error);
+      showAlertRef.current?.("Failed to restore product size", "error");
+    }
+  }, []);
+
+  const value = useMemo<ProductSizeContextProps>(
+    () => ({
+      productSizes,
+      createProductSize,
+      updateProductSize,
+      deleteProductSize,
+      restoreProductSize,
+      loading,
+    }),
+    [
+      productSizes,
+      createProductSize,
+      updateProductSize,
+      deleteProductSize,
+      restoreProductSize,
+      loading,
+    ]
+  );
 
   return (
-    <ProductSizeContext.Provider value={{ productSizes, createProductSize, updateProductSize, deleteProductSize, loading }}>
+    <ProductSizeContext.Provider value={value}>
       {children}
     </ProductSizeContext.Provider>
   );

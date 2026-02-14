@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../../database.types";
+import type { Database } from "../database.types";
 
 // Create a strictly typed Supabase client bound to our Database types.
 // Values are read from environment; fall back to existing literals for local dev only.

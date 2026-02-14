@@ -74,14 +74,14 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [sizeInput, setSizeInput] = useState<string>("");
   // legacy filtered categories removed
-  
+
   // New category system
   const [categoryMode, setCategoryMode] = useState<"category" | "set">("category");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
   const [selectedRangeId, setSelectedRangeId] = useState<string>("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  
+
   const [productData, setProductData] = React.useState<ProductInsert>({
     name: selectedProduct?.name || "",
     product_folder_id: selectedFolder?.id,
@@ -180,7 +180,24 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
     }
   }, [selectedProduct]);
 
+  // Track if form has been edited to prevent unwanted resets
+  const [formDirty, setFormDirty] = React.useState(false);
+  const previousSelectedProductId = React.useRef<string | null>(null);
+
   useEffect(() => {
+    const currentProductId = selectedProduct?.id || null;
+
+    // If the selected product changed, reset dirty flag
+    if (currentProductId !== previousSelectedProductId.current) {
+      previousSelectedProductId.current = currentProductId;
+      setFormDirty(false);
+    }
+
+    // Don't reset form data if user has made edits (unless selectedProduct changed)
+    if (formDirty && currentProductId === previousSelectedProductId.current) {
+      return;
+    }
+
     if (selectedProduct) {
       // Ensure classification ids (category/department/range/brand) are loaded from base table
       (async () => {
@@ -221,12 +238,12 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         selectedProduct.product_sizes?.filter((size) => size.active)
           .map((size) => size.size) || []
       );
-      
+
       // Ensure medias is initialized as an array
       if (!selectedProduct.medias) {
         selectedProduct.medias = [];
       }
-      
+
       selectedProduct.medias = productMedias.filter(
         (media) => media.product_id === selectedProduct.id
       );
@@ -246,34 +263,37 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
         ) as ProductFolderMedia[]
       );
     } else {
-      setProductData({
-        name: "",
-        product_folder_id: selectedFolder?.id,
-        article_number: "",
-        price: 0,
-        festival: "",
-        season: "",
-        stock_place: "",
-        stock_code: "",
-        description: "",
-        warranty_period: "",
-        warranty_description: "",
-        status: "",
-      });
+      // Only reset if not dirty (i.e., user hasn't started filling out form)
+      if (!formDirty) {
+        setProductData({
+          name: "",
+          product_folder_id: selectedFolder?.id,
+          article_number: "",
+          price: 0,
+          festival: "",
+          season: "",
+          stock_place: "",
+          stock_code: "",
+          description: "",
+          warranty_period: "",
+          warranty_description: "",
+          status: "",
+        });
 
-      setArrangedMedias([]);
-      setSelectedMedias([]);
-      setSelectedCategories([]);
-      setSelectedColors([]);
-      setSelectedSizes([]);
-      // Reset new selection fields when no product is selected
-      setCategoryMode("category");
-      setSelectedDepartmentId("");
-      setSelectedRangeId("");
-      setSelectedBrandId("");
-      setSelectedCategoryId("");
+        setArrangedMedias([]);
+        setSelectedMedias([]);
+        setSelectedCategories([]);
+        setSelectedColors([]);
+        setSelectedSizes([]);
+        // Reset new selection fields when no product is selected
+        setCategoryMode("category");
+        setSelectedDepartmentId("");
+        setSelectedRangeId("");
+        setSelectedBrandId("");
+        setSelectedCategoryId("");
+      }
     }
-  }, [productFolderMedias, productMedias, selectedFolder?.id, selectedProduct]);
+  }, [productFolderMedias, productMedias, selectedFolder?.id, selectedProduct, formDirty]);
 
   // legacy handlers removed
 
@@ -364,22 +384,22 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     {/* Show a tick on top of the image if selected */}
                     {(selectedMedias.find((m) => m.id === media.id) ||
                       arrangedMedias.find((m) => m.id === media.id)) && (
-                      <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6 text-green-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                    )}
+                        <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 p-1 rounded-full">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-green-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                      )}
                   </div>
                 ))}
               </div>
@@ -399,9 +419,10 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     placeholder="Enter name"
                     // icon={HiMail}
                     value={productData?.name}
-                    onChange={(e) =>
-                      setProductData({ ...productData, name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setProductData({ ...productData, name: e.target.value });
+                      setFormDirty(true);
+                    }}
                   />
                 </div>
 
@@ -623,7 +644,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     }
                   />
                 </div>
-                
+
                 {/* Warranty Period */}
                 <div className="mt-4">
                   <flowbiteReact.Label>Warranty Period</flowbiteReact.Label>
@@ -640,7 +661,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     }
                   />
                 </div>
-                
+
                 {/* Warranty Description */}
                 <div className="mt-4">
                   <flowbiteReact.Label>Warranty Description</flowbiteReact.Label>

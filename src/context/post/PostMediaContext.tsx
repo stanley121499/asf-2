@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../../database.types";
+import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export type PostMedia = Database["public"]["Tables"]["post_medias"]["Row"];
 export type PostMediaInsert = Database["public"]["Tables"]["post_medias"]["Insert"];
@@ -16,72 +25,88 @@ interface PostMediaContextProps {
   loading: boolean;
 }
 
-const PostMediaContext = createContext<PostMediaContextProps>(undefined!);
+const PostMediaContext = createContext<PostMediaContextProps | undefined>(undefined);
 
 export function PostMediaProvider({ children }: PropsWithChildren) {
   const [postMedias, setPostMedias] = useState<PostMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all post medias.
+   */
+  const fetchPostMedias = useCallback(async (): Promise<void> => {
     setLoading(true);
 
-    const fetchPostMedias = async () => {
-      const { data: postMedias, error } = await supabase
-        .from("post_medias")
-        .select("*");
+    try {
+      const { data, error } = await supabase.from("post_medias").select("*");
 
       if (error) {
         showAlert(error.message, "error");
         return;
       }
 
-      setPostMedias(postMedias);
-    };
+      setPostMedias(data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [showAlert]);
 
-    fetchPostMedias();
+  /**
+   * Realtime handler for post_medias changes.
+   */
+  const handleChanges = useCallback((payload: RealtimePostgresChangesPayload<PostMedia>) => {
+    if (payload.eventType === "INSERT") {
+      setPostMedias((prev) => [...prev, payload.new]);
+    }
 
-    const handleChanges = (payload: any) => {
-      if (payload.eventType === "INSERT") {
-        setPostMedias((prev) => [...prev, payload.new]);
-      }
+    if (payload.eventType === "UPDATE") {
+      const updated = payload.new;
+      setPostMedias((prev) =>
+        prev.map((postMedia) => (postMedia.id === updated.id ? updated : postMedia))
+      );
+    }
 
-      if (payload.eventType === "UPDATE") {
-        setPostMedias((prev) =>
-          prev.map((postMedia) =>
-            postMedia.id === payload.new.id ? payload.new : postMedia
-          )
-        );
-      }
+    if (payload.eventType === "DELETE") {
+      const removed = payload.old;
+      setPostMedias((prev) => prev.filter((postMedia) => postMedia.id !== removed.id));
+    }
+  }, []);
 
-      if (payload.eventType === "DELETE") {
-        setPostMedias((prev) =>
-          prev.filter((postMedia) => postMedia.id !== payload.old.id)
-        );
-      }
-    };
+  useEffect(() => {
+    void fetchPostMedias();
 
     const subscription = supabase
       .channel("post_medias")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'post_medias' }, payload => {
-        handleChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "post_medias" },
+        (payload: RealtimePostgresChangesPayload<PostMedia>) => {
+          handleChanges(payload);
+        }
+      )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchPostMedias, handleChanges]);
 
-  const createPostMedia = async (postMedia: PostMediaInsert) => {
+  /**
+   * Create a post media record.
+   */
+  const createPostMedia = useCallback(async (postMedia: PostMediaInsert): Promise<void> => {
     const { error } = await supabase.from("post_medias").insert(postMedia);
 
     if (error) {
       showAlert(error.message, "error");
     }
-  };
+  }, [showAlert]);
 
-  const updatePostMedia = async (postMedia: PostMediaUpdate) => {
+  /**
+   * Update a post media record.
+   */
+  const updatePostMedia = useCallback(async (postMedia: PostMediaUpdate): Promise<void> => {
     const { error } = await supabase
       .from("post_medias")
       .update(postMedia)
@@ -90,9 +115,12 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  };
+  }, [showAlert]);
 
-  const deletePostMedia = async (postMediaId: string) => {
+  /**
+   * Delete a post media record by id.
+   */
+  const deletePostMedia = useCallback(async (postMediaId: string): Promise<void> => {
     const { error } = await supabase
       .from("post_medias")
       .delete()
@@ -101,9 +129,12 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  }
+  }, [showAlert]);
 
-  const deleteAllPostMediaByPostId = async (postId: string) => {
+  /**
+   * Delete all post medias belonging to a post id.
+   */
+  const deleteAllPostMediaByPostId = useCallback(async (postId: string): Promise<void> => {
     const { error } = await supabase
       .from("post_medias")
       .delete()
@@ -112,10 +143,29 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  }
+  }, [showAlert]);
+
+  const value = useMemo<PostMediaContextProps>(
+    () => ({
+      postMedias,
+      createPostMedia,
+      updatePostMedia,
+      deletePostMedia,
+      deleteAllPostMediaByPostId,
+      loading,
+    }),
+    [
+      postMedias,
+      createPostMedia,
+      updatePostMedia,
+      deletePostMedia,
+      deleteAllPostMediaByPostId,
+      loading,
+    ]
+  );
 
   return (
-    <PostMediaContext.Provider value={{ postMedias, createPostMedia, updatePostMedia, deletePostMedia, loading, deleteAllPostMediaByPostId }}>
+    <PostMediaContext.Provider value={value}>
       {children}
     </PostMediaContext.Provider>
   );

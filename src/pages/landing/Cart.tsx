@@ -16,7 +16,8 @@ import { useAuthContext } from "../../context/AuthContext";
 import { useAddToCartContext } from "../../context/product/CartContext";
 import { useAddToCartLogContext } from "../../context/product/AddToCartLogContext";
 import { supabase } from "../../utils/supabaseClient";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
+import { readDeletedAt } from "../../utils/softDeleteRuntime";
 import CheckoutButton from "../../components/stripe/CheckoutButton";
 import { usePointsMembership } from "../../context/PointsMembershipContext";
 import { formatCurrency, pointsToRM, rmToPoints, calculatePointsEarned } from "../../utils/pointsConfig";
@@ -35,13 +36,10 @@ interface CartItemViewModel {
   variant: string;
   inStock: boolean;
   maxQuantity: number;
-}
-
-interface PromoCode {
-  code: string;
-  discount: number;
-  type: "percentage" | "fixed";
-  valid: boolean;
+  /** True when the underlying product is soft deleted and cannot be purchased. */
+  isDeleted: boolean;
+  /** Human-readable deleted timestamp (ISO) when isDeleted is true. */
+  deletedAt?: string;
 }
 
 const CartPage: React.FC = () => {
@@ -52,9 +50,12 @@ const CartPage: React.FC = () => {
   const pointsAPI = usePointsMembership();
 
   const [cartItems, setCartItems] = useState<CartItemViewModel[]>([]);
+  const hasDeletedProducts: boolean = useMemo(() => {
+    return cartItems.some((item) => item.isDeleted);
+  }, [cartItems]);
   const [pointsToUse, setPointsToUse] = useState<number>(0);
   const [userPoints, setUserPoints] = useState<number>(0);
-  const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
+  // NOTE: Checkout state is handled by the Stripe button; keep state local to that component.
 
   // Fetch user points
   useEffect(() => {
@@ -119,7 +120,8 @@ const CartPage: React.FC = () => {
       const [productsRes, mediasRes, colorsRes, sizesRes] = await Promise.all([
         supabase
           .from("products")
-          .select("id,name,price")
+          // Use '*' so this compiles even if `database.types.ts` is temporarily out of sync.
+          .select("*")
           .in("id", productIds),
         supabase
           .from("product_medias")
@@ -158,13 +160,17 @@ const CartPage: React.FC = () => {
         console.error(sizesRes.error);
       }
 
-      const products = (productsRes.data ?? []).reduce(
-        (acc: Record<string, { id: string; name: string; price: number }>, p) => {
-          acc[p.id] = p as { id: string; name: string; price: number };
-          return acc;
-        },
-        {}
-      );
+      const products = (productsRes.data ?? []).reduce((acc: Record<string, unknown>, p) => {
+        // We only require `id`, `name`, `price` at runtime; deleted status is derived via helpers.
+        if (typeof p === "object" && p !== null && "id" in p) {
+          const record = p as Record<string, unknown>;
+          const id = record["id"];
+          if (typeof id === "string" && id.length > 0) {
+            acc[id] = record;
+          }
+        }
+        return acc;
+      }, {});
 
       // Choose the media with the smallest arrangement per product id
       const firstMediaByProduct: Record<string, string> = {};
@@ -198,17 +204,33 @@ const CartPage: React.FC = () => {
         const sizeText = row.size_id ? sizeLabelById[row.size_id] : "";
         const variant = [colorText, sizeText].filter((t) => t && t.length > 0).join(" / ");
 
+        const deletedAtIso = readDeletedAt(product);
+        const isDeleted = typeof deletedAtIso === "string" && deletedAtIso.length > 0;
+
+        const name =
+          typeof product === "object" && product !== null && "name" in product
+            ? String((product as Record<string, unknown>)["name"] ?? "Product")
+            : "Product";
+        const priceRaw =
+          typeof product === "object" && product !== null && "price" in product
+            ? (product as Record<string, unknown>)["price"]
+            : 0;
+        const price = typeof priceRaw === "number" ? priceRaw : 0;
+
         return {
           id: row.id,
           productId: row.product_id,
-          name: product?.name ?? "Product",
-          price: typeof product?.price === "number" ? product.price : 0,
+          name,
+          price,
           originalPrice: undefined,
           quantity: typeof row.amount === "number" ? row.amount : 1,
           image: imageUrl,
           variant: variant,
-          inStock: true,
-          maxQuantity: 99,
+          // If the product is deleted, treat it as not purchasable (inStock=false).
+          inStock: !isDeleted,
+          maxQuantity: isDeleted ? 0 : 99,
+          isDeleted: isDeleted,
+          deletedAt: isDeleted ? deletedAtIso : undefined,
         };
       });
 
@@ -289,12 +311,21 @@ const CartPage: React.FC = () => {
     }
   };
 
+  /**
+   * Removes all cart items whose products have been soft deleted.
+   * This prevents checkout errors and makes the state consistent.
+   */
+  const handleRemoveDeletedItems = async (): Promise<void> => {
+    const idsToRemove = cartItems.filter((i) => i.isDeleted).map((i) => i.id);
+    for (const id of idsToRemove) {
+      await handleRemoveItem(id);
+    }
+  };
+
   // Wishlist and promo features removed per requirements
 
   // Proceed to checkout
-  const handleCheckout = () => {
-    navigate("/checkout");
-  };
+  // Checkout navigation is handled by CheckoutButton.
 
   /**
    * Create a fake Stripe-like session and local cart, then navigate to success page.
@@ -425,6 +456,23 @@ const CartPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Cart Items Section */}
               <div className="lg:col-span-2">
+                {hasDeletedProducts && (
+                  <Card className="mb-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          Some items are unavailable
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          One or more products in your cart were removed from sale. Please remove them before checkout.
+                        </p>
+                      </div>
+                      <Button color="failure" onClick={() => void handleRemoveDeletedItems()}>
+                        Remove Unavailable Items
+                      </Button>
+                    </div>
+                  </Card>
+                )}
                 <Card className="mb-6">
                   <div className="space-y-4">
                     {cartItems.map((item) => (
@@ -444,6 +492,11 @@ const CartPage: React.FC = () => {
                               <Link to={`/product-details/${item.productId}`} className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600">
                                 {item.name}
                               </Link>
+                              {item.isDeleted && (
+                                <p className="mt-1 text-sm text-red-600">
+                                  This product is no longer available.
+                                </p>
+                              )}
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 Variant: {item.variant || "Default"}
                               </p>
@@ -476,7 +529,7 @@ const CartPage: React.FC = () => {
                                 size="xs" 
                                 color="light"
                                 onClick={() => void handleQuantityChange(item.id, item.quantity - 1)}
-                                disabled={item.quantity <= 1}
+                                disabled={item.isDeleted || item.quantity <= 1}
                               >
                                 <HiMinus className="h-3 w-3" />
                               </Button>
@@ -487,7 +540,7 @@ const CartPage: React.FC = () => {
                                 size="xs" 
                                 color="light"
                                 onClick={() => void handleQuantityChange(item.id, item.quantity + 1)}
-                                disabled={item.quantity >= item.maxQuantity}
+                                disabled={item.isDeleted || item.quantity >= item.maxQuantity}
                               >
                                 <HiPlus className="h-3 w-3" />
                               </Button>

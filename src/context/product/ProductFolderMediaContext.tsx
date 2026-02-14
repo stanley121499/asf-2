@@ -1,7 +1,17 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../../database.types";
+import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export type ProductFolderMedia = Database["public"]["Tables"]["product_folder_medias"]["Row"];
 export type ProductFolderMediaInsert = Database["public"]["Tables"]["product_folder_medias"]["Insert"];
@@ -15,32 +25,49 @@ interface ProductFolderMediaContextProps {
   loading: boolean;
 }
 
-const ProductFolderMediaContext = createContext<ProductFolderMediaContextProps>(undefined!);
+const ProductFolderMediaContext = createContext<ProductFolderMediaContextProps | undefined>(undefined);
 
 export function ProductFolderMediaProvider({ children }: PropsWithChildren) {
   const [productFolderMedias, setProductFolderMedias] = useState<ProductFolderMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
-    setLoading(true);
+  /**
+   * A ref wrapper for AlertContext's `showAlert` to avoid effect dependency loops.
+   */
+  const showAlertRef = useRef<typeof showAlert | null>(null);
 
-    const fetchProductFolderMedias = async () => {
-      const { data: productFolderMedias, error } = await supabase
-        .from("product_folder_medias")
-        .select("*");
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
+  /**
+   * Fetch all product folder medias from Supabase.
+   */
+  const fetchProductFolderMedias = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("product_folder_medias").select("*");
 
       if (error) {
-        showAlert(error.message, "error");
+        showAlertRef.current?.(error.message, "error");
         return;
       }
 
-      setProductFolderMedias(productFolderMedias);
-    };
+      setProductFolderMedias(data ?? []);
+    } catch (error: unknown) {
+      console.error("Failed to fetch product folder medias:", error);
+      showAlertRef.current?.("Failed to fetch product folder medias", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    fetchProductFolderMedias();
-
-    const handleChanges = (payload: any) => {
+  /**
+   * Realtime handler for product folder media changes.
+   */
+  const handleRealtimeChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<ProductFolderMedia>): void => {
       if (payload.eventType === "INSERT") {
         setProductFolderMedias((prev) => [...prev, payload.new]);
       }
@@ -58,42 +85,84 @@ export function ProductFolderMediaProvider({ children }: PropsWithChildren) {
           prev.filter((productFolderMedia) => productFolderMedia.id !== payload.old.id)
         );
       }
-    };
+    },
+    []
+  );
+
+  /**
+   * Fetch once on mount and subscribe to realtime changes.
+   */
+  useEffect(() => {
+    void fetchProductFolderMedias();
 
     const subscription = supabase
       .channel("product_folder_medias")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'product_folder_medias' }, payload => {
-        handleChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "product_folder_medias" },
+        (payload: RealtimePostgresChangesPayload<ProductFolderMedia>) => {
+          handleRealtimeChanges(payload);
+        }
+      )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchProductFolderMedias, handleRealtimeChanges]);
 
-  const createProductFolderMedia = async (productFolderMedia: ProductFolderMediaInsert) => {
-    const { error } = await supabase.from("product_folder_medias").insert(productFolderMedia);
+  /**
+   * Create a product folder media row.\n   *
+   * NOTE: List updates are handled by realtime subscriptions.\n   *
+   * @param productFolderMedia - Insert payload for `product_folder_medias`.
+   */
+  const createProductFolderMedia = useCallback(
+    async (productFolderMedia: ProductFolderMediaInsert): Promise<void> => {
+      try {
+        const { error } = await supabase.from("product_folder_medias").insert(productFolderMedia);
 
-    if (error) {
-      showAlert(error.message, "error");
-      return;
-    }
+        if (error) {
+          showAlertRef.current?.(error.message, "error");
+          return;
+        }
 
-    showAlert("Product folder media created successfully", "success");
-  };
+        showAlertRef.current?.("Product folder media created successfully", "success");
+      } catch (error: unknown) {
+        console.error("Failed to create product folder media:", error);
+        showAlertRef.current?.("Failed to create product folder media", "error");
+      }
+    },
+    []
+  );
 
-  const updateProductFolderMedia = async (productFolderMedia: ProductFolderMediaUpdate) => {
-    const { error } = await supabase
-      .from("product_folder_medias")
-      .update(productFolderMedia)
-      .match({ id: productFolderMedia.id });
+  /**
+   * Update a product folder media row.\n   *
+   * @param productFolderMedia - Update payload; must include an `id`.
+   */
+  const updateProductFolderMedia = useCallback(
+    async (productFolderMedia: ProductFolderMediaUpdate): Promise<void> => {
+      const id = productFolderMedia.id;
+      if (typeof id !== "string" || id.trim().length === 0) {
+        showAlertRef.current?.("Missing product folder media id for update.", "error");
+        return;
+      }
 
-    if (error) {
-      showAlert(error.message, "error");
-      return;
-    }
-  }
+      try {
+        const { error } = await supabase
+          .from("product_folder_medias")
+          .update(productFolderMedia)
+          .eq("id", id);
+
+        if (error) {
+          showAlertRef.current?.(error.message, "error");
+        }
+      } catch (error: unknown) {
+        console.error("Failed to update product folder media:", error);
+        showAlertRef.current?.("Failed to update product folder media", "error");
+      }
+    },
+    []
+  );
 
   // const deleteProductFolderMedia = async (productFolderMediaId: string) => {
   //   const { error } = await supabase
@@ -125,8 +194,18 @@ export function ProductFolderMediaProvider({ children }: PropsWithChildren) {
   //   showAlert("Product folder media deleted successfully", "success");
   // }
 
+  const value = useMemo<ProductFolderMediaContextProps>(
+    () => ({
+      productFolderMedias,
+      createProductFolderMedia,
+      updateProductFolderMedia,
+      loading,
+    }),
+    [productFolderMedias, createProductFolderMedia, updateProductFolderMedia, loading]
+  );
+
   return (
-    <ProductFolderMediaContext.Provider value={{ productFolderMedias, createProductFolderMedia, updateProductFolderMedia, loading }}>
+    <ProductFolderMediaContext.Provider value={value}>
       {children}
     </ProductFolderMediaContext.Provider>
   );

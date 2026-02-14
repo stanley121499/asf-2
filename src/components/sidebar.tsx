@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import classNames from "classnames";
-import { Sidebar, Avatar, Dropdown } from "flowbite-react";
+import { Sidebar, Avatar } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import { FaBox, FaUsers } from "react-icons/fa";
 import { useSidebarContext } from "../context/SidebarContext";
@@ -209,7 +209,10 @@ const ExampleSidebar: React.FC = function () {
   const MobileUserSection: React.FC = () => {
     const { signOut, user } = useAuthContext();
     const navigate = useNavigate();
-    const username = user.email.split("@")[0];
+
+    // `user` can be null and `email` can be undefined. Derive safe display strings.
+    const email = user?.email ?? "";
+    const username = email.includes("@") ? email.split("@")[0] : (email || "Account");
 
     const handleNavigation = (path: string) => {
       navigate(path);
@@ -230,7 +233,7 @@ const ExampleSidebar: React.FC = function () {
               {username}
             </p>
             <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-              {user.email}
+              {email || "Not signed in"}
             </p>
           </div>
         </div>
@@ -244,7 +247,7 @@ const ExampleSidebar: React.FC = function () {
           </button>
           <button
             onClick={() => {
-              signOut();
+              void signOut();
               setOpenOnSmallScreens(false);
             }}
             className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md dark:text-gray-300 dark:hover:bg-gray-600"

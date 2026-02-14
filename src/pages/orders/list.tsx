@@ -7,7 +7,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { useOrderContext } from "../../context/product/OrderContext";
 import { supabase } from "../../utils/supabaseClient";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 
 type UserRow = Database["public"]["Tables"]["user_details"]["Row"];
 

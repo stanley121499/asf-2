@@ -43,6 +43,7 @@ import PostListPage from "./pages/posts/list";
 import SchedulePostListPage from "./pages/posts/schedule-post-page";
 import CategoryListPage from "./pages/products/category-page";
 import CreateProductPage from "./pages/products/create-product-page";
+import DeletedProductsPage from "./pages/products/deleted-products";
 import ProductListPage from "./pages/products/list";
 import ScheduleProductListPage from "./pages/products/schedule-product-page";
 import CreatePurchaseOrderPage from "./pages/stocks/create-purchase-order";
@@ -83,7 +84,6 @@ import { TicketProvider } from "./context/TicketContext";
 import { TicketStatusLogProvider } from "./context/TicketStatusLogContext";
 import SupportPage from "./pages/support";
 import GoodStockPage from "./pages/stocks/good-stocks";
-import PromotionListPage from "./pages/promotions/list";
 import InternalChat from "./pages/internal-chat";
 import SupportAnalyticsPage from "./pages/analytics/support";
 import NotificationsPage from "./pages/landing/notifications";
@@ -93,11 +93,14 @@ import { PaymentProvider } from "./context/PaymentContext";
 import OrderListPage from "./pages/orders/list";
 import { PaymentListPage, PaymentDetailPage } from "./pages/payments";
 import OrderDetailPage from "./pages/orders/detail";
+import { WishlistProvider } from "./context/WishlistContext";
+import WishlistPage from "./pages/landing/Wishlist";
 
 const App: React.FC = () => (
   <AlertProvider>
     <ProviderComposer
       providers={[
+        WishlistProvider,
         ProductPurchaseOrderProvider,
         ProductReportProvider,
         AuthProvider,
@@ -153,6 +156,7 @@ const App: React.FC = () => (
                   element={<SchedulePostListPage />}
                 />
                 <Route path="/products/list" element={<ProductListPage />} />
+                <Route path="/products/deleted" element={<DeletedProductsPage />} />
                 <Route
                   path="/products/create/:folderId?/:productId?"
                   element={<CreateProductPage />}
@@ -165,14 +169,11 @@ const App: React.FC = () => (
                   path="/products/categories"
                   element={<CategoryListPage />}
                 />
-                
+
                 <Route
                   path="/products/stock/:productId"
                   element={<ProductStockDetails />}
                 />
-
-                {/* Promotion */}
-                <Route path="/promotions/list" element={<PromotionListPage />} />
 
                 {/* Stock */}
 
@@ -218,7 +219,7 @@ const App: React.FC = () => (
                 <Route path="/payments" element={<PaymentListPage />} />
                 <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
 
-                {/* Support */} 
+                {/* Support */}
                 <Route path="/support" element={<SupportPage />} />
 
                 {/* Analytics */}
@@ -270,6 +271,7 @@ const App: React.FC = () => (
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/pages/maintenance" element={<MaintenancePage />} />
               <Route path="/authentication/sign-in" element={<SignInPage />} />
 

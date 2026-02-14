@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../../database.types";
+import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export type PostFolderMedia = Database["public"]["Tables"]["post_folder_medias"]["Row"];
 export type PostFolderMediaInsert = Database["public"]["Tables"]["post_folder_medias"]["Insert"];
@@ -15,64 +24,84 @@ interface PostFolderMediaContextProps {
   loading: boolean;
 }
 
-const PostFolderMediaContext = createContext<PostFolderMediaContextProps>(undefined!);
+const PostFolderMediaContext = createContext<PostFolderMediaContextProps | undefined>(undefined);
 
 export function PostFolderMediaProvider({ children }: PropsWithChildren) {
   const [postFolderMedias, setPostFolderMedias] = useState<PostFolderMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all post folder medias.
+   */
+  const fetchPostFolderMedias = useCallback(async (): Promise<void> => {
     setLoading(true);
 
-    const fetchPostFolderMedias = async () => {
-      const { data: postFolderMedias, error } = await supabase
-        .from("post_folder_medias")
-        .select("*");
+    try {
+      const { data, error } = await supabase.from("post_folder_medias").select("*");
 
       if (error) {
         showAlert(error.message, "error");
         return;
       }
 
-      setPostFolderMedias(postFolderMedias);
-    };
+      setPostFolderMedias(data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [showAlert]);
 
-    fetchPostFolderMedias();
-
-    const handleChanges = (payload: any) => {
+  /**
+   * Realtime handler for post_folder_medias changes.
+   */
+  const handleChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<PostFolderMedia>) => {
       if (payload.eventType === "INSERT") {
         setPostFolderMedias((prev) => [...prev, payload.new]);
       }
 
       if (payload.eventType === "UPDATE") {
+        const updated = payload.new;
         setPostFolderMedias((prev) =>
           prev.map((postFolderMedia) =>
-            postFolderMedia.id === payload.new.id ? payload.new : postFolderMedia
+            postFolderMedia.id === updated.id ? updated : postFolderMedia
           )
         );
       }
 
       if (payload.eventType === "DELETE") {
+        const removed = payload.old;
         setPostFolderMedias((prev) =>
-          prev.filter((postFolderMedia) => postFolderMedia.id !== payload.old.id)
+          prev.filter((postFolderMedia) => postFolderMedia.id !== removed.id)
         );
       }
-    };
+    },
+    []
+  );
+
+  useEffect(() => {
+    void fetchPostFolderMedias();
 
     const subscription = supabase
       .channel("post_folder_medias")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'post_folder_medias' }, payload => {
-        handleChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "post_folder_medias" },
+        (payload: RealtimePostgresChangesPayload<PostFolderMedia>) => {
+          handleChanges(payload);
+        }
+      )
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchPostFolderMedias, handleChanges]);
 
-  const createPostFolderMedia = async (postFolderMedia: PostFolderMediaInsert) => {
+  /**
+   * Create a post folder media record.
+   */
+  const createPostFolderMedia = useCallback(async (postFolderMedia: PostFolderMediaInsert): Promise<void> => {
     const { error } = await supabase.from("post_folder_medias").insert(postFolderMedia);
 
     if (error) {
@@ -81,9 +110,12 @@ export function PostFolderMediaProvider({ children }: PropsWithChildren) {
     }
 
     showAlert("Post folder media created successfully", "success");
-  };
+  }, [showAlert]);
 
-  const updatePostFolderMedia = async (postFolderMedia: PostFolderMediaUpdate) => {
+  /**
+   * Update a post folder media record.
+   */
+  const updatePostFolderMedia = useCallback(async (postFolderMedia: PostFolderMediaUpdate): Promise<void> => {
     const { error } = await supabase
       .from("post_folder_medias")
       .update(postFolderMedia)
@@ -93,7 +125,7 @@ export function PostFolderMediaProvider({ children }: PropsWithChildren) {
       showAlert(error.message, "error");
       return;
     }
-  }
+  }, [showAlert])
 
   // const deletePostFolderMedia = async (postFolderMediaId: string) => {
   //   const { error } = await supabase
@@ -125,11 +157,17 @@ export function PostFolderMediaProvider({ children }: PropsWithChildren) {
   //   showAlert("Post folder media deleted successfully", "success");
   // }
 
-  return (
-    <PostFolderMediaContext.Provider value={{ postFolderMedias, createPostFolderMedia, updatePostFolderMedia, loading }}>
-      {children}
-    </PostFolderMediaContext.Provider>
-  );
+  const value = useMemo<PostFolderMediaContextProps>(
+    () => ({
+      postFolderMedias,
+      createPostFolderMedia,
+      updatePostFolderMedia,
+      loading,
+    }),
+    [postFolderMedias, createPostFolderMedia, updatePostFolderMedia, loading]
+  )
+
+  return <PostFolderMediaContext.Provider value={value}>{children}</PostFolderMediaContext.Provider>
 }
 
 export function usePostFolderMediaContext() {

@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
+import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { supabase } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
@@ -7,7 +16,13 @@ export type User = {
   id: string;
   email: string;
   password: string;
-  user_detail: Database["public"]["Tables"]["user_details"]["Row"];
+  /**
+   * NOTE: We never fetch/store real passwords from Supabase.
+   * This field is only used as an input for create/update flows.
+   */
+  user_detail: Partial<Database["public"]["Tables"]["user_details"]["Row"]> & {
+    role: Database["public"]["Tables"]["user_details"]["Row"]["role"];
+  };
 };
 export type Users = { users: User[] };
 
@@ -19,16 +34,21 @@ interface UserContextProps {
   updateUser: (user: User) => Promise<void>;
 }
 
-const UserContext = createContext<UserContextProps>(undefined!);
+const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 export function UserProvider({ children }: PropsWithChildren) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const { data: users, error } = await supabase.auth.admin.listUsers()
+  /**
+   * Fetch all users from Supabase auth and enrich them with `user_details`.
+   */
+  const fetchUsers = useCallback(async (): Promise<void> => {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.admin.listUsers();
 
       if (error) {
         console.error("Error fetching users:", error);
@@ -36,145 +56,194 @@ export function UserProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      let usersWithDetails = await Promise.all(
-        users.users.map(async (user: any) => {
-          const { data: user_detail, error } = await supabase
+      const authUsers: SupabaseAuthUser[] = data.users ?? [];
+
+      // Build app-friendly `User` objects (password is never returned by Supabase).
+      const usersWithDetails: User[] = await Promise.all(
+        authUsers.map(async (authUser) => {
+          const { data: detail, error: detailError } = await supabase
             .from("user_details")
             .select("*")
-            .eq("id", user.id)
-            .single();
+            .eq("id", authUser.id)
+            .maybeSingle();
 
-          if (error) {
+          if (detailError) {
+            console.error("Error fetching user details:", detailError);
             showAlert("Error fetching user details", "error");
-            return { ...user, user_detail: null };
-          }         
+          }
 
-          return { ...user, user_detail};            
+          // Ensure we always have a role field for UI safety.
+          const role = typeof detail?.role === "string" && detail.role.trim().length > 0 ? detail.role : "USER";
+
+          return {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            password: "",
+            user_detail: {
+              ...detail,
+              role,
+            },
+          };
         })
       );
 
       setUsers(usersWithDetails);
-
-      const handleChanges = (payload: any) => {
-        if (payload.eventType === 'INSERT') {
-          setUsers(prev => [payload.new, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-          setUsers(prev => prev.map(user => user.id === payload.new.id ? payload.new : user));
-        } else if (payload.eventType === 'DELETE') {
-          setUsers(prev => prev.filter(user => user.id !== payload.old.id));
-        }
-      };
-  
-      const subscription = supabase
-        .channel('auth.users')
-        .on('postgres_changes', { event: '*', schema: 'auth', table: 'users' }, payload => {
-          handleChanges(payload);
-        })
-        .subscribe();
-
+    } finally {
       setLoading(false);
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    };
-
-    fetchUsers();
+    }
   }, [showAlert]);
 
-  const addUser = async (user: User) => {
+  /**
+   * Realtime handler for auth user changes.
+   *
+   * We re-fetch from admin APIs so the UI always has the enriched `user_detail` data.
+   */
+  const handleAuthUsersRealtime = useCallback((): void => {
+    void fetchUsers();
+  }, [fetchUsers]);
+
+  // Initial fetch and realtime subscription.
+  useEffect(() => {
+    void fetchUsers();
+
+    const subscription = supabase
+      .channel("auth.users")
+      .on("postgres_changes", { event: "*", schema: "auth", table: "users" }, () => {
+        handleAuthUsersRealtime();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchUsers, handleAuthUsersRealtime]);
+
+  /**
+   * Creates a new auth user and a corresponding `user_details` record.
+   */
+  const addUser = useCallback(async (user: User): Promise<void> => {
     setLoading(true);
 
-    const { data , error } = await supabase.auth.admin.createUser({
-      email: user.email,
-      password: user.password,
-      email_confirm: true
-    })
+    try {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: user.email,
+        password: user.password,
+        email_confirm: true,
+      });
 
-    if (error) {
-      console.error("Error adding user:", error);
-      showAlert("Error adding user", "error");
+      if (error) {
+        console.error("Error adding user:", error);
+        showAlert("Error adding user", "error");
+        return;
+      }
+
+      // Create User Details (user_details primary key is the auth user id).
+      const { error: userDetailError } = await supabase.from("user_details").insert([
+        {
+          ...user.user_detail,
+          id: data.user.id,
+        },
+      ]);
+
+      if (userDetailError) {
+        console.error("Error adding user details:", userDetailError);
+        showAlert("Error adding user details", "error");
+        return;
+      }
+
+      showAlert("User added successfully", "success");
+    } finally {
       setLoading(false);
-      return;
     }
+  }, [showAlert]);
 
-    // Create User Details
-    const { error: userDetailError } = await supabase
-      .from("user_details")
-      .insert([{ ...user.user_detail, user_id: data.user.id }]);
-
-    if (userDetailError) {
-      console.error("Error adding user details:", userDetailError);
-      showAlert("Error adding user details", "error");
-      setLoading(false);
-      return;
-    }
-
-    showAlert("User added successfully", "success");
-    setLoading(false);
-  };
-
-  const deleteUser = async (user: User) => {
+  /**
+   * Deletes a user (details row first, then auth user).
+   */
+  const deleteUser = useCallback(async (user: User): Promise<void> => {
     setLoading(true);
 
-    // Delete User Details
-    const { error: userDetailError } = await supabase
-      .from("user_details")
-      .delete()
-      .eq("user_id", user.id);
+    try {
+      // Delete User Details
+      const { error: userDetailError } = await supabase
+        .from("user_details")
+        .delete()
+        .eq("id", user.id);
 
-    if (userDetailError) {
-      console.error("Error deleting user details:", userDetailError);
-      showAlert("Error deleting user details", "error");
+      if (userDetailError) {
+        console.error("Error deleting user details:", userDetailError);
+        showAlert("Error deleting user details", "error");
+        return;
+      }
+
+      // Delete Auth user
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+
+      if (error) {
+        console.error("Error deleting user:", error);
+        showAlert("Error deleting user", "error");
+        return;
+      }
+
+      showAlert("User deleted successfully", "success");
+    } finally {
+      setLoading(false);
     }
+  }, [showAlert]);
 
-
-    const { error } = await supabase.auth.admin.deleteUser(user.id);
-
-    if (error) {
-      console.error("Error deleting user:", error);
-      showAlert("Error deleting user", "error");
-    }
-
-    showAlert("User deleted successfully", "success"); // "User deleted successfully
-    setLoading(false);
-  };
-
-  const updateUser = async (user: User) => {
+  /**
+   * Updates a user password and updates their user_details record.
+   */
+  const updateUser = useCallback(async (user: User): Promise<void> => {
     setLoading(true);
-    const { error } = await supabase.auth.admin.updateUserById(
-      user.id,
-      { password: user.password }
-    )
 
-    if (error) {
-      console.error("Error updating user:", error);
-      showAlert("Error updating user", "error");
+    try {
+      // Update auth user password (only if provided)
+      if (typeof user.password === "string" && user.password.trim().length > 0) {
+        const { error } = await supabase.auth.admin.updateUserById(user.id, {
+          password: user.password,
+        });
+
+        if (error) {
+          console.error("Error updating user:", error);
+          showAlert("Error updating user", "error");
+          return;
+        }
+      }
+
+      // Update User Details (avoid attempting to update the primary key `id`)
+      const { id: _ignoredId, ...detailUpdate } = user.user_detail;
+      const { error: userDetailError } = await supabase
+        .from("user_details")
+        .update(detailUpdate)
+        .eq("id", user.id);
+
+      if (userDetailError) {
+        console.error("Error updating user details:", userDetailError);
+        showAlert("Error updating user details", "error");
+        return;
+      }
+
+      showAlert("User updated successfully", "success");
+    } finally {
       setLoading(false);
-      return;
     }
+  }, [showAlert]);
 
-    // Update User Details
-    const { error: userDetailError } = await supabase
-      .from("user_details")
-      .update(user.user_detail)
-      .eq("user_id", user.id);
-
-    if (userDetailError) {
-      console.error("Error updating user details:", userDetailError);
-      showAlert("Error updating user details", "error");
-      setLoading(false);
-      return;
-    }
-
-    showAlert("User updated successfully", "success");
-    setLoading(false);
-  };
+  // Memoize the value to prevent unnecessary re-renders in consumers.
+  const value = useMemo<UserContextProps>(
+    () => ({
+      users,
+      loading,
+      addUser,
+      deleteUser,
+      updateUser,
+    }),
+    [users, loading, addUser, deleteUser, updateUser]
+  );
 
   return (
-    <UserContext.Provider value={{ users, loading, addUser, deleteUser, updateUser }}>
-      {children}
-    </UserContext.Provider>
+    <UserContext.Provider value={value}>{children}</UserContext.Provider>
   );
 }
 

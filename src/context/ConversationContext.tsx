@@ -1,12 +1,14 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Database, Tables, TablesInsert, TablesUpdate } from "../../database.types";
+import { Tables, TablesInsert, TablesUpdate } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
@@ -71,30 +73,31 @@ export function ConversationProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all conversations with messages and participants. Maps to internal shape.
+   */
+  const fetchConversations = useCallback(async (): Promise<void> => {
     setLoading(true);
 
-    /**
-     * Fetch all conversations with messages and participants. Maps to internal shape.
-     */
-    const fetchConversations = async () => {
+    try {
       const { data, error } = await supabase
         .from("conversations")
         .select("*, chat_messages(*), conversation_participants(*)");
 
       if (error) {
         showAlert(error.message, "error");
-        setLoading(false);
         return;
       }
 
-      const mapped: Conversation[] = (data as ConversationJoinedRow[] | null)?.map((row) => {
+      const rows = (data as ConversationJoinedRow[] | null) ?? [];
+      const mapped: Conversation[] = rows.map((row) => {
         const msgs = Array.isArray(row.chat_messages) ? row.chat_messages : [];
         const sorted = [...msgs].sort((a, b) => {
           const at = a.created_at ? Date.parse(a.created_at) : 0;
           const bt = b.created_at ? Date.parse(b.created_at) : 0;
           return at - bt;
         });
+
         return {
           id: row.id,
           created_at: row.created_at,
@@ -107,23 +110,21 @@ export function ConversationProvider({ children }: PropsWithChildren) {
             ? row.conversation_participants
             : [],
         };
-      }) ?? [];
+      });
 
-      console.log("[ConversationContext] fetched conversations", { count: mapped.length, sample: mapped.slice(0, 2).map(c => ({ id: c.id, messages: c.messages.length, participants: c.participants.length })) });
       setConversations(mapped);
+    } finally {
       setLoading(false);
-    };
+    }
+  }, [showAlert]);
 
-    fetchConversations();
-
-    /**
-     * Realtime: conversations
-     */
-    const handleConversationChanges = (
-      payload: RealtimePostgresChangesPayload<ConversationRow>
-    ) => {
+  /**
+   * Realtime: conversations
+   */
+  const handleConversationChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<ConversationRow>) => {
       if (payload.eventType === "INSERT") {
-        const inserted = payload.new as ConversationRow;
+        const inserted = payload.new;
         setConversations((prev) => [
           ...prev,
           { ...inserted, messages: [], participants: [] },
@@ -131,27 +132,27 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       }
 
       if (payload.eventType === "UPDATE") {
-        const updated = payload.new as ConversationRow;
+        const updated = payload.new;
         setConversations((prev) =>
           prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
         );
       }
 
       if (payload.eventType === "DELETE") {
-        const removed = payload.old as ConversationRow;
+        const removed = payload.old;
         setConversations((prev) => prev.filter((c) => c.id !== removed.id));
       }
-    };
+    },
+    []
+  );
 
-    /**
-     * Realtime: chat_messages
-     */
-    const handleMessageChanges = (
-      payload: RealtimePostgresChangesPayload<ChatMessageRow>
-    ) => {
+  /**
+   * Realtime: chat_messages
+   */
+  const handleMessageChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
       if (payload.eventType === "INSERT") {
-        const inserted = payload.new as ChatMessageRow;
-        console.log("[ConversationContext] realtime message INSERT", inserted);
+        const inserted = payload.new;
         setConversations((prev) =>
           prev.map((c) => {
             if (c.id !== inserted.conversation_id) return c;
@@ -163,22 +164,22 @@ export function ConversationProvider({ children }: PropsWithChildren) {
         );
       }
       if (payload.eventType === "UPDATE") {
-        const updated = payload.new as ChatMessageRow;
-        console.log("[ConversationContext] realtime message UPDATE", updated);
+        const updated = payload.new;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === updated.conversation_id
               ? {
                   ...c,
-                  messages: c.messages.map((m) => (m.id === updated.id ? updated : m)),
+                  messages: c.messages.map((m) =>
+                    m.id === updated.id ? updated : m
+                  ),
                 }
               : c
           )
         );
       }
       if (payload.eventType === "DELETE") {
-        const removed = payload.old as ChatMessageRow;
-        console.log("[ConversationContext] realtime message DELETE", removed);
+        const removed = payload.old;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === removed.conversation_id
@@ -190,16 +191,17 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           )
         );
       }
-    };
+    },
+    []
+  );
 
-    /**
-     * Realtime: conversation_participants
-     */
-    const handleParticipantChanges = (
-      payload: RealtimePostgresChangesPayload<ConversationParticipantRow>
-    ) => {
+  /**
+   * Realtime: conversation_participants
+   */
+  const handleParticipantChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<ConversationParticipantRow>) => {
       if (payload.eventType === "INSERT") {
-        const inserted = payload.new as ConversationParticipantRow;
+        const inserted = payload.new;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === inserted.conversation_id
@@ -209,7 +211,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
         );
       }
       if (payload.eventType === "UPDATE") {
-        const updated = payload.new as ConversationParticipantRow;
+        const updated = payload.new;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === updated.conversation_id
@@ -224,19 +226,27 @@ export function ConversationProvider({ children }: PropsWithChildren) {
         );
       }
       if (payload.eventType === "DELETE") {
-        const removed = payload.old as ConversationParticipantRow;
+        const removed = payload.old;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === removed.conversation_id
               ? {
                   ...c,
-                  participants: c.participants.filter((p) => p.id !== removed.id),
+                  participants: c.participants.filter(
+                    (p) => p.id !== removed.id
+                  ),
                 }
               : c
           )
         );
       }
-    };
+    },
+    []
+  );
+
+  // Initial fetch + subscription setup.
+  useEffect(() => {
+    void fetchConversations();
 
     const conversationSubscription = supabase
       .channel("conversations")
@@ -251,15 +261,27 @@ export function ConversationProvider({ children }: PropsWithChildren) {
 
     const messageSubscription = supabase
       .channel("chat_messages-room")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
-        handleMessageChanges(payload);
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_messages" }, (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
-        handleMessageChanges(payload);
-      })
-      .on("postgres_changes", { event: "DELETE", schema: "public", table: "chat_messages" }, (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
-        handleMessageChanges(payload);
-      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages" },
+        (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
+          handleMessageChanges(payload);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_messages" },
+        (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
+          handleMessageChanges(payload);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_messages" },
+        (payload: RealtimePostgresChangesPayload<ChatMessageRow>) => {
+          handleMessageChanges(payload);
+        }
+      )
       .subscribe();
 
     const participantSubscription = supabase
@@ -278,13 +300,18 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       messageSubscription.unsubscribe();
       participantSubscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [
+    fetchConversations,
+    handleConversationChanges,
+    handleMessageChanges,
+    handleParticipantChanges,
+  ]);
 
   // Conversation CRUD
   /**
    * Create a conversation row.
    */
-  const createConversation = async (
+  const createConversation = useCallback(async (
     payload: ConversationInsert
   ): Promise<Conversation | undefined> => {
     const { data, error } = await supabase
@@ -298,12 +325,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  };
+  }, [showAlert]);
 
   /**
    * Update a conversation by id.
    */
-  const updateConversation = async (
+  const updateConversation = useCallback(async (
     payload: ConversationUpdate
   ): Promise<Conversation | undefined> => {
     if (!isNonEmptyString(payload.id)) {
@@ -322,12 +349,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  };
+  }, [showAlert]);
 
   /**
    * Delete a conversation by id.
    */
-  const deleteConversation = async (conversationId: string): Promise<void> => {
+  const deleteConversation = useCallback(async (conversationId: string): Promise<void> => {
     if (!isNonEmptyString(conversationId)) {
       showAlert("Invalid conversation id.", "error");
       return;
@@ -339,13 +366,13 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  };
+  }, [showAlert]);
 
   // Message CRUD
   /**
    * Create chat message.
    */
-  const createMessage = async (
+  const createMessage = useCallback(async (
     payload: ChatMessageInsert
   ): Promise<ChatMessageRow | undefined> => {
     const { data, error } = await supabase
@@ -370,12 +397,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       );
     }
     return created;
-  };
+  }, [showAlert]);
 
   /**
    * Update chat message by id.
    */
-  const updateMessage = async (
+  const updateMessage = useCallback(async (
     id: string,
     payload: ChatMessageUpdate
   ): Promise<ChatMessageRow | undefined> => {
@@ -394,12 +421,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       return undefined;
     }
     return data as ChatMessageRow;
-  };
+  }, [showAlert]);
 
   /**
    * Delete chat message by id.
    */
-  const deleteMessage = async (messageId: string): Promise<void> => {
+  const deleteMessage = useCallback(async (messageId: string): Promise<void> => {
     if (!isNonEmptyString(messageId)) {
       showAlert("Invalid message id.", "error");
       return;
@@ -411,9 +438,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  };
+  }, [showAlert]);
 
-  const listMessagesByConversationId = async (
+  /**
+   * List messages for a given conversation, using cached state when available.
+   */
+  const listMessagesByConversationId = useCallback(async (
     conversationId: string
   ): Promise<ChatMessageRow[]> => {
     if (!isNonEmptyString(conversationId)) {
@@ -433,13 +463,13 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       return [];
     }
     return (data ?? []) as ChatMessageRow[];
-  };
+  }, [conversations, showAlert]);
 
   // Participant CRUD
   /**
    * Add a conversation participant.
    */
-  const addParticipant = async (
+  const addParticipant = useCallback(async (
     payload: ConversationParticipantInsert
   ): Promise<ConversationParticipantRow | undefined> => {
     const { data, error } = await supabase
@@ -452,12 +482,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       return undefined;
     }
     return data as ConversationParticipantRow;
-  };
+  }, [showAlert]);
 
   /**
    * Update participant by id.
    */
-  const updateParticipant = async (
+  const updateParticipant = useCallback(async (
     id: string,
     payload: ConversationParticipantUpdate
   ): Promise<ConversationParticipantRow | undefined> => {
@@ -476,12 +506,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       return undefined;
     }
     return data as ConversationParticipantRow;
-  };
+  }, [showAlert]);
 
   /**
    * Remove participant by id.
    */
-  const removeParticipant = async (participantId: string): Promise<void> => {
+  const removeParticipant = useCallback(async (participantId: string): Promise<void> => {
     if (!isNonEmptyString(participantId)) {
       showAlert("Invalid participant id.", "error");
       return;
@@ -493,25 +523,42 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     if (error) {
       showAlert(error.message, "error");
     }
-  };
+  }, [showAlert]);
+
+  // Memoize context value so consumers only re-render when relevant data actually changes.
+  const value = useMemo<ConversationContextProps>(
+    () => ({
+      conversations,
+      loading,
+      createConversation,
+      updateConversation,
+      deleteConversation,
+      createMessage,
+      updateMessage,
+      deleteMessage,
+      listMessagesByConversationId,
+      addParticipant,
+      updateParticipant,
+      removeParticipant,
+    }),
+    [
+      conversations,
+      loading,
+      createConversation,
+      updateConversation,
+      deleteConversation,
+      createMessage,
+      updateMessage,
+      deleteMessage,
+      listMessagesByConversationId,
+      addParticipant,
+      updateParticipant,
+      removeParticipant,
+    ]
+  );
 
   return (
-    <ConversationContext.Provider
-      value={{
-        conversations,
-        loading,
-        createConversation,
-        updateConversation,
-        deleteConversation,
-        createMessage,
-        updateMessage,
-        deleteMessage,
-        listMessagesByConversationId,
-        addParticipant,
-        updateParticipant,
-        removeParticipant,
-      }}
-    >
+    <ConversationContext.Provider value={value}>
       {children}
     </ConversationContext.Provider>
   );

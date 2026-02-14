@@ -7,7 +7,7 @@ import React, {
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useAlertContext } from "../AlertContext";
 

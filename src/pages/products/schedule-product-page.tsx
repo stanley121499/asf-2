@@ -17,6 +17,65 @@ import LoadingPage from "../pages/loading";
 import { FaChevronDown } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
 
+/**
+ * Builds a validated ISO timestamp string for the `time_post` column.
+ *
+ * NOTE:
+ * - We store a full ISO string (`toISOString()`), so comparisons against
+ *   `new Date().toISOString()` are consistent.
+ *
+ * @param date - The selected date.
+ * @param timeHHMM - Time in `HH:MM` 24-hour format.
+ * @returns ISO timestamp string.
+ * @throws Error when the date or time is invalid.
+ */
+const buildIsoTimePost = (date: Date, timeHHMM: string): string => {
+  // Validate date input
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new TypeError("Please select a valid date.");
+  }
+
+  // Validate time format HH:MM
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match) {
+    throw new TypeError("Please select a valid time (HH:MM).");
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    throw new TypeError("Please select a valid time (HH:MM).");
+  }
+
+  // Use local time for the chosen date, then persist as UTC ISO
+  const scheduled = new Date(date);
+  scheduled.setHours(hours, minutes, 0, 0);
+  return scheduled.toISOString();
+};
+
+/**
+ * Converts an unknown caught error to a safe human-readable message.
+ *
+ * @param error - The caught error value.
+ * @returns A safe string message for alerts.
+ */
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "Unknown error";
+};
+
 const ScheduleProductListPage: React.FC = function () {
   const { products, loading, updateProductTimePost } = useProductContext();
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
@@ -32,14 +91,28 @@ const ScheduleProductListPage: React.FC = function () {
   useEffect(() => {
     if (productId) {
       setSelectedProduct(
-        products.find((product) => product.id === productId) || null
+        products.find((product) => product.id === productId) ?? null
       );
     }
   }, [productId, products]);
 
   useEffect(() => {
     if (selectedProduct) {
-      setProductTime(selectedProduct.time_post?.split("T")[1] || "");
+      // When rescheduling, pre-populate both the date and time inputs.
+      if (selectedProduct.time_post) {
+        const parsed = new Date(selectedProduct.time_post);
+        if (!Number.isNaN(parsed.getTime())) {
+          setDateInput(parsed);
+          const hours = `${parsed.getHours()}`.padStart(2, "0");
+          const minutes = `${parsed.getMinutes()}`.padStart(2, "0");
+          setProductTime(`${hours}:${minutes}`);
+          return;
+        }
+      }
+
+      // If not scheduled (or invalid date in DB), clear inputs.
+      setDateInput(null);
+      setProductTime("");
     }
   }, [selectedProduct]);
 
@@ -47,16 +120,54 @@ const ScheduleProductListPage: React.FC = function () {
     return <LoadingPage />;
   }
 
-  const handleUpdateProduct = async (product: ProductUpdate) => {
-    // Add time to product
-    if (productTime) {
-      product.time_post = `${product.time_post}T${productTime}`;
-    }
+  /**
+   * Saves (re)scheduling for a product by persisting `products.time_post`.
+   *
+   * @param product - Product update object; must include `id`.
+   */
+  const handleSaveProductSchedule = async (product: ProductUpdate) => {
+    try {
+      // Scheduling requires a date + time.
+      if (!dateInput) {
+        throw new Error("Please select a date.");
+      }
+      if (!productTime) {
+        throw new Error("Please select a time.");
+      }
+      if (!product.id) {
+        throw new Error("Missing product id.");
+      }
 
-    // await updateProductTimePost(product.id, product.time_post);
-    setSelectedProduct(null);
-    setProductTime("");
-    showAlert("Product updated successfully", "success");
+      const timePostIso = buildIsoTimePost(dateInput, productTime);
+      await updateProductTimePost(product.id, timePostIso);
+
+      // Reset editor state on success only.
+      setSelectedProduct(null);
+      setDateInput(null);
+      setProductTime("");
+      showAlert("Product updated successfully", "success");
+    } catch (error: unknown) {
+      // Surface a safe message to the user; details are still logged for debugging.
+      const message = `Failed to update product schedule: ${getErrorMessage(error)}`;
+      console.error(error);
+      showAlert(message, "error");
+    }
+  };
+
+  /**
+   * Clears a product schedule by setting `products.time_post` to `null`.
+   *
+   * @param productId - The product id to update.
+   */
+  const handleClearProductSchedule = async (productId: string) => {
+    try {
+      await updateProductTimePost(productId, null);
+      showAlert("Product unpublished successfully", "success");
+    } catch (error: unknown) {
+      const message = `Failed to unpublish product: ${getErrorMessage(error)}`;
+      console.error(error);
+      showAlert(message, "error");
+    }
   };
 
   return (
@@ -193,7 +304,7 @@ const ScheduleProductListPage: React.FC = function () {
 
                   <Button
                     color={"info"}
-                    onClick={() => handleUpdateProduct(selectedProduct)}
+                    onClick={() => handleSaveProductSchedule(selectedProduct)}
                     className="mb-4">
                     Save
                   </Button>
@@ -234,83 +345,70 @@ const ScheduleProductListPage: React.FC = function () {
                           .toLowerCase()
                           .includes(searchValue.toLowerCase())
                       )
-                      .flatMap((product) =>
-                        Array(10)
-                          .fill(null)
-                          .map((_, index) => (
-                            <div
-                              key={`${product.id}-${index}`}
-                              style={{ height: `calc((100vh - 11rem) / 8)` }}
-                              className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
-                              <div className="flex items-center gap-4">
-                                <img
-                                  src={
-                                    productMedias.find(
-                                      (media) => media.product_id === product.id
-                                    )?.media_url
-                                  }
-                                  alt={product.name}
-                                  className="w-16 h-16 object-cover rounded-md"
-                                />
-                                <div
-                                  className="w-[20vw]"
-                                  style={{ maxWidth: "50%" }}>
-                                  <div className="flex items-center gap-x-5">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2">
-                                      {product.name}
-                                    </h2>
-                                  </div>
-                                </div>
-                                {getBadge(product)}
+                      .map((product) => (
+                        <div
+                          key={product.id}
+                          style={{ height: `calc((100vh - 11rem) / 8)` }}
+                          className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={
+                                productMedias.find(
+                                  (media) => media.product_id === product.id
+                                )?.media_url
+                              }
+                              alt={product.name}
+                              className="w-16 h-16 object-cover rounded-md"
+                            />
+                            <div className="w-[20vw]" style={{ maxWidth: "50%" }}>
+                              <div className="flex items-center gap-x-5">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl flex items-center gap-x-2">
+                                  {product.name}
+                                </h2>
                               </div>
-                              <div className="flex items-center gap-4">
-                                {/* If no time product */}
-                                {!product.time_post && (
-                                  <Button
-                                    color={"info"}
-                                    onClick={() => setSelectedProduct(product)}>
-                                    Schedule
-                                  </Button>
-                                )}
+                            </div>
+                            {getBadge(product)}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {/* If no time product */}
+                            {!product.time_post && (
+                              <Button
+                                color={"info"}
+                                onClick={() => setSelectedProduct(product)}>
+                                Schedule
+                              </Button>
+                            )}
 
-                                {/* If time product is in the future */}
-                                {product.time_post &&
-                                  product.time_post >
-                                    new Date().toISOString() && (
-                                    <Button
-                                      color={"info"}
-                                      onClick={() =>
-                                        setSelectedProduct(product)
-                                      }>
-                                      Reschedule
-                                    </Button>
-                                  )}
-
-                                {/* If time product is in the past */}
-                                {product.time_post &&
-                                  product.time_post <
-                                    new Date().toISOString() && (
-                                    <Button
-                                      color="failure"
-                                      onClick={() =>
-                                        handleUpdateProduct({
-                                          ...product,
-                                          time_post: null,
-                                        })
-                                      }>
-                                      Unpublish
-                                    </Button>
-                                  )}
-
+                            {/* If time product is in the future */}
+                            {product.time_post &&
+                              product.time_post > new Date().toISOString() && (
                                 <Button
                                   color={"info"}
                                   onClick={() => setSelectedProduct(product)}>
-                                  Preview
+                                  Reschedule
                                 </Button>
-                              </div>
-                            </div>
-                          ))
-                      )}
+                              )}
+
+                            {/* If time product is in the past */}
+                            {product.time_post &&
+                              product.time_post < new Date().toISOString() && (
+                                <Button
+                                  color="failure"
+                                  onClick={() =>
+                                    handleClearProductSchedule(product.id)
+                                  }>
+                                  Unpublish
+                                </Button>
+                              )}
+
+                            <Button
+                              color={"info"}
+                              onClick={() => setSelectedProduct(product)}>
+                              Preview
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <>

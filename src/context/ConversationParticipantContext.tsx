@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Tables, TablesInsert, TablesUpdate } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
@@ -24,94 +31,128 @@ export const ConversationParticipantProvider: React.FC<React.PropsWithChildren> 
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all conversation participants.
+   */
+  const fetchAll = useCallback(async (): Promise<void> => {
     setLoading(true);
-    const fetchAll = async () => {
+    try {
       const { data, error } = await supabase.from("conversation_participants").select("*");
       if (error) {
         showAlert(error.message, "error");
-        setLoading(false);
         return;
       }
-      setParticipants((data ?? []) as ParticipantRow[]);
+      setParticipants(data ?? []);
+    } finally {
       setLoading(false);
-    };
-    fetchAll();
+    }
+  }, [showAlert]);
 
-    const onChange = (payload: RealtimePostgresChangesPayload<ParticipantRow>) => {
-      if (payload.eventType === "INSERT") {
-        setParticipants((prev) => [...prev, payload.new as ParticipantRow]);
-      }
-      if (payload.eventType === "UPDATE") {
-        const updated = payload.new as ParticipantRow;
-        setParticipants((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      }
-      if (payload.eventType === "DELETE") {
-        const removed = payload.old as ParticipantRow;
-        setParticipants((prev) => prev.filter((p) => p.id !== removed.id));
-      }
-    };
+  /**
+   * Realtime handler for participant changes.
+   */
+  const onChange = useCallback((payload: RealtimePostgresChangesPayload<ParticipantRow>): void => {
+    if (payload.eventType === "INSERT") {
+      setParticipants((prev) => [...prev, payload.new]);
+    }
+    if (payload.eventType === "UPDATE") {
+      const updated = payload.new;
+      setParticipants((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    }
+    if (payload.eventType === "DELETE") {
+      const removed = payload.old;
+      setParticipants((prev) => prev.filter((p) => p.id !== removed.id));
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchAll();
 
     const sub = supabase
       .channel("conversation_participants")
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversation_participants" }, (p: RealtimePostgresChangesPayload<ParticipantRow>) => onChange(p))
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversation_participants" },
+        (p: RealtimePostgresChangesPayload<ParticipantRow>) => onChange(p)
+      )
       .subscribe();
+
     return () => {
       sub.unsubscribe();
     };
+  }, [fetchAll, onChange]);
+
+  /**
+   * List participants by conversation id.
+   */
+  const listByConversation = useCallback(async (conversationId: string): Promise<ParticipantRow[]> => {
+    const { data, error } = await supabase
+      .from("conversation_participants")
+      .select("*")
+      .eq("conversation_id", conversationId);
+    if (error) {
+      showAlert(error.message, "error");
+      return [];
+    }
+    return data ?? [];
+  }, [showAlert]);
+
+  /**
+   * Add a participant.
+   */
+  const addParticipant = useCallback(async (payload: ParticipantInsert): Promise<ParticipantRow | undefined> => {
+    const { data, error } = await supabase
+      .from("conversation_participants")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) {
+      showAlert(error.message, "error");
+      return undefined;
+    }
+    return data;
+  }, [showAlert]);
+
+  /**
+   * Update a participant by id.
+   */
+  const updateParticipant = useCallback(async (id: string, payload: ParticipantUpdate): Promise<ParticipantRow | undefined> => {
+    const { data, error } = await supabase
+      .from("conversation_participants")
+      .update(payload)
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) {
+      showAlert(error.message, "error");
+      return undefined;
+    }
+    return data;
+  }, [showAlert]);
+
+  /**
+   * Remove a participant by id.
+   */
+  const removeParticipant = useCallback(async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("conversation_participants")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      showAlert(error.message, "error");
+    }
   }, [showAlert]);
 
   const api = useMemo<ParticipantAPI>(() => {
     return {
       participants,
       loading,
-      async listByConversation(conversationId: string) {
-        const { data, error } = await supabase
-          .from("conversation_participants")
-          .select("*")
-          .eq("conversation_id", conversationId);
-        if (error) {
-          showAlert(error.message, "error");
-          return [];
-        }
-        return (data ?? []) as ParticipantRow[];
-      },
-      async addParticipant(payload: ParticipantInsert) {
-        const { data, error } = await supabase
-          .from("conversation_participants")
-          .insert(payload)
-          .select("*")
-          .single();
-        if (error) {
-          showAlert(error.message, "error");
-          return undefined;
-        }
-        return data as ParticipantRow;
-      },
-      async updateParticipant(id: string, payload: ParticipantUpdate) {
-        const { data, error } = await supabase
-          .from("conversation_participants")
-          .update(payload)
-          .eq("id", id)
-          .select("*")
-          .single();
-        if (error) {
-          showAlert(error.message, "error");
-          return undefined;
-        }
-        return data as ParticipantRow;
-      },
-      async removeParticipant(id: string) {
-        const { error } = await supabase
-          .from("conversation_participants")
-          .delete()
-          .eq("id", id);
-        if (error) {
-          showAlert(error.message, "error");
-        }
-      },
+      listByConversation,
+      addParticipant,
+      updateParticipant,
+      removeParticipant,
     };
-  }, [participants, loading, showAlert]);
+  }, [participants, loading, listByConversation, addParticipant, updateParticipant, removeParticipant]);
 
   return (
     <ConversationParticipantContext.Provider value={api}>

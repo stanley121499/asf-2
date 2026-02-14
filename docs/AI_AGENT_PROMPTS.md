@@ -662,7 +662,7 @@ REFERENCE DOCUMENTATION:
 - See docs/SOFT_DELETE_STRATEGY.md for complete implementation guide
 - See docs/DATABASE.md for table relationships
 - See docs/CONTEXTS.md for context patterns
-```
+
 
 ---
 

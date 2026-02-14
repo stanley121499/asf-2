@@ -1,14 +1,19 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../../database.types";
+import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
 import { PostMedia } from "./PostMediaContext";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { restoreById, softDeleteById } from "../../utils/softDelete";
+import { isSoftDeletedRow } from "../../utils/softDeleteRuntime";
 
 export type Post = Database["public"]["Tables"]["posts"]["Row"] & {
   medias: PostMedia[];
@@ -22,68 +27,108 @@ interface PostContextProps {
   createPost: (post: PostInsert) => Promise<Post | undefined>;
   updatePost: (post: PostUpdate) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
+  restorePost: (postId: string) => Promise<void>;
   loading: boolean;
 }
 
-const PostContext = createContext<PostContextProps>(undefined!);
+const PostContext = createContext<PostContextProps | undefined>(undefined);
 
 export function PostProvider({ children }: PropsWithChildren) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
-  useEffect(() => {
+  /**
+   * Fetch all posts.
+   */
+  const fetchPosts = useCallback(async (): Promise<void> => {
     setLoading(true);
 
-    const fetchPosts = async () => {
-      const { data, error } = await supabase.from("posts").select("*");
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*");
 
       if (error) {
         showAlert(error.message, "error");
         return;
       }
 
-      const mapped = (data ?? []).map((p) => ({ ...p, medias: [] })) as Post[];
+      // Attach medias as an empty array here; media association is handled elsewhere.
+      const mapped: Post[] = (data ?? [])
+        .filter((p) => !isSoftDeletedRow(p))
+        .map((p) => ({ ...p, medias: [] }));
       setPosts(mapped);
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [showAlert]);
 
-    fetchPosts();
-
-    const handleChanges = (payload: any) => {
+  /**
+   * Realtime handler for posts table changes.
+   */
+  const handleChanges = useCallback(
+    (
+      payload: RealtimePostgresChangesPayload<
+        Database["public"]["Tables"]["posts"]["Row"]
+      >
+    ) => {
       if (payload.eventType === "INSERT") {
-        setPosts((prev) => [...prev, payload.new]);
+        const inserted = payload.new;
+        if (isSoftDeletedRow(inserted)) {
+          return;
+        }
+        setPosts((prev) => [...prev, { ...inserted, medias: [] }]);
       }
 
       if (payload.eventType === "UPDATE") {
+        const updated = payload.new;
+        if (isSoftDeletedRow(updated)) {
+          setPosts((prev) => prev.filter((p) => p.id !== updated.id));
+          return;
+        }
         setPosts((prev) =>
-          prev.map((post) => (post.id === payload.new.id ? payload.new : post))
+          prev.map((post) =>
+            post.id === updated.id ? { ...updated, medias: post.medias } : post
+          )
         );
       }
 
       if (payload.eventType === "DELETE") {
-        setPosts((prev) => prev.filter((post) => post.id !== payload.old.id));
+        const removed = payload.old;
+        setPosts((prev) => prev.filter((post) => post.id !== removed.id));
       }
-    };
+    },
+    []
+  );
+
+  useEffect(() => {
+    void fetchPosts();
 
     const subscription = supabase
       .channel("posts")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "posts" },
-        (payload) => {
+        (
+          payload: RealtimePostgresChangesPayload<
+            Database["public"]["Tables"]["posts"]["Row"]
+          >
+        ) => {
           handleChanges(payload);
         }
       )
       .subscribe();
 
-    setLoading(false);
-
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [fetchPosts, handleChanges]);
 
-  const createPost = async (post: PostInsert) => {
+  /**
+   * Create a post and return the created row with empty medias.
+   */
+  const createPost = useCallback(async (post: PostInsert): Promise<Post | undefined> => {
     const { data, error } = await supabase.from("posts").insert(post).select();
 
     if (error) {
@@ -93,33 +138,86 @@ export function PostProvider({ children }: PropsWithChildren) {
     const row = data?.[0];
     if (!row) return undefined;
     return { ...row, medias: [] } as Post;
-  };
+  }, [showAlert]);
 
-  const updatePost = async (post: PostUpdate) => {
+  /**
+   * Update an existing post by id.
+   */
+  const updatePost = useCallback(async (post: PostUpdate): Promise<void> => {
+    // Validation: we cannot update a post without an ID.
+    if (!post.id) {
+      const message = "Missing post id for update.";
+      showAlert(message, "error");
+      throw new Error(message);
+    }
+
     const { error } = await supabase
       .from("posts")
       .update(post)
-      .eq("id", post.id!)
-      .single();
+      .eq("id", post.id);
 
     if (error) {
-      console.log(error);
       showAlert(error.message, "error");
+      console.error(error);
+      // Throw so UIs can avoid showing a false success alert.
+      throw new Error(error.message);
     }
-  };
+  }, [showAlert]);
 
-  const deletePost = async (postId: string) => {
-    const { error } = await supabase.from("posts").delete().eq("id", postId);
-
-    if (error) {
-      console.log(error);
-      showAlert(error.message, "error");
+  /**
+   * Delete a post by id.
+   */
+  const deletePost = useCallback(async (postId: string): Promise<void> => {
+    if (typeof postId !== "string" || postId.trim().length === 0) {
+      showAlert("Post id is required to delete.", "error");
+      return;
     }
-  };
+
+    try {
+      await softDeleteById("posts", postId, { setActive: true });
+      showAlert("Post deleted successfully", "success");
+    } catch (error: unknown) {
+      console.error("Failed to delete post:", error);
+      showAlert("Failed to delete post", "error");
+      throw error instanceof Error ? error : new Error("Failed to delete post");
+    }
+  }, [showAlert]);
+
+  /**
+   * Restore a previously soft-deleted post.
+   *
+   * @param postId - Post id to restore.
+   */
+  const restorePost = useCallback(async (postId: string): Promise<void> => {
+    if (typeof postId !== "string" || postId.trim().length === 0) {
+      showAlert("Post id is required to restore.", "error");
+      return;
+    }
+
+    try {
+      await restoreById("posts", postId, { setActive: true });
+      showAlert("Post restored successfully", "success");
+    } catch (error: unknown) {
+      console.error("Failed to restore post:", error);
+      showAlert("Failed to restore post", "error");
+      throw error instanceof Error ? error : new Error("Failed to restore post");
+    }
+  }, [showAlert]);
+
+  const value = useMemo<PostContextProps>(
+    () => ({
+      posts,
+      createPost,
+      updatePost,
+      deletePost,
+      restorePost,
+      loading,
+    }),
+    [posts, createPost, updatePost, deletePost, restorePost, loading]
+  );
 
   return (
-    <PostContext.Provider
-      value={{ posts, createPost, updatePost, deletePost, loading }}>
+    <PostContext.Provider value={value}>
       {children}
     </PostContext.Provider>
   );

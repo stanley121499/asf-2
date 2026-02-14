@@ -35,17 +35,26 @@ const CreateProductPage: React.FC = () => {
   const { folderId, productId } = useParams();
   const navigate = useNavigate();
 
+  // Track if we've already initialized from URL params to avoid resetting on context refetches
+  const initializedRef = React.useRef({ folder: false, product: false });
+
   useEffect(() => {
-    if (folderId) {
-      setSelectedFolder(
-        productFolders.find((folder) => folder.id === folderId) || null
-      );
+    // Only set from URL params if not already initialized
+    if (folderId && !initializedRef.current.folder) {
+      const folder = productFolders.find((folder) => folder.id === folderId);
+      if (folder) {
+        setSelectedFolder(folder);
+        initializedRef.current.folder = true;
+      }
     }
 
-    if (productId) {
-      setSelectedProduct(
-        products.find((product) => product.id === productId) || null
-      );
+    // Only set from URL params if not already initialized  
+    if (productId && !initializedRef.current.product) {
+      const product = products.find((product) => product.id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        initializedRef.current.product = true;
+      }
     }
   }, [folderId, productFolders, productId, products]);
 

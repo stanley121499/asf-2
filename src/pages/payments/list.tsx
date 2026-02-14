@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { usePaymentContext } from "../../context/PaymentContext";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 type RefundStatus = Database["public"]["Enums"]["refund_status"];

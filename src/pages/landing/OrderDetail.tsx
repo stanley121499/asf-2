@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft } from "react-icons/hi";
 import NavbarHome from "../../components/navbar-home";
 import { supabase } from "../../utils/supabaseClient";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 import { formatCurrency } from "../../utils/pointsConfig";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];

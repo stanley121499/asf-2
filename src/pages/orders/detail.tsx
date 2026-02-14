@@ -7,7 +7,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { supabase } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
-import type { Database } from "../../../database.types";
+import type { Database } from "../../database.types";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];

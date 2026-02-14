@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -25,6 +26,52 @@ export interface PaymentWithDetails extends PaymentRow {
   user_email?: string;
   order_items_count?: number;
   payment_events?: PaymentEventRow[];
+}
+
+/**
+ * Runtime helper: type guard for plain objects.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/**
+ * Runtime helper: safely extracts the joined `order` object and its `user_id`.
+ */
+function getOrderUserId(payment: unknown): string | null {
+  if (!isRecord(payment)) return null;
+  const orderValue = payment["order"];
+  if (!isRecord(orderValue)) return null;
+  const userId = orderValue["user_id"];
+  return typeof userId === "string" ? userId : null;
+}
+
+/**
+ * Runtime helper: sums `order.order_items[].amount` if present.
+ */
+function getOrderItemsAmountSum(payment: unknown): number {
+  if (!isRecord(payment)) return 0;
+  const orderValue = payment["order"];
+  if (!isRecord(orderValue)) return 0;
+  const itemsValue = orderValue["order_items"];
+  if (!Array.isArray(itemsValue)) return 0;
+
+  return itemsValue.reduce((sum: number, item: unknown) => {
+    if (!isRecord(item)) return sum;
+    const amount = item["amount"];
+    return typeof amount === "number" && Number.isFinite(amount) ? sum + amount : sum;
+  }, 0);
+}
+
+/**
+ * Runtime helper: extracts payment_events if present.
+ */
+function getPaymentEvents(payment: unknown): PaymentEventRow[] {
+  if (!isRecord(payment)) return [];
+  const eventsValue = payment["payment_events"];
+  if (!Array.isArray(eventsValue)) return [];
+  // Supabase select join typing is not available here; we keep it safe via a narrow assertion.
+  return eventsValue as PaymentEventRow[];
 }
 
 interface PaymentContextProps {
@@ -54,7 +101,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
   /**
    * Fetch payments with enriched data including user details and order information
    */
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -79,52 +126,50 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
         throw paymentsError;
       }
 
-      if (!paymentsData) {
-        setPayments([]);
-        return;
-      }
+      const rawPayments: unknown[] = Array.isArray(paymentsData) ? (paymentsData as unknown[]) : [];
 
       // Get unique user IDs for fetching user details
-      const userIds = Array.from(
-        new Set(
-          paymentsData
-            .map(payment => (payment as any).order?.user_id)
-            .filter(Boolean)
-        )
-      );
+      const userIds = Array.from(new Set(rawPayments.map(getOrderUserId).filter((v): v is string => typeof v === "string")));
 
       // Fetch user details if there are any user IDs
-      let usersData: any[] = [];
+      let usersData: { id: string; email?: string }[] = [];
       if (userIds.length > 0) {
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
         if (authError) {
           console.error("Error fetching auth users:", authError);
         } else {
-          usersData = authUsers?.users || [];
+          usersData =
+            (authUsers?.users ?? []).map((u) => ({
+              id: u.id,
+              email: u.email ?? undefined,
+            })) ?? [];
         }
       }
 
       // Enrich payments with user details and computed fields
-      const enrichedPayments: PaymentWithDetails[] = paymentsData.map(payment => {
-        const orderData = (payment as any).order;
-        const orderItemsCount = orderData?.order_items?.reduce(
-          (sum: number, item: any) => sum + (item.amount || 0), 
-          0
-        ) || 0;
+      const enrichedPayments: PaymentWithDetails[] = rawPayments
+        .map((payment): PaymentWithDetails | null => {
+          if (!isRecord(payment) || typeof payment["id"] !== "string") {
+            return null;
+          }
 
-        // Find user details
-        const user = usersData.find(u => u.id === orderData?.user_id);
-        const userName = user?.email?.split("@")[0] || "Unknown User";
-        const userEmail = user?.email || "";
+          const userId = getOrderUserId(payment);
+          const orderItemsCount = getOrderItemsAmountSum(payment);
 
-        return {
-          ...payment,
-          user_name: userName,
-          user_email: userEmail,
-          order_items_count: orderItemsCount,
-          payment_events: (payment as any).payment_events || [],
-        };
-      });
+          // Find user details
+          const user = typeof userId === "string" ? usersData.find((u) => u.id === userId) : undefined;
+          const email = typeof user?.email === "string" ? user.email : "";
+          const userName = email.includes("@") ? email.split("@")[0] : "Unknown User";
+
+          return {
+            ...(payment as PaymentRow),
+            user_name: userName,
+            user_email: email,
+            order_items_count: orderItemsCount,
+            payment_events: getPaymentEvents(payment),
+          };
+        })
+        .filter((p): p is PaymentWithDetails => p !== null);
 
       setPayments(enrichedPayments);
     } catch (err) {
@@ -134,28 +179,29 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showAlert]);
 
   /**
    * Refresh payments data
    */
-  const refreshPayments = async () => {
+  const refreshPayments = useCallback(async (): Promise<void> => {
     await fetchPayments();
-  };
+  }, [fetchPayments]);
 
   /**
    * Update payment status
    */
-  const updatePaymentStatus = async (
+  const updatePaymentStatus = useCallback(async (
     paymentId: string, 
     newStatus: Database["public"]["Enums"]["payment_status"]
   ): Promise<boolean> => {
     try {
+      const updatedAt = new Date().toISOString();
       const { error } = await supabase
         .from("payments")
         .update({ 
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at: updatedAt,
         })
         .eq("id", paymentId);
 
@@ -164,9 +210,9 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
 
       // Update local state
-      setPayments(prev => prev.map(payment => 
+      setPayments((prev) => prev.map((payment) => 
         payment.id === paymentId 
-          ? { ...payment, status: newStatus, updated_at: new Date().toISOString() }
+          ? { ...payment, status: newStatus, updated_at: updatedAt }
           : payment
       ));
 
@@ -177,23 +223,24 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       showAlert(message, "error");
       return false;
     }
-  };
+  }, [showAlert]);
 
   /**
    * Update refund status and amount
    */
-  const updateRefundStatus = async (
+  const updateRefundStatus = useCallback(async (
     paymentId: string, 
     newRefundStatus: Database["public"]["Enums"]["refund_status"],
     refundedAmount: number
   ): Promise<boolean> => {
     try {
+      const updatedAt = new Date().toISOString();
       const { error } = await supabase
         .from("payments")
         .update({ 
           refund_status: newRefundStatus,
           refunded_amount: refundedAmount,
-          updated_at: new Date().toISOString()
+          updated_at: updatedAt,
         })
         .eq("id", paymentId);
 
@@ -202,13 +249,13 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
 
       // Update local state
-      setPayments(prev => prev.map(payment => 
+      setPayments((prev) => prev.map((payment) => 
         payment.id === paymentId 
           ? { 
               ...payment, 
               refund_status: newRefundStatus, 
               refunded_amount: refundedAmount,
-              updated_at: new Date().toISOString()
+              updated_at: updatedAt,
             }
           : payment
       ));
@@ -220,44 +267,40 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       showAlert(message, "error");
       return false;
     }
-  };
-
-  // Initialize data on mount
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadPayments = async () => {
-      if (isMounted) {
-        await fetchPayments();
-      }
-    };
-    
-    loadPayments();
-    
-    return () => {
-      isMounted = false;
-    };
   }, [showAlert]);
 
-  // Set up real-time subscriptions
+  /**
+   * Initialize data on mount.
+   */
   useEffect(() => {
-    const handlePaymentChanges = (payload: RealtimePostgresChangesPayload<PaymentRow>) => {
+    void fetchPayments();
+  }, [fetchPayments]);
+
+  /**
+   * Realtime handler for payments table changes.
+   */
+  const handlePaymentChanges = useCallback(
+    (payload: RealtimePostgresChangesPayload<PaymentRow>): void => {
       if (payload.eventType === "INSERT") {
         // For new payments, we need to fetch full details including user info
-        refreshPayments();
+        void refreshPayments();
       } else if (payload.eventType === "UPDATE") {
         const updatedPayment = payload.new as PaymentRow;
-        setPayments(prev => prev.map(payment => 
+        setPayments((prev) => prev.map((payment) => 
           payment.id === updatedPayment.id 
             ? { ...payment, ...updatedPayment }
             : payment
         ));
       } else if (payload.eventType === "DELETE") {
         const deletedPayment = payload.old as PaymentRow;
-        setPayments(prev => prev.filter(payment => payment.id !== deletedPayment.id));
+        setPayments((prev) => prev.filter((payment) => payment.id !== deletedPayment.id));
       }
-    };
+    },
+    [refreshPayments]
+  );
 
+  // Set up real-time subscriptions
+  useEffect(() => {
     const subscription = supabase
       .channel("payments")
       .on(
@@ -270,7 +313,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [handlePaymentChanges]);
 
   const value = useMemo<PaymentContextProps>(
     () => ({ 
@@ -280,7 +323,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       updatePaymentStatus,
       updateRefundStatus
     }),
-    [payments, loading]
+    [payments, loading, refreshPayments, updatePaymentStatus, updateRefundStatus]
   );
 
   return <PaymentContext.Provider value={value}>{children}</PaymentContext.Provider>;

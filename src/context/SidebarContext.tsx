@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import isBrowser from "../helpers/is-browser";
 import isSmallScreen from "../helpers/is-small-screen";
 import React from "react";
@@ -11,7 +11,7 @@ interface SidebarContextProps {
   setOpenOnSmallScreens: (isOpen: boolean) => void;
 }
 
-const SidebarContext = createContext<SidebarContextProps>(undefined!);
+const SidebarContext = createContext<SidebarContextProps | undefined>(undefined);
 
 export function SidebarProvider({ children }: PropsWithChildren) {
   const location = isBrowser() ? window.location.pathname : "/";
@@ -20,6 +20,14 @@ export function SidebarProvider({ children }: PropsWithChildren) {
       ? window.localStorage.getItem("isSidebarOpen") === "true"
       : false
   );
+
+  /**
+   * Public setter for small-screen sidebar state.
+   * Wrapped with useCallback so consumers don't re-render due to a new function identity each render.
+   */
+  const setOpenOnSmallScreens = useCallback((nextIsOpen: boolean) => {
+    setOpen(nextIsOpen);
+  }, []);
 
   // Save latest state to localStorage
   useEffect(() => {
@@ -35,14 +43,23 @@ export function SidebarProvider({ children }: PropsWithChildren) {
 
   // Close Sidebar on mobile tap inside main content
   useEffect(() => {
-    function handleMobileTapInsideMain(event: MouseEvent) {
+    /**
+     * Handles mobile taps inside the main content area to close the sidebar.
+     */
+    const handleMobileTapInsideMain = (event: MouseEvent) => {
+      // Defensive: event.target can be null or not a Node.
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
       const main = document.querySelector("main");
-      const isClickInsideMain = main?.contains(event.target as Node);
+      const isClickInsideMain = main !== null && main.contains(target);
 
       if (isSmallScreen() && isClickInsideMain) {
         setOpen(false);
       }
-    }
+    };
 
     document.addEventListener("mousedown", handleMobileTapInsideMain);
     return () => {
@@ -50,13 +67,19 @@ export function SidebarProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  // Memoize provider value so context consumers don't re-render unnecessarily.
+  const value = useMemo<SidebarContextProps>(
+    () => ({
+      isOpenOnSmallScreens: isOpen,
+      isPageWithSidebar: true,
+      setOpenOnSmallScreens,
+    }),
+    [isOpen, setOpenOnSmallScreens]
+  );
+
   return (
     <SidebarContext.Provider
-      value={{
-        isOpenOnSmallScreens: isOpen,
-        isPageWithSidebar: true,
-        setOpenOnSmallScreens: setOpen,
-      }}
+      value={value}
     >
       {children}
     </SidebarContext.Provider>
