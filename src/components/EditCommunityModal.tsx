@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { FiX, FiUpload, FiEdit3 } from "react-icons/fi";
+import { FiX, FiUpload } from "react-icons/fi";
 import { useCommunityContext } from "../context/CommunityContext";
 import { uploadToMedias } from "../utils/upload";
 
@@ -108,7 +108,7 @@ const EditCommunityModal: React.FC<EditCommunityModalProps> = ({
     if (isOpen && community) {
       resetForm();
     }
-  }, [isOpen, community]);
+  }, [isOpen, community]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isOpen || !community) return null;
 

@@ -11,7 +11,7 @@ import {
   Alert,
 } from "flowbite-react";
 import NavbarHome from "../../components/navbar-home";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   HiOutlineShoppingCart,
   HiOutlineLocationMarker,
@@ -50,8 +50,6 @@ enum CheckoutStep {
 }
 
 const CheckoutPage: React.FC = () => {
-  const navigate = useNavigate();
-
   // Mock data for cart items
   const cartItems: CartItem[] = [
     {

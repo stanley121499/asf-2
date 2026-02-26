@@ -5,9 +5,9 @@ import {
   CategoryUpdate,
   useCategoryContext,
 } from "../../context/product/CategoryContext";
-import { useBrandContext, Brand, BrandInsert, BrandUpdate } from "../../context/product/BrandContext";
-import { useDepartmentContext, Department, DepartmentInsert, DepartmentUpdate } from "../../context/product/DepartmentContext";
-import { useRangeContext, Range, RangeInsert, RangeUpdate } from "../../context/product/RangeContext";
+import { useBrandContext, Brand, BrandUpdate } from "../../context/product/BrandContext";
+import { useDepartmentContext, Department, DepartmentUpdate } from "../../context/product/DepartmentContext";
+import { useRangeContext, Range, RangeUpdate } from "../../context/product/RangeContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { IoIosSearch } from "react-icons/io";
@@ -19,9 +19,9 @@ import AddSetModal from "./create-set-modal";
 const CategoryListPage: React.FC = function () {
   const { categories, loading, updateCategory, deleteCategory } =
     useCategoryContext();
-  const { brands, loading: brandsLoading, createBrand, updateBrand, deleteBrand } = useBrandContext();
-  const { departments, loading: departmentsLoading, createDepartment, updateDepartment, deleteDepartment } = useDepartmentContext();
-  const { ranges, loading: rangesLoading, createRange, updateRange, deleteRange } = useRangeContext();
+  const { brands, loading: brandsLoading, updateBrand, deleteBrand } = useBrandContext();
+  const { departments, loading: departmentsLoading, updateDepartment, deleteDepartment } = useDepartmentContext();
+  const { ranges, loading: rangesLoading, updateRange, deleteRange } = useRangeContext();
   const [selectedCategory, setSelectedCategory] =
     React.useState<Category | null>(null);
   const [selectedBrand, setSelectedBrand] = React.useState<Brand | null>(null);
@@ -188,6 +188,7 @@ const CategoryListPage: React.FC = function () {
     showAlert("Brand updated", "success");
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleToggleBrandActive = async (brand: Brand): Promise<void> => {
     const payload: BrandUpdate & { id: string } = {
       id: brand.id,
@@ -226,6 +227,7 @@ const CategoryListPage: React.FC = function () {
     showAlert("Department updated", "success");
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleToggleDepartmentActive = async (
     department: Department
   ): Promise<void> => {
@@ -264,6 +266,7 @@ const CategoryListPage: React.FC = function () {
     showAlert("Range updated", "success");
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleToggleRangeActive = async (range: Range): Promise<void> => {
     const payload: RangeUpdate & { id: string } = {
       id: range.id,

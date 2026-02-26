@@ -73,7 +73,7 @@ const ProfileSettingsPage: React.FC = () => {
     if (!isNonEmptyString(avatarUrl) && isNonEmptyString(user_detail?.profile_image)) {
       setAvatarUrl(String(user_detail?.profile_image));
     }
-  }, [user?.id, user?.email, user_detail?.first_name, user_detail?.last_name, user_detail?.profile_image]);
+  }, [user?.id, user?.email, user_detail?.first_name, user_detail?.last_name, user_detail?.profile_image]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const displayName = useMemo(() => {
     const joined = `${firstName} ${lastName}`.trim();

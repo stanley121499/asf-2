@@ -2,9 +2,6 @@ import { Select } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import NavbarHome from "../../components/navbar-home";
 import { useCategoryContext } from "../../context/product/CategoryContext";
-import { useDepartmentContext } from "../../context/product/DepartmentContext";
-import { useRangeContext } from "../../context/product/RangeContext";
-import { useBrandContext } from "../../context/product/BrandContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -14,9 +11,6 @@ const ProductSection: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { categories } = useCategoryContext();
-  const { departments } = useDepartmentContext();
-  const { ranges } = useRangeContext();
-  const { brands } = useBrandContext();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
   

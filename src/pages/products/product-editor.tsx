@@ -76,6 +76,8 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
   // legacy filtered categories removed
 
   // New category system
+  // categoryMode reserved for future UI toggle; value read is intentionally unused
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [categoryMode, setCategoryMode] = useState<"category" | "set">("category");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
   const [selectedRangeId, setSelectedRangeId] = useState<string>("");

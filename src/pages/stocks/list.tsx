@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import { Badge, Button, Label, TextInput } from "flowbite-react";
+import { Badge, Label, TextInput } from "flowbite-react";
 import React from "react";
 import { IoIosSearch } from "react-icons/io";
 import {

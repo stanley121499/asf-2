@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaBoxes, FaHome, FaShoppingCart, FaUser, FaTrophy } from "react-icons/fa";
+import { FaHome, FaShoppingCart, FaUser, FaTrophy } from "react-icons/fa";
 import { GoGoal } from "react-icons/go";
-import { MdLocalOffer } from "react-icons/md";
 
 interface TooltipButtonProps {
   tooltipText: string;

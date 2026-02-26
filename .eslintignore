@@ -1,0 +1,11 @@
+# Ignore build output - these are minified bundles, not source code
+build/
+
+# Ignore dependencies
+node_modules/
+
+# Ignore public static assets
+public/
+
+# Ignore generated type files at root level
+database.types.ts

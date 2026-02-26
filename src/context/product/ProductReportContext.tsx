@@ -8,7 +8,6 @@ import React, {
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
-import { useProductContext } from "./ProductContext";
 
 export type ProductReport =
   Database["public"]["Tables"]["product_reports"]["Row"];
@@ -38,12 +37,11 @@ export function ProductReportProvider({ children }: PropsWithChildren) {
   const [product_reports, setProductReports] = useState<ProductReport[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
-  const { products } = useProductContext();
 
   useEffect(() => {
     setLoading(true);
     fetchProductReports();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchProductReports() {
     const { data, error } = await supabase.from("product_reports").select("*");
@@ -73,7 +71,7 @@ export function ProductReportProvider({ children }: PropsWithChildren) {
   }
 
   async function updateProductReport(product_report: ProductReportUpdate) {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("product_reports")
       .update(product_report)
       .match({ id: product_report.id });

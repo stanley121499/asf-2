@@ -3,13 +3,10 @@ import React from "react";
 import { useProductContext } from "../../context/product/ProductContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import PieChart from "../../components/analytics/PieChart";
-import BarChart from "../../components/analytics/BarChart";
-import ListWidget from "../../components/analytics/ListWidget";
 import LineChart from "../../components/analytics/LineChart";
 
 const CategoriesInnerAnalyticsPage: React.FC = function () {
-  const { products, loading } = useProductContext();
+  const { loading } = useProductContext();
 
   if (loading) {
     return <LoadingPage />;

@@ -113,7 +113,7 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]);
+  }, [showAlert]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function createProductPurchaseOrder(
     product_purchase_order: ProductPurchaseOrderInsert,

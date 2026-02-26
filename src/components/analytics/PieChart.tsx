@@ -77,7 +77,7 @@ const PieChart: React.FC<PieChartProps> = ({
     };
   };
 
-  // Initialize the chart
+  // Initialize the chart; getTrafficChartOptions is stable after mount
   useEffect(() => {
     setChartOptions(getTrafficChartOptions());
 
@@ -90,7 +90,7 @@ const PieChart: React.FC<PieChartProps> = ({
     return () => {
       document.removeEventListener("rerender-charts", rerenderChart);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800 md:p-6">

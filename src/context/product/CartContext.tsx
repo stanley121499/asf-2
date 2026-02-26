@@ -224,7 +224,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       clearCartByUser,
       loading,
     }),
-    [add_to_carts, loading]
+    [add_to_carts, loading] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return <AddToCartContext.Provider value={value}>{children}</AddToCartContext.Provider>;

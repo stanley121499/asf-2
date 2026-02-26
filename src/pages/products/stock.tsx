@@ -4,7 +4,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import { IoChevronBack } from "react-icons/io5";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
-import { Badge, Button, Label, Select, Table } from "flowbite-react";
+import { Badge, Label, Select, Table } from "flowbite-react";
 import { useProductStockLogContext } from "../../context/product/ProductStockLogContext";
 import AddStockModal from "./add-stock-modal";
 import AddReturnModal from "./add-return-modal";

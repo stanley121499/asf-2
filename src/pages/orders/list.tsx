@@ -7,9 +7,7 @@ import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { useOrderContext } from "../../context/product/OrderContext";
 import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
-import type { Database } from "../../database.types";
 
-type UserRow = Database["public"]["Tables"]["user_details"]["Row"];
 
 interface OrderWithUser {
   id: string;
@@ -199,7 +197,7 @@ const OrderListPage: React.FC = function () {
         const userIds = Array.from(userIdSet);
 
         // Fetch user details
-        const { data: users, error: usersError } = await supabase
+        const { error: usersError } = await supabase
           .from("user_details")
           .select("id, profile_image")
           .in("id", userIds);
@@ -217,7 +215,7 @@ const OrderListPage: React.FC = function () {
         // Fetch order item counts
         const orderItemCounts = await Promise.all(
           orders.map(async (order) => {
-            const { data: items, error } = await supabase
+            const { data: items } = await supabase
               .from("order_items")
               .select("amount")
               .eq("order_id", order.id);
@@ -229,7 +227,6 @@ const OrderListPage: React.FC = function () {
 
         // Combine order data with user details and item counts
         const enrichedOrders: OrderWithUser[] = orders.map(order => {
-          const user = users?.find(u => u.id === order.user_id);
           const authUser = authUsers?.users?.find(u => u.id === order.user_id);
           const itemData = orderItemCounts.find(item => item.orderId === order.id);
 

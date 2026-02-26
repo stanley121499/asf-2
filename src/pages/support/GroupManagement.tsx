@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiPlus, FiX, FiUsers } from "react-icons/fi";
-import { HiOutlineUserGroup } from "react-icons/hi";
+import { FiX } from "react-icons/fi";
 import { useUserContext } from "../../context/UserContext";
 
 // Types for the group management

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import NavbarHome from "../../components/navbar-home";
 import { usePostContext } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
-import { HiArrowLeft, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
+import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
 
 /**
  * Highlights page component that displays featured posts with a premium feel

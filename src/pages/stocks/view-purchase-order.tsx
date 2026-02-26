@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useProductPurchaseOrderContext } from "../../context/product/ProductPurchaseOrderContext";
 import LoadingPage from "../pages/loading";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
-import { useNavigate } from "react-router-dom";
 import { Button, Table } from "flowbite-react";
 
 const ViewPurchaseOrderPage: React.FC = function () {

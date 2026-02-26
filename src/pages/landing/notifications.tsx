@@ -1,6 +1,5 @@
 import React from "react";
 import { LandingLayout } from "../../layouts";
-import { Link } from "react-router-dom";
 
 /**
  * Interface for notification data structure

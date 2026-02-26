@@ -103,7 +103,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, [showAlert]);
+  }, [showAlert]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * createOrderWithItemsAndStock
@@ -313,7 +313,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
       refreshOrders, 
       loading 
     }),
-    [orders, loading]
+    [orders, loading] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;

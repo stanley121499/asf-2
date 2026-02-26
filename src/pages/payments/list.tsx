@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Badge, Button, Card, TextInput, Select, Table } from "flowbite-react";
 import { HiSearch, HiEye, HiRefresh } from "react-icons/hi";
 import { Link } from "react-router-dom";

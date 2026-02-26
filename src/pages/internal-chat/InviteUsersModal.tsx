@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal, Button, Label } from "flowbite-react";
+import { Modal, Button } from "flowbite-react";
 
 export interface InviteUsersModalProps {
   isOpen: boolean;

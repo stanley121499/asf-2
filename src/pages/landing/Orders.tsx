@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Card, Badge, Select, TextInput, Table, Pagination } from "flowbite-react";
 import NavbarHome from "../../components/navbar-home";
 import { Link } from "react-router-dom";
-import { HiOutlineSearch, HiOutlineFilter, HiOutlineRefresh, HiOutlineCalendar, HiOutlineEye } from "react-icons/hi";
+import { HiOutlineSearch, HiOutlineRefresh, HiOutlineCalendar, HiOutlineEye } from "react-icons/hi";
 
 // Define TypeScript types
 interface Order {

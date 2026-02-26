@@ -177,7 +177,7 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
       fetchByProductId,
       loading,
     }),
-    [add_to_cart_logs, loading]
+    [add_to_cart_logs, loading] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (

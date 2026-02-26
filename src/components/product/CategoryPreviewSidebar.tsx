@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Category } from "../../context/product/CategoryContext";
 import type { Department } from "../../context/product/DepartmentContext";
 import type { Range } from "../../context/product/RangeContext";

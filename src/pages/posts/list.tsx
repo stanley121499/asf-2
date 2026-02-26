@@ -3,7 +3,7 @@ import { Button, Label, TextInput } from "flowbite-react";
 import React from "react";
 import { HiPlus } from "react-icons/hi";
 import { IoIosSearch } from "react-icons/io";
-import { Posts, usePostContext, Post } from "../../context/post/PostContext";
+import { usePostContext, Post } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
