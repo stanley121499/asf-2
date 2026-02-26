@@ -8,7 +8,7 @@ import React, {
   type PropsWithChildren,
 } from "react";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
-import { supabase } from "../utils/supabaseClient";
+import { supabase, supabaseAdmin } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
 
@@ -48,7 +48,7 @@ export function UserProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
 
       if (error) {
         console.error("Error fetching users:", error);
@@ -125,7 +125,7 @@ export function UserProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email: user.email,
         password: user.password,
         email_confirm: true,
@@ -177,7 +177,7 @@ export function UserProvider({ children }: PropsWithChildren) {
       }
 
       // Delete Auth user
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
       if (error) {
         console.error("Error deleting user:", error);
@@ -200,7 +200,7 @@ export function UserProvider({ children }: PropsWithChildren) {
     try {
       // Update auth user password (only if provided)
       if (typeof user.password === "string" && user.password.trim().length > 0) {
-        const { error } = await supabase.auth.admin.updateUserById(user.id, {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
           password: user.password,
         });
 

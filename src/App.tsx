@@ -96,198 +96,215 @@ import OrderDetailPage from "./pages/orders/detail";
 import { WishlistProvider } from "./context/WishlistContext";
 import WishlistPage from "./pages/landing/Wishlist";
 
-const App: React.FC = () => (
-  <AlertProvider>
-    <ProviderComposer
-      providers={[
-        WishlistProvider,
-        ProductPurchaseOrderProvider,
-        ProductReportProvider,
-        AuthProvider,
-        PointsMembershipProvider,
-        UserProvider,
-        PostProvider,
-        PostFolderProvider,
-        PostFolderMediaProvider,
-        PostMediaProvider,
-        BrandProvider,
-        DepartmentProvider,
-        RangeProvider,
-        CategoryProvider,
-        ProductProvider,
-        ProductCategoryProvider,
-        ProductSizeProvider,
-        ProductColorProvider,
-        ProductMediaProvider,
-        ProductFolderProvider,
-        ProductFolderMediaProvider,
-        ProductEventProvider,
-        ProductStockLogProvider,
-        ProductStockProvider,
-        AddToCartLogProvider,
-        AddToCartProvider,
-        OrderProvider,
-        PaymentProvider,
-        HomePageElementProvider,
-        CommunityProvider,
-        GroupProvider,
-        ConversationParticipantProvider,
-        TicketProvider,
-        TicketStatusLogProvider,
-        ConversationProvider,
-      ]}>
-      <AlertComponent />
-      <BrowserRouter>
-        <DndProvider backend={HTML5Backend}>
-          <Routes>
-            <Route element={<FlowbiteWrapper />}>
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/users/list" element={<UserListPage />} />
-                <Route path="/users/settings" element={<UserSettingsPage />} />
-                <Route path="/posts/list" element={<PostListPage />} />
-                <Route
-                  path="/posts/create/:folderId?/:postId?"
-                  element={<CreatePostPage />}
-                />
-                <Route
-                  path="/posts/schedule/:postId?"
-                  element={<SchedulePostListPage />}
-                />
-                <Route path="/products/list" element={<ProductListPage />} />
-                <Route path="/products/deleted" element={<DeletedProductsPage />} />
-                <Route
-                  path="/products/create/:folderId?/:productId?"
-                  element={<CreateProductPage />}
-                />
-                <Route
-                  path="/products/schedule/:productId?"
-                  element={<ScheduleProductListPage />}
-                />
-                <Route
-                  path="/products/categories"
-                  element={<CategoryListPage />}
-                />
+const App: React.FC = () => {
+  return (
+    <AlertProvider>
+      <ProviderComposer
+        providers={[
+          // Outermost: Auth Context (many providers depend on this)
+          AuthProvider,
 
-                <Route
-                  path="/products/stock/:productId"
-                  element={<ProductStockDetails />}
-                />
+          // Independent / Base Providers
+          PointsMembershipProvider,
+          UserProvider,
+          BrandProvider,
+          DepartmentProvider,
+          RangeProvider,
+          CategoryProvider,
 
-                {/* Stock */}
+          // Post Module
+          PostMediaProvider,
+          PostFolderMediaProvider,
+          PostFolderProvider, // Depends on PostFolderMediaProvider
+          PostProvider,
 
-                <Route path="/stocks/good" element={<GoodStockPage />} />
+          // Product Base Variants + Dependencies
+          ProductCategoryProvider,
+          ProductSizeProvider,
+          ProductColorProvider,
+          ProductMediaProvider,
+          ProductFolderMediaProvider,
+          ProductFolderProvider, // Depends on ProductFolderMediaProvider
+          ProductEventProvider,
+          ProductStockLogProvider,
+          ProductStockProvider,
 
-                <Route
-                  path="/stocks/overview"
-                  element={<StockOverviewPage />}
-                />
-                <Route path="/stocks/all" element={<StockAllProductPage />} />
-                <Route
-                  path="/stocks/events"
-                  element={<StockAllProductEventPage />}
-                />
-                <Route path="/stocks/reports" element={<StockReportPage />} />
-                <Route
-                  path="/stocks/report/create/:productId?/:productEventId?"
-                  element={<CreateReportPage />}
-                />
-                <Route
-                  path="/stocks/report/:reportId"
-                  element={<ViewReportPage />}
-                />
-                <Route
-                  path="/stocks/purchase-orders/create/:productId?/:productEventId?"
-                  element={<CreatePurchaseOrderPage />}
-                />
-                <Route
-                  path="/stocks/purchase-orders/:purchaseOrderId"
-                  element={<ViewPurchaseOrderPage />}
-                />
-                {/* Home Page Builder */}
-                <Route
-                  path="/home-page-builder"
-                  element={<HomePageBuilder />}
-                />
+          // Product Provider (Depends on Category, Size, Color)
+          ProductProvider,
 
-                {/* Orders */}
-                <Route path="/orders" element={<OrderListPage />} />
-                <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+          // Providers dependent on ProductProvider
+          ProductPurchaseOrderProvider,
+          ProductReportProvider,
+          WishlistProvider,
 
-                {/* Payments */}
-                <Route path="/payments" element={<PaymentListPage />} />
-                <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
+          // Cart / Logs / Orders
+          AddToCartLogProvider,
+          AddToCartProvider,
+          OrderProvider,
+          PaymentProvider,
 
-                {/* Support */}
-                <Route path="/support" element={<SupportPage />} />
+          // App Modules
+          HomePageElementProvider,
+          CommunityProvider,
+          GroupProvider,
+          ConversationParticipantProvider,
+          TicketProvider,
+          TicketStatusLogProvider,
+          ConversationProvider,
+        ]}>
+        <AlertComponent />
+        <BrowserRouter>
+          <DndProvider backend={HTML5Backend}>
+            <Routes>
+              <Route element={<FlowbiteWrapper />}>
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/users/list" element={<UserListPage />} />
+                  <Route path="/users/settings" element={<UserSettingsPage />} />
+                  <Route path="/posts/list" element={<PostListPage />} />
+                  <Route
+                    path="/posts/create/:folderId?/:postId?"
+                    element={<CreatePostPage />}
+                  />
+                  <Route
+                    path="/posts/schedule/:postId?"
+                    element={<SchedulePostListPage />}
+                  />
+                  <Route path="/products/list" element={<ProductListPage />} />
+                  <Route path="/products/deleted" element={<DeletedProductsPage />} />
+                  <Route
+                    path="/products/create/:folderId?/:productId?"
+                    element={<CreateProductPage />}
+                  />
+                  <Route
+                    path="/products/schedule/:productId?"
+                    element={<ScheduleProductListPage />}
+                  />
+                  <Route
+                    path="/products/categories"
+                    element={<CategoryListPage />}
+                  />
 
-                {/* Analytics */}
+                  <Route
+                    path="/products/stock/:productId"
+                    element={<ProductStockDetails />}
+                  />
+
+                  {/* Stock */}
+
+                  <Route path="/stocks/good" element={<GoodStockPage />} />
+
+                  <Route
+                    path="/stocks/overview"
+                    element={<StockOverviewPage />}
+                  />
+                  <Route path="/stocks/all" element={<StockAllProductPage />} />
+                  <Route
+                    path="/stocks/events"
+                    element={<StockAllProductEventPage />}
+                  />
+                  <Route path="/stocks/reports" element={<StockReportPage />} />
+                  <Route
+                    path="/stocks/report/create/:productId?/:productEventId?"
+                    element={<CreateReportPage />}
+                  />
+                  <Route
+                    path="/stocks/report/:reportId"
+                    element={<ViewReportPage />}
+                  />
+                  <Route
+                    path="/stocks/purchase-orders/create/:productId?/:productEventId?"
+                    element={<CreatePurchaseOrderPage />}
+                  />
+                  <Route
+                    path="/stocks/purchase-orders/:purchaseOrderId"
+                    element={<ViewPurchaseOrderPage />}
+                  />
+                  {/* Home Page Builder */}
+                  <Route
+                    path="/home-page-builder"
+                    element={<HomePageBuilder />}
+                  />
+
+                  {/* Orders */}
+                  <Route path="/orders" element={<OrderListPage />} />
+                  <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+
+                  {/* Payments */}
+                  <Route path="/payments" element={<PaymentListPage />} />
+                  <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
+
+                  {/* Support */}
+                  <Route path="/support" element={<SupportPage />} />
+
+                  {/* Analytics */}
+                  <Route
+                    path="/analytics/users"
+                    element={<UserAnalyticsPage />}
+                  />
+                  <Route
+                    path="/analytics/products"
+                    element={<ProductAnalyticsPage />}
+                  />
+                  <Route
+                    path="/analytics/products-inner/:productId"
+                    element={<ProductInnerAnalyticsPage />}
+                  />
+                  <Route
+                    path="/analytics/categories"
+                    element={<CategoriesAnalyticsPage />}
+                  />
+                  <Route
+                    path="/analytics/categories-inner/:categoryId"
+                    element={<CategoriesInnerAnalyticsPage />}
+                  />
+                  <Route
+                    path="/analytics/support"
+                    element={<SupportAnalyticsPage />}
+                  />
+                </Route>
+
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/order-cancel" element={<OrderCancel />} />
+                <Route path="/order-details/:orderId" element={<CustomerOrderDetailPage />} />
+                <Route path="/goal" element={<GoalPage />} />
+                <Route path="/settings" element={<ProfileSettingsPage />} />
+                <Route path="/support-chat" element={<ChatWindow />} />
+                <Route path="/internal-chat" element={<InternalChat />} />
                 <Route
-                  path="/analytics/users"
-                  element={<UserAnalyticsPage />}
+                  path="/product-section/:categoryId?"
+                  element={<ProductSection />}
                 />
                 <Route
-                  path="/analytics/products"
-                  element={<ProductAnalyticsPage />}
+                  path="/product-details/:productId?"
+                  element={<ProductDetails />}
                 />
-                <Route
-                  path="/analytics/products-inner/:productId"
-                  element={<ProductInnerAnalyticsPage />}
-                />
-                <Route
-                  path="/analytics/categories"
-                  element={<CategoriesAnalyticsPage />}
-                />
-                <Route
-                  path="/analytics/categories-inner/:categoryId"
-                  element={<CategoriesInnerAnalyticsPage />}
-                />
-                <Route
-                  path="/analytics/support"
-                  element={<SupportAnalyticsPage />}
-                />
+                <Route path="/highlights" element={<HighlightsPage />} />
+
+                {/* Public Routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/wishlist" element={<WishlistPage />} />
+                <Route path="/pages/maintenance" element={<MaintenancePage />} />
+                <Route path="/authentication/sign-in" element={<SignInPage />} />
+
+                {/* Legal Pages */}
+                <Route path="/legal/privacy" element={<PrivacyPage />} />
+
+                {/* Error Handling Routes */}
+                <Route path="/500" element={<ServerErrorPage />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
-
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/order-cancel" element={<OrderCancel />} />
-              <Route path="/order-details/:orderId" element={<CustomerOrderDetailPage />} />
-              <Route path="/goal" element={<GoalPage />} />
-              <Route path="/settings" element={<ProfileSettingsPage />} />
-              <Route path="/support-chat" element={<ChatWindow />} />
-              <Route path="/internal-chat" element={<InternalChat />} />
-              <Route
-                path="/product-section/:categoryId?"
-                element={<ProductSection />}
-              />
-              <Route
-                path="/product-details/:productId?"
-                element={<ProductDetails />}
-              />
-              <Route path="/highlights" element={<HighlightsPage />} />
-
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/pages/maintenance" element={<MaintenancePage />} />
-              <Route path="/authentication/sign-in" element={<SignInPage />} />
-
-              {/* Legal Pages */}
-              <Route path="/legal/privacy" element={<PrivacyPage />} />
-
-              {/* Error Handling Routes */}
-              <Route path="/500" element={<ServerErrorPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </DndProvider>
-      </BrowserRouter>
-    </ProviderComposer>
-  </AlertProvider>
-);
+            </Routes>
+          </DndProvider>
+        </BrowserRouter>
+      </ProviderComposer>
+    </AlertProvider>
+  );
+};
 
 export default App;
 
@@ -295,7 +312,10 @@ const ProviderComposer: React.FC<{
   providers: React.JSXElementConstructor<React.PropsWithChildren<{}>>[];
   children: React.ReactNode;
 }> = ({ providers, children }) => {
-  return providers.reduce((AccumulatedProviders, CurrentProvider) => {
+  // reduceRight ensures the FIRST provider in the array becomes the OUTERMOST
+  // wrapper (the first to mount), matching the natural reading order of the list.
+  // Using `reduce` instead would invert the hierarchy silently.
+  return providers.reduceRight((AccumulatedProviders, CurrentProvider) => {
     return <CurrentProvider>{AccumulatedProviders}</CurrentProvider>;
   }, <>{children}</>);
 };

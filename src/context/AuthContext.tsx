@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { AuthError, User } from "@supabase/supabase-js";
@@ -45,6 +46,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const [user_detail, setUserDetail] = useState<UserDetail | null>(null);
 
+  // Use a ref to track the previous user id so the onAuthStateChange listener
+  // doesn't need user?.id in the dependency array (which caused an infinite loop).
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
   /**
    * Fetches the current authenticated user and (if present) their `user_details` row.
    */
@@ -52,18 +57,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     try {
-      // Step 1: get the current user from Supabase auth
+      // Use getSession() instead of getUser() — the service_role key has no `sub` claim,
+      // so getUser() always returns 403 "invalid claim: missing sub claim".
+      // getSession() reads the user session from local storage which works correctly
+      // regardless of which API key the Supabase client is configured with.
       const {
-        data: { user: currentUser },
-        error: userError,
-      } = await supabase.auth.getUser();
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-      if (userError) {
-        console.error("Error getting user:", userError);
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
         setUser(null);
         setUserDetail(null);
         return;
       }
+
+      const currentUser = session?.user ?? null;
 
       // Step 2: fetch user_details if we have a user
       if (currentUser) {
@@ -85,6 +95,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       // Step 3: set user state last to reduce intermediate re-renders
       setUser(currentUser);
+      prevUserIdRef.current = currentUser?.id ?? null;
     } finally {
       setLoading(false);
     }
@@ -109,6 +120,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       // Keep state in sync with Supabase response.
       setUser(data.user);
+      prevUserIdRef.current = data.user?.id ?? null;
 
       // Fetch user_detail after sign-in (if we have a user id).
       if (data.user) {
@@ -150,6 +162,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // Clear local auth state
       setUser(null);
       setUserDetail(null);
+      prevUserIdRef.current = null;
       return { error: null };
     } finally {
       setLoading(false);
@@ -165,8 +178,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const newUser = session?.user ?? null;
       setUser(newUser);
 
-      // Only fetch user_detail if user changed (not on every session refresh)
-      if (newUser && newUser.id !== user?.id) {
+      // Only fetch user_detail if user changed (not on every session refresh).
+      // Use ref instead of user?.id in deps to avoid an infinite re-subscription loop.
+      if (newUser && newUser.id !== prevUserIdRef.current) {
+        prevUserIdRef.current = newUser.id;
+
         const { data: detail, error: detailError } = await supabase
           .from("user_details")
           .select("*")
@@ -180,6 +196,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           setUserDetail(detail);
         }
       } else if (!newUser) {
+        prevUserIdRef.current = null;
         setUserDetail(null);
       }
     });
@@ -187,7 +204,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       listener?.subscription.unsubscribe();
     };
-  }, [fetchCurrentUser, user?.id]);
+  }, [fetchCurrentUser]); // ← fetchCurrentUser is stable (no deps), so this only runs once
 
   // Memoize value to avoid forcing rerenders of every consumer on unrelated renders.
   const value = useMemo<AuthContextProps>(
@@ -217,4 +234,3 @@ export function useAuthContext() {
 
   return context;
 }
-

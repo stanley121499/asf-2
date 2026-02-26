@@ -5,7 +5,7 @@ import { Card, Badge, Button, Select, Modal } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX } from "react-icons/hi";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
 import type { Database } from "../../database.types";
 
@@ -163,7 +163,7 @@ const OrderDetailPage: React.FC = function () {
             .single();
 
           // Get email from auth users
-          const { data: authData } = await supabase.auth.admin.getUserById(orderData.user_id);
+          const { data: authData } = await supabaseAdmin.auth.admin.getUserById(orderData.user_id);
           if (authData.user?.email) {
             userEmail = authData.user.email;
             userName = authData.user.email.split("@")[0];

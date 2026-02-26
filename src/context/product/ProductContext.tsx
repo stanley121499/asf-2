@@ -11,6 +11,7 @@ import React, {
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+
 import { ProductMedia } from "./ProductMediaContext";
 import { Category } from "./CategoryContext";
 import {
@@ -123,9 +124,12 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
    */
   const fetchProducts = useCallback(async (): Promise<void> => {
     setLoading(true);
+    console.log("[ProductContext] fetchProducts called");
 
     try {
       const { data, error } = await supabase.rpc("fetch_products_with_computed_attributes");
+
+      console.log("[ProductContext] RPC result:", { count: data?.length, error });
 
       if (error) {
         showAlertRef.current?.(error.message, "error");
@@ -139,10 +143,13 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       let allowedIds = new Set<string>();
 
       if (ids.length > 0) {
+        console.log("[ProductContext] Fetching base rows for", ids.length, "products");
         const { data: baseRows, error: baseError } = await supabase
           .from("products")
           .select("*")
           .in("id", ids);
+
+        console.log("[ProductContext] Base rows result:", { count: baseRows?.length, baseError });
 
         if (baseError) {
           showAlertRef.current?.(baseError.message, "error");
@@ -160,54 +167,56 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         // If we fetched base rows (ids.length > 0), only keep products that are not soft deleted.
         .filter((p: RpcReturnedProduct) => (ids.length > 0 ? allowedIds.has(p.id) : true))
         .map((p: RpcReturnedProduct) => {
-        const base = rowsById[p.id];
+          const base = rowsById[p.id];
 
-        // If we have the base row (from `products` table), prefer it for fields the RPC omits.
-        // Otherwise, build a complete `products.Row` from the RPC payload with safe fallbacks.
-        const row: ProductRow =
-          base ??
-          ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            description: p.description ?? null,
-            article_number: p.article_number ?? null,
-            festival: p.festival ?? null,
-            season: p.season ?? null,
-            status: p.status,
-            stock_code: p.stock_code ?? null,
-            stock_place: p.stock_place ?? null,
-            created_at: p.created_at,
-            updated_at: p.updated_at,
-            time_post: p.time_post ?? null,
-            product_folder_id: p.product_folder_id ?? null,
-            // The RPC does not return deleted_at; default to NULL for active products.
-            deleted_at: null,
-            // The RPC does not return these; default to null.
-            brand_id: null,
-            category_id: null,
-            department_id: null,
-            range_id: null,
-            warranty_description: null,
-            warranty_period: null,
-          } satisfies ProductRow);
+          // If we have the base row (from `products` table), prefer it for fields the RPC omits.
+          // Otherwise, build a complete `products.Row` from the RPC payload with safe fallbacks.
+          const row: ProductRow =
+            base ??
+            ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              description: p.description ?? null,
+              article_number: p.article_number ?? null,
+              festival: p.festival ?? null,
+              season: p.season ?? null,
+              status: p.status,
+              stock_code: p.stock_code ?? null,
+              stock_place: p.stock_place ?? null,
+              created_at: p.created_at,
+              updated_at: p.updated_at,
+              time_post: p.time_post ?? null,
+              product_folder_id: p.product_folder_id ?? null,
+              // The RPC does not return deleted_at; default to NULL for active products.
+              deleted_at: null,
+              // The RPC does not return these; default to null.
+              brand_id: null,
+              category_id: null,
+              department_id: null,
+              range_id: null,
+              warranty_description: null,
+              warranty_period: null,
+            } satisfies ProductRow);
 
-        return {
-          ...row,
-          medias: [],
-          product_categories: [],
-          product_colors: [],
-          product_sizes: [],
-          stock_status: p.stock_status ?? "",
-          stock_count: typeof p.stock_count === "number" ? p.stock_count : 0,
-        };
-      });
+          return {
+            ...row,
+            medias: [],
+            product_categories: [],
+            product_colors: [],
+            product_sizes: [],
+            stock_status: p.stock_status ?? "",
+            stock_count: typeof p.stock_count === "number" ? p.stock_count : 0,
+          };
+        });
 
+      console.log("[ProductContext] Mapped products:", mapped.length);
       setProducts(mapped);
     } catch (error: unknown) {
-      console.error("Failed to fetch products:", error);
+      console.error("[ProductContext] Failed to fetch products:", error);
       showAlertRef.current?.("Failed to fetch products", "error");
     } finally {
+      console.log("[ProductContext] setLoading(false)");
       setLoading(false);
     }
   }, []);
@@ -247,8 +256,8 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
   );
 
   /**
-   * Initial fetch + realtime subscription.\n   *
-   * Dependencies exclude `showAlert` (we use a ref) to prevent subscription churn.\n   */
+   * Initial fetch + realtime subscription.
+   */
   useEffect(() => {
     void fetchProducts();
 

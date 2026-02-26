@@ -19,6 +19,8 @@ const ProductListPage: React.FC = function () {
   const [productData, setProductData] = React.useState<Product | null>(null);
   const { productMedias } = useProductMediaContext();
 
+  console.log("[ProductListPage] loading:", loading, "products:", products.length);
+
   if (loading) {
     return <LoadingPage />;
   }
@@ -75,8 +77,8 @@ const ProductListPage: React.FC = function () {
                         color={
                           productData?.product_colors
                             ? productData.product_colors.map(
-                                (color) => color.color
-                              )
+                              (color) => color.color
+                            )
                             : ["red", "blue", "green", "yellow"]
                         }
                         size={
@@ -100,9 +102,8 @@ const ProductListPage: React.FC = function () {
               </div>
             )}
             <div
-              className={`overflow-hidden shadow ${
-                productData ? "col-span-3" : "col-span-4"
-              }`}>
+              className={`overflow-hidden shadow ${productData ? "col-span-3" : "col-span-4"
+                }`}>
               <form className="lg:pr-3">
                 <Label htmlFor="products-search" className="sr-only">
                   Search

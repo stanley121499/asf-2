@@ -5,7 +5,7 @@ import { useAuthContext } from '../context/AuthContext';
 
 const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuthContext();
-  
+
   if (loading) {
     return (
       <LoadingPage />

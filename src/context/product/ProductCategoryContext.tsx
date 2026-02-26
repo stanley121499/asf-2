@@ -11,6 +11,7 @@ import React, {
 import { supabase } from "../../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "../AlertContext";
+
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export type ProductCategory = Database["public"]["Tables"]["product_categories"]["Row"];
@@ -31,6 +32,7 @@ export function ProductCategoryProvider({ children }: PropsWithChildren) {
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
+
 
   /**
    * A ref wrapper for AlertContext's `showAlert` to avoid effect dependency loops.
@@ -91,6 +93,7 @@ export function ProductCategoryProvider({ children }: PropsWithChildren) {
 
   /**
    * Fetch once on mount and subscribe to realtime changes.
+   * Auth-guarded: skip if there is no active user session.
    */
   useEffect(() => {
     void fetchProductCategories();

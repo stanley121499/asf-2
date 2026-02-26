@@ -7,7 +7,7 @@ import React, {
   useState,
   PropsWithChildren,
 } from "react";
-import { supabase } from "../utils/supabaseClient";
+import { supabase, supabaseAdmin } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
@@ -134,7 +134,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       // Fetch user details if there are any user IDs
       let usersData: { id: string; email?: string }[] = [];
       if (userIds.length > 0) {
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
         if (authError) {
           console.error("Error fetching auth users:", authError);
         } else {
@@ -192,14 +192,14 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
    * Update payment status
    */
   const updatePaymentStatus = useCallback(async (
-    paymentId: string, 
+    paymentId: string,
     newStatus: Database["public"]["Enums"]["payment_status"]
   ): Promise<boolean> => {
     try {
       const updatedAt = new Date().toISOString();
       const { error } = await supabase
         .from("payments")
-        .update({ 
+        .update({
           status: newStatus,
           updated_at: updatedAt,
         })
@@ -210,8 +210,8 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
 
       // Update local state
-      setPayments((prev) => prev.map((payment) => 
-        payment.id === paymentId 
+      setPayments((prev) => prev.map((payment) =>
+        payment.id === paymentId
           ? { ...payment, status: newStatus, updated_at: updatedAt }
           : payment
       ));
@@ -229,7 +229,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
    * Update refund status and amount
    */
   const updateRefundStatus = useCallback(async (
-    paymentId: string, 
+    paymentId: string,
     newRefundStatus: Database["public"]["Enums"]["refund_status"],
     refundedAmount: number
   ): Promise<boolean> => {
@@ -237,7 +237,7 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const updatedAt = new Date().toISOString();
       const { error } = await supabase
         .from("payments")
-        .update({ 
+        .update({
           refund_status: newRefundStatus,
           refunded_amount: refundedAmount,
           updated_at: updatedAt,
@@ -249,14 +249,14 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
 
       // Update local state
-      setPayments((prev) => prev.map((payment) => 
-        payment.id === paymentId 
-          ? { 
-              ...payment, 
-              refund_status: newRefundStatus, 
-              refunded_amount: refundedAmount,
-              updated_at: updatedAt,
-            }
+      setPayments((prev) => prev.map((payment) =>
+        payment.id === paymentId
+          ? {
+            ...payment,
+            refund_status: newRefundStatus,
+            refunded_amount: refundedAmount,
+            updated_at: updatedAt,
+          }
           : payment
       ));
 
@@ -286,8 +286,8 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
         void refreshPayments();
       } else if (payload.eventType === "UPDATE") {
         const updatedPayment = payload.new as PaymentRow;
-        setPayments((prev) => prev.map((payment) => 
-          payment.id === updatedPayment.id 
+        setPayments((prev) => prev.map((payment) =>
+          payment.id === updatedPayment.id
             ? { ...payment, ...updatedPayment }
             : payment
         ));
@@ -304,8 +304,8 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const subscription = supabase
       .channel("payments")
       .on(
-        "postgres_changes", 
-        { event: "*", schema: "public", table: "payments" }, 
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
         handlePaymentChanges
       )
       .subscribe();
@@ -316,9 +316,9 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [handlePaymentChanges]);
 
   const value = useMemo<PaymentContextProps>(
-    () => ({ 
-      payments, 
-      loading, 
+    () => ({
+      payments,
+      loading,
       refreshPayments,
       updatePaymentStatus,
       updateRefundStatus

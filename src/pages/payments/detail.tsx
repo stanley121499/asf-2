@@ -5,7 +5,7 @@ import { Card, Badge, Button, Select, Modal, TextInput } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX, HiRefresh, HiCreditCard } from "react-icons/hi";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
 import { usePaymentContext } from "../../context/PaymentContext";
 import type { Database } from "../../database.types";
@@ -236,7 +236,7 @@ const PaymentDetailPage: React.FC = function () {
 
         if (paymentData.user_id) {
           // Get email from auth users
-          const { data: authData } = await supabase.auth.admin.getUserById(paymentData.user_id);
+          const { data: authData } = await supabaseAdmin.auth.admin.getUserById(paymentData.user_id);
           if (authData.user?.email) {
             userEmail = authData.user.email;
             userName = authData.user.email.split("@")[0];

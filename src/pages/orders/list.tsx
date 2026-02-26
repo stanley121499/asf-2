@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { useOrderContext } from "../../context/product/OrderContext";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
 import type { Database } from "../../database.types";
 
 type UserRow = Database["public"]["Tables"]["user_details"]["Row"];
@@ -209,7 +209,7 @@ const OrderListPage: React.FC = function () {
         }
 
         // Get auth users for email
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
         if (authError) {
           console.error("Error fetching auth users:", authError);
         }
