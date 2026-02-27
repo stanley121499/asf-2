@@ -74,6 +74,26 @@
   @apply hover:bg-gray-50 cursor-pointer !important;
 }
 
+/* ============================================================
+   Mobile / WebView safe area support
+   On devices with a notch or home indicator (iPhone X+, Android
+   with gesture navigation), the OS reserves inset space at the
+   top and bottom. These CSS custom properties expose those values
+   so components can offset fixed elements appropriately.
+   ============================================================ */
+:root {
+  /* Provide a 0px fallback for browsers that don't support env() */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ensure the WebView honours safe-area env() values */
+html {
+  /* Tells the WebView to extend into the safe area so we can
+     manually pad instead of having the system blank it out */
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Transparent background minimalist scrollbar with rounded ends */
 ::-webkit-scrollbar {
   width: 12px;

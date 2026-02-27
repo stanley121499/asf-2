@@ -52,6 +52,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   /**
    * Fetches the current authenticated user and (if present) their `user_details` row.
+   *
+   * Because the Supabase client uses `autoRefreshToken: false` (see supabaseClient.ts),
+   * `getSession()` returns immediately without any network round-trip. However it may
+   * return an already-expired session stored in localStorage. We detect and discard
+   * those here so the user is redirected to sign-in instead of being silently stuck
+   * in an authenticated-but-401 state.
    */
   const fetchCurrentUser = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -61,6 +67,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // so getUser() always returns 403 "invalid claim: missing sub claim".
       // getSession() reads the user session from local storage which works correctly
       // regardless of which API key the Supabase client is configured with.
+      //
+      // With autoRefreshToken: false (see supabaseClient.ts) this call returns
+      // immediately without any network round-trip, even for expired sessions.
       const {
         data: { session },
         error: sessionError,
@@ -70,6 +79,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
         console.error("Error getting session:", sessionError);
         setUser(null);
         setUserDetail(null);
+        return;
+      }
+
+      // With autoRefreshToken: false, getSession() may return an expired session
+      // directly (no network refresh attempt).  Treat expired sessions as "no
+      // session" so the user is prompted to sign in again rather than ending up
+      // in an indeterminate state where the UI thinks they're logged in but every
+      // API request returns 401.
+      const sessionIsExpired =
+        typeof session?.expires_at === "number" &&
+        session.expires_at < Date.now() / 1000;
+
+      if (sessionIsExpired) {
+        // Clear the stale entry from localStorage to speed up the next check.
+        localStorage.removeItem("sb-app-session");
+        setUser(null);
+        setUserDetail(null);
+        prevUserIdRef.current = null;
         return;
       }
 

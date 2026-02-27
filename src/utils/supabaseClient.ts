@@ -12,20 +12,30 @@ const serviceRoleKey: string =
 
 /**
  * Main Supabase client — used for all regular data fetching and user auth.
- * Uses the service_role key but with auth session storage disabled so it does
- * NOT compete for navigator.locks with admin operations.
  *
- * The key insight: `persistSession: false` + `autoRefreshToken: false` means
- * this client never acquires navigator.locks for storage, so table queries
- * (categories, products, etc.) always fire immediately without queuing.
+ * `autoRefreshToken: false` is intentional and critical.
  *
- * Auth state (sign-in / sign-out / session) is tracked manually in AuthContext
- * by calling supabase.auth.setSession() after signInWithPassword resolves.
+ * When autoRefreshToken is true, every call to `supabase.auth.getSession()`
+ * acquires an exclusive `navigator.locks` initialization lock.  If the stored
+ * session is expired the client fires a network request to refresh the token
+ * while holding that lock.  If the Supabase server is unreachable (paused
+ * project, network outage, WebView network restrictions) that request hangs
+ * indefinitely — deadlocking every subsequent auth operation that needs the
+ * same lock (including sign-in itself).
+ *
+ * With autoRefreshToken: false, getSession() returns the session immediately
+ * without any network round-trip.  AuthContext.fetchCurrentUser() checks
+ * session expiry and treats expired sessions as "no session", prompting the
+ * user to sign in again.  This matches the original developer intent described
+ * in this comment.
+ *
+ * `persistSession: true` + `storageKey: "sb-app-session"` ensure that a
+ * freshly acquired session (from signInWithPassword) survives page reloads.
  */
 const supabase = createClient<Database>(supabaseUrl, serviceRoleKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false, // See comment above — must stay false
     detectSessionInUrl: true,
     storageKey: "sb-app-session",
   },

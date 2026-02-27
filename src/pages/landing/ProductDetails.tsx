@@ -648,8 +648,8 @@ const ProductDetails: React.FC = () => {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="mt-6 sm:gap-4 sm:items-center sm:flex sm:mt-8">
+              {/* Action Buttons — visible on larger screens inline (hidden on mobile, sticky bar used instead) */}
+              <div className="mt-6 hidden sm:flex sm:gap-4 sm:items-center sm:mt-8">
                 <button
                   className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0"
                   onClick={() => void handleAddToCart()}
@@ -676,6 +676,43 @@ const ProductDetails: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Sticky mobile action bar ────────────────────────────────────
+          Always visible at the bottom on small screens.
+          Sits ABOVE the fixed BottomNavbar so both remain accessible.
+          Uses safe-area-inset-bottom so it does not overlap the iOS home
+          indicator bar or Android gesture navigation zone.        ──── */}
+      <div
+        className="fixed left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 flex gap-3 sm:hidden"
+        style={{
+          bottom: "calc(4rem + 1rem + env(safe-area-inset-bottom, 0px))",
+          paddingTop: "0.75rem",
+          paddingBottom: "0.75rem",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => void handleAddToCart()}
+          disabled={disableActions}
+          aria-disabled={disableActions}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white disabled:opacity-40 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Add to Cart
+        </button>
+        <CheckoutButton
+          items={[
+            {
+              name: product.name,
+              quantity: 1,
+              price: Math.round(product.price * 100),
+            },
+          ]}
+          customerId={user?.id ?? ""}
+          beforeCheckout={beforeBuyNow}
+          disabled={disableActions}
+          buttonTitle="Buy Now"
+        />
+      </div>
     </>
   );
 };

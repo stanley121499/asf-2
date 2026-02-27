@@ -426,10 +426,18 @@ const HomePage: React.FC = () => {
             </div>
             
             {!user && (
-              <div className="mt-6 py-4 px-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg border border-white border-opacity-20">
+              /* Wrap in Link so the banner is tappable on mobile.
+                 `returnTo=/` brings the user back to the home page after login. */
+              <Link
+                to="/authentication/sign-in?returnTo=%2F"
+                className="mt-6 block py-4 px-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg border border-white border-opacity-20 active:bg-opacity-25 transition-all"
+              >
                 <p className="text-sm uppercase tracking-wider font-medium">LOG IN / REGISTER</p>
-                <p className="text-xs mt-1 opacity-80 leading-relaxed">Login to check your progress and redeem exclusive rewards</p>
-              </div>
+                <p className="text-xs mt-1 opacity-80 leading-relaxed">
+                  Login to check your progress and redeem exclusive rewards
+                </p>
+                <p className="text-xs mt-2 font-semibold opacity-90">Tap to sign in →</p>
+              </Link>
             )}
           </div>
         </div>

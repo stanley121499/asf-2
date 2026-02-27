@@ -390,21 +390,47 @@ const CartPage: React.FC = () => {
     setPointsToUse(Math.max(0, Math.min(points, maxUsablePoints)));
   };
 
-  // If user not logged in, prompt to sign in
+  // If user not logged in, show a friendly guest state with navigation options.
+  // Mobile note: always include a "Continue Shopping" link so users are never
+  // left on a dead-end screen with no visible exit.
   if (!user) {
     return (
       <>
         <NavbarHome />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24">
+        <div
+          className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24"
+          style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
           <div className="max-w-3xl mx-auto">
+            {/* Back navigation — primary escape on mobile WebView */}
+            <div className="mb-4">
+              <Link
+                to="/product-section"
+                className="inline-flex items-center text-blue-600 hover:underline text-sm"
+              >
+                <HiOutlineArrowLeft className="mr-1 h-4 w-4" />
+                Continue Shopping
+              </Link>
+            </div>
+
             <Card className="mb-6">
               <div className="text-center py-10">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Please sign in to view your cart
+                <HiOutlineShoppingCart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Your cart is empty
                 </h3>
-                <Link to="/authentication/sign-in">
-                  <Button color="blue">Sign In</Button>
-                </Link>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Sign in to see your saved items, or keep browsing.
+                </p>
+                {/* Pass returnTo so after login the user lands back on /cart */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link to="/authentication/sign-in?returnTo=%2Fcart">
+                    <Button color="blue" className="w-full sm:w-auto">Sign In</Button>
+                  </Link>
+                  <Link to="/product-section">
+                    <Button color="light" className="w-full sm:w-auto">Browse Products</Button>
+                  </Link>
+                </div>
               </div>
             </Card>
           </div>
@@ -416,7 +442,11 @@ const CartPage: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24">
+      {/* Mobile: bottom padding clears the fixed bottom nav + safe area */}
+      <div
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24"
+        style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
+      >
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <Link to="/product-section" className="inline-flex items-center text-blue-600 hover:underline">
@@ -522,44 +552,56 @@ const CartPage: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Quantity and Actions */}
+                          {/* Quantity and Actions
+                              Mobile note: buttons use min 44×44px touch targets
+                              (Apple HIG / Google Material minimum) to prevent
+                              mis-taps on small screens. */}
                           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4">
                             <div className="flex items-center mb-3 md:mb-0">
-                              <Button 
-                                size="xs" 
-                                color="light"
+                              {/* Decrease quantity */}
+                              <button
+                                type="button"
                                 onClick={() => void handleQuantityChange(item.id, item.quantity - 1)}
                                 disabled={item.isDeleted || item.quantity <= 1}
+                                aria-label="Decrease quantity"
+                                className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-40 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
-                                <HiMinus className="h-3 w-3" />
-                              </Button>
-                              <span className="mx-3 w-8 text-center">
+                                <HiMinus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                              </button>
+
+                              <span className="mx-4 w-8 text-center text-base font-medium tabular-nums text-gray-900 dark:text-white">
                                 {item.quantity}
                               </span>
-                              <Button 
-                                size="xs" 
-                                color="light"
+
+                              {/* Increase quantity */}
+                              <button
+                                type="button"
                                 onClick={() => void handleQuantityChange(item.id, item.quantity + 1)}
                                 disabled={item.isDeleted || item.quantity >= item.maxQuantity}
+                                aria-label="Increase quantity"
+                                className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-40 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
-                                <HiPlus className="h-3 w-3" />
-                              </Button>
+                                <HiPlus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                              </button>
+
                               {item.quantity >= item.maxQuantity && (
-                                <span className="ml-2 text-xs text-gray-500">
+                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                                   Max
                                 </span>
                               )}
                             </div>
                             
                             <div className="flex space-x-2">
-                              <Button 
-                                size="xs" 
-                                color="light"
+                              {/* Remove item — also meets 44px minimum via py-2.5 px-4 */}
+                              <button
+                                type="button"
                                 onClick={() => void handleRemoveItem(item.id)}
+                                aria-label={`Remove ${item.name} from cart`}
+                                className="inline-flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
-                                <HiOutlineTrash className="mr-1 h-4 w-4" />
+                                <HiOutlineTrash className="mr-1.5 h-4 w-4" />
                                 Remove
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         </div>
