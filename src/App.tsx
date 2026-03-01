@@ -242,6 +242,10 @@ const App: React.FC = () => {
                         {/* Home & notifications */}
                         <Route path="/" element={<HomePage />} />
                         <Route path="/notifications" element={<NotificationsPage />} />
+
+                        {/* Landing-layout pages that also use NavbarHome (need category/product contexts) */}
+                        <Route path="/goal" element={<GoalPage />} />
+                        <Route path="/settings" element={<ProfileSettingsPage />} />
                       </Route>
 
                       <Route element={<CommunityContextBundle><Outlet /></CommunityContextBundle>}>
@@ -250,8 +254,6 @@ const App: React.FC = () => {
                       </Route>
 
                       {/* Auth-only pages — no data contexts needed */}
-                      <Route path="/goal" element={<GoalPage />} />
-                      <Route path="/settings" element={<ProfileSettingsPage />} />
                       <Route path="/pages/maintenance" element={<MaintenancePage />} />
                       <Route path="/authentication/sign-in" element={<SignInPage />} />
 
