@@ -29,13 +29,7 @@ const HighlightsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Promotional Banner */}
-      <div className="bg-gray-100 py-3 px-4 text-center text-sm font-medium relative">
-        <p>Subscribe To Newsletter & Create Account For 10% Off*</p>
-        <button className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-          <span className="text-xl">×</span>
-        </button>
-      </div>
+
 
       {/* Top Navigation */}
       <NavbarHome />
