@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   PropsWithChildren,
 } from "react";
@@ -35,7 +36,7 @@ export type Conversation = ConversationRow & {
 };
 
 type ConversationJoinedRow = ConversationRow & {
-  chat_messages: ChatMessageRow[] | null;
+  chat_messages?: ChatMessageRow[] | null;
   conversation_participants: ConversationParticipantRow[] | null;
 };
 
@@ -73,8 +74,13 @@ export function ConversationProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   /**
-   * Fetch all conversations with messages and participants. Maps to internal shape.
+   * Fetch all conversations with participants (messages are lazy loaded).
    */
   const fetchConversations = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -82,22 +88,15 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     try {
       const { data, error } = await supabase
         .from("conversations")
-        .select("*, chat_messages(*), conversation_participants(*)");
+        .select("*, conversation_participants(*)");
 
       if (error) {
-        showAlert(error.message, "error");
+        showAlertRef.current?.(error.message, "error");
         return;
       }
 
       const rows = (data as ConversationJoinedRow[] | null) ?? [];
       const mapped: Conversation[] = rows.map((row) => {
-        const msgs = Array.isArray(row.chat_messages) ? row.chat_messages : [];
-        const sorted = [...msgs].sort((a, b) => {
-          const at = a.created_at ? Date.parse(a.created_at) : 0;
-          const bt = b.created_at ? Date.parse(b.created_at) : 0;
-          return at - bt;
-        });
-
         return {
           id: row.id,
           created_at: row.created_at,
@@ -105,7 +104,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           group_id: row.group_id ?? null,
           ticket_id: row.ticket_id ?? null,
           type: row.type ?? null,
-          messages: sorted,
+          messages: [],
           participants: Array.isArray(row.conversation_participants)
             ? row.conversation_participants
             : [],
@@ -116,7 +115,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Realtime: conversations
@@ -169,11 +168,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           prev.map((c) =>
             c.id === updated.conversation_id
               ? {
-                  ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === updated.id ? updated : m
-                  ),
-                }
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === updated.id ? updated : m
+                ),
+              }
               : c
           )
         );
@@ -184,9 +183,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           prev.map((c) =>
             c.id === removed.conversation_id
               ? {
-                  ...c,
-                  messages: c.messages.filter((m) => m.id !== removed.id),
-                }
+                ...c,
+                messages: c.messages.filter((m) => m.id !== removed.id),
+              }
               : c
           )
         );
@@ -216,11 +215,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           prev.map((c) =>
             c.id === updated.conversation_id
               ? {
-                  ...c,
-                  participants: c.participants.map((p) =>
-                    p.id === updated.id ? updated : p
-                  ),
-                }
+                ...c,
+                participants: c.participants.map((p) =>
+                  p.id === updated.id ? updated : p
+                ),
+              }
               : c
           )
         );
@@ -231,11 +230,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
           prev.map((c) =>
             c.id === removed.conversation_id
               ? {
-                  ...c,
-                  participants: c.participants.filter(
-                    (p) => p.id !== removed.id
-                  ),
-                }
+                ...c,
+                participants: c.participants.filter(
+                  (p) => p.id !== removed.id
+                ),
+              }
               : c
           )
         );
@@ -320,12 +319,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  }, [showAlert]);
+  }, []);
 
   /**
    * Update a conversation by id.
@@ -334,7 +333,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ConversationUpdate
   ): Promise<Conversation | undefined> => {
     if (!isNonEmptyString(payload.id)) {
-      showAlert("Missing conversation id for update.", "error");
+      showAlertRef.current?.("Missing conversation id for update.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -344,19 +343,19 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  }, [showAlert]);
+  }, []);
 
   /**
    * Delete a conversation by id.
    */
   const deleteConversation = useCallback(async (conversationId: string): Promise<void> => {
     if (!isNonEmptyString(conversationId)) {
-      showAlert("Invalid conversation id.", "error");
+      showAlertRef.current?.("Invalid conversation id.", "error");
       return;
     }
     const { error } = await supabase
@@ -364,9 +363,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", conversationId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  }, [showAlert]);
+  }, []);
 
   // Message CRUD
   /**
@@ -381,7 +380,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     const created = data as ChatMessageRow;
@@ -397,7 +396,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       );
     }
     return created;
-  }, [showAlert]);
+  }, []);
 
   /**
    * Update chat message by id.
@@ -407,7 +406,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ChatMessageUpdate
   ): Promise<ChatMessageRow | undefined> => {
     if (!isNonEmptyString(id)) {
-      showAlert("Invalid message id.", "error");
+      showAlertRef.current?.("Invalid message id.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -417,18 +416,18 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     return data as ChatMessageRow;
-  }, [showAlert]);
+  }, []);
 
   /**
    * Delete chat message by id.
    */
   const deleteMessage = useCallback(async (messageId: string): Promise<void> => {
     if (!isNonEmptyString(messageId)) {
-      showAlert("Invalid message id.", "error");
+      showAlertRef.current?.("Invalid message id.", "error");
       return;
     }
     const { error } = await supabase
@@ -436,9 +435,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", messageId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * List messages for a given conversation, using cached state when available.
@@ -458,12 +457,25 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
+
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return [];
     }
-    return (data ?? []) as ChatMessageRow[];
-  }, [conversations, showAlert]);
+
+    const fetchedMessages = (data ?? []) as ChatMessageRow[];
+
+    // Cache the fetched messages in context
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? { ...c, messages: fetchedMessages }
+          : c
+      )
+    );
+
+    return fetchedMessages;
+  }, [conversations]);
 
   // Participant CRUD
   /**
@@ -478,11 +490,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     return data as ConversationParticipantRow;
-  }, [showAlert]);
+  }, []);
 
   /**
    * Update participant by id.
@@ -492,7 +504,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ConversationParticipantUpdate
   ): Promise<ConversationParticipantRow | undefined> => {
     if (!isNonEmptyString(id)) {
-      showAlert("Invalid participant id.", "error");
+      showAlertRef.current?.("Invalid participant id.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -502,18 +514,18 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return undefined;
     }
     return data as ConversationParticipantRow;
-  }, [showAlert]);
+  }, []);
 
   /**
    * Remove participant by id.
    */
   const removeParticipant = useCallback(async (participantId: string): Promise<void> => {
     if (!isNonEmptyString(participantId)) {
-      showAlert("Invalid participant id.", "error");
+      showAlertRef.current?.("Invalid participant id.", "error");
       return;
     }
     const { error } = await supabase
@@ -521,9 +533,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", participantId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  }, [showAlert]);
+  }, []);
 
   // Memoize context value so consumers only re-render when relevant data actually changes.
   const value = useMemo<ConversationContextProps>(

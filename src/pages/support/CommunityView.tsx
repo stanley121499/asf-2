@@ -40,7 +40,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
   const [selectedCommunity, setSelectedCommunity] = useState<Group | null>(null);
   const [showGroups, setShowGroups] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
-  
+
   // Update form when communityToEdit changes
   useEffect(() => {
     if (communityToEdit) {
@@ -103,7 +103,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
   // Handle user selection
   const handleSelectUser = (user: any) => {
     if (selectedMembers.some(member => member.id === user.id)) return;
-    
+
     const newMember: GroupMember = {
       id: user.id,
       name: user.email,
@@ -111,7 +111,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
       avatar: "/images/users/default-avatar.png",
       role: "member",
     };
-    
+
     setSelectedMembers([...selectedMembers, newMember]);
   };
 
@@ -123,9 +123,9 @@ const CommunityView: React.FC<CommunityViewProps> = ({
   // Find all groups that belong to this community
   const getCommunityGroups = () => {
     if (!selectedCommunity) return [];
-    
-    return groups.filter(group => 
-      group.type === "group" && 
+
+    return groups.filter(group =>
+      group.type === "group" &&
       group.name.startsWith(`${selectedCommunity.name} - `)
     );
   };
@@ -133,7 +133,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
   // Create a new group in this community
   const handleCreateGroupInCommunity = () => {
     if (!selectedCommunity || !newGroupName.trim()) return;
-    
+
     const newGroup = {
       name: `${selectedCommunity.name} - ${newGroupName}`,
       description: `Group in ${selectedCommunity.name} community`,
@@ -142,7 +142,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
       type: "group" as const,
       createdBy: "current-user-id"
     };
-    
+
     onCreateGroup(newGroup);
     setNewGroupName("");
   };
@@ -182,7 +182,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                   placeholder="Enter community name"
                 />
               </div>
-              
+
               {/* Community Description */}
               <div>
                 <label htmlFor="community-description" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -214,7 +214,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                   {searchTerm && (
                     <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg max-h-60 overflow-auto">
                       {users
-                        .filter(user => 
+                        .filter(user =>
                           user.email.toLowerCase().includes(searchTerm.toLowerCase())
                         )
                         .map(user => (
@@ -226,6 +226,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                               src="/images/users/default-avatar.png"
                               alt={user.email}
                               className="w-8 h-8 rounded-full"
+                              loading="lazy"
+                              decoding="async"
                             />
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -256,6 +258,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                         src={member.avatar || "/images/users/default-avatar.png"}
                         alt={member.name}
                         className="w-5 h-5 rounded-full"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <span className="text-sm text-gray-800 dark:text-gray-200">{member.name}</span>
                       <button
@@ -315,10 +319,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({
             <div className="space-y-4">
               {/* Community Info */}
               <div className="flex items-center mb-4">
-                <img 
-                  src={selectedCommunity?.avatar || "/images/users/community-avatar.png"} 
+                <img
+                  src={selectedCommunity?.avatar || "/images/users/community-avatar.png"}
                   alt={selectedCommunity?.name || "Community"}
-                  className="w-12 h-12 rounded-full mr-4" 
+                  className="w-12 h-12 rounded-full mr-4"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -362,10 +368,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <div className="relative flex-shrink-0">
-                              <img 
-                                src={group.avatar || "/images/users/group-avatar.png"} 
+                              <img
+                                src={group.avatar || "/images/users/group-avatar.png"}
                                 alt={group.name}
-                                className="w-8 h-8 rounded-full" 
+                                className="w-8 h-8 rounded-full"
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
                                 <HiOutlineUserGroup size={10} className="text-white" />
@@ -381,7 +389,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                             </div>
                           </div>
                           <div className="flex space-x-1">
-                            <button 
+                            <button
                               onClick={() => onDeleteGroup(group.id)}
                               className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 p-1"
                             >

@@ -36,12 +36,14 @@ const ListWidget: React.FC<ListWidgetProps> = ({
             <div className="flex items-center">
               {data.media_url && (
                 <div className="shrink-0">
-                <img
-                  className="h-9 w-9"
-                  src={data.media_url}
-                  alt={data.title}
-                />
-              </div>
+                  <img
+                    className="h-9 w-9 object-cover rounded"
+                    src={data.media_url}
+                    alt={data.title ?? ""}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
               )}
               <div className="ms-4 min-w-0 flex-1">
                 <p className="truncate font-semibold text-gray-900 dark:text-white">

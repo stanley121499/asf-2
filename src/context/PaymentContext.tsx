@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   PropsWithChildren,
 } from "react";
@@ -98,6 +99,11 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   /**
    * Fetch payments with enriched data including user details and order information
    */
@@ -134,16 +140,23 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       // Fetch user details if there are any user IDs
       let usersData: { id: string; email?: string }[] = [];
       if (userIds.length > 0) {
-        const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-        if (authError) {
-          console.error("Error fetching auth users:", authError);
-        } else {
-          usersData =
-            (authUsers?.users ?? []).map((u) => ({
-              id: u.id,
-              email: u.email ?? undefined,
-            })) ?? [];
-        }
+        const details = await Promise.all(
+          userIds.map(async (id) => {
+            const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+            if (error) {
+              console.error(`Error fetching user details for ID ${id}:`, error);
+              return null;
+            }
+            return data.user;
+          })
+        );
+
+        usersData = details
+          .filter((d): d is NonNullable<typeof d> => d !== null)
+          .map((d) => ({
+            id: d.id,
+            email: typeof d.email === "string" ? d.email : undefined,
+          }));
       }
 
       // Enrich payments with user details and computed fields
@@ -174,12 +187,12 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       setPayments(enrichedPayments);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
       console.error("Error fetching payments:", err);
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Refresh payments data
@@ -216,14 +229,14 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
           : payment
       ));
 
-      showAlert("Payment status updated successfully", "success");
+      showAlertRef.current?.("Payment status updated successfully", "success");
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update payment status";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
       return false;
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Update refund status and amount
@@ -260,14 +273,14 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
           : payment
       ));
 
-      showAlert("Refund status updated successfully", "success");
+      showAlertRef.current?.("Refund status updated successfully", "success");
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update refund status";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
       return false;
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Initialize data on mount.

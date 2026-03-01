@@ -20,6 +20,11 @@ const HomePageCategoryComponent: React.FC<HomePageCategoryComponentProps> = ({
   const { productCategories } = useProductCategoryContext();
   const { productMedias } = useProductMediaContext();
 
+  const productMediaMap = React.useMemo<Map<string, string>>(
+    () => new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""])),
+    [productMedias]
+  );
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Find the category by targetId
@@ -65,31 +70,25 @@ const HomePageCategoryComponent: React.FC<HomePageCategoryComponentProps> = ({
         className="flex overflow-x-auto hide-scrollbar space-x-4"
         style={{ scrollSnapType: "x mandatory" }}
       >
-        {productsByCategory.flatMap((product) =>
-          Array(10)
-            .fill(null)
-            .map((_, index) => (
-              <div
-                key={`${product.id}-${index}`}
-                className="flex-shrink-0 w-40 p-4 rounded-lg shadow-lg"
-                style={{ scrollSnapAlign: "start" }}
-              >
-                {/* Image Section */}
-                <div className="relative mb-4 overflow-hidden rounded-lg h-40">
-                  <img
-                    src={
-                      productMedias.find(
-                        (media) => media.product_id === product.id
-                      )?.media_url || "/default-image.jpg"
-                    } // Fallback image
-                    alt={product?.name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ display: "block" }} // Ensure block display for proper object-fit
-                  />
-                </div>
-              </div>
-            ))
-        )}
+        {productsByCategory.map((product) => (
+          <div
+            key={product.id}
+            className="flex-shrink-0 w-40 p-4 rounded-lg shadow-lg"
+            style={{ scrollSnapAlign: "start" }}
+          >
+            {/* Image Section */}
+            <div className="relative mb-4 overflow-hidden rounded-lg h-40">
+              <img
+                src={productMediaMap.get(product.id) || "/default-image.jpg"}
+                alt={product?.name}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ display: "block" }}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

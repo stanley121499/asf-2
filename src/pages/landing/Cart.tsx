@@ -129,15 +129,15 @@ const CartPage: React.FC = () => {
           .in("product_id", productIds),
         colorIds.length > 0
           ? supabase
-              .from("product_colors")
-              .select("id,color")
-              .in("id", colorIds)
+            .from("product_colors")
+            .select("id,color")
+            .in("id", colorIds)
           : Promise.resolve({ data: [], error: null } as const),
         sizeIds.length > 0
           ? supabase
-              .from("product_sizes")
-              .select("id,size")
-              .in("id", sizeIds)
+            .from("product_sizes")
+            .select("id,size")
+            .in("id", sizeIds)
           : Promise.resolve({ data: [], error: null } as const),
       ]);
 
@@ -250,14 +250,14 @@ const CartPage: React.FC = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  
+
   // Use fetched user points
   const availablePoints = userPoints;
-  
+
   // Calculate discount from points
   const pointsDiscount = pointsToRM(pointsToUse);
   const total = Math.max(0, subtotal - pointsDiscount);
-  
+
   // Calculate points that will be earned (only if not using points for discount)
   const pointsEarned = pointsToUse > 0 ? 0 : calculatePointsEarned(total);
 
@@ -366,7 +366,7 @@ const CartPage: React.FC = () => {
       color_id: null as string | null,
       size_id: null as string | null,
     }));
-    
+
     // Store points usage information for order processing
     const orderMetadata = {
       pointsUsed: pointsToUse,
@@ -509,10 +509,12 @@ const CartPage: React.FC = () => {
                       <div key={item.id} className="flex flex-col md:flex-row border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
                         <div className="w-full md:w-32 h-32 flex-shrink-0 mb-4 md:mb-0">
                           <Link to={`/product-details/${item.productId}`}>
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
+                            <img
+                              src={item.image}
+                              alt={item.name}
                               className="w-full h-full object-cover rounded-md"
+                              loading="lazy"
+                              decoding="async"
                             />
                           </Link>
                         </div>
@@ -530,7 +532,7 @@ const CartPage: React.FC = () => {
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 Variant: {item.variant || "Default"}
                               </p>
-                              
+
                               {/* Price */}
                               <div className="flex items-baseline mt-1">
                                 <span className="text-lg font-medium text-gray-900 dark:text-white">
@@ -543,7 +545,7 @@ const CartPage: React.FC = () => {
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Item Total */}
                             <div className="mt-3 md:mt-0 text-right">
                               <p className="font-semibold text-gray-900 dark:text-white">
@@ -590,7 +592,7 @@ const CartPage: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            
+
                             <div className="flex space-x-2">
                               {/* Remove item — also meets 44px minimum via py-2.5 px-4 */}
                               <button
@@ -650,7 +652,7 @@ const CartPage: React.FC = () => {
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                     Order Summary
                   </h2>
-                  
+
                   {/* Points Usage Section */}
                   {availablePoints > 0 && (
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -676,28 +678,28 @@ const CartPage: React.FC = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   {/* Price Details */}
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-700 dark:text-gray-300">Subtotal</span>
                       <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
                     </div>
-                    
+
                     {pointsToUse > 0 && (
                       <div className="flex justify-between text-green-600 dark:text-green-400">
                         <span>Points Discount ({pointsToUse.toLocaleString()} points)</span>
                         <span>-{formatCurrency(pointsDiscount)}</span>
                       </div>
                     )}
-                    
+
                     {pointsEarned > 0 && (
                       <div className="flex justify-between text-blue-600 dark:text-blue-400">
                         <span>Points Earned</span>
                         <span>+{pointsEarned.toLocaleString()} points</span>
                       </div>
                     )}
-                    
+
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                       <div className="flex justify-between font-bold">
                         <span className="text-lg">Total</span>
@@ -705,7 +707,7 @@ const CartPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Checkout Button (Stripe) */}
                   <div className="mt-6">
                     <CheckoutButton
@@ -722,7 +724,7 @@ const CartPage: React.FC = () => {
                         Test Pay Now (Skip Stripe)
                       </Button>
                     </div>
-                    
+
                     {/* Payment methods image removed */}
                   </div>
                 </Card>

@@ -19,7 +19,23 @@ const ProductListPage: React.FC = function () {
   const [productData, setProductData] = React.useState<Product | null>(null);
   const { productMedias } = useProductMediaContext();
 
-  console.log("[ProductListPage] loading:", loading, "products:", products.length);
+  const filteredProducts = React.useMemo(
+    () =>
+      products.filter((product) =>
+        product.name.toLowerCase().includes(searchValue.toLowerCase())
+      ),
+    [products, searchValue]
+  );
+
+  const previewMediaUrls = React.useMemo(
+    () =>
+      productData
+        ? productMedias
+          .filter((media) => media.product_id === productData.id)
+          .map((media) => media.media_url)
+        : ["red", "blue", "green", "yellow"],
+    [productMedias, productData]
+  );
 
   if (loading) {
     return <LoadingPage />;
@@ -86,11 +102,7 @@ const ProductListPage: React.FC = function () {
                             ? productData.product_sizes.map((size) => size.size)
                             : ["S", "M", "L", "XL"]
                         }
-                        medias={productMedias
-                          .filter(
-                            (media) => media.product_id === productData?.id
-                          )
-                          .map((media) => media.media_url)}
+                        medias={previewMediaUrls}
                         description={
                           productData?.description ||
                           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus feugiat, molestie ipsum et, consequat nibh. Ut sit amet lacus ultrices, tincidunt metus in, maximus metus."
@@ -123,11 +135,7 @@ const ProductListPage: React.FC = function () {
               </form>
               {products.length > 0 ? (
                 <ProductsTable
-                  products={products.filter((product) =>
-                    product.name
-                      .toLowerCase()
-                      .includes(searchValue.toLowerCase())
-                  )}
+                  products={filteredProducts}
                   setProductData={setProductData}
                 />
               ) : (
@@ -160,84 +168,87 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
 }) {
   const { productMedias } = useProductMediaContext();
   const { deleteProduct } = useProductContext();
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] = React.useState<string | null>(null);
+
+  const mediaByProductId = React.useMemo((): Record<string, string | undefined> => {
+    const map: Record<string, string | undefined> = {};
+    for (const media of productMedias) {
+      if (map[media.product_id] === undefined) {
+        map[media.product_id] = media.media_url;
+      }
+    }
+    return map;
+  }, [productMedias]);
 
   return (
     // Create a grid of 3 columns and use card to display the product
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
-      {products.flatMap((product) =>
-        Array(1)
-          .fill(null)
-          .map((_, index) => (
-            <Card
-              key={`${product.id}-${index}`}
-              className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-              renderImage={() => (
-                <div className="relative w-full h-48 p-4">
-                  <img
-                    src={
-                      productMedias.find(
-                        (media) => media.product_id === product.id
-                      )?.media_url
-                    }
-                    alt={product.name}
-                    className="object-cover w-full h-48 rounded-lg"
-                  />
-                </div>
-              )}
-              style={{
-                height: `calc((100vh - 190px) / 2)`,
-                backgroundColor: "transparent",
-              }}
-              onClick={() => {
-                setProductData(product);
-              }}>
-              {/* Delete Confirmation Modal */}
-              <ConfirmDeleteModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={() => {
-                  deleteProduct(product.id);
-                  setIsDeleteModalOpen(false);
-                }}
+      <ConfirmDeleteModal
+        isOpen={productToDelete !== null}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={() => {
+          if (productToDelete !== null) {
+            deleteProduct(productToDelete);
+          }
+          setProductToDelete(null);
+        }}
+      />
+      {products.map((product) => (
+        <Card
+          key={product.id}
+          className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+          renderImage={() => (
+            <div className="relative w-full h-48 p-4">
+              <img
+                src={mediaByProductId[product.id]}
+                alt={product.name}
+                className="object-cover w-full h-48 rounded-lg"
               />
-              <div className="flex justify-between flex-col gap-2">
-                <div className="flex items-center gap-x-3">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl truncate overflow-hidden">
-                    {product.name}
-                  </h2>
-                  <Badge color={getBadgeColor(product.status)}>
-                    {product.status.toLowerCase()}
-                  </Badge>
-                </div>
-                {/* Description */}
-                <p className="text-sm text-gray-900 w-full pb-0 dark:text-gray-400 line-clamp-2 overflow-hidden">
-                  {product.description}
-                </p>
-                {/* Price */}
-                {/* Show in two decimal place */}
-                <p className="text-sm text-gray-900 w-full dark:text-gray-400">
-                  RM{product.price.toFixed(2)}
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  <Button
-                    className="w-full sm:w-auto px-4"
-                    href={`/products/create/${product.product_folder_id}/${product.id}`}>
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="w-full sm:w-auto px-4"
-                    color={"red"}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))
-      )}
+            </div>
+          )}
+          style={{
+            height: `calc((100vh - 190px) / 2)`,
+            backgroundColor: "transparent",
+          }}
+          onClick={() => {
+            setProductData(product);
+          }}>
+          <div className="flex justify-between flex-col gap-2">
+            <div className="flex items-center gap-x-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl truncate overflow-hidden">
+                {product.name}
+              </h2>
+              <Badge color={getBadgeColor(product.status)}>
+                {product.status.toLowerCase()}
+              </Badge>
+            </div>
+            {/* Description */}
+            <p className="text-sm text-gray-900 w-full pb-0 dark:text-gray-400 line-clamp-2 overflow-hidden">
+              {product.description}
+            </p>
+            {/* Price */}
+            {/* Show in two decimal place */}
+            <p className="text-sm text-gray-900 w-full dark:text-gray-400">
+              RM{product.price.toFixed(2)}
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+              <Button
+                className="w-full sm:w-auto px-4"
+                href={`/products/create/${product.product_folder_id}/${product.id}`}>
+                Edit
+              </Button>
+              <Button
+                onClick={() => {
+                  setProductToDelete(product.id);
+                }}
+                className="w-full sm:w-auto px-4"
+                color={"red"}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };

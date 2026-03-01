@@ -1,8 +1,10 @@
 import React, {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   PropsWithChildren,
 } from "react";
@@ -61,10 +63,16 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   /**
    * Fetch orders from database
    */
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -77,33 +85,22 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
       setOrders(data ?? []);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Refresh orders data
    */
-  const refreshOrders = async () => {
+  const refreshOrders = useCallback(async () => {
     await fetchOrders();
-  };
+  }, [fetchOrders]);
 
   useEffect(() => {
-    let isMounted = true;
-    const loadOrders = async () => {
-      await fetchOrders();
-    };
-    
-    if (isMounted) {
-      loadOrders();
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [showAlert]); // eslint-disable-line react-hooks/exhaustive-deps
+    void fetchOrders();
+  }, [fetchOrders]);
 
   /**
    * createOrderWithItemsAndStock
@@ -111,7 +108,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
    * Creates an order and its items, then updates product stock and logs movements.
    * Performs defensive checks and reports errors through the global alert system.
    */
-  const createOrderWithItemsAndStock = async (
+  const createOrderWithItemsAndStock = useCallback(async (
     payload: {
       userId: string;
       shippingAddress: string | null;
@@ -125,7 +122,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
   ): Promise<{ order: OrderRow; orderItems: OrderItemRow[] } | undefined> => {
     try {
       if (items.length === 0) {
-        showAlert("Cart is empty.", "error");
+        showAlertRef.current?.("Cart is empty.", "error");
         return undefined;
       }
 
@@ -243,10 +240,10 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return { order: orderData, orderItems: itemsData as OrderItemRow[] };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
       return undefined;
     }
-  };
+  }, []);
 
   /**
    * Update order status and log the change
@@ -255,16 +252,16 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
    * @param changedBy - User ID of who made the change (optional)
    * @returns Promise<boolean> - Success status
    */
-  const updateOrderStatus = async (
-    orderId: string, 
-    newStatus: string, 
+  const updateOrderStatus = useCallback(async (
+    orderId: string,
+    newStatus: string,
     changedBy?: string
   ): Promise<boolean> => {
     try {
       // Get current order to track old status
       const currentOrder = orders.find(o => o.id === orderId);
       if (!currentOrder) {
-        showAlert("Order not found", "error");
+        showAlertRef.current?.("Order not found", "error");
         return false;
       }
 
@@ -278,42 +275,32 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
         throw new Error(updateError.message);
       }
 
-      // TODO: Log status change once order_status_logs table is available
-      // For now, just log to console
-      console.log("Status change:", {
-        order_id: orderId,
-        old_status: currentOrder.status,
-        new_status: newStatus,
-        changed_by: changedBy || "admin",
-        user_id: currentOrder.user_id,
-      });
-
       // Update local state
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
+      setOrders(prev => prev.map(order =>
+        order.id === orderId
           ? { ...order, status: newStatus }
           : order
       ));
 
-      showAlert("Order status updated successfully", "success");
+      showAlertRef.current?.("Order status updated successfully", "success");
       return true;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update order status";
-      showAlert(message, "error");
+      showAlertRef.current?.(message, "error");
       return false;
     }
-  };
+  }, [orders]);
 
   const value = useMemo<OrderContextProps>(
-    () => ({ 
-      orders, 
-      createOrderWithItemsAndStock, 
-      updateOrderStatus, 
-      refreshOrders, 
-      loading 
+    () => ({
+      orders,
+      loading,
+      createOrderWithItemsAndStock,
+      updateOrderStatus,
+      refreshOrders,
     }),
-    [orders, loading] // eslint-disable-line react-hooks/exhaustive-deps
+    [orders, loading, createOrderWithItemsAndStock, updateOrderStatus, refreshOrders]
   );
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
@@ -326,5 +313,3 @@ export const useOrderContext = (): OrderContextProps => {
   }
   return ctx;
 };
-
-

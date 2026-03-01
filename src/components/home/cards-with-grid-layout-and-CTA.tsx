@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from "react";
+import { LazyImage } from "../ui/LazyImage";
 
 const CardsWithGridLayoutAndCTA: React.FC = () => {
   return (
@@ -17,7 +18,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
 
         <div className="grid grid-cols-1 gap-4 mt-8 lg:mt-16 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-1.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-1.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -31,7 +32,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-2.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-2.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -45,7 +46,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-3.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-3.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -59,7 +60,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-4.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-4.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -73,7 +74,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-5.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-5.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -87,7 +88,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-6.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-6.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -101,7 +102,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-7.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-7.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -115,7 +116,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-8.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-8.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -129,7 +130,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-9.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-9.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -143,7 +144,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-10.png" alt=""   />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-10.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -157,7 +158,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-11.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-11.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">
@@ -171,7 +172,7 @@ const CardsWithGridLayoutAndCTA: React.FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-lg group">
-            <img className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-12.png" alt="" />
+            <LazyImage className="object-cover w-full h-[320px] lg:h-auto scale-100 ease-in duration-300 group-hover:scale-125" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/team/member-12.png" alt="" wrapperClassName="w-full h-[320px] lg:h-auto overflow-hidden" />
               <div className="absolute inset-0 grid items-end justify-center p-4 bg-gradient-to-b from-transparent to-black/60">
                 <div className="text-center">
                   <p className="text-xl font-bold text-white">

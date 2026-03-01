@@ -51,6 +51,9 @@ const HomePageProductComponent: React.FC<HomePageProductComponentProps> = ({
           alt={product?.name}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ display: "block" }} // Ensure block display for proper object-fit
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
       </div>
 

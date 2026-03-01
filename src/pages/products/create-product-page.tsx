@@ -78,41 +78,43 @@ const CreateProductPage: React.FC = () => {
       ).length,
     };
 
-    createProductFolder(newProductFolder).then((productFolder) => {
+    createProductFolder(newProductFolder).then(async (productFolder) => {
       if (productFolder) {
-        acceptedFiles.forEach(async (file) => {
-          // Generate Random Unique ID for the media
-          const randomId = Math.random().toString(36).substring(2);
+        await Promise.all(
+          acceptedFiles.map(async (file) => {
+            // Generate Random Unique ID for the media
+            const randomId = Math.random().toString(36).substring(2);
 
-          const { data, error } = await supabase.storage
-            .from("product_medias")
-            .upload(`${randomId}`, file, {
-              cacheControl: "3600",
-              upsert: false,
-            });
+            const { data, error } = await supabase.storage
+              .from("product_medias")
+              .upload(`${randomId}`, file, {
+                cacheControl: "3600",
+                upsert: false,
+              });
 
-          if (error) {
-            console.error(error);
-            showAlert("Failed to upload file", "error");
-            return;
-          }
-
-          const newProductFolderMedia: ProductFolderMediaInsert = {
-            product_folder_id: productFolder.id,
-            media_url:
-              "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" +
-              data.path,
-          };
-
-          createProductFolderMedia(newProductFolderMedia)
-            .then(() => {
-              showAlert("Files uploaded successfully", "success");
-            })
-            .catch((error) => {
-              showAlert(error.message, "error");
+            if (error || !data) {
               console.error(error);
-            });
-        });
+              showAlert("Failed to upload file", "error");
+              return;
+            }
+
+            const newProductFolderMedia: ProductFolderMediaInsert = {
+              product_folder_id: productFolder.id,
+              media_url:
+                "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/" +
+                data.path,
+            };
+
+            try {
+              await createProductFolderMedia(newProductFolderMedia);
+              showAlert("Files uploaded successfully", "success");
+            } catch (err: unknown) {
+              const errorMessage = err instanceof Error ? err.message : "Error";
+              showAlert(errorMessage, "error");
+              console.error(err);
+            }
+          })
+        );
       }
     });
   };
@@ -135,9 +137,8 @@ const CreateProductPage: React.FC = () => {
             <ReactDropzone
               onDrop={(acceptedFiles) => {
                 // Get Folder Name using split, could be first or second index, could be /  or \\
-                let folderName =
-                  (acceptedFiles[0] as any).path.split(/[/\\]/)[1] ||
-                  (acceptedFiles[0] as any).path.split(/\/|\\/)[0];
+                const rawPath = (acceptedFiles[0] as unknown as { path?: string }).path ?? "";
+                let folderName = rawPath.split(/[/\\]/)[1] ?? rawPath.split(/[/\\]/)[0] ?? "New Folder";
 
                 handleUpload(acceptedFiles, folderName);
               }}>
@@ -164,31 +165,27 @@ const CreateProductPage: React.FC = () => {
               )}
             </ReactDropzone>
 
-            {productFolders.map((folder) =>
-              Array(1)
-                .fill(null)
-                .map((_, index) => (
-                  <Card
-                    key={`${folder.id}-${index}`}
-                    onClick={() => {
-                      setSelectedFolder(folder);
-                      setSelectedProduct(null);
-                    }}
-                    style={{ height: `calc((100vh - 10rem) / 6)` }}
-                    className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white m-0">
-                        {folder.name}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Photos: {folder.image_count} <br /> Videos:{" "}
-                        {folder.video_count} <br /> Created:{" "}
-                        {folder.created_at.split("T")[0]}
-                      </p>
-                    </div>
-                  </Card>
-                ))
-            )}
+            {productFolders.map((folder) => (
+              <Card
+                key={folder.id}
+                onClick={() => {
+                  setSelectedFolder(folder);
+                  setSelectedProduct(null);
+                }}
+                style={{ height: `calc((100vh - 10rem) / 6)` }}
+                className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white m-0">
+                    {folder.name}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Photos: {folder.image_count} <br /> Videos:{" "}
+                    {folder.video_count} <br /> Created:{" "}
+                    {folder.created_at.split("T")[0]}
+                  </p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
         <div className="col-span-4">
@@ -222,35 +219,31 @@ const CreateProductPage: React.FC = () => {
               .filter(
                 (product) => product.product_folder_id === selectedFolder?.id
               )
-              .flatMap((product) =>
-                Array(1)
-                  .fill(null)
-                  .map((_, index) => (
-                    <Card
-                      key={`${product.id}-${index}`}
-                      onClick={() => setSelectedProduct(product)}
-                      style={{ height: `calc((100vh - 9rem) / 6)` }}
-                      className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
-                      <div className="flex flex-col items-start justify-center h-full">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {product.name}
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Created: {product.created_at.split("T")[0]}{" "}
-                          {product.created_at.split("T")[1].split(".")[0]}
-                        </p>
-                        {/* Schedule Button */}
-                        <Button
-                          className="btn btn-primary mt-2"
-                          onClick={() => {
-                            navigate(`/products/schedule/${product.id}`);
-                          }}>
-                          Schedule
-                        </Button>
-                      </div>
-                    </Card>
-                  ))
-              )}
+              .map((product) => (
+                <Card
+                  key={product.id}
+                  onClick={() => setSelectedProduct(product)}
+                  style={{ height: `calc((100vh - 9rem) / 6)` }}
+                  className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
+                  <div className="flex flex-col items-start justify-center h-full">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {product.name}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Created: {product.created_at.split("T")[0]}{" "}
+                      {product.created_at.split("T")[1].split(".")[0]}
+                    </p>
+                    {/* Schedule Button */}
+                    <Button
+                      className="btn btn-primary mt-2"
+                      onClick={() => {
+                        navigate(`/products/schedule/${product.id}`);
+                      }}>
+                      Schedule
+                    </Button>
+                  </div>
+                </Card>
+              ))}
           </div>
         </div>
       </div>

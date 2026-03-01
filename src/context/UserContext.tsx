@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -41,6 +42,11 @@ export function UserProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   /**
    * Fetch all users from Supabase auth and enrich them with `user_details`.
    */
@@ -48,50 +54,50 @@ export function UserProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     try {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
 
-      if (error) {
-        console.error("Error fetching users:", error);
-        showAlert("Error fetching users", "error");
+      if (authError) {
+        showAlertRef.current?.("Error fetching users", "error");
+        console.error("Error fetching users:", authError);
         return;
       }
 
-      const authUsers: SupabaseAuthUser[] = data.users ?? [];
+      const authUsers: SupabaseAuthUser[] = authData.users ?? [];
 
-      // Build app-friendly `User` objects (password is never returned by Supabase).
-      const usersWithDetails: User[] = await Promise.all(
-        authUsers.map(async (authUser) => {
-          const { data: detail, error: detailError } = await supabase
-            .from("user_details")
-            .select("*")
-            .eq("id", authUser.id)
-            .maybeSingle();
+      const authUserIds = authUsers.map((u) => u.id);
+      const { data: allDetails, error: detailsError } = await supabase
+        .from("user_details")
+        .select("*")
+        .in("id", authUserIds);
 
-          if (detailError) {
-            console.error("Error fetching user details:", detailError);
-            showAlert("Error fetching user details", "error");
-          }
+      if (detailsError) {
+        console.error("Error fetching user details:", detailsError);
+        showAlertRef.current?.("Error fetching user details", "error");
+      }
 
-          // Ensure we always have a role field for UI safety.
-          const role = typeof detail?.role === "string" && detail.role.trim().length > 0 ? detail.role : "USER";
-
-          return {
-            id: authUser.id,
-            email: authUser.email ?? "",
-            password: "",
-            user_detail: {
-              ...detail,
-              role,
-            },
-          };
-        })
+      const detailsMap = Object.fromEntries(
+        (allDetails ?? []).map((d) => [d.id, d])
       );
+
+      const usersWithDetails: User[] = authUsers.map((authUser) => {
+        const detail = detailsMap[authUser.id];
+        const role =
+          typeof detail?.role === "string" && detail.role.trim().length > 0
+            ? detail.role
+            : "USER";
+        return {
+          id: authUser.id,
+          email: authUser.email ?? "",
+          password: "",
+          user_detail: { ...detail, role },
+        };
+      });
 
       setUsers(usersWithDetails);
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Realtime handler for auth user changes.
@@ -133,7 +139,7 @@ export function UserProvider({ children }: PropsWithChildren) {
 
       if (error) {
         console.error("Error adding user:", error);
-        showAlert("Error adding user", "error");
+        showAlertRef.current?.("Error adding user", "error");
         return;
       }
 
@@ -147,15 +153,15 @@ export function UserProvider({ children }: PropsWithChildren) {
 
       if (userDetailError) {
         console.error("Error adding user details:", userDetailError);
-        showAlert("Error adding user details", "error");
+        showAlertRef.current?.("Error adding user details", "error");
         return;
       }
 
-      showAlert("User added successfully", "success");
+      showAlertRef.current?.("User added successfully", "success");
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Deletes a user (details row first, then auth user).
@@ -172,7 +178,7 @@ export function UserProvider({ children }: PropsWithChildren) {
 
       if (userDetailError) {
         console.error("Error deleting user details:", userDetailError);
-        showAlert("Error deleting user details", "error");
+        showAlertRef.current?.("Error deleting user details", "error");
         return;
       }
 
@@ -181,15 +187,15 @@ export function UserProvider({ children }: PropsWithChildren) {
 
       if (error) {
         console.error("Error deleting user:", error);
-        showAlert("Error deleting user", "error");
+        showAlertRef.current?.("Error deleting user", "error");
         return;
       }
 
-      showAlert("User deleted successfully", "success");
+      showAlertRef.current?.("User deleted successfully", "success");
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   /**
    * Updates a user password and updates their user_details record.
@@ -206,7 +212,7 @@ export function UserProvider({ children }: PropsWithChildren) {
 
         if (error) {
           console.error("Error updating user:", error);
-          showAlert("Error updating user", "error");
+          showAlertRef.current?.("Error updating user", "error");
           return;
         }
       }
@@ -220,15 +226,15 @@ export function UserProvider({ children }: PropsWithChildren) {
 
       if (userDetailError) {
         console.error("Error updating user details:", userDetailError);
-        showAlert("Error updating user details", "error");
+        showAlertRef.current?.("Error updating user details", "error");
         return;
       }
 
-      showAlert("User updated successfully", "success");
+      showAlertRef.current?.("User updated successfully", "success");
     } finally {
       setLoading(false);
     }
-  }, [showAlert]);
+  }, []);
 
   // Memoize the value to prevent unnecessary re-renders in consumers.
   const value = useMemo<UserContextProps>(

@@ -124,12 +124,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
    */
   const fetchProducts = useCallback(async (): Promise<void> => {
     setLoading(true);
-    console.log("[ProductContext] fetchProducts called");
 
     try {
       const { data, error } = await supabase.rpc("fetch_products_with_computed_attributes");
-
-      console.log("[ProductContext] RPC result:", { count: data?.length, error });
 
       if (error) {
         showAlertRef.current?.(error.message, "error");
@@ -143,13 +140,10 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       let allowedIds = new Set<string>();
 
       if (ids.length > 0) {
-        console.log("[ProductContext] Fetching base rows for", ids.length, "products");
         const { data: baseRows, error: baseError } = await supabase
           .from("products")
           .select("*")
           .in("id", ids);
-
-        console.log("[ProductContext] Base rows result:", { count: baseRows?.length, baseError });
 
         if (baseError) {
           showAlertRef.current?.(baseError.message, "error");
@@ -210,13 +204,11 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
           };
         });
 
-      console.log("[ProductContext] Mapped products:", mapped.length);
       setProducts(mapped);
     } catch (error: unknown) {
       console.error("[ProductContext] Failed to fetch products:", error);
       showAlertRef.current?.("Failed to fetch products", "error");
     } finally {
-      console.log("[ProductContext] setLoading(false)");
       setLoading(false);
     }
   }, []);
@@ -243,7 +235,7 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
 
         setProducts((prev) =>
           prev.map((product) =>
-            product.id === payload.new.id ? mapRowToProduct(payload.new) : product
+            product.id === payload.new.id ? { ...product, ...payload.new } : product
           )
         );
       }

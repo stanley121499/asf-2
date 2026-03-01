@@ -93,7 +93,9 @@ export function HomeHighlightsCard({
         <img
           src={resolvedImageUrl}
           alt={resolvedAlt}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
       </div>

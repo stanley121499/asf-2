@@ -58,7 +58,7 @@ const ScrollableSection = <TItem,>({
           )
         )}
       </div>
-      <div 
+      <div
         ref={scrollContainerRef}
         className="flex overflow-x-auto hide-scrollbar space-x-4 px-5 pb-2"
         style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
@@ -83,6 +83,16 @@ const HomePage: React.FC = () => {
   const { productCategories } = useProductCategoryContext();
   const { products } = useProductContext();
   const { productMedias } = useProductMediaContext();
+
+  const postMediaMap = useMemo<Map<string, string>>(
+    () => new Map(postMedias.map((m) => [m.post_id, m.media_url ?? ""])),
+    [postMedias]
+  );
+
+  const productMediaMap = useMemo<Map<string, string>>(
+    () => new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""])),
+    [productMedias]
+  );
 
   /**
    * Build placeholder image URLs for cards that don't have a usable image.
@@ -324,7 +334,7 @@ const HomePage: React.FC = () => {
     return "Guest";
   }, [user?.user_metadata, user?.email]);
 
-  
+
 
   // Helper function to get a product image for a category
   const getCategoryProductImage = (categoryId: string): string => {
@@ -332,12 +342,12 @@ const HomePage: React.FC = () => {
     const productIds = productCategories
       .filter(pc => pc.category_id === categoryId)
       .map(pc => pc.product_id);
-    
+
     // Find the first product that has media
     for (const productId of productIds) {
-      const media = productMedias.find(media => media.product_id === productId);
-      if (media?.media_url) {
-        return media.media_url;
+      const mediaUrl = productMediaMap.get(productId ?? "");
+      if (mediaUrl) {
+        return mediaUrl;
       }
     }
 
@@ -354,8 +364,8 @@ const HomePage: React.FC = () => {
   const getClassificationImage = (key: ProductClassificationKey, id: string): string => {
     const product = products.find((p) => p[key] === id);
     if (product) {
-      const media = productMedias.find((m) => m.product_id === product.id);
-      if (media?.media_url) return media.media_url;
+      const mediaUrl = productMediaMap.get(product.id ?? "");
+      if (mediaUrl) return mediaUrl;
     }
     return "";
   };
@@ -368,12 +378,12 @@ const HomePage: React.FC = () => {
           <div className="absolute inset-0 bg-pattern opacity-5"></div>
           <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full bg-white bg-opacity-10 blur-xl"></div>
           <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white bg-opacity-5 blur-xl"></div>
-          
+
           <div className="px-6 pt-6 pb-4 relative">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium uppercase tracking-wider opacity-90">Wallet Balance</h2>
-              <Link 
-                to="/notifications" 
+              <Link
+                to="/notifications"
                 className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-full p-2 shadow-inner relative hover:bg-opacity-25 transition-all duration-300 transform hover:scale-105"
               >
                 <FaBell size={20} className="text-white" />
@@ -389,7 +399,7 @@ const HomePage: React.FC = () => {
               <span className="text-6xl font-bold tracking-tight">{user_detail?.lifetime_val?.toFixed(2) || "0.00"}</span>
             </div>
           </div>
-          
+
           <div className="px-6 pt-3 pb-10 relative z-10">
             <h1 className="text-2xl font-bold tracking-tight"> <span className="opacity-90">{displayName}</span></h1>
             <div className="flex justify-between items-center mt-6">
@@ -424,7 +434,7 @@ const HomePage: React.FC = () => {
                 <FaQrcode size={24} className="text-white" />
               </button>
             </div>
-            
+
             {!user && (
               /* Wrap in Link so the banner is tappable on mobile.
                  `returnTo=/` brings the user back to the home page after login. */
@@ -442,7 +452,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className="pt-4">
         {/* Highlights Section */}
@@ -453,14 +463,14 @@ const HomePage: React.FC = () => {
             items={sortedPosts.slice(0, 10)}
             renderItem={(post, index) => {
               // Find media for this post
-              const postMedia = post.medias?.[0]?.media_url || 
-                postMedias.find(media => media.post_id === post.id)?.media_url || 
+              const postMedia = post.medias?.[0]?.media_url ||
+                postMediaMap.get(post.id) ||
                 `https://via.placeholder.com/300x200?text=Post+${index + 1}`;
-              
+
               return (
-                <Link 
+                <Link
                   to="/product-section"
-                  key={`post-${post.id || index}`} 
+                  key={`post-${post.id || index}`}
                   className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group"
                   style={{ width: "17rem" }}
                 >
@@ -469,10 +479,12 @@ const HomePage: React.FC = () => {
                     FEATURED
                   </div>
                   <div className="h-48 bg-gray-100 relative">
-                    <img 
-                      src={postMedia} 
+                    <img
+                      src={postMedia}
                       alt={post.caption || `Post ${index + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
                   </div>
@@ -493,7 +505,7 @@ const HomePage: React.FC = () => {
             isHighlightSection={true}
           />
         </div>
-        
+
         {/* Categories Section */}
         <div className="py-4">
           <ScrollableSection
@@ -616,7 +628,7 @@ const HomePage: React.FC = () => {
             isHighlightSection={true}
           />
         </div>
-        
+
         {/* Products Section */}
         <div className="py-4">
           <ScrollableSection
@@ -624,13 +636,13 @@ const HomePage: React.FC = () => {
             viewAllLink="/products"
             items={sortedProducts.slice(0, 10)}
             renderItem={(product, index) => {
-              const productMedia = productMedias.find(media => media.product_id === product.id);
-              
+              const productMediaUrl = productMediaMap.get(product.id);
+
               // Get categories for this product
               const productCategoryIds = productCategories
                 .filter(pc => pc.product_id === product.id)
                 .map(pc => pc.category_id);
-              
+
               const productCategoryNames = categories
                 .filter(cat => productCategoryIds.includes(cat.id))
                 .map(cat => cat.name)
@@ -643,10 +655,12 @@ const HomePage: React.FC = () => {
                   className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-1 group"
                 >
                   <div className="h-44 bg-gray-100 relative">
-                    <img 
-                      src={productMedia?.media_url || `https://via.placeholder.com/160?text=Product+${index + 1}`} 
+                    <img
+                      src={productMediaUrl || `https://via.placeholder.com/160?text=Product+${index + 1}`}
                       alt={product.name || `Product ${index + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
                     />
                     {productCategoryNames && (
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
@@ -676,7 +690,7 @@ const HomePage: React.FC = () => {
             isHighlightSection={false}
           />
         </div>
-        
+
         {/* Promotions Section */}
         {/* <div className="py-6 pb-24">
           <ScrollableSection

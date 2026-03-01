@@ -265,7 +265,13 @@ const WishlistPage: React.FC = () => {
                   >
                     <div className="relative">
                       <Link to={`/product-details/${item.productId}`}>
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-48 object-cover" />
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-48 object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </Link>
 
                       <div className="absolute top-2 right-2">

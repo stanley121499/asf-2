@@ -113,52 +113,51 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({ products }) {
   const { productMedias } = useProductMediaContext();
   const navigate = useNavigate();
 
+  const productMediaMap = React.useMemo<Map<string, string>>(
+    () => new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""])),
+    [productMedias]
+  );
+
   return (
     <div>
       {products.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
-          {products.flatMap((product) =>
-            Array(10)
-              .fill(null)
-              .map((_, index) => (
-                <div
-                  key={`${product.id}-${index}`}
-                  style={{ height: `calc((100vh - 167px) / 8)` }}
-                  onClick={() => {
-                    // Navigate to ProductStockDetails page
-                    navigate(`/products/stock/${product.id}`);
-                  }}
-                  className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={
-                        productMedias.find(
-                          (media) => media.product_id === product.id
-                        )?.media_url
-                      }
-                      alt={product.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                        {product.name}
-                      </h2>
-                      {/* <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              style={{ height: `calc((100vh - 167px) / 8)` }}
+              onClick={() => {
+                // Navigate to ProductStockDetails page
+                navigate(`/products/stock/${product.id}`);
+              }}
+              className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+              <div className="flex items-center gap-4">
+                <img
+                  src={productMediaMap.get(product.id) ?? ""}
+                  alt={product.name}
+                  className="w-16 h-16 object-cover rounded-md"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                    {product.name}
+                  </h2>
+                  {/* <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
                         {product.description}
                       </p> */}
-                    </div>
-                    <Badge color={getBadgeColor(product.stock_status)}>
-                      {getBadgeText(product.stock_status)}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
-                      Stock: {product.stock_count}
-                    </p>
-                  </div>
                 </div>
-              ))
-          )}
+                <Badge color={getBadgeColor(product.stock_status)}>
+                  {getBadgeText(product.stock_status)}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
+                  Stock: {product.stock_count}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <>

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Category } from "../../context/product/CategoryContext";
 import type { Department } from "../../context/product/DepartmentContext";
 import type { Range } from "../../context/product/RangeContext";
-import type { Brand } from "../../context/product/BrandContext";
+import { Brand } from "../../context/product/BrandContext";
 import { useNavigate } from "react-router-dom";
 
 /**
@@ -77,11 +77,11 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
   // Handle category selection with optional redirection
   const handleCategorySelect = (category: Category) => {
     onSelectCategory(category);
-    
+
     if (shouldRedirect) {
       const redirectUrl = redirectUrlFormatter("category", category);
       navigate(redirectUrl);
-      
+
       // Close the sidebar if it's mobile
       if (isMobile && onClose) {
         onClose();
@@ -104,11 +104,10 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
     return (
       <React.Fragment key={category.id}>
         <div
-          className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${
-            category.id === selectedCategory?.id
-              ? "border-4 border-red-500"
-              : ""
-          }`}
+          className={`relative w-full h-16 rounded-lg overflow-hidden mb-2 ${category.id === selectedCategory?.id
+            ? "border-4 border-red-500"
+            : ""
+            }`}
           style={{
             marginLeft: `${level * 20}px`,
             width: `calc(100% - ${level * 20}px)`,
@@ -119,6 +118,8 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
             src={category.media_url}
             alt={category.name}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
             <h2 className="text-white text-2xl font-semibold">
@@ -144,7 +145,13 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
         onClick={() => handleFlatSelect(tab, item)}
       >
         {image && (
-          <img src={image} alt={label} className="w-full h-full object-cover" />
+          <img
+            src={image}
+            alt={label}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         )}
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
           <h2 className="text-white text-2xl font-semibold">{label}</h2>
@@ -154,13 +161,13 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
   };
 
   const sidebarClasses = `
-    ${isMobile 
-      ? `fixed inset-y-0 ${slideFromLeft ? "left-0" : "right-0"} z-50 transform transition-transform duration-300 ease-in-out` 
+    ${isMobile
+      ? `fixed inset-y-0 ${slideFromLeft ? "left-0" : "right-0"} z-50 transform transition-transform duration-300 ease-in-out`
       : "relative"}
-    ${isVisible 
-      ? "translate-x-0" 
+    ${isVisible
+      ? "translate-x-0"
       : slideFromLeft ? "-translate-x-full" : "translate-x-full"}
-    ${isMobile 
+    ${isMobile
       ? fullWidth ? "w-full" : slideFromLeft ? "w-80" : "w-72"
       : "w-full h-full"}
     bg-white dark:bg-gray-800 overflow-y-auto

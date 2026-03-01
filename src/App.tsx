@@ -1,321 +1,276 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Outlet } from "react-router-dom";
 import { AlertComponent } from "./components/AlertComponent";
 import FlowbiteWrapper from "./components/FlowbiteWrapper";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AlertProvider } from "./context/AlertContext";
 import { AuthProvider } from "./context/AuthContext";
 import { UserProvider } from "./context/UserContext";
-import { PostProvider } from "./context/post/PostContext";
-import { PostFolderProvider } from "./context/post/PostFolderContext";
-import { PostFolderMediaProvider } from "./context/post/PostFolderMediaContext";
-import { PostMediaProvider } from "./context/post/PostMediaContext";
-import { CategoryProvider } from "./context/product/CategoryContext";
-import { ProductCategoryProvider } from "./context/product/ProductCategoryContext";
-import { ProductColorProvider } from "./context/product/ProductColorContext";
-import { ProductProvider } from "./context/product/ProductContext";
-import { ProductEventProvider } from "./context/product/ProductEventContext";
-import { ProductFolderProvider } from "./context/product/ProductFolderContext";
-import { ProductFolderMediaProvider } from "./context/product/ProductFolderMediaContext";
-import { ProductMediaProvider } from "./context/product/ProductMediaContext";
-import { ProductPurchaseOrderProvider } from "./context/product/ProductPurchaseOrderContext";
-import { ProductReportProvider } from "./context/product/ProductReportContext";
-import { ProductSizeProvider } from "./context/product/ProductSizeContext";
-import { ProductStockLogProvider } from "./context/product/ProductStockLogContext";
-import { ProductStockProvider } from "./context/product/ProductStockContext";
-import { BrandProvider } from "./context/product/BrandContext";
-import { DepartmentProvider } from "./context/product/DepartmentContext";
-import { RangeProvider } from "./context/product/RangeContext";
-import { AddToCartProvider } from "./context/product/CartContext";
-import { AddToCartLogProvider } from "./context/product/AddToCartLogContext";
-import "./index.css";
-import DashboardPage from "./pages";
-import SignInPage from "./pages/authentication/sign-in";
-import HomePage from "./pages/landing/home";
-import HighlightsPage from "./pages/landing/Highlights";
-import PrivacyPage from "./pages/legal/privacy";
-import NotFoundPage from "./pages/pages/404";
-import ServerErrorPage from "./pages/pages/500";
-import MaintenancePage from "./pages/pages/maintenance";
-import CreatePostPage from "./pages/posts/create-post-page";
-import PostListPage from "./pages/posts/list";
-import SchedulePostListPage from "./pages/posts/schedule-post-page";
-import CategoryListPage from "./pages/products/category-page";
-import CreateProductPage from "./pages/products/create-product-page";
-import DeletedProductsPage from "./pages/products/deleted-products";
-import ProductListPage from "./pages/products/list";
-import ScheduleProductListPage from "./pages/products/schedule-product-page";
-import CreatePurchaseOrderPage from "./pages/stocks/create-purchase-order";
-import CreateReportPage from "./pages/stocks/create-report";
-import StockAllProductEventPage from "./pages/stocks/event-list";
-import StockAllProductPage from "./pages/stocks/list";
-import StockOverviewPage from "./pages/stocks/overview";
-import StockReportPage from "./pages/stocks/report";
-import ViewPurchaseOrderPage from "./pages/stocks/view-purchase-order";
-import ViewReportPage from "./pages/stocks/view-report";
-import UserListPage from "./pages/users/list";
-import UserSettingsPage from "./pages/users/settings";
-import ProductStockDetails from "./pages/products/stock";
-import HomePageBuilder from "./pages/home-page-builder";
+import {
+  ProductContextBundle,
+  PostContextBundle,
+  OrderContextBundle,
+  CommunityContextBundle,
+  AnalyticsContextBundle,
+  LandingContextBundle,
+} from "./context/RouteContextBundles";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { HomePageElementProvider } from "./context/HomePageElementContext";
-import CartPage from "./pages/landing/Cart";
 import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
-import CustomerOrderDetailPage from "./pages/landing/OrderDetail";
-import ProductSection from "./pages/landing/ProductSection";
-import ProductDetails from "./pages/landing/ProductDetails";
-import GoalPage from "./pages/landing/Goal";
-import ProfileSettingsPage from "./pages/landing/Settings";
-import ChatWindow from "./pages/landing/Chat";
-import CheckoutPage from "./pages/landing/Checkout";
-import UserAnalyticsPage from "./pages/analytics/users";
-import ProductAnalyticsPage from "./pages/analytics/products";
-import CategoriesAnalyticsPage from "./pages/analytics/categories";
-import CategoriesInnerAnalyticsPage from "./pages/analytics/categories-inner";
-import ProductInnerAnalyticsPage from "./pages/analytics/products-inner";
-import { ConversationProvider } from "./context/ConversationContext";
-import { CommunityProvider } from "./context/CommunityContext";
-import { GroupProvider } from "./context/GroupContext";
-import { ConversationParticipantProvider } from "./context/ConversationParticipantContext";
-import { TicketProvider } from "./context/TicketContext";
-import { TicketStatusLogProvider } from "./context/TicketStatusLogContext";
-import SupportPage from "./pages/support";
-import GoodStockPage from "./pages/stocks/good-stocks";
-import InternalChat from "./pages/internal-chat";
-import SupportAnalyticsPage from "./pages/analytics/support";
-import NotificationsPage from "./pages/landing/notifications";
 import { PointsMembershipProvider } from "./context/PointsMembershipContext";
-import { OrderProvider } from "./context/product/OrderContext";
-import { PaymentProvider } from "./context/PaymentContext";
-import OrderListPage from "./pages/orders/list";
-import { PaymentListPage, PaymentDetailPage } from "./pages/payments";
-import OrderDetailPage from "./pages/orders/detail";
-import { WishlistProvider } from "./context/WishlistContext";
-import WishlistPage from "./pages/landing/Wishlist";
+import "./index.css";
+import LoadingPage from "./pages/pages/loading";
+
+const DashboardPage = lazy(() => import("./pages"));
+const SignInPage = lazy(() => import("./pages/authentication/sign-in"));
+const HomePage = lazy(() => import("./pages/landing/home"));
+const HighlightsPage = lazy(() => import("./pages/landing/Highlights"));
+const PrivacyPage = lazy(() => import("./pages/legal/privacy"));
+const NotFoundPage = lazy(() => import("./pages/pages/404"));
+const ServerErrorPage = lazy(() => import("./pages/pages/500"));
+const MaintenancePage = lazy(() => import("./pages/pages/maintenance"));
+const CreatePostPage = lazy(() => import("./pages/posts/create-post-page"));
+const PostListPage = lazy(() => import("./pages/posts/list"));
+const SchedulePostListPage = lazy(() => import("./pages/posts/schedule-post-page"));
+const CategoryListPage = lazy(() => import("./pages/products/category-page"));
+const CreateProductPage = lazy(() => import("./pages/products/create-product-page"));
+const DeletedProductsPage = lazy(() => import("./pages/products/deleted-products"));
+const ProductListPage = lazy(() => import("./pages/products/list"));
+const ScheduleProductListPage = lazy(() => import("./pages/products/schedule-product-page"));
+const CreatePurchaseOrderPage = lazy(() => import("./pages/stocks/create-purchase-order"));
+const CreateReportPage = lazy(() => import("./pages/stocks/create-report"));
+const StockAllProductEventPage = lazy(() => import("./pages/stocks/event-list"));
+const StockAllProductPage = lazy(() => import("./pages/stocks/list"));
+const StockOverviewPage = lazy(() => import("./pages/stocks/overview"));
+const StockReportPage = lazy(() => import("./pages/stocks/report"));
+const ViewPurchaseOrderPage = lazy(() => import("./pages/stocks/view-purchase-order"));
+const ViewReportPage = lazy(() => import("./pages/stocks/view-report"));
+const UserListPage = lazy(() => import("./pages/users/list"));
+const UserSettingsPage = lazy(() => import("./pages/users/settings"));
+const ProductStockDetails = lazy(() => import("./pages/products/stock"));
+const HomePageBuilder = lazy(() => import("./pages/home-page-builder"));
+
+
+const CartPage = lazy(() => import("./pages/landing/Cart"));
+const CustomerOrderDetailPage = lazy(() => import("./pages/landing/OrderDetail"));
+const ProductSection = lazy(() => import("./pages/landing/ProductSection"));
+const ProductDetails = lazy(() => import("./pages/landing/ProductDetails"));
+const GoalPage = lazy(() => import("./pages/landing/Goal"));
+const ProfileSettingsPage = lazy(() => import("./pages/landing/Settings"));
+const ChatWindow = lazy(() => import("./pages/landing/Chat"));
+const CheckoutPage = lazy(() => import("./pages/landing/Checkout"));
+const UserAnalyticsPage = lazy(() => import("./pages/analytics/users"));
+const ProductAnalyticsPage = lazy(() => import("./pages/analytics/products"));
+const CategoriesAnalyticsPage = lazy(() => import("./pages/analytics/categories"));
+const CategoriesInnerAnalyticsPage = lazy(() => import("./pages/analytics/categories-inner"));
+const ProductInnerAnalyticsPage = lazy(() => import("./pages/analytics/products-inner"));
+
+const SupportPage = lazy(() => import("./pages/support"));
+const GoodStockPage = lazy(() => import("./pages/stocks/good-stocks"));
+const InternalChat = lazy(() => import("./pages/internal-chat"));
+const SupportAnalyticsPage = lazy(() => import("./pages/analytics/support"));
+const NotificationsPage = lazy(() => import("./pages/landing/notifications"));
+
+
+
+const OrderListPage = lazy(() => import("./pages/orders/list"));
+const PaymentListPage = lazy(() => import("./pages/payments").then(m => ({ default: m.PaymentListPage })));
+const PaymentDetailPage = lazy(() => import("./pages/payments").then(m => ({ default: m.PaymentDetailPage })));
+const OrderDetailPage = lazy(() => import("./pages/orders/detail"));
+const WishlistPage = lazy(() => import("./pages/landing/Wishlist"));
 
 const App: React.FC = () => {
   return (
     <AlertProvider>
-      <ProviderComposer
-        providers={[
-          // Outermost: Auth Context (many providers depend on this)
-          AuthProvider,
+      <AuthProvider>
+        <PointsMembershipProvider>
+          <UserProvider>
+            <AlertComponent />
+            <BrowserRouter>
+              <DndProvider backend={HTML5Backend}>
+                <Suspense fallback={<LoadingPage />}>
+                  <Routes>
+                    <Route element={<FlowbiteWrapper />}>
+                      {/* Protected Routes */}
+                      <Route element={<ProtectedRoute />}>
+                        <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/users/list" element={<UserListPage />} />
+                        <Route path="/users/settings" element={<UserSettingsPage />} />
+                        <Route element={<PostContextBundle><Outlet /></PostContextBundle>}>
+                          <Route path="/posts/list" element={<PostListPage />} />
+                          <Route
+                            path="/posts/create/:folderId?/:postId?"
+                            element={<CreatePostPage />}
+                          />
+                          <Route
+                            path="/posts/schedule/:postId?"
+                            element={<SchedulePostListPage />}
+                          />
+                        </Route>
+                        <Route element={<ProductContextBundle><Outlet /></ProductContextBundle>}>
+                          <Route path="/products/list" element={<ProductListPage />} />
+                          <Route path="/products/deleted" element={<DeletedProductsPage />} />
+                          <Route
+                            path="/products/create/:folderId?/:productId?"
+                            element={<CreateProductPage />}
+                          />
+                          <Route
+                            path="/products/schedule/:productId?"
+                            element={<ScheduleProductListPage />}
+                          />
+                          <Route
+                            path="/products/categories"
+                            element={<CategoryListPage />}
+                          />
 
-          // Independent / Base Providers
-          PointsMembershipProvider,
-          UserProvider,
-          BrandProvider,
-          DepartmentProvider,
-          RangeProvider,
-          CategoryProvider,
+                          <Route
+                            path="/products/stock/:productId"
+                            element={<ProductStockDetails />}
+                          />
 
-          // Post Module
-          PostMediaProvider,
-          PostFolderMediaProvider,
-          PostFolderProvider, // Depends on PostFolderMediaProvider
-          PostProvider,
+                          {/* Stock */}
 
-          // Product Base Variants + Dependencies
-          ProductCategoryProvider,
-          ProductSizeProvider,
-          ProductColorProvider,
-          ProductMediaProvider,
-          ProductFolderMediaProvider,
-          ProductFolderProvider, // Depends on ProductFolderMediaProvider
-          ProductEventProvider,
-          ProductStockLogProvider,
-          ProductStockProvider,
+                          <Route path="/stocks/good" element={<GoodStockPage />} />
 
-          // Product Provider (Depends on Category, Size, Color)
-          ProductProvider,
+                          <Route
+                            path="/stocks/overview"
+                            element={<StockOverviewPage />}
+                          />
+                          <Route path="/stocks/all" element={<StockAllProductPage />} />
+                          <Route
+                            path="/stocks/events"
+                            element={<StockAllProductEventPage />}
+                          />
+                          <Route path="/stocks/reports" element={<StockReportPage />} />
+                          <Route
+                            path="/stocks/report/create/:productId?/:productEventId?"
+                            element={<CreateReportPage />}
+                          />
+                          <Route
+                            path="/stocks/report/:reportId"
+                            element={<ViewReportPage />}
+                          />
+                          <Route
+                            path="/stocks/purchase-orders/create/:productId?/:productEventId?"
+                            element={<CreatePurchaseOrderPage />}
+                          />
+                          <Route
+                            path="/stocks/purchase-orders/:purchaseOrderId"
+                            element={<ViewPurchaseOrderPage />}
+                          />
+                        </Route>
+                        {/* Home Page Builder */}
+                        <Route
+                          path="/home-page-builder"
+                          element={<HomePageElementProvider><HomePageBuilder /></HomePageElementProvider>}
+                        />
 
-          // Providers dependent on ProductProvider
-          ProductPurchaseOrderProvider,
-          ProductReportProvider,
-          WishlistProvider,
+                        <Route element={<OrderContextBundle><Outlet /></OrderContextBundle>}>
+                          {/* Orders */}
+                          <Route path="/orders" element={<OrderListPage />} />
+                          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
 
-          // Cart / Logs / Orders
-          AddToCartLogProvider,
-          AddToCartProvider,
-          OrderProvider,
-          PaymentProvider,
+                          {/* Payments */}
+                          <Route path="/payments" element={<PaymentListPage />} />
+                          <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
+                        </Route>
 
-          // App Modules
-          HomePageElementProvider,
-          CommunityProvider,
-          GroupProvider,
-          ConversationParticipantProvider,
-          TicketProvider,
-          TicketStatusLogProvider,
-          ConversationProvider,
-        ]}>
-        <AlertComponent />
-        <BrowserRouter>
-          <DndProvider backend={HTML5Backend}>
-            <Routes>
-              <Route element={<FlowbiteWrapper />}>
-                {/* Protected Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/users/list" element={<UserListPage />} />
-                  <Route path="/users/settings" element={<UserSettingsPage />} />
-                  <Route path="/posts/list" element={<PostListPage />} />
-                  <Route
-                    path="/posts/create/:folderId?/:postId?"
-                    element={<CreatePostPage />}
-                  />
-                  <Route
-                    path="/posts/schedule/:postId?"
-                    element={<SchedulePostListPage />}
-                  />
-                  <Route path="/products/list" element={<ProductListPage />} />
-                  <Route path="/products/deleted" element={<DeletedProductsPage />} />
-                  <Route
-                    path="/products/create/:folderId?/:productId?"
-                    element={<CreateProductPage />}
-                  />
-                  <Route
-                    path="/products/schedule/:productId?"
-                    element={<ScheduleProductListPage />}
-                  />
-                  <Route
-                    path="/products/categories"
-                    element={<CategoryListPage />}
-                  />
+                        <Route element={<CommunityContextBundle><Outlet /></CommunityContextBundle>}>
+                          {/* Support */}
+                          <Route path="/support" element={<SupportPage />} />
+                        </Route>
 
-                  <Route
-                    path="/products/stock/:productId"
-                    element={<ProductStockDetails />}
-                  />
+                        <Route element={<AnalyticsContextBundle><Outlet /></AnalyticsContextBundle>}>
+                          {/* Analytics */}
+                          <Route
+                            path="/analytics/users"
+                            element={<UserAnalyticsPage />}
+                          />
+                          <Route
+                            path="/analytics/products"
+                            element={<ProductAnalyticsPage />}
+                          />
+                          <Route
+                            path="/analytics/products-inner/:productId"
+                            element={<ProductInnerAnalyticsPage />}
+                          />
+                          <Route
+                            path="/analytics/categories"
+                            element={<CategoriesAnalyticsPage />}
+                          />
+                          <Route
+                            path="/analytics/categories-inner/:categoryId"
+                            element={<CategoriesInnerAnalyticsPage />}
+                          />
+                          <Route
+                            path="/analytics/support"
+                            element={<SupportAnalyticsPage />}
+                          />
+                        </Route>
+                      </Route>
 
-                  {/* Stock */}
+                      {/*
+                       * Customer-facing / landing routes.
+                       * LandingContextBundle provides: ProductContextBundle + PostContextBundle + OrderContextBundle.
+                       * This covers all data needs for the home page, product browsing, cart, wishlist, etc.
+                       */}
+                      <Route element={<LandingContextBundle><Outlet /></LandingContextBundle>}>
+                        {/* Shopping flow */}
+                        <Route path="/cart" element={<CartPage />} />
+                        <Route path="/checkout" element={<CheckoutPage />} />
+                        <Route path="/order-success" element={<OrderSuccess />} />
+                        <Route path="/order-cancel" element={<OrderCancel />} />
+                        <Route path="/order-details/:orderId" element={<CustomerOrderDetailPage />} />
+                        <Route path="/wishlist" element={<WishlistPage />} />
 
-                  <Route path="/stocks/good" element={<GoodStockPage />} />
+                        {/* Product browsing */}
+                        <Route
+                          path="/product-section/:categoryId?"
+                          element={<ProductSection />}
+                        />
+                        <Route
+                          path="/product-details/:productId?"
+                          element={<ProductDetails />}
+                        />
 
-                  <Route
-                    path="/stocks/overview"
-                    element={<StockOverviewPage />}
-                  />
-                  <Route path="/stocks/all" element={<StockAllProductPage />} />
-                  <Route
-                    path="/stocks/events"
-                    element={<StockAllProductEventPage />}
-                  />
-                  <Route path="/stocks/reports" element={<StockReportPage />} />
-                  <Route
-                    path="/stocks/report/create/:productId?/:productEventId?"
-                    element={<CreateReportPage />}
-                  />
-                  <Route
-                    path="/stocks/report/:reportId"
-                    element={<ViewReportPage />}
-                  />
-                  <Route
-                    path="/stocks/purchase-orders/create/:productId?/:productEventId?"
-                    element={<CreatePurchaseOrderPage />}
-                  />
-                  <Route
-                    path="/stocks/purchase-orders/:purchaseOrderId"
-                    element={<ViewPurchaseOrderPage />}
-                  />
-                  {/* Home Page Builder */}
-                  <Route
-                    path="/home-page-builder"
-                    element={<HomePageBuilder />}
-                  />
+                        {/* Post / highlights */}
+                        <Route path="/highlights" element={<HighlightsPage />} />
 
-                  {/* Orders */}
-                  <Route path="/orders" element={<OrderListPage />} />
-                  <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+                        {/* Home & notifications */}
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/notifications" element={<NotificationsPage />} />
+                      </Route>
 
-                  {/* Payments */}
-                  <Route path="/payments" element={<PaymentListPage />} />
-                  <Route path="/payments/:paymentId" element={<PaymentDetailPage />} />
+                      <Route element={<CommunityContextBundle><Outlet /></CommunityContextBundle>}>
+                        <Route path="/support-chat" element={<ChatWindow />} />
+                        <Route path="/internal-chat" element={<InternalChat />} />
+                      </Route>
 
-                  {/* Support */}
-                  <Route path="/support" element={<SupportPage />} />
+                      {/* Auth-only pages — no data contexts needed */}
+                      <Route path="/goal" element={<GoalPage />} />
+                      <Route path="/settings" element={<ProfileSettingsPage />} />
+                      <Route path="/pages/maintenance" element={<MaintenancePage />} />
+                      <Route path="/authentication/sign-in" element={<SignInPage />} />
 
-                  {/* Analytics */}
-                  <Route
-                    path="/analytics/users"
-                    element={<UserAnalyticsPage />}
-                  />
-                  <Route
-                    path="/analytics/products"
-                    element={<ProductAnalyticsPage />}
-                  />
-                  <Route
-                    path="/analytics/products-inner/:productId"
-                    element={<ProductInnerAnalyticsPage />}
-                  />
-                  <Route
-                    path="/analytics/categories"
-                    element={<CategoriesAnalyticsPage />}
-                  />
-                  <Route
-                    path="/analytics/categories-inner/:categoryId"
-                    element={<CategoriesInnerAnalyticsPage />}
-                  />
-                  <Route
-                    path="/analytics/support"
-                    element={<SupportAnalyticsPage />}
-                  />
-                </Route>
+                      {/* Legal Pages */}
+                      <Route path="/legal/privacy" element={<PrivacyPage />} />
 
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/order-cancel" element={<OrderCancel />} />
-                <Route path="/order-details/:orderId" element={<CustomerOrderDetailPage />} />
-                <Route path="/goal" element={<GoalPage />} />
-                <Route path="/settings" element={<ProfileSettingsPage />} />
-                <Route path="/support-chat" element={<ChatWindow />} />
-                <Route path="/internal-chat" element={<InternalChat />} />
-                <Route
-                  path="/product-section/:categoryId?"
-                  element={<ProductSection />}
-                />
-                <Route
-                  path="/product-details/:productId?"
-                  element={<ProductDetails />}
-                />
-                <Route path="/highlights" element={<HighlightsPage />} />
-
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/wishlist" element={<WishlistPage />} />
-                <Route path="/pages/maintenance" element={<MaintenancePage />} />
-                <Route path="/authentication/sign-in" element={<SignInPage />} />
-
-                {/* Legal Pages */}
-                <Route path="/legal/privacy" element={<PrivacyPage />} />
-
-                {/* Error Handling Routes */}
-                <Route path="/500" element={<ServerErrorPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </DndProvider>
-        </BrowserRouter>
-      </ProviderComposer>
+                      {/* Error Handling Routes */}
+                      <Route path="/500" element={<ServerErrorPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </DndProvider>
+            </BrowserRouter>
+          </UserProvider>
+        </PointsMembershipProvider>
+      </AuthProvider>
     </AlertProvider>
   );
 };
 
 export default App;
-
-const ProviderComposer: React.FC<{
-  providers: React.JSXElementConstructor<React.PropsWithChildren<{}>>[];
-  children: React.ReactNode;
-}> = ({ providers, children }) => {
-  // reduceRight ensures the FIRST provider in the array becomes the OUTERMOST
-  // wrapper (the first to mount), matching the natural reading order of the list.
-  // Using `reduce` instead would invert the hierarchy silently.
-  return providers.reduceRight((AccumulatedProviders, CurrentProvider) => {
-    return <CurrentProvider>{AccumulatedProviders}</CurrentProvider>;
-  }, <>{children}</>);
-};

@@ -132,86 +132,84 @@ const ProductEventsTable: React.FC<ProductEventsTableProps> = function ({
   const { productMedias } = useProductMediaContext();
   const navigate = useNavigate();
 
+  const productMediaMap = React.useMemo<Map<string, string>>(
+    () => new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""])),
+    [productMedias]
+  );
+
   return (
     <div>
       {productEvents.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
-          {productEvents.flatMap((productEvent) =>
-            Array(1)
-              .fill(null)
-              .map((_, index) => (
-                <div
-                  key={`${productEvent.id}-${index}`}
-                  style={{ height: `calc((100vh - 167px) / 8)` }}
-                  onClick={() => {
-                    // Navigate to ProductStockDetails page
-                    navigate(`/products/stock/${productEvent.product.id}`);
-                  }}
-                  className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={
-                        productMedias.find(
-                          (media) =>
-                            media.product_id === productEvent.product.id
-                        )?.media_url
-                      }
-                      alt={productEvent.product.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
-                    <div className="flex flex-col">
-                      <div className="flex gap-2">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                          {productEvent.product.name}
-                        </h2>
-                        <Badge color={getBadgeColor(productEvent.type)}>
-                          {productEvent.type}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(productEvent.created_at).toDateString()}
-                      </p>
-                    </div>
+          {productEvents.map((productEvent) => (
+            <div
+              key={productEvent.id}
+              style={{ height: `calc((100vh - 167px) / 8)` }}
+              onClick={() => {
+                // Navigate to ProductStockDetails page
+                navigate(`/products/stock/${productEvent.product.id}`);
+              }}
+              className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+              <div className="flex items-center gap-4">
+                <img
+                  src={productMediaMap.get(productEvent.product.id) ?? ""}
+                  alt={productEvent.product.name}
+                  className="w-16 h-16 object-cover rounded-md"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="flex flex-col">
+                  <div className="flex gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                      {productEvent.product.name}
+                    </h2>
+                    <Badge color={getBadgeColor(productEvent.type)}>
+                      {productEvent.type}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {!productEvent.purchase_order_id &&
-                    !productEvent.report_id ? (
-                      <>
-                        <Button
-                          color="info"
-                          className="w-40"
-                          href={`/stocks/purchase-orders/create/${productEvent.product.id}/${productEvent.id}`}>
-                          Create PO
-                        </Button>
-                        <Button
-                          className="w-40"
-                          color="red"
-                          href={`/stocks/report/create/${productEvent.product.id}/${productEvent.id}`}>
-                          Create Report
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        {productEvent.purchase_order_id && (
-                          <Button
-                            color="success"
-                            href={`/stocks/purchase-orders/${productEvent.purchase_order_id}`}>
-                            View PO
-                          </Button>
-                        )}
-                        {productEvent.report_id && (
-                          <Button
-                            color="success"
-                            href={`/stocks/report/${productEvent.report_id}`}>
-                            View Report
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(productEvent.created_at).toDateString()}
+                  </p>
                 </div>
-              ))
-          )}
+              </div>
+              <div className="flex items-center gap-4">
+                {!productEvent.purchase_order_id &&
+                  !productEvent.report_id ? (
+                  <>
+                    <Button
+                      color="info"
+                      className="w-40"
+                      href={`/stocks/purchase-orders/create/${productEvent.product.id}/${productEvent.id}`}>
+                      Create PO
+                    </Button>
+                    <Button
+                      className="w-40"
+                      color="red"
+                      href={`/stocks/report/create/${productEvent.product.id}/${productEvent.id}`}>
+                      Create Report
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {productEvent.purchase_order_id && (
+                      <Button
+                        color="success"
+                        href={`/stocks/purchase-orders/${productEvent.purchase_order_id}`}>
+                        View PO
+                      </Button>
+                    )}
+                    {productEvent.report_id && (
+                      <Button
+                        color="success"
+                        href={`/stocks/report/${productEvent.report_id}`}>
+                        View Report
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <>

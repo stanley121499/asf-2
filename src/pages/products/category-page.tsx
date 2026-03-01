@@ -123,9 +123,11 @@ const CategoryListPage: React.FC = function () {
       >
         <div className="flex space-between items-center gap-4">
           <img
-            src={category.media_url}
+            src={category.media_url || ""}
             alt={category.name}
             className="w-16 h-16 object-cover rounded-md"
+            loading="lazy"
+            decoding="async"
           />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
             {category.name}
@@ -284,7 +286,7 @@ const CategoryListPage: React.FC = function () {
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Products</h1>
               <a href="/products/list" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">All Products</a>
               <a href="/products/categories" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">Category</a>
-              
+
               <a href="/products/schedule" className="text-sm text-grey-500 dark:text-grey-400 hover:underline">Schedule</a>
             </div>
             <AddSetModal activeSet={activeSet} />
@@ -339,12 +341,12 @@ const CategoryListPage: React.FC = function () {
                     </div>
                     {file && (
                       <div className="mt-2">
-                        <img src={URL.createObjectURL(file)} alt="Category Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={URL.createObjectURL(file)} alt="Category Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                     {selectedCategory.media_url && !file && (
                       <div className="mt-2">
-                        <img src={selectedCategory.media_url} alt="Category Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={selectedCategory.media_url} alt="Category Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                   </div>
@@ -377,7 +379,13 @@ const CategoryListPage: React.FC = function () {
                       <div key={d.id} className="rounded-lg shadow p-3 flex items-center justify-between border border-gray-200 dark:border-gray-500 bg-transparent">
                         <div className="flex items-center gap-4">
                           {d.media_url && (
-                            <img src={d.media_url} alt={d.name || "Department"} className="w-16 h-16 object-cover rounded-md" />
+                            <img
+                              src={d.media_url}
+                              alt={d.name || "Department"}
+                              className="w-16 h-16 object-cover rounded-md"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           )}
                           <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">{d.name || "Untitled Department"}</h2>
                         </div>
@@ -402,12 +410,12 @@ const CategoryListPage: React.FC = function () {
                     </div>
                     {deptFile && (
                       <div className="mt-2">
-                        <img src={URL.createObjectURL(deptFile)} alt="Department Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={URL.createObjectURL(deptFile)} alt="Department Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                     {selectedDepartment.media_url && !deptFile && (
                       <div className="mt-2">
-                        <img src={selectedDepartment.media_url || ""} alt="Department Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={selectedDepartment.media_url || ""} alt="Department Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                   </div>
@@ -438,7 +446,13 @@ const CategoryListPage: React.FC = function () {
                       <div key={r.id} className="rounded-lg shadow p-3 flex items-center justify-between border border-gray-200 dark:border-gray-500 bg-transparent">
                         <div className="flex items-center gap-4">
                           {r.media_url && (
-                            <img src={r.media_url} alt={r.name || "Range"} className="w-16 h-16 object-cover rounded-md" />
+                            <img
+                              src={r.media_url}
+                              alt={r.name || "Range"}
+                              className="w-16 h-16 object-cover rounded-md"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           )}
                           <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">{r.name || "Untitled Range"}</h2>
                         </div>
@@ -463,12 +477,12 @@ const CategoryListPage: React.FC = function () {
                     </div>
                     {rangeFile && (
                       <div className="mt-2">
-                        <img src={URL.createObjectURL(rangeFile)} alt="Range Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={URL.createObjectURL(rangeFile)} alt="Range Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                     {selectedRange.media_url && !rangeFile && (
                       <div className="mt-2">
-                        <img src={selectedRange.media_url || ""} alt="Range Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={selectedRange.media_url || ""} alt="Range Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                   </div>
@@ -499,7 +513,13 @@ const CategoryListPage: React.FC = function () {
                       <div key={b.id} className="rounded-lg shadow p-3 flex items-center justify-between border border-gray-200 dark:border-gray-500 bg-transparent">
                         <div className="flex items-center gap-4">
                           {b.media_url && (
-                            <img src={b.media_url} alt={b.name || "Brand"} className="w-16 h-16 object-cover rounded-md" />
+                            <img
+                              src={b.media_url}
+                              alt={b.name || "Brand"}
+                              className="w-16 h-16 object-cover rounded-md"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           )}
                           <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">{b.name || "Untitled Brand"}</h2>
                         </div>
@@ -524,12 +544,12 @@ const CategoryListPage: React.FC = function () {
                     </div>
                     {brandFile && (
                       <div className="mt-2">
-                        <img src={URL.createObjectURL(brandFile)} alt="Brand Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={URL.createObjectURL(brandFile)} alt="Brand Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                     {selectedBrand.media_url && !brandFile && (
                       <div className="mt-2">
-                        <img src={selectedBrand.media_url || ""} alt="Brand Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" />
+                        <img src={selectedBrand.media_url || ""} alt="Brand Preview" className="object-cover rounded-sm w-full max-h-64 rounded-md" loading="eager" fetchPriority="high" decoding="async" />
                       </div>
                     )}
                   </div>
