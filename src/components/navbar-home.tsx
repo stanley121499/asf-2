@@ -55,11 +55,11 @@ useEffect(() => {
       <Navbar
         fluid
         rounded
-        className="bg-white dark:bg-gray-800 shadow-lg dark:shadow-none border-b dark:border-gray-700 transition-colors duration-200 p-4">
+        className="bg-white dark:bg-gray-800 shadow-lg dark:shadow-none border-b dark:border-gray-700 transition-colors duration-200 pl-4 pr-4">
         <div className="flex w-full items-center justify-between">
           {/* Logo */}
           <Navbar.Brand as={Link} href="https://flowbite-react.com">
-            <img alt="Logo" src="../../images/logo.svg" className="mr-3 h-10" />
+            <img alt="Logo" src="../../images/logo.svg" className="mr-3 h-14" />
             <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
               SYSTEM APP FORMULA
             </span>
