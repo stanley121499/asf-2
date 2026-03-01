@@ -197,32 +197,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   // Initialize current user state and listen for auth changes.
+  //
+  // IMPORTANT: the onAuthStateChange callback must NOT call any supabase.*
+  // methods (getSession, from, etc.).  Those calls internally await
+  // `initializePromise`, which is still pending while _notifyAllSubscribers
+  // is running inside _initialize()'s lock — causing a permanent navigator.locks
+  // deadlock that silently hangs every data fetch in the app.
+  //
+  // user_details is fetched in the separate useEffect below that reacts to
+  // user?.id changes, safely outside the auth lock.
   useEffect(() => {
     void fetchCurrentUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Keep `user` in sync
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Synchronous — only update React state, no Supabase calls.
       const newUser = session?.user ?? null;
       setUser(newUser);
-
-      // Only fetch user_detail if user changed (not on every session refresh).
-      // Use ref instead of user?.id in deps to avoid an infinite re-subscription loop.
-      if (newUser && newUser.id !== prevUserIdRef.current) {
-        prevUserIdRef.current = newUser.id;
-
-        const { data: detail, error: detailError } = await supabase
-          .from("user_details")
-          .select("*")
-          .eq("id", newUser.id)
-          .maybeSingle();
-
-        if (detailError) {
-          console.error("Error fetching user details:", detailError);
-          setUserDetail(null);
-        } else {
-          setUserDetail(detail);
-        }
-      } else if (!newUser) {
+      if (!newUser) {
         prevUserIdRef.current = null;
         setUserDetail(null);
       }
@@ -232,6 +223,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
       listener?.subscription.unsubscribe();
     };
   }, [fetchCurrentUser]); // ← fetchCurrentUser is stable (no deps), so this only runs once
+
+  // Fetch user_detail whenever the authenticated user ID changes.
+  // This runs outside the auth lock so supabase.from() can proceed safely.
+  useEffect(() => {
+    if (!user) return;
+    const userId = user.id;
+    if (userId === prevUserIdRef.current) return; // already fetched for this user
+    prevUserIdRef.current = userId;
+
+    supabase
+      .from("user_details")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error fetching user details:", error);
+          setUserDetail(null);
+        } else {
+          setUserDetail(data);
+        }
+      });
+  }, [user]);
 
   // Memoize value to avoid forcing rerenders of every consumer on unrelated renders.
   const value = useMemo<AuthContextProps>(
