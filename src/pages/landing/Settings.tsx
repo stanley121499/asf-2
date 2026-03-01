@@ -297,7 +297,7 @@ const ProfileSettingsPage: React.FC = () => {
     <>
       <NavbarHome />
       <section
-        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24"
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6"
         style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="w-full max-w-4xl mx-auto">

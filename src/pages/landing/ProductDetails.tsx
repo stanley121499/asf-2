@@ -395,7 +395,7 @@ const ProductDetails: React.FC = () => {
     return (
       <>
         <NavbarHome />
-        <div className="pt-20 md:pt-24 pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
+        <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
           <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Product Unavailable
@@ -423,7 +423,7 @@ const ProductDetails: React.FC = () => {
     return (
       <>
         <NavbarHome />
-        <div className="pt-20 md:pt-24 pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
+        <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
           <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Product Not Found
@@ -460,7 +460,7 @@ const ProductDetails: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      <section className="pt-20 md:pt-24 pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
+      <section className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
         <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-16">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
             {/* Product Image */}

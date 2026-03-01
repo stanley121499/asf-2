@@ -398,7 +398,7 @@ const CartPage: React.FC = () => {
       <>
         <NavbarHome />
         <div
-          className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24"
+          className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6"
           style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="max-w-3xl mx-auto">
@@ -444,7 +444,7 @@ const CartPage: React.FC = () => {
       <NavbarHome />
       {/* Mobile: bottom padding clears the fixed bottom nav + safe area */}
       <div
-        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 pt-20 md:pt-24"
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6"
         style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="max-w-6xl mx-auto">
