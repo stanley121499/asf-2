@@ -42,19 +42,46 @@ const SmartImage: React.FC<SmartImageProps> = ({
 }) => {
   /**
    * Check the module-level cache synchronously during state initialisation.
-   * If the URL was loaded earlier in this session, `isCached` will be true and
-   * both flags are set to true from the start — no skeleton, no observer.
+   * If the URL was loaded earlier in this session, both flags start as true —
+   * no skeleton, no observer, image renders instantly.
    */
-  const isCached = imageCache.has(src);
+  const isCachedOnMount = imageCache.has(src);
 
-  const [isVisible, setIsVisible] = useState<boolean>(eager || isCached);
-  const [isLoaded, setIsLoaded] = useState<boolean>(isCached);
+  const [isVisible, setIsVisible] = useState<boolean>(eager || isCachedOnMount);
+  const [isLoaded, setIsLoaded] = useState<boolean>(isCachedOnMount);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Synchronise isVisible and isLoaded whenever the `src` prop changes.
+   *
+   * `useState` initialiser only runs on the first mount. If the parent passes
+   * a different `src` after mount (e.g., because a context finished loading),
+   * the state flags become stale. This effect corrects that by re-checking the
+   * cache for the new URL and either showing it instantly (cache hit) or
+   * resetting to the loading state (cache miss) so the skeleton shows correctly.
+   *
+   * This also covers the "scroll back" case when the component was somehow
+   * remounted: the cache check makes the image appear without a skeleton.
+   */
   useEffect(() => {
-    // If eager or already cached, no need for the IntersectionObserver
-    if (eager || isCached) return;
+    if (imageCache.has(src)) {
+      setIsVisible(true);
+      setIsLoaded(true);
+    } else {
+      // New src not yet in cache — reset loaded flag so skeleton shows while
+      // the image downloads. Keep isVisible if the IO already fired.
+      setIsLoaded(false);
+    }
+  }, [src]);
+
+  /**
+   * Set up the IntersectionObserver to trigger loading before the element
+   * enters the viewport. Skipped entirely if eager or src is already cached.
+   */
+  useEffect(() => {
+    // Already visible (eager or cache hit) — no observer needed
+    if (eager || imageCache.has(src)) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -75,9 +102,7 @@ const SmartImage: React.FC<SmartImageProps> = ({
     return () => {
       observer.disconnect();
     };
-    // isCached is evaluated once at mount from module-level state — intentionally excluded
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eager, rootMargin]);
+  }, [eager, src, rootMargin]);
 
   /**
    * Called when the browser finishes downloading the image.

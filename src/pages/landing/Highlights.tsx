@@ -27,10 +27,17 @@ const HighlightsPage: React.FC = () => {
     [posts]
   );
 
-  /** Collect above-fold and near-fold image URLs to programmatically preload */
+  /**
+   * Preload ALL image URLs for the page immediately after the contexts are ready.
+   * This is an editorial/gallery page — the user will scroll through all content,
+   * so there is no benefit to holding back any download. Firing all requests at
+   * once lets the browser pipeline them over HTTP/2 and fill its cache before
+   * the user reaches each image. SmartImage will check `imageCache` on mount and
+   * skip the skeleton entirely for any URL that finished downloading first.
+   */
   const preloadUrls = useMemo<string[]>(
     () =>
-      featuredPosts.slice(0, 5).map(
+      featuredPosts.map(
         (post) =>
           post.medias?.[0]?.media_url ??
           postMediaMap.get(post.id) ??
