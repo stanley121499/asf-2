@@ -1,31 +1,55 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import NavbarHome from "../../components/navbar-home";
-import { usePostContext } from "../../context/post/PostContext";
+import { usePostContext, Post } from "../../context/post/PostContext";
 import { usePostMediaContext } from "../../context/post/PostMediaContext";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
+import { useImagePreloader } from "../../hooks/useImagePreloader";
+import SmartImage from "../../components/SmartImage";
 
 /**
  * Highlights page component that displays featured posts with a premium feel
  */
 const HighlightsPage: React.FC = () => {
-  const { posts } = usePostContext();
-  const { postMedias } = usePostMediaContext();
+  const { posts, loading: postsLoading } = usePostContext();
+  const { postMedias, loading: mediaLoading } = usePostMediaContext();
   const postMediaMap = useMemo<Map<string, string>>(
     () => new Map(postMedias.map((m) => [m.post_id, m.media_url ?? ""])),
     [postMedias]
   );
-  const [featuredPosts, setFeaturedPosts] = useState<any[]>([]);
 
-  // Filter and organize posts for display
-  useEffect(() => {
-    // Sort posts by creation date (newest first)
-    const sortedPosts = [...posts].sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const featuredPosts = useMemo<Post[]>(
+    () =>
+      [...posts].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+    [posts]
+  );
+
+  /** Collect above-fold and near-fold image URLs to programmatically preload */
+  const preloadUrls = useMemo<string[]>(
+    () =>
+      featuredPosts.slice(0, 5).map(
+        (post) =>
+          post.medias?.[0]?.media_url ??
+          postMediaMap.get(post.id) ??
+          ""
+      ),
+    [featuredPosts, postMediaMap]
+  );
+
+  useImagePreloader(preloadUrls);
+
+  if (postsLoading || mediaLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <NavbarHome />
+        <div className="w-full h-[75vh] bg-gray-200 animate-pulse" />
+        <div className="w-full h-[75vh] bg-gray-200 animate-pulse mt-2" />
+      </div>
     );
-
-    setFeaturedPosts(sortedPosts);
-  }, [posts]);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -39,15 +63,15 @@ const HighlightsPage: React.FC = () => {
         {/* Hero Banner */}
         {featuredPosts.length > 0 && (
           <Link to="/product-section" className="relative">
-            <img
-              src={featuredPosts[0].medias?.[0]?.media_url ||
-                postMediaMap.get(featuredPosts[0].id) ||
-                "https://via.placeholder.com/800x600?text=Featured+Highlight"}
+            <SmartImage
+              src={
+                featuredPosts[0].medias?.[0]?.media_url ??
+                postMediaMap.get(featuredPosts[0].id) ??
+                "https://via.placeholder.com/800x600?text=Featured+Highlight"
+              }
               alt="Featured Collection"
               className="w-full h-[75vh] object-cover"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
+              eager={true}
             />
             <div className="absolute inset-0 flex flex-col justify-end p-8 bg-gradient-to-t from-black/40 to-transparent">
               <h2 className="text-3xl font-semibold text-white uppercase tracking-wide">
@@ -65,14 +89,14 @@ const HighlightsPage: React.FC = () => {
         {/* Festival Swirls Banner */}
         {featuredPosts.length > 1 && (
           <Link to="/product-section" className="relative mt-2">
-            <img
-              src={featuredPosts[1].medias?.[0]?.media_url ||
-                postMediaMap.get(featuredPosts[1].id) ||
-                "https://via.placeholder.com/800x600?text=Festival+Collection"}
+            <SmartImage
+              src={
+                featuredPosts[1].medias?.[0]?.media_url ??
+                postMediaMap.get(featuredPosts[1].id) ??
+                "https://via.placeholder.com/800x600?text=Festival+Collection"
+              }
               alt="Festival Collection"
               className="w-full h-[75vh] object-cover"
-              loading="lazy"
-              decoding="async"
             />
             <div className="absolute inset-0 flex flex-col justify-end p-8 bg-gradient-to-t from-black/40 to-transparent">
               <h2 className="text-3xl font-semibold text-white uppercase tracking-wide">
@@ -94,14 +118,14 @@ const HighlightsPage: React.FC = () => {
           {/* Full-Width Spotlight Item */}
           {featuredPosts.length > 2 && (
             <Link to="/product-section" className="relative mb-6">
-              <img
-                src={featuredPosts[2].medias?.[0]?.media_url ||
-                  postMediaMap.get(featuredPosts[2].id) ||
-                  "https://via.placeholder.com/800x500?text=Spring+Vacay"}
+              <SmartImage
+                src={
+                  featuredPosts[2].medias?.[0]?.media_url ??
+                  postMediaMap.get(featuredPosts[2].id) ??
+                  "https://via.placeholder.com/800x500?text=Spring+Vacay"
+                }
                 alt="Spring Vacay"
                 className="w-full aspect-[4/5] object-cover"
-                loading="lazy"
-                decoding="async"
               />
               <div className="absolute bottom-0 left-0 w-full p-6">
                 <h3 className="text-xl font-medium text-white uppercase tracking-wide">
@@ -119,8 +143,9 @@ const HighlightsPage: React.FC = () => {
           {/* Side-by-Side Spotlight Items */}
           <div className="flex space-x-2">
             {featuredPosts.slice(3, 5).map((post, index) => {
-              const postMedia = post.medias?.[0]?.media_url ||
-                postMediaMap.get(post.id) ||
+              const postMedia =
+                post.medias?.[0]?.media_url ??
+                postMediaMap.get(post.id) ??
                 `https://via.placeholder.com/400x500?text=Spotlight+${index + 1}`;
 
               const titles = ["CHIC THONGS", "BEACH ESSENTIALS"];
@@ -128,12 +153,10 @@ const HighlightsPage: React.FC = () => {
               return (
                 <Link to="/product-section" key={post.id || `spotlight-${index}`} className="w-1/2">
                   <div className="relative">
-                    <img
+                    <SmartImage
                       src={postMedia}
                       alt={post.caption || titles[index]}
                       className="w-full aspect-[3/4] object-cover"
-                      loading="lazy"
-                      decoding="async"
                     />
                     <div className="absolute bottom-0 left-0 w-full p-4">
                       <h3 className="text-sm font-medium text-white uppercase tracking-wide">
@@ -161,21 +184,20 @@ const HighlightsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex space-x-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
+          <div className="flex space-x-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain">
             {featuredPosts.slice(5, 8).map((post, index) => {
-              const postMedia = post.medias?.[0]?.media_url ||
-                postMediaMap.get(post.id) ||
+              const postMedia =
+                post.medias?.[0]?.media_url ??
+                postMediaMap.get(post.id) ??
                 `https://via.placeholder.com/400x400?text=Product+${index + 1}`;
 
               return (
-                <Link to="/product-section" key={post.id || `product-${index}`} className="flex-shrink-0 w-[60vw]">
+                <Link to="/product-section" key={post.id || `product-${index}`} className="flex-shrink-0 w-[60vw] snap-start">
                   <div className="relative">
-                    <img
+                    <SmartImage
                       src={postMedia}
                       alt={post.caption || `Product ${index + 1}`}
                       className="w-full aspect-square object-cover"
-                      loading="lazy"
-                      decoding="async"
                     />
                   </div>
                 </Link>
@@ -191,14 +213,14 @@ const HighlightsPage: React.FC = () => {
           {/* First Row - Full Width Image */}
           {featuredPosts.length > 8 && (
             <Link to="/product-section" className="relative mb-2">
-              <img
-                src={featuredPosts[8].medias?.[0]?.media_url ||
-                  postMediaMap.get(featuredPosts[8].id) ||
-                  "https://via.placeholder.com/800x400?text=Featured+Collection"}
+              <SmartImage
+                src={
+                  featuredPosts[8].medias?.[0]?.media_url ??
+                  postMediaMap.get(featuredPosts[8].id) ??
+                  "https://via.placeholder.com/800x400?text=Featured+Collection"
+                }
                 alt={featuredPosts[8].caption || "Featured Collection"}
                 className="w-full aspect-video object-cover"
-                loading="lazy"
-                decoding="async"
               />
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <h3 className="text-xl font-medium text-white uppercase tracking-wide">
@@ -216,20 +238,19 @@ const HighlightsPage: React.FC = () => {
           {/* Second Row - Two Side-by-Side Images */}
           <div className="flex">
             {featuredPosts.slice(9, 11).map((post, index) => {
-              const postMedia = post.medias?.[0]?.media_url ||
-                postMediaMap.get(post.id) ||
+              const postMedia =
+                post.medias?.[0]?.media_url ??
+                postMediaMap.get(post.id) ??
                 `https://via.placeholder.com/400x600?text=Collection+${index + 1}`;
 
               const titles = ["BUILT TO BREAK THE RULES", "EFFORT MEETS EDGE"];
 
               return (
                 <Link to="/product-section" key={post.id || `collection-side-${index}`} className="w-1/2 relative">
-                  <img
+                  <SmartImage
                     src={postMedia}
                     alt={post.caption || titles[index]}
                     className="w-full aspect-[3/4] object-cover"
-                    loading="lazy"
-                    decoding="async"
                   />
                   <div className="absolute inset-0 flex flex-col justify-end p-4">
                     <h3 className="text-sm font-medium text-white uppercase tracking-wide">
@@ -249,14 +270,14 @@ const HighlightsPage: React.FC = () => {
           {/* Third Row - Full Width Image */}
           {featuredPosts.length > 11 && (
             <Link to="/product-section" className="relative mt-2">
-              <img
-                src={featuredPosts[11].medias?.[0]?.media_url ||
-                  postMediaMap.get(featuredPosts[11].id) ||
-                  "https://via.placeholder.com/800x400?text=Street+Meets+Chic"}
+              <SmartImage
+                src={
+                  featuredPosts[11].medias?.[0]?.media_url ??
+                  postMediaMap.get(featuredPosts[11].id) ??
+                  "https://via.placeholder.com/800x400?text=Street+Meets+Chic"
+                }
                 alt={featuredPosts[11].caption || "Street Meets Chic"}
                 className="w-full aspect-video object-cover"
-                loading="lazy"
-                decoding="async"
               />
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <h3 className="text-xl font-medium text-white uppercase tracking-wide">
@@ -276,14 +297,14 @@ const HighlightsPage: React.FC = () => {
         {featuredPosts.length > 12 && (
           <Link to="/product-section" className="mt-12 px-0">
             <div className="relative">
-              <img
-                src={featuredPosts[12].medias?.[0]?.media_url ||
-                  postMediaMap.get(featuredPosts[12].id) ||
-                  "https://via.placeholder.com/800x400?text=Texture+Talks"}
+              <SmartImage
+                src={
+                  featuredPosts[12].medias?.[0]?.media_url ??
+                  postMediaMap.get(featuredPosts[12].id) ??
+                  "https://via.placeholder.com/800x400?text=Texture+Talks"
+                }
                 alt={featuredPosts[12].caption || "Texture Talks"}
                 className="w-full aspect-[3/2] object-cover"
-                loading="lazy"
-                decoding="async"
               />
               <div className="absolute inset-0 flex flex-col justify-center items-start p-8">
                 <h2 className="text-2xl font-semibold text-white mb-2">Texture Talks</h2>
@@ -302,19 +323,18 @@ const HighlightsPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             {featuredPosts.slice(13).map((post, index) => {
-              const postMedia = post.medias?.[0]?.media_url ||
-                postMediaMap.get(post.id) ||
+              const postMedia =
+                post.medias?.[0]?.media_url ??
+                postMediaMap.get(post.id) ??
                 `https://via.placeholder.com/400x400?text=Item+${index + 1}`;
 
               return (
                 <Link to="/product-section" key={post.id || `all-item-${index}`} className="flex flex-col">
                   <div className="relative">
-                    <img
+                    <SmartImage
                       src={postMedia}
                       alt={post.caption || `Item ${index + 1}`}
                       className="w-full aspect-square object-cover"
-                      loading="lazy"
-                      decoding="async"
                     />
                     <div className="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/30 to-transparent">
                       <h3 className="text-sm font-medium text-white">
@@ -337,4 +357,4 @@ const HighlightsPage: React.FC = () => {
   );
 };
 
-export default HighlightsPage; 
+export default HighlightsPage;
