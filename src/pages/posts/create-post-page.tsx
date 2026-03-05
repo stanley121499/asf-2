@@ -66,14 +66,22 @@ const CreatePostPage: React.FC = () => {
     createPostFolder(newPostFolder).then((postFolder) => {
       if (postFolder) {
         acceptedFiles.forEach(async (file) => {
-          // Generate Random Unique ID for the media
+          // Generate Random Unique ID for the media.
+          // We append the original file extension so that:
+          //  1. Supabase Storage serves the file with the correct Content-Type.
+          //  2. Our isVideoUrl() helper can detect videos from the URL alone.
           const randomId = Math.random().toString(36).substring(2);
+          const ext = file.name.includes(".")
+            ? `.${file.name.split(".").pop() ?? ""}`
+            : "";
+          const storagePath = `${randomId}${ext}`;
 
           const { data, error } = await supabase.storage
             .from("post_medias")
-            .upload(`${randomId}`, file, {
+            .upload(storagePath, file, {
               cacheControl: "3600",
               upsert: false,
+              contentType: file.type || undefined,
             });
 
           if (error) {

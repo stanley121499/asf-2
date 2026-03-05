@@ -82,14 +82,22 @@ const CreateProductPage: React.FC = () => {
       if (productFolder) {
         await Promise.all(
           acceptedFiles.map(async (file) => {
-            // Generate Random Unique ID for the media
+            // Generate Random Unique ID for the media.
+            // We append the original file extension so that:
+            //  1. Supabase Storage serves the file with the correct Content-Type.
+            //  2. Our isVideoUrl() helper can detect videos from the URL alone.
             const randomId = Math.random().toString(36).substring(2);
+            const ext = file.name.includes(".")
+              ? `.${file.name.split(".").pop() ?? ""}`
+              : "";
+            const storagePath = `${randomId}${ext}`;
 
             const { data, error } = await supabase.storage
               .from("product_medias")
-              .upload(`${randomId}`, file, {
+              .upload(storagePath, file, {
                 cacheControl: "3600",
                 upsert: false,
+                contentType: file.type || undefined,
               });
 
             if (error || !data) {

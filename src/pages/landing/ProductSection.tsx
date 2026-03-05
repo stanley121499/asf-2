@@ -77,7 +77,7 @@ const ProductSection: React.FC = () => {
                           viewBox="0 0 20 20">
                           <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
                         </svg>
-                        Home
+                        首页
                       </a>
                     </li>
                     <li>
@@ -101,7 +101,7 @@ const ProductSection: React.FC = () => {
                         <a
                           href="/product-section"
                           className="ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-white md:ms-2">
-                          Products
+                          商品
                         </a>
                       </div>
                     </li>
@@ -141,7 +141,7 @@ const ProductSection: React.FC = () => {
                   value={selectedFilter}
                   onChange={(e) => handleFilterChange(e.target.value)}
                   className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
-                  <option value="All">All</option>
+                  <option value="All">全部</option>
                   {categories.map((filter) => (
                     <option key={filter.id} value={filter.name}>
                       {filter.name}
@@ -154,9 +154,9 @@ const ProductSection: React.FC = () => {
                 value={selectedSort}
                 onChange={(e) => setSelectedSort(e.target.value)}
                 className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
-                <option value="Price: Low to High">Price: Low to High</option>
-                <option value="Price: High to Low">Price: High to Low</option>
-                <option value="Newest First">Newest First</option>
+                <option value="Price: Low to High">价格：从低到高</option>
+                <option value="Price: High to Low">价格：从高到低</option>
+                <option value="Newest First">最新优先</option>
               </Select>
             </div>
           </div>
@@ -205,7 +205,7 @@ const ProductSection: React.FC = () => {
                             (media) => media.product_id === product.id
                           )?.media_url || "/default-image.jpg"
                         }
-                        alt={"Product"}
+                        alt={"商品"}
                       />
 
                       <div className="p-4">

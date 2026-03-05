@@ -18,6 +18,7 @@ import * as flowbiteReact from "flowbite-react";
 import { useAlertContext } from "../../context/AlertContext";
 import PostComponent from "../../components/post/post";
 import { FaChevronDown } from "react-icons/fa6";
+import MediaThumb from "../../components/MediaThumb";
 
 interface PostEditorProps {
   selectedFolder: PostFolder | null;
@@ -195,7 +196,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                         setPreviewMedia(media.media_url);
                       }
                     }}>
-                    <img
+                    <MediaThumb
                       src={media.media_url}
                       alt="media"
                       className="w-full object-cover rounded"
@@ -374,7 +375,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       prev.filter((m) => m.id !== media.id)
                     );
                   }}>
-                  <img
+                  <MediaThumb
                     src={media.media_url}
                     alt="media"
                     className="w-16 h-16 object-cover rounded"
@@ -405,7 +406,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                     onClick={() => {
                       setArrangedMedias((prev) => [...prev, media]);
                     }}>
-                    <img
+                    <MediaThumb
                       src={media.media_url}
                       alt="media"
                       className="w-16 h-16 object-cover rounded"

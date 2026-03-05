@@ -15,6 +15,8 @@ import { Link } from "react-router-dom";
 import { LandingLayout } from "../../layouts";
 import type { Tables } from "../../database.types";
 import { HomeHighlightsCard } from "../../components/home/HomeHighlightsCard";
+import MediaThumb from "../../components/MediaThumb";
+import MediaAwareLink from "../../components/MediaAwareLink";
 
 /**
  * Horizontal scrollable section component for reuse across different content types
@@ -43,14 +45,14 @@ const ScrollableSection = <TItem,>({
         {viewAllLink && (
           isHighlightSection ? (
             <Link to={viewAllLink} className="group bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm transform transition-all duration-300 hover:shadow-md hover:scale-105 hover:from-indigo-800 hover:to-purple-900 flex items-center space-x-1 hover:-translate-y-0.5">
-              <span>View All</span>
+              <span>查看全部</span>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           ) : (
             <Link to={viewAllLink} className="text-indigo-700 text-sm font-medium hover:text-indigo-900 transition-colors duration-200 flex items-center space-x-1 group">
-              <span>View All</span>
+              <span>查看全部</span>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -107,7 +109,7 @@ const HomePage: React.FC = () => {
    * Example: "1 product" / "12 products"
    */
   const formatProductCount = (count: number): string => {
-    return `${count} product${count === 1 ? "" : "s"}`;
+    return `${count} 件商品`;
   };
 
   // Sort posts by latest (created_at or updated_at)
@@ -381,7 +383,7 @@ const HomePage: React.FC = () => {
 
           <div className="px-6 pt-6 pb-4 relative">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium uppercase tracking-wider opacity-90">Wallet Balance</h2>
+              <h2 className="text-sm font-medium uppercase tracking-wider opacity-90">钱包余额</h2>
               <Link
                 to="/notifications"
                 className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-full p-2 shadow-inner relative hover:bg-opacity-25 transition-all duration-300 transform hover:scale-105"
@@ -407,9 +409,9 @@ const HomePage: React.FC = () => {
                 <div className="flex items-center">
                   <div className="flex flex-col space-y-3 w-full">
                     <div className="flex items-center">
-                      <span className="text-3xl font-bold tracking-tight">{points} Points</span>
+                      <span className="text-3xl font-bold tracking-tight">{points} 积分</span>
                       <span className="ml-3 px-3 py-1 text-xs font-semibold bg-yellow-500 bg-opacity-20 text-yellow-300 rounded-full border border-yellow-500 border-opacity-20">
-                        {levelData.currentLevel || "Member"}
+                        {levelData.currentLevel || "会员"}
                       </span>
                     </div>
                     <div className="w-full">
@@ -422,7 +424,7 @@ const HomePage: React.FC = () => {
                         </div>
                         <div className="mt-1.5">
                           <span className="text-xs font-medium text-white text-opacity-80">
-                            {levelData.nextLevel ? `${levelData.pointsToNextLevel} points to ${levelData.nextLevel}` : "Max tier reached"}
+                            {levelData.nextLevel ? `还需 ${levelData.pointsToNextLevel} 积分升至 ${levelData.nextLevel}` : "已达最高等级"}
                           </span>
                         </div>
                       </div>
@@ -442,11 +444,11 @@ const HomePage: React.FC = () => {
                 to="/authentication/sign-in?returnTo=%2F"
                 className="mt-6 block py-4 px-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg border border-white border-opacity-20 active:bg-opacity-25 transition-all"
               >
-                <p className="text-sm uppercase tracking-wider font-medium">LOG IN / REGISTER</p>
+                <p className="text-sm uppercase tracking-wider font-medium">登录 / 注册</p>
                 <p className="text-xs mt-1 opacity-80 leading-relaxed">
-                  Login to check your progress and redeem exclusive rewards
+                  登录以查看您的进度并兑换专属奖励
                 </p>
-                <p className="text-xs mt-2 font-semibold opacity-90">Tap to sign in →</p>
+                <p className="text-xs mt-2 font-semibold opacity-90">点击登录 →</p>
               </Link>
             )}
           </div>
@@ -458,7 +460,7 @@ const HomePage: React.FC = () => {
         {/* Highlights Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Highlights"
+            title="精选推荐"
             viewAllLink="/highlights"
             items={sortedPosts.slice(0, 10)}
             renderItem={(post, index) => {
@@ -468,38 +470,39 @@ const HomePage: React.FC = () => {
                 `https://via.placeholder.com/300x200?text=Post+${index + 1}`;
 
               return (
-                <Link
+                <MediaAwareLink
                   to="/product-section"
-                  key={`post-${post.id || index}`}
-                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group"
+                  mediaSrc={postMedia}
+                  caption={post.caption ?? `帖子 ${index + 1}`}
+                  ctaLabel="了解更多"
+                  key={`post-${post.id !== "" ? post.id : index}`}
+                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group block"
                   style={{ width: "17rem" }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-xl"></div>
-                  <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                    FEATURED
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-xl pointer-events-none"></div>
+                  <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10 pointer-events-none">
+                    精选
                   </div>
                   <div className="h-48 bg-gray-100 relative">
-                    <img
+                    <MediaThumb
                       src={postMedia}
-                      alt={post.caption || `Post ${index + 1}`}
+                      alt={post.caption ?? `帖子 ${index + 1}`}
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      decoding="async"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30 pointer-events-none"></div>
                   </div>
                   <div className="p-5 relative">
                     <h3 className="font-bold text-gray-900 truncate">
-                      {post.caption || `Featured Post ${index + 1}`}
+                      {post.caption !== "" ? post.caption : `精选帖子 ${index + 1}`}
                     </h3>
                     <p className="text-sm text-gray-600 line-clamp-2 mt-2 leading-relaxed">
-                      {post.cta_text || "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
+                      {post.cta_text !== "" ? post.cta_text : "暂无描述"}
                     </p>
                     <div className="mt-4 flex justify-end">
-                      <span className="text-xs text-indigo-700 font-medium">Discover More →</span>
+                      <span className="text-xs text-indigo-700 font-medium">了解更多 →</span>
                     </div>
                   </div>
-                </Link>
+                </MediaAwareLink>
               );
             }}
             isHighlightSection={true}
@@ -509,12 +512,12 @@ const HomePage: React.FC = () => {
         {/* Categories Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Categories"
+            title="分类"
             viewAllLink="/product-section"
             items={sortedCategories.slice(0, 10)}
             renderItem={(category, index) => {
               // Step 1: Determine the best image we can show for this category.
-              const placeholder = makePlaceholderImageUrl(`Category ${index + 1}`);
+              const placeholder = makePlaceholderImageUrl(`分类 ${index + 1}`);
               const categoryImage = category.media_url || getCategoryProductImage(category.id);
 
               // Step 2: Compute product count subtitle (via product_categories mapping).
@@ -542,12 +545,12 @@ const HomePage: React.FC = () => {
         {/* Departments Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Departments"
+            title="部门"
             viewAllLink="/product-section?department=all"
             items={sortedDepartments.slice(0, 10)}
             renderItem={(dept, index) => {
               // Step 1: Determine image for this department.
-              const placeholder = makePlaceholderImageUrl(`Department ${index + 1}`);
+              const placeholder = makePlaceholderImageUrl(`部门 ${index + 1}`);
               const img = dept.media_url || getClassificationImage("department_id", dept.id);
 
               // Step 2: Compute product count subtitle (via products foreign key).
@@ -560,7 +563,7 @@ const HomePage: React.FC = () => {
                   to={`/product-section?department=${dept.id}`}
                   imageUrl={img}
                   fallbackImageUrl={placeholder}
-                  title={dept.name ?? `Department ${index + 1}`}
+                  title={dept.name ?? `部门 ${index + 1}`}
                   subtitle={formatProductCount(count)}
                 />
               );
@@ -572,12 +575,12 @@ const HomePage: React.FC = () => {
         {/* Ranges Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Ranges"
+            title="系列"
             viewAllLink="/product-section?range=all"
             items={sortedRanges.slice(0, 10)}
             renderItem={(range, index) => {
               // Step 1: Determine image for this range.
-              const placeholder = makePlaceholderImageUrl(`Range ${index + 1}`);
+              const placeholder = makePlaceholderImageUrl(`系列 ${index + 1}`);
               const img = range.media_url || getClassificationImage("range_id", range.id);
 
               // Step 2: Compute product count subtitle.
@@ -590,7 +593,7 @@ const HomePage: React.FC = () => {
                   to={`/product-section?range=${range.id}`}
                   imageUrl={img}
                   fallbackImageUrl={placeholder}
-                  title={range.name ?? `Range ${index + 1}`}
+                  title={range.name ?? `系列 ${index + 1}`}
                   subtitle={formatProductCount(count)}
                 />
               );
@@ -602,12 +605,12 @@ const HomePage: React.FC = () => {
         {/* Brands Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Brands"
+            title="品牌"
             viewAllLink="/product-section?brand=all"
             items={sortedBrands.slice(0, 10)}
             renderItem={(brand, index) => {
               // Step 1: Determine image for this brand.
-              const placeholder = makePlaceholderImageUrl(`Brand ${index + 1}`);
+              const placeholder = makePlaceholderImageUrl(`品牌 ${index + 1}`);
               const img = brand.media_url || getClassificationImage("brand_id", brand.id);
 
               // Step 2: Compute product count subtitle.
@@ -620,7 +623,7 @@ const HomePage: React.FC = () => {
                   to={`/product-section?brand=${brand.id}`}
                   imageUrl={img}
                   fallbackImageUrl={placeholder}
-                  title={brand.name ?? `Brand ${index + 1}`}
+                  title={brand.name ?? `品牌 ${index + 1}`}
                   subtitle={formatProductCount(count)}
                 />
               );
@@ -632,7 +635,7 @@ const HomePage: React.FC = () => {
         {/* Products Section */}
         <div className="py-4">
           <ScrollableSection
-            title="Products"
+            title="商品"
             viewAllLink="/products"
             items={sortedProducts.slice(0, 10)}
             renderItem={(product, index) => {
@@ -655,12 +658,10 @@ const HomePage: React.FC = () => {
                   className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-1 group"
                 >
                   <div className="h-44 bg-gray-100 relative">
-                    <img
-                      src={productMediaUrl || `https://via.placeholder.com/160?text=Product+${index + 1}`}
-                      alt={product.name || `Product ${index + 1}`}
+                    <MediaThumb
+                      src={productMediaUrl || `https://via.placeholder.com/160?text=商品+${index + 1}`}
+                      alt={product.name || `商品 ${index + 1}`}
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      loading="lazy"
-                      decoding="async"
                     />
                     {productCategoryNames && (
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
@@ -671,7 +672,7 @@ const HomePage: React.FC = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="font-medium text-gray-900 truncate">
-                      {product.name || `Product ${index + 1}`}
+                      {product.name || `商品 ${index + 1}`}
                     </h3>
                     <div className="flex justify-between items-center mt-2">
                       <p className="text-sm font-bold text-indigo-800">

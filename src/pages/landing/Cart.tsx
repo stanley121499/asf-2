@@ -332,7 +332,7 @@ const CartPage: React.FC = () => {
    */
   const handleTestPayNow = (): void => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty.");
+      alert("您的购物车为空。");
       return;
     }
 
@@ -409,7 +409,7 @@ const CartPage: React.FC = () => {
                 className="inline-flex items-center text-blue-600 hover:underline text-sm"
               >
                 <HiOutlineArrowLeft className="mr-1 h-4 w-4" />
-                Continue Shopping
+                继续购物
               </Link>
             </div>
 
@@ -417,18 +417,18 @@ const CartPage: React.FC = () => {
               <div className="text-center py-10">
                 <HiOutlineShoppingCart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Your cart is empty
+                  您的购物车为空
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Sign in to see your saved items, or keep browsing.
+                  登录以查看已保存的商品，或继续浏览。
                 </p>
                 {/* Pass returnTo so after login the user lands back on /cart */}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link to="/authentication/sign-in?returnTo=%2Fcart">
-                    <Button color="blue" className="w-full sm:w-auto">Sign In</Button>
+                    <Button color="blue" className="w-full sm:w-auto">登录</Button>
                   </Link>
                   <Link to="/product-section">
-                    <Button color="light" className="w-full sm:w-auto">Browse Products</Button>
+                    <Button color="light" className="w-full sm:w-auto">浏览商品</Button>
                   </Link>
                 </div>
               </div>
@@ -451,15 +451,15 @@ const CartPage: React.FC = () => {
           <div className="mb-6">
             <Link to="/product-section" className="inline-flex items-center text-blue-600 hover:underline">
               <HiOutlineArrowLeft className="mr-2 h-5 w-5" />
-              Continue Shopping
+              继续购物
             </Link>
           </div>
 
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
             <HiOutlineShoppingCart className="mr-3 h-8 w-8" />
-            Shopping Cart
+            购物车
             <Badge color="gray" className="ml-3">
-              {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+              {cartItems.length} 件商品
             </Badge>
           </h1>
 
@@ -470,14 +470,14 @@ const CartPage: React.FC = () => {
                   <HiOutlineShoppingCart className="w-full h-full" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Your cart is empty
+                  您的购物车为空
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Looks like you haven&apos;t added any items to your cart yet.
+                  您尚未将任何商品添加至购物车。
                 </p>
                 <Link to="/product-section">
                   <Button color="blue">
-                    Start Shopping
+                    开始购物
                   </Button>
                 </Link>
               </div>
@@ -491,14 +491,14 @@ const CartPage: React.FC = () => {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          Some items are unavailable
+                          部分商品不可用
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                          One or more products in your cart were removed from sale. Please remove them before checkout.
+                          购物车中的一个或多个商品已下架，请在结账前将其移除。
                         </p>
                       </div>
                       <Button color="failure" onClick={() => void handleRemoveDeletedItems()}>
-                        Remove Unavailable Items
+                        移除不可用商品
                       </Button>
                     </div>
                   </Card>
@@ -526,11 +526,11 @@ const CartPage: React.FC = () => {
                               </Link>
                               {item.isDeleted && (
                                 <p className="mt-1 text-sm text-red-600">
-                                  This product is no longer available.
+                                  此商品已不再可用。
                                 </p>
                               )}
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Variant: {item.variant || "Default"}
+                                规格：{item.variant || "默认"}
                               </p>
 
                               {/* Price */}
@@ -588,7 +588,7 @@ const CartPage: React.FC = () => {
 
                               {item.quantity >= item.maxQuantity && (
                                 <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                  Max
+                                  已达上限
                                 </span>
                               )}
                             </div>
@@ -602,7 +602,7 @@ const CartPage: React.FC = () => {
                                 className="inline-flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
                                 <HiOutlineTrash className="mr-1.5 h-4 w-4" />
-                                Remove
+                                删除
                               </button>
                             </div>
                           </div>
@@ -620,8 +620,8 @@ const CartPage: React.FC = () => {
                         <HiOutlineShieldCheck className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Secure Checkout</h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Your payment information is encrypted</p>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">安全结账</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">您的支付信息已加密</p>
                       </div>
                     </div>
                     <div className="flex items-start">
@@ -629,8 +629,8 @@ const CartPage: React.FC = () => {
                         <HiOutlineTruck className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Free Shipping</h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">On orders over $100</p>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">免费配送</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">满100元免运费</p>
                       </div>
                     </div>
                     <div className="flex items-start">
@@ -638,8 +638,8 @@ const CartPage: React.FC = () => {
                         <HiOutlineCreditCard className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Multiple Payment Options</h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Credit card, PayPal, and more</p>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">多种支付方式</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">信用卡、PayPal等多种方式</p>
                       </div>
                     </div>
                   </div>
@@ -650,14 +650,14 @@ const CartPage: React.FC = () => {
               <div className="lg:col-span-1">
                 <Card>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    Order Summary
+                    订单摘要
                   </h2>
 
                   {/* Points Usage Section */}
                   {availablePoints > 0 && (
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                        Use Points (Available: {availablePoints.toLocaleString()})
+                        使用积分（可用：{availablePoints.toLocaleString()}）
                       </h3>
                       <div className="flex items-center space-x-2">
                         <input
@@ -667,14 +667,14 @@ const CartPage: React.FC = () => {
                           value={pointsToUse}
                           onChange={(e) => handlePointsChange(parseInt(e.target.value) || 0)}
                           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          placeholder="Points to use"
+                          placeholder="使用积分数量"
                         />
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           = {formatCurrency(pointsToRM(pointsToUse))}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Max usable: {Math.min(availablePoints, rmToPoints(subtotal)).toLocaleString()} points
+                        最多可用：{Math.min(availablePoints, rmToPoints(subtotal)).toLocaleString()} 积分
                       </p>
                     </div>
                   )}
@@ -682,27 +682,27 @@ const CartPage: React.FC = () => {
                   {/* Price Details */}
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-700 dark:text-gray-300">Subtotal</span>
+                      <span className="text-gray-700 dark:text-gray-300">小计</span>
                       <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
                     </div>
 
                     {pointsToUse > 0 && (
                       <div className="flex justify-between text-green-600 dark:text-green-400">
-                        <span>Points Discount ({pointsToUse.toLocaleString()} points)</span>
+                        <span>积分折扣（{pointsToUse.toLocaleString()} 积分）</span>
                         <span>-{formatCurrency(pointsDiscount)}</span>
                       </div>
                     )}
 
                     {pointsEarned > 0 && (
                       <div className="flex justify-between text-blue-600 dark:text-blue-400">
-                        <span>Points Earned</span>
-                        <span>+{pointsEarned.toLocaleString()} points</span>
+                        <span>获得积分</span>
+                        <span>+{pointsEarned.toLocaleString()} 积分</span>
                       </div>
                     )}
 
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                       <div className="flex justify-between font-bold">
-                        <span className="text-lg">Total</span>
+                        <span className="text-lg">总计</span>
                         <span className="text-xl text-gray-900 dark:text-white">{formatCurrency(total)}</span>
                       </div>
                     </div>
@@ -717,11 +717,11 @@ const CartPage: React.FC = () => {
                         price: Math.round(i.price * 100),
                       }))}
                       customerId={user.id}
-                      buttonTitle="Proceed to Checkout"
+                      buttonTitle="前往结账"
                     />
                     <div className="mt-3">
                       <Button color="success" onClick={handleTestPayNow}>
-                        Test Pay Now (Skip Stripe)
+                        测试立即支付（跳过Stripe）
                       </Button>
                     </div>
 

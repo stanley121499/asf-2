@@ -137,7 +137,7 @@ const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = async () => {
     if (!agreeToTerms) {
       setOrderError(
-        "Please agree to the terms and conditions to place your order."
+        "请同意服务条款和条件后再提交订单。"
       );
       return;
     }
@@ -158,7 +158,7 @@ const CheckoutPage: React.FC = () => {
       window.scrollTo(0, 0);
     } catch (error) {
       setOrderError(
-        "There was an error processing your order. Please try again."
+        "处理订单时出错，请重试。"
       );
     } finally {
       setIsSubmitting(false);
@@ -217,7 +217,7 @@ const CheckoutPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-firstName`}>First Name</Label>
+            <Label htmlFor={`${addressType}-firstName`}>名</Label>
             <TextInput
               id={`${addressType}-firstName`}
               type="text"
@@ -231,7 +231,7 @@ const CheckoutPage: React.FC = () => {
         </div>
         <div>
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-lastName`}>Last Name</Label>
+            <Label htmlFor={`${addressType}-lastName`}>姓</Label>
             <TextInput
               id={`${addressType}-lastName`}
               type="text"
@@ -245,7 +245,7 @@ const CheckoutPage: React.FC = () => {
         </div>
         <div className="md:col-span-2">
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-address1`}>Address Line 1</Label>
+            <Label htmlFor={`${addressType}-address1`}>地址行 1</Label>
             <TextInput
               id={`${addressType}-address1`}
               type="text"
@@ -260,7 +260,7 @@ const CheckoutPage: React.FC = () => {
         <div className="md:col-span-2">
           <div className="mb-2">
             <Label htmlFor={`${addressType}-address2`}>
-              Address Line 2 (Optional)
+              地址行 2（可选）
             </Label>
             <TextInput
               id={`${addressType}-address2`}
@@ -274,7 +274,7 @@ const CheckoutPage: React.FC = () => {
         </div>
         <div>
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-city`}>City</Label>
+            <Label htmlFor={`${addressType}-city`}>城市</Label>
             <TextInput
               id={`${addressType}-city`}
               type="text"
@@ -289,7 +289,7 @@ const CheckoutPage: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="mb-2">
-              <Label htmlFor={`${addressType}-state`}>State</Label>
+              <Label htmlFor={`${addressType}-state`}>州/省</Label>
               <Select
                 id={`${addressType}-state`}
                 value={address.state}
@@ -309,7 +309,7 @@ const CheckoutPage: React.FC = () => {
           </div>
           <div>
             <div className="mb-2">
-              <Label htmlFor={`${addressType}-postalCode`}>Zip Code</Label>
+              <Label htmlFor={`${addressType}-postalCode`}>邮政编码</Label>
               <TextInput
                 id={`${addressType}-postalCode`}
                 type="text"
@@ -324,7 +324,7 @@ const CheckoutPage: React.FC = () => {
         </div>
         <div>
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-country`}>Country</Label>
+            <Label htmlFor={`${addressType}-country`}>国家</Label>
             <Select
               id={`${addressType}-country`}
               value={address.country}
@@ -341,7 +341,7 @@ const CheckoutPage: React.FC = () => {
         </div>
         <div>
           <div className="mb-2">
-            <Label htmlFor={`${addressType}-phone`}>Phone Number</Label>
+            <Label htmlFor={`${addressType}-phone`}>电话号码</Label>
             <TextInput
               id={`${addressType}-phone`}
               type="tel"
@@ -383,7 +383,7 @@ const CheckoutPage: React.FC = () => {
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+            <span className="text-gray-600 dark:text-gray-400">小计</span>
             <span className="text-gray-900 dark:text-white">
               {formatCurrency(subtotal)}
             </span>
@@ -393,7 +393,7 @@ const CheckoutPage: React.FC = () => {
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="flex justify-between items-center">
             <span className="text-lg font-bold text-gray-900 dark:text-white">
-              Total
+              总计
             </span>
             <span className="text-xl font-bold text-gray-900 dark:text-white">
               {formatCurrency(total)}
@@ -413,7 +413,7 @@ const CheckoutPage: React.FC = () => {
             <Card className="mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                 <HiOutlineLocationMarker className="mr-2 h-6 w-6" />
-                Shipping Information
+                配送信息
               </h2>
 
               {renderAddressForm("shipping")}
@@ -425,14 +425,14 @@ const CheckoutPage: React.FC = () => {
                   onChange={(e) => handleUseAsBillingChange(e.target.checked)}
                   className="mr-2"
                 />
-                <Label htmlFor="useAsBilling">Use as billing address</Label>
+                <Label htmlFor="useAsBilling">用作账单地址</Label>
               </div>
             </Card>
 
             {!useAsBilling && (
               <Card className="mb-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Billing Information
+                  账单信息
                 </h2>
 
                 {renderAddressForm("billing")}
@@ -443,7 +443,7 @@ const CheckoutPage: React.FC = () => {
 
             <div className="flex justify-end">
               <Button type="submit" color="blue">
-                Continue to Payment
+                继续付款
               </Button>
             </div>
           </form>
@@ -457,13 +457,13 @@ const CheckoutPage: React.FC = () => {
             <Card className="mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                 <HiOutlineDocumentText className="mr-2 h-6 w-6" />
-                Review Your Order
+                确认订单
               </h2>
 
               <div className="space-y-6">
                 <Accordion>
                   <Accordion.Panel key="shipping">
-                    <Accordion.Title>Shipping Information</Accordion.Title>
+                    <Accordion.Title>配送信息</Accordion.Title>
                     <Accordion.Content>
                       <div className="space-y-2">
                         <p className="font-medium">
@@ -486,7 +486,7 @@ const CheckoutPage: React.FC = () => {
                   </Accordion.Panel>
 
                   <Accordion.Panel key="billing">
-                    <Accordion.Title>Billing Information</Accordion.Title>
+                    <Accordion.Title>账单信息</Accordion.Title>
                     <Accordion.Content>
                       <div className="space-y-2">
                         <p className="font-medium">
@@ -509,7 +509,7 @@ const CheckoutPage: React.FC = () => {
                   
 
                   <Accordion.Panel key="items">
-                    <Accordion.Title>Order Items</Accordion.Title>
+                    <Accordion.Title>订单商品</Accordion.Title>
                     <Accordion.Content>
                       <div className="space-y-4">
                         {cartItems.map((item) => (
@@ -522,7 +522,7 @@ const CheckoutPage: React.FC = () => {
                             <div>
                               <p className="font-medium">{item.name}</p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Variant: {item.variant}
+                                规格：{item.variant}
                               </p>
                               <div className="flex items-center mt-1">
                                 <span className="text-sm">
@@ -541,12 +541,12 @@ const CheckoutPage: React.FC = () => {
                 </Accordion>
 
                 <div className="mt-6">
-                  <Label htmlFor="orderNotes">Order Notes (Optional)</Label>
+                  <Label htmlFor="orderNotes">订单备注（可选）</Label>
                   <textarea
                     id="orderNotes"
                     rows={3}
                     className="block w-full border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Special instructions for delivery or any other notes"
+                    placeholder="配送特殊说明或其他备注"
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
                   />
@@ -562,22 +562,22 @@ const CheckoutPage: React.FC = () => {
                     />
                   </div>
                   <Label htmlFor="terms" className="text-sm">
-                    I agree to the{" "}
+                    我同意{" "}
                     <Link to="/terms" className="text-blue-600 hover:underline">
-                      Terms and Conditions
+                      服务条款
                     </Link>{" "}
-                    and{" "}
+                    和{" "}
                     <Link
                       to="/privacy"
                       className="text-blue-600 hover:underline">
-                      Privacy Policy
+                      隐私政策
                     </Link>
                   </Label>
                 </div>
 
                 {orderError && (
                   <Alert color="failure">
-                    <span className="font-medium">Error!</span> {orderError}
+                    <span className="font-medium">错误！</span> {orderError}
                   </Alert>
                 )}
               </div>
@@ -586,7 +586,7 @@ const CheckoutPage: React.FC = () => {
             <div className="flex justify-between">
               <Button type="button" color="light" onClick={goToPreviousStep}>
                 <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
-                Back to Shipping
+                返回配送
               </Button>
               <Button
                 type="button"
@@ -596,12 +596,12 @@ const CheckoutPage: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Spinner size="sm" className="mr-2" />
-                    Processing Order...
+                    处理中...
                   </>
                 ) : (
                   <>
                     <HiOutlineCurrencyDollar className="mr-2 h-5 w-5" />
-                    Place Order ({formatCurrency(total)})
+                    提交订单（{formatCurrency(total)}）
                   </>
                 )}
               </Button>
@@ -620,18 +620,17 @@ const CheckoutPage: React.FC = () => {
               </div>
 
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Order Confirmed!
+                订单已确认！
               </h2>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Thank you for your purchase. Your order has been received and is
-                being processed.
+                感谢您的购买，您的订单已收到并正在处理中。
               </p>
 
               <div className="mb-6">
                 <div className="inline-block bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 mb-4">
                   <p className="text-gray-800 dark:text-gray-200">
-                    Order Number:
+                    订单编号：
                   </p>
                   <p className="text-xl font-bold">{orderNumber}</p>
                 </div>
@@ -639,21 +638,21 @@ const CheckoutPage: React.FC = () => {
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Order Summary
+                  订单摘要
                 </h3>
                 {renderOrderSummary()}
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                A confirmation email has been sent to your email address.
+                确认邮件已发送至您的邮箱。
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
                 <Link to="/orders">
-                  <Button color="blue">View Order</Button>
+                  <Button color="blue">查看订单</Button>
                 </Link>
                 <Link to="/">
-                  <Button color="light">Continue Shopping</Button>
+                  <Button color="light">继续购物</Button>
                 </Link>
               </div>
             </div>
@@ -671,9 +670,9 @@ const CheckoutPage: React.FC = () => {
       <div className="mb-8">
         <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
           {[
-            { key: CheckoutStep.Shipping, label: "Shipping" },
-            { key: CheckoutStep.Review, label: "Review" },
-            { key: CheckoutStep.Confirmation, label: "Confirmation" },
+            { key: CheckoutStep.Shipping, label: "配送" },
+            { key: CheckoutStep.Review, label: "确认" },
+            { key: CheckoutStep.Confirmation, label: "已完成" },
           ].map((step, index) => {
             const isActive = currentStep === step.key;
             const isPassed =
@@ -742,13 +741,13 @@ const CheckoutPage: React.FC = () => {
               to="/cart"
               className="inline-flex items-center text-blue-600 hover:underline">
               <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
-              Back to Cart
+              返回购物车
             </Link>
           </div>
 
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
             <HiOutlineShoppingCart className="mr-3 h-8 w-8" />
-            Checkout
+            结账
           </h1>
 
           {/* Steps indicator */}
@@ -762,7 +761,7 @@ const CheckoutPage: React.FC = () => {
               <div className="lg:col-span-1">
                 <Card>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    Order Summary
+                    订单摘要
                   </h2>
 
                   {renderOrderSummary()}

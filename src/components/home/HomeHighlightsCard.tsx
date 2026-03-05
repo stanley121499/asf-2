@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import MediaThumb from "../MediaThumb";
 
 /**
  * Highlights-style card used on the customer homepage horizontal sections.
@@ -88,14 +89,12 @@ export function HomeHighlightsCard({
         </div>
       )}
 
-      {/* Image */}
+      {/* Image / Video */}
       <div className="h-48 bg-gray-100 relative">
-        <img
+        <MediaThumb
           src={resolvedImageUrl}
           alt={resolvedAlt}
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
       </div>

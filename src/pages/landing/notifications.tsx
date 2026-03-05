@@ -19,33 +19,33 @@ interface Notification {
 const mockNotifications: Notification[] = [
   {
     id: "1",
-    title: "New Product Alert",
-    message: "Check out our latest collection of summer wear",
-    timestamp: "2 hours ago",
+    title: "新品提醒",
+    message: "快来查看我们最新的夏季系列",
+    timestamp: "2小时前",
     isRead: false,
     type: "info"
   },
   {
     id: "2",
-    title: "Order Confirmed",
-    message: "Your order #12345 has been confirmed",
-    timestamp: "1 day ago",
+    title: "订单确认",
+    message: "您的订单 #12345 已确认",
+    timestamp: "1天前",
     isRead: false,
     type: "success"
   },
   {
     id: "3",
-    title: "Special Offer",
-    message: "Get 20% off on all sports equipment",
-    timestamp: "2 days ago",
+    title: "特别优惠",
+    message: "所有运动器材享八折优惠",
+    timestamp: "2天前",
     isRead: true,
     type: "warning"
   },
   {
     id: "4",
-    title: "Payment Failed",
-    message: "Your recent payment could not be processed",
-    timestamp: "3 days ago",
+    title: "付款失败",
+    message: "您最近的付款无法处理",
+    timestamp: "3天前",
     isRead: true,
     type: "error"
   }
@@ -61,10 +61,10 @@ const NotificationsPage: React.FC = () => {
     <LandingLayout>
       <div className="p-5">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+          <h1 className="text-2xl font-bold text-gray-900">通知</h1>
           {unreadCount > 0 && (
             <span className="bg-indigo-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-              {unreadCount} unread
+              {unreadCount} 条未读
             </span>
           )}
         </div>

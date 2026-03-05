@@ -26,6 +26,7 @@ import {
 } from "../../context/product/ProductMediaContext";
 import { FaChevronDown } from "react-icons/fa6";
 import { supabase } from "../../utils/supabaseClient";
+import MediaThumb from "../../components/MediaThumb";
 
 /**
  * Interface for category v2 items from localStorage
@@ -377,7 +378,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                         setPreviewMedia(media.media_url);
                       }
                     }}>
-                    <img
+                    <MediaThumb
                       src={media.media_url}
                       alt="media"
                       className="w-full object-cover rounded"
@@ -773,7 +774,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                       prev.filter((m) => m.id !== media.id)
                     );
                   }}>
-                  <img
+                  <MediaThumb
                     src={media.media_url}
                     alt="media"
                     className="w-16 h-16 object-cover rounded"
@@ -805,7 +806,7 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                       setArrangedMedias((prev) => [...prev, media]);
                       setPreviewMedia("");
                     }}>
-                    <img
+                    <MediaThumb
                       src={media.media_url}
                       alt="media"
                       className="w-16 h-16 object-cover rounded"

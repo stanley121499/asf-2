@@ -67,10 +67,10 @@ useEffect(() => {
             onClick={toggleSidebar}
             type="button"
             className="flex items-center justify-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-            aria-label="Open categories menu"
+            aria-label="打开分类菜单"
           >
             <HiOutlineMenuAlt3 className="w-7 h-7" />
-            <span className="sr-only">Open categories</span>
+            <span className="sr-only">打开分类</span>
           </button>
         </div>
       </div>

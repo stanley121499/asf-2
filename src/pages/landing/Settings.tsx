@@ -233,18 +233,18 @@ const ProfileSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={toggleMode}
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={isDarkMode ? "切换到浅色模式" : "切换到深色模式"}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               {isDarkMode ? (
                 <>
                   <HiOutlineSun className="h-5 w-5 text-yellow-400" />
-                  <span>Light Mode</span>
+                  <span>浅色模式</span>
                 </>
               ) : (
                 <>
                   <HiOutlineMoon className="h-5 w-5 text-indigo-500" />
-                  <span>Dark Mode</span>
+                  <span>深色模式</span>
                 </>
               )}
             </button>
@@ -255,21 +255,21 @@ const ProfileSettingsPage: React.FC = () => {
               <FaUser className="w-20 h-20 mx-auto" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Your Profile
+              我的资料
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-              Sign in to manage your account, view your orders, and earn loyalty points.
+              登录以管理账户、查看订单并赚取积分。
             </p>
             <Link to="/authentication/sign-in?returnTo=%2Fsettings" className="block">
               <Button color="blue" size="lg" className="w-full">
-                Sign In
+                登录
               </Button>
             </Link>
             <Link
               to="/"
               className="block mt-4 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 py-2"
             >
-              Continue Browsing
+              继续浏览
             </Link>
           </div>
         </section>
@@ -307,28 +307,28 @@ const ProfileSettingsPage: React.FC = () => {
               type="button"
               onClick={() => navigate(-1)}
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors py-2 pr-2"
-              aria-label="Go back"
+              aria-label="返回"
             >
               <HiOutlineArrowLeft className="h-4 w-4" />
-              <span>Back</span>
+              <span>返回</span>
             </button>
 
             {/* ── Dark / Light mode toggle ── */}
             <button
               type="button"
               onClick={toggleMode}
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={isDarkMode ? "切换到浅色模式" : "切换到深色模式"}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               {isDarkMode ? (
                 <>
                   <HiOutlineSun className="h-5 w-5 text-yellow-400" />
-                  <span className="hidden sm:inline">Light Mode</span>
+                  <span className="hidden sm:inline">浅色模式</span>
                 </>
               ) : (
                 <>
                   <HiOutlineMoon className="h-5 w-5 text-indigo-500" />
-                  <span className="hidden sm:inline">Dark Mode</span>
+                  <span className="hidden sm:inline">深色模式</span>
                 </>
               )}
             </button>
@@ -341,13 +341,13 @@ const ProfileSettingsPage: React.FC = () => {
                 <div className="flex flex-col items-center mb-6">
                   <Avatar
                     img={isNonEmptyString(avatarUrl) ? avatarUrl : undefined}
-                    alt="Profile Picture"
+                    alt="头像"
                     rounded={true}
                     size="xl"
                     className="mb-4"
                   />
                   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    {displayName || "User"}
+                    {displayName || "用户"}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                     {email || ""}
@@ -355,15 +355,15 @@ const ProfileSettingsPage: React.FC = () => {
                   <div className="flex items-center mt-1 mb-4">
                     <Badge color="info" className="px-3 py-1.5">
                       <div className="flex items-center space-x-1">
-                        <span className="font-medium">Gold Member</span>
+                        <span className="font-medium">金牌会员</span>
                       </div>
                     </Badge>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Points:
+                      积分：
                     </span>
-                    <Tooltip content="You can redeem these points for discounts">
+                    <Tooltip content="您可以用这些积分兑换折扣">
                       <span className="text-sm text-gray-800 dark:text-white font-semibold">
                         {userPoints.toLocaleString()}
                       </span>
@@ -379,7 +379,7 @@ const ProfileSettingsPage: React.FC = () => {
                     onClick={() => setActiveTab("account")}
                   >
                     <HiOutlineUser className="mr-2 h-5 w-5" />
-                    Account
+                    账户
                   </Button>
                   <Button
                     color={activeTab === "orders" ? "blue" : "gray"}
@@ -387,7 +387,7 @@ const ProfileSettingsPage: React.FC = () => {
                     onClick={() => setActiveTab("orders")}
                   >
                     <HiOutlineShoppingBag className="mr-2 h-5 w-5" />
-                    Orders
+                    订单
                   </Button>
                   <Button
                     color={activeTab === "appearance" ? "blue" : "gray"}
@@ -399,7 +399,7 @@ const ProfileSettingsPage: React.FC = () => {
                     ) : (
                       <HiOutlineSun className="mr-2 h-5 w-5" />
                     )}
-                    Appearance
+                    外观
                   </Button>
                   <Button
                     color={activeTab === "support" ? "blue" : "gray"}
@@ -407,7 +407,7 @@ const ProfileSettingsPage: React.FC = () => {
                     onClick={() => setActiveTab("support")}
                   >
                     <HiOutlineQuestionMarkCircle className="mr-2 h-5 w-5" />
-                    Support
+                    支持
                   </Button>
                   {/* Logout — goes to home page, not sign-in, so the user
                       is not implied to immediately re-authenticate. */}
@@ -417,7 +417,7 @@ const ProfileSettingsPage: React.FC = () => {
                     onClick={() => void handleLogout()}
                   >
                     <HiOutlineLogout className="mr-2 h-5 w-5" />
-                    Logout
+                    退出登录
                   </Button>
                 </div>
               </div>
@@ -429,12 +429,12 @@ const ProfileSettingsPage: React.FC = () => {
                 {activeTab === "account" && (
                   <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Account Information
+                      账户信息
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          First Name
+                          名
                         </label>
                         <input
                           type="text"
@@ -445,7 +445,7 @@ const ProfileSettingsPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Last Name
+                          姓
                         </label>
                         <input
                           type="text"
@@ -456,7 +456,7 @@ const ProfileSettingsPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Email
+                          邮箱
                         </label>
                         <input
                           type="email"
@@ -467,7 +467,7 @@ const ProfileSettingsPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Phone Number
+                          电话号码
                         </label>
                         <input
                           type="tel"
@@ -478,17 +478,17 @@ const ProfileSettingsPage: React.FC = () => {
                       </div>
                     </div>
                     <Button color="blue" onClick={() => void handleSaveProfile()} disabled={saving}>
-                      {saving ? "Saving…" : "Save Changes"}
+                      {saving ? "保存中…" : "保存更改"}
                     </Button>
 
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        Password
+                        密码
                       </h3>
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Current Password
+                            当前密码
                           </label>
                           <input
                             type="password"
@@ -500,7 +500,7 @@ const ProfileSettingsPage: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            New Password
+                            新密码
                           </label>
                           <input
                             type="password"
@@ -512,7 +512,7 @@ const ProfileSettingsPage: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Confirm New Password
+                            确认新密码
                           </label>
                           <input
                             type="password"
@@ -529,13 +529,13 @@ const ProfileSettingsPage: React.FC = () => {
                         onClick={() => void handleUpdatePassword()}
                         disabled={pwSaving}
                       >
-                        {pwSaving ? "Updating…" : "Update Password"}
+                        {pwSaving ? "更新中…" : "更新密码"}
                       </Button>
                     </div>
 
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        Profile Picture
+                        头像
                       </h3>
                       <div className="space-y-3">
                         <input
@@ -549,7 +549,7 @@ const ProfileSettingsPage: React.FC = () => {
                           onClick={() => void handleUploadAvatar()}
                           disabled={!avatarFile}
                         >
-                          Upload Avatar
+                          上传头像
                         </Button>
                       </div>
                     </div>
@@ -560,7 +560,7 @@ const ProfileSettingsPage: React.FC = () => {
                 {activeTab === "orders" && (
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                      Order History
+                      订单历史
                     </h3>
                     <OrdersList />
                   </div>
@@ -570,7 +570,7 @@ const ProfileSettingsPage: React.FC = () => {
                 {activeTab === "appearance" && (
                   <div className="space-y-6">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Appearance
+                      外观
                     </h3>
 
                     {/* ── Theme toggle card ── */}
@@ -583,12 +583,12 @@ const ProfileSettingsPage: React.FC = () => {
                         )}
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {isDarkMode ? "Dark Mode" : "Light Mode"}
+                            {isDarkMode ? "深色模式" : "浅色模式"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             {isDarkMode
-                              ? "Switch to a lighter colour scheme"
-                              : "Switch to a darker colour scheme"}
+                              ? "切换到浅色主题"
+                              : "切换到深色主题"}
                           </p>
                         </div>
                       </div>
@@ -602,7 +602,7 @@ const ProfileSettingsPage: React.FC = () => {
                     </div>
 
                     <p className="text-xs text-gray-400 dark:text-gray-500">
-                      Your preference is saved automatically and restored next time you open the app.
+                      您的偏好设置已自动保存，下次打开应用时将恢复。
                     </p>
                   </div>
                 )}
@@ -611,44 +611,43 @@ const ProfileSettingsPage: React.FC = () => {
                 {activeTab === "support" && (
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                      Customer Support
+                      客户支持
                     </h3>
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Need help with your orders, returns, or have questions about our products?
-                        Our customer support team is here to help.
+                        需要订单帮助、退货或商品咨询？我们的客服团队随时为您服务。
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Link to="/support-chat">
                           <Button fullSized color="blue">
                             <HiOutlineQuestionMarkCircle className="mr-2 h-5 w-5" />
-                            Chat with Support
+                            联系客服
                           </Button>
                         </Link>
                         <a href="mailto:support@example.com">
                           <Button fullSized color="light">
-                            Email Support
+                            邮件支持
                           </Button>
                         </a>
                       </div>
 
                       <div className="mt-6">
                         <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                          Frequently Asked Questions
+                          常见问题
                         </h4>
                         <div className="space-y-2">
                           <Link to="/faq#returns" className="block text-blue-600 hover:underline">
-                            How do I return an item?
+                            如何退货？
                           </Link>
                           <Link to="/faq#shipping" className="block text-blue-600 hover:underline">
-                            What are the shipping options?
+                            有哪些配送方式？
                           </Link>
                           <Link to="/faq#payment" className="block text-blue-600 hover:underline">
-                            What payment methods do you accept?
+                            支持哪些支付方式？
                           </Link>
                           <Link to="/faq" className="block text-blue-600 hover:underline mt-2">
-                            View all FAQs
+                            查看全部常见问题
                           </Link>
                         </div>
                       </div>

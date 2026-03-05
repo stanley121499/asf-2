@@ -306,14 +306,14 @@ const ProductDetails: React.FC = () => {
    */
   const validateVariantAndStock = useCallback((): { ok: true; colorId: string | null; sizeId: string | null } | { ok: false; message: string } => {
     if (!productIdSafe) {
-      return { ok: false, message: "Missing product id." };
+      return { ok: false, message: "缺少商品ID。" };
     }
 
     if (requiresColor && !selectedColor) {
-      return { ok: false, message: "Please select a color." };
+      return { ok: false, message: "请选择颜色。" };
     }
     if (requiresSize && !selectedSize) {
-      return { ok: false, message: "Please select a size." };
+      return { ok: false, message: "请选择尺码。" };
     }
 
     // For non-variant products we keep these null to match `product_stock` and `add_to_carts`.
@@ -321,10 +321,10 @@ const ProductDetails: React.FC = () => {
     const sizeId: string | null = requiresSize ? selectedSize?.id ?? null : null;
 
     if (!currentStockRow) {
-      return { ok: false, message: "This selection is not available in stock." };
+      return { ok: false, message: "所选规格暂无库存。" };
     }
     if (typeof currentStockRow.count !== "number" || currentStockRow.count < 1) {
-      return { ok: false, message: "This item is out of stock." };
+      return { ok: false, message: "此商品库存不足。" };
     }
 
     return { ok: true, colorId, sizeId };
@@ -336,7 +336,7 @@ const ProductDetails: React.FC = () => {
   const handleAddToCart = useCallback(async (): Promise<void> => {
     // Hooks must be declared unconditionally; guard product availability at runtime.
     if (!product) {
-      showAlert("Product not found.", "error");
+      showAlert("未找到商品。", "error");
       return;
     }
     if (!user?.id) {
@@ -373,7 +373,7 @@ const ProductDetails: React.FC = () => {
   const beforeBuyNow = useCallback(async (): Promise<boolean> => {
     // Hooks must be declared unconditionally; guard product availability at runtime.
     if (!product) {
-      showAlert("Product not found.", "error");
+      showAlert("未找到商品。", "error");
       return false;
     }
     if (!user?.id) {
@@ -398,20 +398,20 @@ const ProductDetails: React.FC = () => {
         <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
           <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Product Unavailable
+              商品不可用
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              {availability.name} is no longer available for purchase.
+              {availability.name} 已停止销售。
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Deleted: {new Date(availability.deletedAt).toLocaleString()}
+              删除时间：{new Date(availability.deletedAt).toLocaleString()}
             </p>
             <button
               type="button"
               onClick={() => navigate("/product-section")}
               className="inline-flex items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700"
             >
-              Continue Shopping
+              继续购物
             </button>
           </div>
         </div>
@@ -426,17 +426,17 @@ const ProductDetails: React.FC = () => {
         <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
           <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Product Not Found
+              未找到商品
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              We couldn&apos;t find this product.
+              我们找不到此商品。
             </p>
             <button
               type="button"
               onClick={() => navigate("/product-section")}
               className="inline-flex items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700"
             >
-              Continue Shopping
+              继续购物
             </button>
           </div>
         </div>
@@ -485,7 +485,7 @@ const ProductDetails: React.FC = () => {
                           "shrink-0 rounded border",
                           isSelected ? "border-primary-600" : "border-gray-200 dark:border-gray-700",
                         ].join(" ")}
-                        aria-label={`Select image ${index + 1}`}
+                        aria-label={`选择图片 ${index + 1}`}
                       >
                         <img
                           src={media.media_url}
@@ -509,17 +509,17 @@ const ProductDetails: React.FC = () => {
               <div className="mt-2 space-y-1">
                 {product.article_number && (
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">Article #:</span> {product.article_number}
+                    <span className="font-medium">货号：</span> {product.article_number}
                   </p>
                 )}
                 {product.festival && (
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">Festival:</span> {product.festival}
+                    <span className="font-medium">节日：</span> {product.festival}
                   </p>
                 )}
                 {product.season && (
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">Season:</span> {product.season}
+                    <span className="font-medium">季节：</span> {product.season}
                   </p>
                 )}
               </div>
@@ -535,10 +535,10 @@ const ProductDetails: React.FC = () => {
               <div className="mt-4">
                 {!hasAllRequiredSelections && (requiresColor || requiresSize) ? (
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Select {[
-                      requiresColor && !selectedColor ? "color" : "",
-                      requiresSize && !selectedSize ? "size" : "",
-                    ].filter((t) => t.length > 0).join(" and ")} to see stock.
+                    请选择{[
+                      requiresColor && !selectedColor ? "颜色" : "",
+                      requiresSize && !selectedSize ? "尺码" : "",
+                    ].filter((t) => t.length > 0).join("和")}以查看库存。
                   </p>
                 ) : (
                   <p
@@ -548,8 +548,8 @@ const ProductDetails: React.FC = () => {
                     ].join(" ")}
                   >
                     {isInStock
-                      ? `In Stock (${currentStockQuantity} available)`
-                      : "Out of Stock"}
+                      ? `有货（剩余 ${currentStockQuantity} 件）`
+                      : "缺货"}
                   </p>
                 )}
               </div>
@@ -558,7 +558,7 @@ const ProductDetails: React.FC = () => {
               {requiresColor && (
                 <div className="mt-6">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Color
+                    颜色
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {activeColorsForProduct.map((color) => {
@@ -582,7 +582,7 @@ const ProductDetails: React.FC = () => {
                   </div>
                   {!selectedColor && (
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      Please choose a color.
+                      请选择颜色。
                     </p>
                   )}
                 </div>
@@ -592,7 +592,7 @@ const ProductDetails: React.FC = () => {
               {requiresSize && (
                 <div className="mt-6">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Size
+                    尺码
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {activeSizesForProduct.map((size) => {
@@ -616,7 +616,7 @@ const ProductDetails: React.FC = () => {
                   </div>
                   {!selectedSize && (
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      Please choose a size.
+                      请选择尺码。
                     </p>
                   )}
                 </div>
@@ -633,16 +633,16 @@ const ProductDetails: React.FC = () => {
               {(product.warranty_period || product.warranty_description) && (
                 <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Warranty Information
+                    质保信息
                   </h3>
                   {product.warranty_period && (
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      <span className="font-medium">Warranty Period:</span> {product.warranty_period}
+                      <span className="font-medium">质保期：</span> {product.warranty_period}
                     </p>
                   )}
                   {product.warranty_description && (
                     <p className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Terms & Conditions:</span> {product.warranty_description}
+                      <span className="font-medium">条款与条件：</span> {product.warranty_description}
                     </p>
                   )}
                 </div>
@@ -656,7 +656,7 @@ const ProductDetails: React.FC = () => {
                   disabled={disableActions}
                   aria-disabled={disableActions}
                 >
-                  Add to Cart
+                  加入购物车
                 </button>
                 <CheckoutButton
                   items={[
@@ -669,7 +669,7 @@ const ProductDetails: React.FC = () => {
                   customerId={user?.id ?? ""}
                   beforeCheckout={beforeBuyNow}
                   disabled={disableActions}
-                  buttonTitle="Buy Now"
+                  buttonTitle="立即购买"
                 />
               </div>
             </div>
@@ -697,7 +697,7 @@ const ProductDetails: React.FC = () => {
           aria-disabled={disableActions}
           className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white disabled:opacity-40 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Add to Cart
+          加入购物车
         </button>
         <CheckoutButton
           items={[
@@ -710,7 +710,7 @@ const ProductDetails: React.FC = () => {
           customerId={user?.id ?? ""}
           beforeCheckout={beforeBuyNow}
           disabled={disableActions}
-          buttonTitle="Buy Now"
+          buttonTitle="立即购买"
         />
       </div>
     </>

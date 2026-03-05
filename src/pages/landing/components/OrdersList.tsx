@@ -68,7 +68,7 @@ const OrdersList: React.FC = () => {
       {!hasOrders && (
         <Card>
           <div className="text-center py-8 text-gray-600 dark:text-gray-300">
-            No orders yet.
+            暂无订单。
           </div>
         </Card>
       )}
@@ -81,7 +81,7 @@ const OrdersList: React.FC = () => {
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">#{o.id}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(o.created_at).toLocaleDateString()} · {o.itemsCount} items
+                    {new Date(o.created_at).toLocaleDateString()} · {o.itemsCount} 件商品
                   </p>
                   {o.shipping_address && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xl">
@@ -90,7 +90,7 @@ const OrdersList: React.FC = () => {
                   )}
                 </div>
                 <div className="text-right">
-                  <Badge color="info" className="mb-2">Placed</Badge>
+                  <Badge color="info" className="mb-2">已下单</Badge>
                   <div className="text-gray-900 dark:text-white font-semibold">
                     {typeof o.total_amount === "number" ? formatCurrency(o.total_amount) : formatCurrency(0)}
                   </div>

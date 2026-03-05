@@ -89,12 +89,12 @@ const BottomNavbar: React.FC = () => {
     >
       <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
         {/* Home */}
-        <TooltipButton tooltipText="Home" to="/" rounded isActive={isActive("/")}>
+        <TooltipButton tooltipText="首页" to="/" rounded isActive={isActive("/")}>
           <FaHome className={iconClass("/")} />
         </TooltipButton>
 
         {/* Cart */}
-        <TooltipButton tooltipText="Cart" to="/cart" isActive={isActive("/cart")}>
+        <TooltipButton tooltipText="购物车" to="/cart" isActive={isActive("/cart")}>
           <FaShoppingCart className={iconClass("/cart")} />
         </TooltipButton>
 
@@ -102,7 +102,7 @@ const BottomNavbar: React.FC = () => {
         <div className="flex items-center justify-center">
           <Link
             to="/highlights"
-            aria-label="Highlights"
+            aria-label="精选推荐"
             className={`inline-flex items-center justify-center w-10 h-10 font-medium rounded-full focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800 transition-colors ${
               isActive("/highlights")
                 ? "bg-blue-700 hover:bg-blue-800"
@@ -111,18 +111,18 @@ const BottomNavbar: React.FC = () => {
             style={{ transform: "scale(2)" }}
           >
             <FaTrophy className="w-4 h-4 text-white" />
-            <span className="sr-only">Highlights</span>
+            <span className="sr-only">精选推荐</span>
           </Link>
         </div>
 
         {/* Goal */}
-        <TooltipButton tooltipText="Goal" to="/goal" isActive={isActive("/goal")}>
+        <TooltipButton tooltipText="目标" to="/goal" isActive={isActive("/goal")}>
           <GoGoal className={iconClass("/goal")} />
         </TooltipButton>
 
         {/* Settings / Profile */}
         <TooltipButton
-          tooltipText="Settings"
+          tooltipText="设置"
           to="/settings"
           rounded
           isActive={isActive("/settings")}

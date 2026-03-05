@@ -87,14 +87,14 @@ const WishlistPage: React.FC = () => {
         }
 
         const product = item.product;
-        const name = typeof product?.name === "string" && product.name.length > 0 ? product.name : "Unknown product";
+        const name = typeof product?.name === "string" && product.name.length > 0 ? product.name : "未知商品";
         const price = typeof product?.price === "number" && Number.isFinite(product.price) ? product.price : 0;
 
         const categoryId = typeof product?.category_id === "string" ? product.category_id : null;
         const category =
           categoryId && typeof categoryNameById[categoryId] === "string"
             ? categoryNameById[categoryId]
-            : "Uncategorized";
+            : "未分类";
 
         const addedOn = typeof item.created_at === "string" ? item.created_at : "";
 
@@ -159,9 +159,9 @@ const WishlistPage: React.FC = () => {
    * Format a Supabase timestamp string for display.
    */
   const formatDate = useCallback((dateString: string): string => {
-    if (typeof dateString !== "string" || dateString.length === 0) return "Unknown";
+    if (typeof dateString !== "string" || dateString.length === 0) return "未知";
     const parsed = new Date(dateString);
-    if (Number.isNaN(parsed.getTime())) return "Unknown";
+    if (Number.isNaN(parsed.getTime())) return "未知";
 
     return parsed.toLocaleDateString(undefined, {
       year: "numeric",
@@ -180,7 +180,7 @@ const WishlistPage: React.FC = () => {
   const handleAddAllToCart = useCallback((): void => {
     // This is intentionally not implemented as part of the wishlist backend feature.
     // The cart flow has its own context and variant rules.
-    showAlert("Add All to Cart is not implemented yet.", "error");
+    showAlert("全部加入购物车功能尚未实现。", "error");
   }, [showAlert]);
 
   return (
@@ -193,13 +193,13 @@ const WishlistPage: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
                   <HiOutlineHeart className="mr-2 h-7 w-7 text-red-500" />
-                  My Wishlist
+                  我的收藏
                   <Badge color="gray" className="ml-3">
-                    {displayItems.length} {displayItems.length === 1 ? "item" : "items"}
+                    {displayItems.length} 件商品
                   </Badge>
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Save items you love and come back to them later
+                  收藏您喜爱的商品，稍后再来查看
                 </p>
               </div>
 
@@ -212,7 +212,7 @@ const WishlistPage: React.FC = () => {
                   >
                     {categoryOptions.map((category) => (
                       <option key={category} value={category}>
-                        {category === "all" ? "All" : category}
+                        {category === "all" ? "全部" : category}
                       </option>
                     ))}
                   </select>
@@ -222,24 +222,24 @@ const WishlistPage: React.FC = () => {
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortBy)}
                   >
-                    <option value="addedOn">Newest First</option>
-                    <option value="priceAsc">Price: Low to High</option>
-                    <option value="priceDesc">Price: High to Low</option>
-                    <option value="nameAsc">Name: A to Z</option>
-                    <option value="nameDesc">Name: Z to A</option>
+                    <option value="addedOn">最新优先</option>
+                    <option value="priceAsc">价格：从低到高</option>
+                    <option value="priceDesc">价格：从高到低</option>
+                    <option value="nameAsc">名称：A 到 Z</option>
+                    <option value="nameDesc">名称：Z 到 A</option>
                   </select>
                 </div>
 
                 <Button color="blue" onClick={handleAddAllToCart} disabled={loading || displayItems.length === 0}>
                   <HiOutlineShoppingCart className="mr-2 h-5 w-5" />
-                  Add All to Cart
+                  全部加入购物车
                 </Button>
               </div>
             </div>
 
             {loading ? (
               <div className="text-center py-10 text-gray-600 dark:text-gray-300">
-                Loading wishlist...
+                正在加载收藏...
               </div>
             ) : displayItems.length === 0 ? (
               <div className="text-center py-10">
@@ -247,13 +247,13 @@ const WishlistPage: React.FC = () => {
                   <HiOutlineHeart className="w-full h-full" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Your wishlist is empty
+                  您的收藏为空
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Items added to your wishlist will appear here
+                  添加到收藏的商品将在此处显示
                 </p>
                 <Link to="/product-section">
-                  <Button color="blue">Start Shopping</Button>
+                  <Button color="blue">开始购物</Button>
                 </Link>
               </div>
             ) : (
@@ -283,7 +283,7 @@ const WishlistPage: React.FC = () => {
                           <Dropdown.Item onClick={() => void handleRemove(item.productId)}>
                             <div className="flex items-center">
                               <HiOutlineTrash className="mr-2 h-4 w-4" />
-                              Remove
+                              移除
                             </div>
                           </Dropdown.Item>
                         </Dropdown>
@@ -303,7 +303,7 @@ const WishlistPage: React.FC = () => {
 
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Added on {formatDate(item.addedOn)}
+                          添加于 {formatDate(item.addedOn)}
                         </span>
                         <span
                           className={[
@@ -311,7 +311,7 @@ const WishlistPage: React.FC = () => {
                             item.inStock ? "text-green-600" : "text-red-600",
                           ].join(" ")}
                         >
-                          {item.inStock ? "In Stock" : "Out of Stock"}
+                          {item.inStock ? "有货" : "缺货"}
                         </span>
                       </div>
 
@@ -321,16 +321,16 @@ const WishlistPage: React.FC = () => {
                         </span>
                         <div>
                           {item.inStock ? (
-                            <Tooltip content="Cart flow is separate from wishlist">
+                            <Tooltip content="购物车流程与收藏列表分开">
                               <Button size="xs" color="blue" disabled>
                                 <HiOutlineShoppingCart className="mr-1 h-4 w-4" />
-                                Add to Cart
+                                加入购物车
                               </Button>
                             </Tooltip>
                           ) : (
-                            <Tooltip content="This item is currently out of stock">
+                            <Tooltip content="此商品目前缺货">
                               <Button size="xs" color="gray" disabled>
-                                Out of Stock
+                                缺货
                               </Button>
                             </Tooltip>
                           )}

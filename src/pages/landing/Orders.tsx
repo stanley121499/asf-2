@@ -142,13 +142,13 @@ const OrdersPage: React.FC = () => {
           <Card className="mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-0">
-                My Orders
+                我的订单
               </h1>
               <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3 w-full md:w-auto">
                 <div className="relative">
                   <TextInput
                     type="text"
-                    placeholder="Search orders..."
+                    placeholder="搜索订单..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     icon={HiOutlineSearch}
@@ -161,21 +161,21 @@ const OrdersPage: React.FC = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="min-w-[130px]"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="all">全部状态</option>
+                    <option value="delivered">已送达</option>
+                    <option value="processing">处理中</option>
+                    <option value="shipped">已发货</option>
+                    <option value="cancelled">已取消</option>
                   </Select>
                   <Select 
                     value={timeRange}
                     onChange={(e) => setTimeRange(e.target.value)}
                     className="min-w-[130px]"
                   >
-                    <option value="all">All Time</option>
-                    <option value="last30">Last 30 Days</option>
-                    <option value="last90">Last 90 Days</option>
-                    <option value="last365">Last Year</option>
+                    <option value="all">全部时间</option>
+                    <option value="last30">最近30天</option>
+                    <option value="last90">最近90天</option>
+                    <option value="last365">最近一年</option>
                   </Select>
                 </div>
               </div>
@@ -183,7 +183,7 @@ const OrdersPage: React.FC = () => {
 
             {filteredOrders.length === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No orders match your search criteria.</p>
+                <p className="text-gray-500 dark:text-gray-400">没有符合搜索条件的订单。</p>
                 <Button 
                   color="gray" 
                   className="mt-4"
@@ -194,7 +194,7 @@ const OrdersPage: React.FC = () => {
                   }}
                 >
                   <HiOutlineRefresh className="mr-2 h-5 w-5" />
-                  Reset Filters
+                  重置筛选
                 </Button>
               </div>
             ) : (
@@ -202,12 +202,12 @@ const OrdersPage: React.FC = () => {
                 <div className="overflow-x-auto">
                   <Table striped>
                     <Table.Head>
-                      <Table.HeadCell>Order #</Table.HeadCell>
-                      <Table.HeadCell>Date</Table.HeadCell>
-                      <Table.HeadCell>Status</Table.HeadCell>
-                      <Table.HeadCell>Items</Table.HeadCell>
-                      <Table.HeadCell>Total</Table.HeadCell>
-                      <Table.HeadCell>Actions</Table.HeadCell>
+                      <Table.HeadCell>订单编号</Table.HeadCell>
+                      <Table.HeadCell>日期</Table.HeadCell>
+                      <Table.HeadCell>状态</Table.HeadCell>
+                      <Table.HeadCell>商品数</Table.HeadCell>
+                      <Table.HeadCell>总计</Table.HeadCell>
+                      <Table.HeadCell>操作</Table.HeadCell>
                     </Table.Head>
                     <Table.Body className="divide-y">
                       {paginatedOrders.map((order) => (
@@ -223,11 +223,17 @@ const OrdersPage: React.FC = () => {
                           </Table.Cell>
                           <Table.Cell>
                             <Badge color={getStatusBadgeColor(order.status)}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {
+                              order.status === "delivered" ? "已送达" :
+                              order.status === "processing" ? "处理中" :
+                              order.status === "shipped" ? "已发货" :
+                              order.status === "cancelled" ? "已取消" :
+                              order.status
+                            }
                             </Badge>
                           </Table.Cell>
                           <Table.Cell>
-                            {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
+                            {order.itemCount} 件
                           </Table.Cell>
                           <Table.Cell>
                             ${order.totalAmount.toFixed(2)}
@@ -237,20 +243,20 @@ const OrdersPage: React.FC = () => {
                               <Link to={`/orders/${order.id}`}>
                                 <Button size="xs" color="blue">
                                   <HiOutlineEye className="mr-1 h-4 w-4" />
-                                  View
+                                  查看
                                 </Button>
                               </Link>
                               {order.status === "delivered" && (
                                 <Link to={`/orders/${order.id}/review`}>
                                   <Button size="xs" color="light">
-                                    Review
+                                    评价
                                   </Button>
                                 </Link>
                               )}
                               {(order.status === "shipped" || order.status === "delivered") && order.trackingNumber && (
                                 <Link to={`/orders/${order.id}/tracking`}>
                                   <Button size="xs" color="light">
-                                    Track
+                                    追踪
                                   </Button>
                                 </Link>
                               )}
@@ -279,21 +285,20 @@ const OrdersPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Need Help?
+                需要帮助？
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                If you need assistance with your orders or have questions about returns and refunds,
-                our customer support team is here to help.
+                如需订单协助或有关于退货退款的问题，我们的客服团队随时为您服务。
               </p>
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 <Link to="/support-chat">
                   <Button color="blue">
-                    Chat with Support
+                    联系客服
                   </Button>
                 </Link>
                 <Link to="/faq#orders">
                   <Button color="light">
-                    Order FAQs
+                    订单常见问题
                   </Button>
                 </Link>
               </div>
@@ -301,17 +306,17 @@ const OrdersPage: React.FC = () => {
             
             <Card>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Return Policy
+                退货政策
               </h2>
               <ul className="list-disc pl-5 mb-4 text-gray-600 dark:text-gray-400 space-y-2">
-                <li>Items can be returned within 30 days of delivery</li>
-                <li>Products must be unopened and in original packaging</li>
-                <li>Free return shipping for eligible items</li>
-                <li>Refunds are processed within 5-7 business days</li>
+                <li>收货后30天内可申请退货</li>
+                <li>商品须未开封且保留原包装</li>
+                <li>符合条件的商品享免费退货运费</li>
+                <li>退款将在5-7个工作日内处理</li>
               </ul>
               <Link to="/return-policy">
                 <Button color="light">
-                  View Return Policy
+                  查看退货政策
                 </Button>
               </Link>
             </Card>

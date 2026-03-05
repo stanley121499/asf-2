@@ -62,10 +62,10 @@ const HomePageProductComponent: React.FC<HomePageProductComponentProps> = ({
         {/* Left Side: Name and Description */}
         <div className="text-left">
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate">
-            {product?.name || "Product Name"}
+            {product?.name || "商品名称"}
           </h3>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-            {product?.description || "No description available."}
+            {product?.description || "暂无描述。"}
           </p>
           <span className="text-md font-bold text-indigo-600">
             RM {product?.price?.toFixed(2) || "0.00"}

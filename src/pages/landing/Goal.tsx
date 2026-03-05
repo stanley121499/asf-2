@@ -87,15 +87,15 @@ const StampCard: React.FC<ScratchCardProps> = ({ onComplete, dayNumber, isComple
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg w-full max-w-sm text-center flex flex-col">
       <div className="p-6">
         <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-white">
-          Loyalty Stamps
+          集章卡
         </h2>
         
         {/* Simple instructions */}
         <div className="mb-6 text-left text-gray-500 dark:text-gray-400">
-          <h3 className="text-lg font-medium mb-2">How It Works:</h3>
-          <p className="mb-2">• Collect one stamp each day you visit.</p>
-          <p className="mb-2">• Special rewards at stamps 3, 6, and 9!</p>
-          <p>• Complete all 9 stamps to earn a free gift!</p>
+          <h3 className="text-lg font-medium mb-2">使用说明：</h3>
+          <p className="mb-2">• 每天访问集一枚印章。</p>
+          <p className="mb-2">• 第3、6、9枚印章有特别奖励！</p>
+          <p>• 集齐9枚印章即可获得免费礼品！</p>
         </div>
         
         {/* Stamp grid */}
@@ -143,15 +143,15 @@ const StampCard: React.FC<ScratchCardProps> = ({ onComplete, dayNumber, isComple
         
         {/* Progress info */}
         <p className="text-gray-500 dark:text-gray-400 mt-2">
-          {completedStamps}/{totalStamps} stamps collected
+          {completedStamps}/{totalStamps} 枚印章已集齐
         </p>
       </div>
       
       <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 p-4 rounded-b-lg">
         <p className="font-medium">
           {completedStamps >= totalStamps 
-            ? "Congratulations! Claim your reward!" 
-            : `${totalStamps - completedStamps} more stamps until your reward!`
+            ? "恭喜！快来领取您的奖励！" 
+            : `还差 ${totalStamps - completedStamps} 枚印章即可获得奖励！`
           }
         </p>
       </div>
@@ -211,25 +211,25 @@ const GoalPage: React.FC = () => {
   const cardsData: CardData[] = [
     {
       type: "scratch",
-      title: "Loyalty Stamps",
+      title: "集章卡",
       dayNumber: scratchedDays.length + 1,
       isCompleted: false,
-      footerText: `${scratchedDays.length}/${totalDays} stamps collected`,
+      footerText: `${scratchedDays.length}/${totalDays} 枚印章已集齐`,
     },
     {
       type: "goal",
-      title: "Yearly Goal",
+      title: "年度目标",
       goal: 10000,
       sale: 7500,
-      goalText: `We have reached $7,500 of your $10,000 yearly goal!`,
-      rewardText: "Reward: 80% off storewide sale!",
+      goalText: `您的年度目标进展：已完成 $7,500 / $10,000！`,
+      rewardText: "奖励：全场八折优惠！",
     },
     {
       type: "reward",
-      title: "Loyalty Program",
+      title: "会员积分计划",
       progress: (scratchedDays.length / totalDays) * 100,
       daysLeft: totalDays - scratchedDays.length,
-      rewardText: "Complete all stamps to unlock a free gift!",
+      rewardText: "集齐所有印章即可解锁免费礼品！",
     }
   ];
 
@@ -241,7 +241,7 @@ const GoalPage: React.FC = () => {
     
     // If all days completed, show a notification or unlock the reward
     if (updatedDays.length >= totalDays) {
-      alert("Congratulations! You've earned a free gift! 🎁");
+      alert("恭喜！您已获得免费礼品！🎁");
     }
   };
 
@@ -309,7 +309,7 @@ const GoalPage: React.FC = () => {
                     >
                       <div className="mb-8 w-64 h-64 mx-auto flex items-center justify-center">
                         <img
-                          alt="Goal Illustration"
+                          alt="目标插图"
                           src="/images/illustrations/goal.svg"
                           className="w-full h-full object-contain"
                         />
@@ -332,9 +332,9 @@ const GoalPage: React.FC = () => {
                           {card.progress < 100 && (
                             <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 flex items-center justify-center">
                               <div className="text-center">
-                                <p className="text-xl font-bold mb-2">Locked</p>
+                                <p className="text-xl font-bold mb-2">已锁定</p>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                  {card.daysLeft} {card.daysLeft === 1 ? "day" : "days"} left!
+                                  还差 {card.daysLeft} 枚！
                                 </p>
                               </div>
                             </div>

@@ -186,7 +186,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
       <div className={sidebarClasses}>
         {isMobile && (
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Browse</h2>
+            <h2 className="text-lg font-semibold">浏览</h2>
             <button
               type="button"
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -202,7 +202,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
             {/* Departments */}
             {sortedDepartments.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Department</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">按部门浏览</h3>
                 {sortedDepartments.map((d) => renderFlatItem("department", d))}
               </div>
             )}
@@ -210,7 +210,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
             {/* Ranges */}
             {sortedRanges.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Range</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">按系列浏览</h3>
                 {sortedRanges.map((r) => renderFlatItem("range", r))}
               </div>
             )}
@@ -218,7 +218,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
             {/* Brands */}
             {sortedBrands.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Brand</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">按品牌浏览</h3>
                 {sortedBrands.map((b) => renderFlatItem("brand", b))}
               </div>
             )}
@@ -226,7 +226,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
             {/* Categories */}
             {sortedCategories.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Browse by Category</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">按分类浏览</h3>
                 {sortedCategories.map((category) => renderCategory(category, 0))}
               </div>
             )}

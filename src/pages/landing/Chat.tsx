@@ -41,16 +41,16 @@ const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, onSubmit, o
     <div className="flex-grow flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          Start a Support Request
+          提交支持请求
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Please provide some details about your issue to help us assist you better.
+          请提供问题详情，以便我们更好地为您服务。
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Type of Issue
+              问题类型
             </label>
             <Select
               id="type"
@@ -58,49 +58,49 @@ const TicketForm: React.FC<TicketFormProps> = ({ formData, onChange, onSubmit, o
               onChange={(e) => handleInputChange("type", e.target.value)}
               required
             >
-              <option value="general">General Inquiry</option>
-              <option value="technical">Technical Issue</option>
-              <option value="billing">Billing Question</option>
-              <option value="feature">Feature Request</option>
-              <option value="bug">Bug Report</option>
-              <option value="account">Account Issue</option>
+              <option value="general">一般咨询</option>
+              <option value="technical">技术问题</option>
+              <option value="billing">账单问题</option>
+              <option value="feature">功能建议</option>
+              <option value="bug">故障报告</option>
+              <option value="account">账号问题</option>
             </Select>
           </div>
 
           <div>
             <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Subject
+              主题
             </label>
             <TextInput
               id="subject"
               type="text"
               value={formData.subject}
               onChange={(e) => handleInputChange("subject", e.target.value)}
-              placeholder="Brief description of your issue"
+              placeholder="简要描述您的问题"
               required
             />
           </div>
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description
+              描述
             </label>
             <Textarea
               id="description"
               rows={4}
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Please provide more details about your issue..."
+              placeholder="请详细描述您的问题..."
               required
             />
           </div>
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" disabled={loading || !formData.subject.trim() || !formData.description.trim()}>
-              {loading ? "Starting Chat..." : "Start Chat"}
+              {loading ? "正在启动..." : "开始聊天"}
             </Button>
             <Button color="gray" onClick={onCancel} disabled={loading}>
-              Cancel
+              取消
             </Button>
           </div>
         </form>
@@ -210,7 +210,7 @@ const LandingSupportChat: React.FC = () => {
       // Only show rating modal if ticket is closed and hasn't been rated yet
       setClosedTicketForRating({
         id: currentTicket.id,
-        subject: currentTicket.subject || "Support Request"
+        subject: currentTicket.subject || "支持请求"
       });
       setShowRatingModal(true);
     }
@@ -289,7 +289,7 @@ const LandingSupportChat: React.FC = () => {
           <IoChevronBack size={24} />
         </button>
         <h1 className="flex-grow text-center text-lg font-semibold text-gray-800 dark:text-white">
-          Chat with Support
+          联系客服
         </h1>
       </div>
 
@@ -306,7 +306,7 @@ const LandingSupportChat: React.FC = () => {
         ) : activeConversation ? (
           <ChatWindow conversation={activeConversation} messages={activeConversation.messages} />
         ) : (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Starting chat...</div>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">正在启动聊天...</div>
         )}
       </div>
 

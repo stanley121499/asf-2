@@ -102,7 +102,7 @@ const OrderDetailPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-10">
-              <p className="text-gray-600 dark:text-gray-300">Loading order details...</p>
+              <p className="text-gray-600 dark:text-gray-300">正在加载订单详情...</p>
             </div>
           </div>
         </div>
@@ -117,13 +117,13 @@ const OrderDetailPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-10">
-              <p className="text-gray-600 dark:text-gray-300">Order not found.</p>
+              <p className="text-gray-600 dark:text-gray-300">未找到订单。</p>
               <Button
                 color="blue"
                 className="mt-4"
                 onClick={() => navigate("/settings")}
               >
-                Back to Settings
+                返回设置
               </Button>
             </div>
           </div>
@@ -147,10 +147,10 @@ const OrderDetailPage: React.FC = () => {
               className="mb-4"
             >
               <HiOutlineArrowLeft className="mr-2 h-4 w-4" />
-              Back to Settings
+              返回设置
             </Button>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-              Order Details
+              订单详情
             </h1>
           </div>
 
@@ -164,16 +164,16 @@ const OrderDetailPage: React.FC = () => {
                       Order #{order.id}
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Placed on {new Date(order.created_at).toLocaleDateString()}
+                      下单日期：{new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <Badge color="info">Placed</Badge>
+                  <Badge color="info">已下单</Badge>
                 </div>
 
                 {/* Order Items */}
                 <div className="space-y-4">
                   <h3 className="font-medium text-gray-900 dark:text-white">
-                    Items ({totalItems})
+                    商品（共 {totalItems} 件）
                   </h3>
                   {order.items.map((item, index) => (
                     <div
@@ -182,15 +182,15 @@ const OrderDetailPage: React.FC = () => {
                     >
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 dark:text-white">
-                          {item.product?.name || "Product"}
+                          {item.product?.name || "商品"}
                         </h4>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {item.color && <span>Color: {item.color.color}</span>}
+                          {item.color && <span>颜色：{item.color.color}</span>}
                           {item.color && item.size && <span> • </span>}
-                          {item.size && <span>Size: {item.size.size}</span>}
+                          {item.size && <span>尺码：{item.size.size}</span>}
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Quantity: {item.amount || 0}
+                          数量：{item.amount || 0}
                         </p>
                       </div>
                       <div className="text-right">
@@ -210,12 +210,12 @@ const OrderDetailPage: React.FC = () => {
             <div className="lg:col-span-1">
               <Card>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Order Summary
+                  订单摘要
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">Total</span>
+                    <span className="text-gray-700 dark:text-gray-300">总计</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {typeof order.total_amount === "number"
                         ? formatCurrency(order.total_amount)
@@ -225,7 +225,7 @@ const OrderDetailPage: React.FC = () => {
 
                   {order.points_earned && (
                     <div className="flex justify-between">
-                      <span className="text-gray-700 dark:text-gray-300">Points Earned</span>
+                      <span className="text-gray-700 dark:text-gray-300">获得积分</span>
                       <span className="text-green-600 dark:text-green-400">
                         +{order.points_earned}
                       </span>
@@ -234,7 +234,7 @@ const OrderDetailPage: React.FC = () => {
 
                   {order.points_spent && (
                     <div className="flex justify-between">
-                      <span className="text-gray-700 dark:text-gray-300">Points Used</span>
+                      <span className="text-gray-700 dark:text-gray-300">使用积分</span>
                       <span className="text-red-600 dark:text-red-400">
                         -{order.points_spent}
                       </span>
@@ -245,7 +245,7 @@ const OrderDetailPage: React.FC = () => {
                 {order.shipping_address && (
                   <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                      Shipping Address
+                      配送地址
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {order.shipping_address}
