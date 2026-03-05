@@ -56,8 +56,8 @@ const ProductSection: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      <section className="bg-gray-50 py-8 antialiased dark:bg-gray-900 md:py-12 ">
-        <div className="mx-auto max-w-screen-xl px-4 2xl:px-0 py-16">
+      <section className="bg-gray-50 antialiased dark:bg-gray-900">
+        <div className="mx-auto max-w-screen-xl px-4 2xl:px-0 pt-4 pb-12">
           {/* Heading & Filters */}
           <div className="mb-4 items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
             <div>

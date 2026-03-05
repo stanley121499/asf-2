@@ -460,8 +460,20 @@ const ProductDetails: React.FC = () => {
   return (
     <>
       <NavbarHome />
-      <section className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
-        <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-16">
+      {/*
+       * On mobile the page sits above TWO fixed bars:
+       *   • The sticky action bar  (~3.5rem / 56 px)
+       *   • The bottom navbar      (~4rem   / 64 px)
+       *   • Plus iOS/Android safe-area-inset-bottom
+       * We use an inline style for the bottom padding so we can reference the
+       * CSS env() function — Tailwind alone cannot express env() values.
+       * On md+ screens the fixed bars are hidden so a simple pb-16 is enough.
+       */}
+      <section
+        className="bg-white dark:bg-gray-900 antialiased md:pb-16"
+        style={{ paddingBottom: "calc(3.5rem + 4rem + 1rem + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
             {/* Product Image */}
             <div className="shrink-0 max-w-md lg:max-w-lg mx-auto">
@@ -699,6 +711,11 @@ const ProductDetails: React.FC = () => {
         >
           加入购物车
         </button>
+        {/*
+         * className override makes the Buy-Now button identical in height,
+         * border-radius, and flex-grow to the Add-to-Cart button beside it.
+         * flex-1 ensures both buttons split the row width equally.
+         */}
         <CheckoutButton
           items={[
             {
@@ -711,6 +728,7 @@ const ProductDetails: React.FC = () => {
           beforeCheckout={beforeBuyNow}
           disabled={disableActions}
           buttonTitle="立即购买"
+          className="flex-1 py-3 rounded-xl text-sm font-semibold bg-primary-700 hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 text-white disabled:opacity-40 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
         />
       </div>
     </>

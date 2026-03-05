@@ -30,6 +30,13 @@ interface CheckoutButtonProps {
   beforeCheckout?: () => boolean | Promise<boolean>;
   /** Optional disabled flag for UI and click-blocking. */
   disabled?: boolean;
+  /**
+   * Optional className override for the rendered <button> element.
+   * When provided, it replaces the default styling entirely so that
+   * callers (e.g. the sticky mobile action bar in ProductDetails) can
+   * match the button dimensions to sibling buttons.
+   */
+  className?: string;
 }
 
 const CheckoutButton: React.FC<CheckoutButtonProps> = ({
@@ -38,6 +45,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   buttonTitle,
   beforeCheckout,
   disabled,
+  className,
 }) => {
   /**
    * Type guard for the session response returned by the serverless endpoint.
@@ -158,12 +166,19 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
     }
   };
 
+  /**
+   * Default styling used when no className override is provided —
+   * matches the original appearance on product detail and checkout pages.
+   */
+  const defaultClassName =
+    "mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0 disabled:opacity-40";
+
   return (
     // <Button onClick={handleCheckout} color={"blue"} size={"lg"}>
     //   Checkout Now
     // </Button>
     <button
-      className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0"
+      className={typeof className === "string" && className.trim().length > 0 ? className : defaultClassName}
       onClick={() => void handleCheckout()}
       type="button"
       disabled={disabled}
