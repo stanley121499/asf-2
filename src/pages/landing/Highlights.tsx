@@ -53,10 +53,23 @@ const HighlightsPage: React.FC = () => {
 
   if (postsLoading || mediaLoading) {
     return (
-      <div className="flex flex-col min-h-screen bg-white">
+      <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
         <NavbarHome />
-        <div className="w-full h-[75vh] bg-gray-200 animate-pulse" />
-        <div className="w-full h-[75vh] bg-gray-200 animate-pulse mt-2" />
+        {/* Hero banner skeleton */}
+        <div className="w-full h-[75vh] animate-pulse bg-gray-200 dark:bg-gray-700" />
+        {/* Second banner skeleton */}
+        <div className="w-full h-[75vh] animate-pulse bg-gray-200 dark:bg-gray-700 mt-2" />
+        {/* Spotlight section skeleton */}
+        <div className="mt-6 px-4">
+          <div className="mb-6 h-6 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          {/* Full-width spotlight */}
+          <div className="mb-6 w-full aspect-[4/5] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          {/* Side-by-side pair */}
+          <div className="flex space-x-2">
+            <div className="w-1/2 aspect-[3/4] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="w-1/2 aspect-[3/4] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
       </div>
     );
   }

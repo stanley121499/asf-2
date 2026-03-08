@@ -76,14 +76,14 @@ const mockUnreadNotifications = 2;
 
 const HomePage: React.FC = () => {
   const { user, user_detail } = useAuthContext();
-  const { posts } = usePostContext();
+  const { posts, loading: postsLoading } = usePostContext();
   const { postMedias } = usePostMediaContext();
   const { categories } = useCategoryContext();
   const { departments } = useDepartmentContext();
   const { ranges } = useRangeContext();
   const { brands } = useBrandContext();
   const { productCategories } = useProductCategoryContext();
-  const { products } = useProductContext();
+  const { products, loading: productsLoading } = useProductContext();
   const { productMedias } = useProductMediaContext();
 
   const postMediaMap = useMemo<Map<string, string>>(
@@ -371,6 +371,43 @@ const HomePage: React.FC = () => {
     }
     return "";
   };
+
+  // ── Loading skeleton ──────────────────────────────────────────────────────
+  // Show the user card immediately (it renders from auth state, no fetch needed),
+  // then skeleton rows for the data-driven sections while Supabase is loading.
+  if (postsLoading || productsLoading) {
+    return (
+      <LandingLayout>
+        {/* User card skeleton — mirrors real card dimensions */}
+        <div className="p-5 pt-8">
+          <div className="animate-pulse h-52 w-full rounded-xl bg-indigo-200 dark:bg-indigo-900" />
+        </div>
+        {/* Scrollable section skeletons */}
+        <div className="pt-4 space-y-6 px-5 pb-16">
+          {/* Repeat 5 rows — one per section (highlights, categories, departments, ranges, brands) */}
+          {Array.from({ length: 5 }).map((_, rowIndex) => (
+            <div key={rowIndex}>
+              {/* Section title placeholder */}
+              <div className="mb-4 flex justify-between items-center">
+                <div className="animate-pulse h-5 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="animate-pulse h-5 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              {/* Horizontal card strip */}
+              <div className="flex space-x-4 overflow-hidden">
+                {Array.from({ length: 4 }).map((_, cardIndex) => (
+                  <div
+                    key={cardIndex}
+                    className="flex-shrink-0 w-44 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700"
+                    style={{ height: "11rem" }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </LandingLayout>
+    );
+  }
 
   return (
     <LandingLayout>

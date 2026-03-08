@@ -5,15 +5,32 @@ import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
 import { useProductMediaContext } from "../../context/product/ProductMediaContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import ProductCard from "./components/ProductCard";
+
+/**
+ * Skeleton placeholder for a single product card while data is loading.
+ * Mirrors the real card's dimensions so layout doesn't shift on reveal.
+ */
+const ProductCardSkeleton: React.FC = () => (
+  <div className="animate-pulse rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    {/* Image placeholder */}
+    <div className="h-56 w-full rounded-t-lg bg-gray-200 dark:bg-gray-700" />
+    {/* Text placeholders */}
+    <div className="p-4 space-y-2">
+      <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
+      <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-700" />
+    </div>
+  </div>
+);
 
 const ProductSection: React.FC = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { categories } = useCategoryContext();
-  const { products } = useProductContext();
+  const { products, loading: productsLoading } = useProductContext();
   const { productMedias } = useProductMediaContext();
-  
+
   const [selectedCategory, setSelectedCategory] = useState(
     categories.find((category) => category.id === categoryId)
   );
@@ -52,6 +69,64 @@ const ProductSection: React.FC = () => {
       }
     }
   };
+
+  // ── Loading skeleton ────────────────────────────────────────────────────────
+  // Show skeleton cards while products are being fetched from Supabase.
+  // We render the full page chrome (navbar + breadcrumb area) so the layout
+  // doesn't jump when the real content appears.
+  if (productsLoading) {
+    return (
+      <>
+        <NavbarHome />
+        <section className="bg-gray-50 antialiased dark:bg-gray-900 min-h-screen">
+          <div className="mx-auto max-w-screen-xl px-4 2xl:px-0 pt-4 pb-12">
+            {/* Breadcrumb skeleton */}
+            <div className="mb-8 flex items-center space-x-2">
+              <div className="h-4 w-10 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-4 w-3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+            {/* Card grid skeleton — 6 placeholder cards */}
+            <div className="grid gap-4 grid-cols-2">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </>
+    );
+  }
+
+  const filteredProducts = products
+    .filter((product) => {
+      // Filter strictly by direct foreign keys
+      if (selectedCategory) {
+        return product.category_id === selectedCategory.id;
+      }
+      if (departmentId && departmentId !== "all") {
+        return product.department_id === departmentId;
+      }
+      if (rangeId && rangeId !== "all") {
+        return product.range_id === rangeId;
+      }
+      if (brandId && brandId !== "all") {
+        return product.brand_id === brandId;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (selectedSort === "Price: Low to High") {
+        return a.price - b.price;
+      } else if (selectedSort === "Price: High to Low") {
+        return b.price - a.price;
+      } else {
+        return (
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+        );
+      }
+    });
 
   return (
     <>
@@ -163,66 +238,20 @@ const ProductSection: React.FC = () => {
 
           {/* Product Cards */}
           <div className="mb-4 grid gap-4 grid-cols-2">
-            {products
-              .filter((product) => {
-                // Filter strictly by direct foreign keys
-                if (selectedCategory) {
-                  return product.category_id === selectedCategory.id;
-                }
-                if (departmentId && departmentId !== "all") {
-                  return product.department_id === departmentId;
-                }
-                if (rangeId && rangeId !== "all") {
-                  return product.range_id === rangeId;
-                }
-                if (brandId && brandId !== "all") {
-                  return product.brand_id === brandId;
-                }
-                return true;
-              })
-              .sort((a, b) => {
-                if (selectedSort === "Price: Low to High") {
-                  return a.price - b.price;
-                } else if (selectedSort === "Price: High to Low") {
-                  return b.price - a.price;
-                } else {
-                  return (
-                    new Date(b.created_at).getTime() -
-                    new Date(a.created_at).getTime()
-                  );
-                }
-              })
-              .map((product) => (
-                <div
+            {filteredProducts.map((product) => {
+              const mediaUrl =
+                productMedias.find((media) => media.product_id === product.id)?.media_url ??
+                "/default-image.jpg";
+
+              return (
+                <ProductCard
                   key={product.id}
-                  className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                  <div className="w-full">
-                    <a href={`/product-details/${product.id}`}>
-                      <img
-                        className="mx-auto h-56 w-full object-cover rounded-t-lg"
-                        src={
-                          productMedias.find(
-                            (media) => media.product_id === product.id
-                          )?.media_url || "/default-image.jpg"
-                        }
-                        alt={"商品"}
-                      />
-
-                      <div className="p-4">
-                        {/* Product Name */}
-                        <h3 className="text-md font-semibold text-gray-900 dark:text-white">
-                          {product.name}
-                        </h3>
-
-                        {/* Product Price */}
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-400">
-                          RM {product.price}
-                        </p>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-              ))}
+                  product={product}
+                  mediaUrl={mediaUrl}
+                  onImageLoad={() => {/* individual image fade-in handled inside ProductCard */}}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
