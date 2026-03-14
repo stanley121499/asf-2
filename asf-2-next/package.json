@@ -1,0 +1,44 @@
+{
+  "name": "asf-2-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@stripe/stripe-js": "^8.9.0",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.99.1",
+    "apexcharts": "^5.10.3",
+    "axios": "^1.13.6",
+    "emoji-picker-react": "^4.18.0",
+    "flowbite-react": "^0.7.5",
+    "next": "14.2.35",
+    "papaparse": "^5.5.3",
+    "react": "^18",
+    "react-apexcharts": "^2.1.0",
+    "react-datepicker": "^9.1.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "^18",
+    "react-dropzone": "^15.0.0",
+    "react-icons": "^5.6.0",
+    "react-modal-image": "^2.6.0",
+    "react-router-dom": "^7.13.1",
+    "react-sortablejs": "^6.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
