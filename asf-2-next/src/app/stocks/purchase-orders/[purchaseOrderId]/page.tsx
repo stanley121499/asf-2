@@ -2,6 +2,7 @@
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 import React from "react";
+import { useParams } from "next/navigation";
 import { useProductPurchaseOrderContext } from "@/context/product/ProductPurchaseOrderContext";
 import LoadingPage from "@/app/loading";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";

@@ -5,6 +5,7 @@ import { PostContextBundle } from "@/context/RouteContextBundles";
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { Badge, Button, Datepicker, Label, TextInput } from "flowbite-react";
 import React, { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { HiPlus } from "react-icons/hi";
 import { IoIosSearch } from "react-icons/io";
 import PostComponent from "@/components/post/post";

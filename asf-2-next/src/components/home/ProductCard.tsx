@@ -7,10 +7,10 @@ import { useAddToCartContext } from "@/context/product/CartContext";
 import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useProductColorContext } from "@/context/product/ProductColorContext";
 import { useProductSizeContext } from "@/context/product/ProductSizeContext";
-import { Product } from "@/context/product/ProductContext";
+import type { Tables } from "@/database.types";
 
 interface ProductCardProps {
-  product: Product;
+  product: Tables<"products">;
   mediaUrl: string;
   onImageLoad?: () => void;
 }

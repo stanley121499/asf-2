@@ -170,7 +170,7 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
 
     const validation = validateVariantAndStock();
     if (!validation.ok) {
-      showAlert(validation.message, "error");
+      showAlert(validation.message ?? "操作失败。", "error");
       return;
     }
 
@@ -201,7 +201,7 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
 
     const validation = validateVariantAndStock();
     if (!validation.ok) {
-      showAlert(validation.message, "error");
+      showAlert(validation.message ?? "操作失败。", "error");
       return false;
     }
     return true;

@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
-import { useAlertContext } from '../context/AlertContext';
-import { Alert } from 'flowbite-react';
+import React from "react";
+import { useAlertContext } from "../context/AlertContext";
+import { Alert } from "flowbite-react";
 
 export const AlertComponent: React.FC = () => {
   const { message, type, visible, hideAlert } = useAlertContext();

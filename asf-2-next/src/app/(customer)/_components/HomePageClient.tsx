@@ -77,7 +77,7 @@ interface HomePageProps {
   categories: Tables<"categories">[];
   posts: (Tables<"posts"> & { medias?: Tables<"post_medias">[] })[];
   productMedias: Tables<"product_medias">[];
-  brands: Tables<"brands">[];
+  brands: Tables<"brand">[];
   departments: Tables<"departments">[];
   ranges: Tables<"ranges">[];
   productCategories: Tables<"product_categories">[];

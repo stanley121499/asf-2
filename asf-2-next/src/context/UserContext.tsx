@@ -11,7 +11,7 @@ import React, {
 } from "react";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { supabase, supabaseAdmin } from "../utils/supabaseClient";
-import { Database } from "../../database.types";
+import { Database } from "@/database.types";
 import { useAlertContext } from "./AlertContext";
 
 export type User = {

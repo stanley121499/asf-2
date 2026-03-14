@@ -8,7 +8,7 @@ import React, {
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
-import { Database } from "../../database.types";
+import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
 // import { useProductContext } from "./ProductContext";
 

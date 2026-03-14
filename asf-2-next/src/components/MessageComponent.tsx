@@ -1,5 +1,5 @@
 import { FiAlertCircle } from "react-icons/fi";
-import { Json } from "../../database.types";
+import { Json } from "@/database.types";
 import React, { useState } from "react";
 import MediaViewer from "./MediaViewer";
 

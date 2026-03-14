@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useCallback, useContext, useMemo } from "react"
 import { supabase } from "../utils/supabaseClient"
-import type { Tables, TablesInsert, TablesUpdate } from "../../database.types"
+import type { Tables, TablesInsert, TablesUpdate } from "@/database.types"
 
 /**
  * PointsMembershipContext provides typed CRUD utilities for the points & membership system.

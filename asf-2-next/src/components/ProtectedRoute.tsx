@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom"; // TODO: migrate remaining
 import { usePathname } from "next/navigation";
-import LoadingPage from "../pages/pages/loading";
+import LoadingPage from "@/app/loading";
 import { useAuthContext } from "../context/AuthContext";
 
 /**
@@ -25,7 +25,7 @@ const ProtectedRoute: React.FC = () => {
   if (!user) {
     // Encode the full current path + search so the sign-in page can redirect
     // back after a successful login.
-    const returnTo = encodeURIComponent(pathname + location.search);
+    const returnTo = encodeURIComponent(pathname + "");
     return (
       <Navigate to={`/authentication/sign-in?returnTo=${returnTo}`} replace />
     );

@@ -94,7 +94,7 @@ const OrderDetailPage = ({ params }: { params: { orderId: string } }) => {
     };
 
     fetchOrderDetails();
-  }, [orderId, navigate]);
+  }, [orderId, router]);
 
 
 

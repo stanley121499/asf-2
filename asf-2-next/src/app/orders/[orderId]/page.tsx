@@ -4,7 +4,7 @@ import { OrderContextBundle } from "@/context/RouteContextBundles";
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Card, Badge, Button, Select, Modal } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX } from "react-icons/hi";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
@@ -211,7 +211,7 @@ const OrderDetailPage: React.FC = function () {
     };
 
     fetchOrderDetails();
-  }, [orderId, navigate, showAlert]);
+  }, [orderId, router, showAlert]);
 
   /**
    * Handle status update

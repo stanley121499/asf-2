@@ -1,5 +1,6 @@
 "use client";
 import { CommunityContextBundle } from "@/context/RouteContextBundles";
+import { UserProvider } from "@/context/UserContext";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useEffect, useMemo, useState } from "react";
@@ -46,7 +47,7 @@ const SupportPage: React.FC = function () {
   const supportTickets = useMemo(() => {
     return tickets.map((t) => {
       const conv = conversations.find((c) => c.ticket_id === t.id);
-      const participantUserId = conv?.participants.find((p) => p.user_id)?.user_id ?? null;
+      const participantUserId = conv?.participants.find((p: { user_id: string | null }) => p.user_id)?.user_id ?? null;
       const participant = users.find((u) => u.id === participantUserId);
       const name = participant?.email || "Customer";
       const detail = participant?.user_detail as Record<string, unknown> | undefined;
@@ -502,9 +503,11 @@ const SupportPage: React.FC = function () {
 
 export default function WrappedSupportPage(props: any) {
   return (
-    <CommunityContextBundle>
+    <UserProvider>
+      <CommunityContextBundle>
       <SupportPage {...props} />
     </CommunityContextBundle>
+    </UserProvider>
   );
 }
 

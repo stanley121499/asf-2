@@ -11,7 +11,7 @@ import React, {
 } from "react";
 import type { AuthError, User } from "@supabase/supabase-js";
 import { supabase } from "../utils/supabaseClient";
-import { Database } from "../../database.types";
+import { Database } from "@/database.types";
 
 type UserDetail = Database["public"]["Tables"]["user_details"]["Row"];
 

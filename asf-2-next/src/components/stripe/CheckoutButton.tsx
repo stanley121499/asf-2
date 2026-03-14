@@ -161,7 +161,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       }
 
       // Redirect to Stripe Checkout
-      await stripe.redirectToCheckout({ sessionId });
+      await (stripe as any).redirectToCheckout({ sessionId });
     } catch (error) {
       console.error("Error creating checkout session:", error);
       alert("There was an issue with the checkout process. Please try again.");

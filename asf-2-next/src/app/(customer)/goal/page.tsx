@@ -71,7 +71,7 @@ const StampCard: React.FC<ScratchCardProps> = ({ onComplete, dayNumber, isComple
 
   // Get completed stamps as an array of numbers
   const getCompletedStamps = () => {
-    const stamps = [];
+    const stamps: number[] = [];
     for (let i = 1; i <= completedStamps; i++) {
       stamps.push(i);
     }

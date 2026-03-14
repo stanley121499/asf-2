@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useOrderContext } from "@/context/product/OrderContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
@@ -39,10 +40,10 @@ interface Address {
  */
 const OrderSuccess: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const sessionId = new URLSearchParams(window.location.search).get(
-    "session_id"
-  );
-  const mode = new URLSearchParams(window.location.search).get("mode");
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const mode = searchParams.get("mode");
+
   const { user } = useAuthContext();
   const { createOrderWithItemsAndStock } = useOrderContext();
   const { clearCartByUser } = useAddToCartContext();
