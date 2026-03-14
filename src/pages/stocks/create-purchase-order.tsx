@@ -37,8 +37,6 @@ const CreatePurchaseOrderPage: React.FC = function () {
     []
   );
 
-  console.log(productId, productEventId);
-
   useEffect(() => {
     if (products) {
       const product = products.find((product) => product.id === productId);

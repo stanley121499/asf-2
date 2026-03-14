@@ -33,6 +33,21 @@ export interface HomeHighlightsCardProps {
 }
 
 /**
+ * Generates a local SVG data-URI placeholder image with centred text.
+ * No external HTTP requests — the SVG is embedded directly.
+ */
+function makePlaceholderImageUrl(text: string): string {
+  const safeText = text.replace(/[<>&"]/g, (ch) => {
+    const escapes: Record<string, string> = { "<": "&lt;", ">": "&gt;", "&": "&amp;", "\"": "&quot;" };
+    return escapes[ch] ?? ch;
+  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="#e5e7eb"/><text x="150" y="105" font-family="sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">${safeText}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+const FALLBACK_PLACEHOLDER_IMAGE = makePlaceholderImageUrl("Image");
+
+/**
  * Resolve a usable image URL (handles null/empty/whitespace values safely).
  */
 function resolveImageUrl(
@@ -50,7 +65,7 @@ function resolveImageUrl(
   }
 
   // Last-resort placeholder to avoid broken images.
-  return "https://via.placeholder.com/300x200?text=Image";
+  return FALLBACK_PLACEHOLDER_IMAGE;
 }
 
 export function HomeHighlightsCard({

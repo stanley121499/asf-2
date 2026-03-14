@@ -63,8 +63,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
       return;
     }
 
-    console.log("Save post");
-    console.log(postData);
+    if (process.env.NODE_ENV === "development") {
+      console.log("Save post");
+      console.log(postData);
+    }
     if (selectedPost) {
       updatePost({ ...postData, id: selectedPost.id }).then(() => {
         deleteAllPostMediaByPostId(selectedPost.id);

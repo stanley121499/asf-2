@@ -130,68 +130,49 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
 
       if (error) {
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         return;
       }
 
-      // Merge base rows to include classification IDs that the RPC may omit.
-      const ids: string[] = (data ?? []).map((p: RpcReturnedProduct) => p.id);
-      let rowsById: Record<string, ProductRow> = {};
-      let allowedIds = new Set<string>();
-
-      if (ids.length > 0) {
-        const { data: baseRows, error: baseError } = await supabase
-          .from("products")
-          .select("*")
-          .in("id", ids);
-
-        if (baseError) {
-          showAlertRef.current?.(baseError.message, "error");
-          console.error(baseError);
-        }
-
-        if (baseRows) {
-          const filteredBaseRows = baseRows.filter((r) => !isSoftDeletedRow(r));
-          rowsById = Object.fromEntries(filteredBaseRows.map((r) => [r.id, r]));
-          allowedIds = new Set(filteredBaseRows.map((r) => r.id));
-        }
-      }
-
       const mapped: Product[] = (data ?? [])
-        // If we fetched base rows (ids.length > 0), only keep products that are not soft deleted.
-        .filter((p: RpcReturnedProduct) => (ids.length > 0 ? allowedIds.has(p.id) : true))
+        .filter((p: RpcReturnedProduct) => !isSoftDeletedRow(p))
         .map((p: RpcReturnedProduct) => {
-          const base = rowsById[p.id];
+          // Cast safely to access columns that might not be in the generated types yet
+          const pExtended = p as RpcReturnedProduct & {
+            brand_id?: string | null;
+            category_id?: string | null;
+            department_id?: string | null;
+            range_id?: string | null;
+            warranty_description?: string | null;
+            warranty_period?: string | null;
+            deleted_at?: string | null;
+          };
 
-          // If we have the base row (from `products` table), prefer it for fields the RPC omits.
-          // Otherwise, build a complete `products.Row` from the RPC payload with safe fallbacks.
-          const row: ProductRow =
-            base ??
-            ({
-              id: p.id,
-              name: p.name,
-              price: p.price,
-              description: p.description ?? null,
-              article_number: p.article_number ?? null,
-              festival: p.festival ?? null,
-              season: p.season ?? null,
-              status: p.status,
-              stock_code: p.stock_code ?? null,
-              stock_place: p.stock_place ?? null,
-              created_at: p.created_at,
-              updated_at: p.updated_at,
-              time_post: p.time_post ?? null,
-              product_folder_id: p.product_folder_id ?? null,
-              // The RPC does not return deleted_at; default to NULL for active products.
-              deleted_at: null,
-              // The RPC does not return these; default to null.
-              brand_id: null,
-              category_id: null,
-              department_id: null,
-              range_id: null,
-              warranty_description: null,
-              warranty_period: null,
-            } satisfies ProductRow);
+          const row: ProductRow = {
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            description: p.description ?? null,
+            article_number: p.article_number ?? null,
+            festival: p.festival ?? null,
+            season: p.season ?? null,
+            status: p.status,
+            stock_code: p.stock_code ?? null,
+            stock_place: p.stock_place ?? null,
+            created_at: p.created_at,
+            updated_at: p.updated_at,
+            time_post: p.time_post ?? null,
+            product_folder_id: p.product_folder_id ?? null,
+            brand_id: pExtended.brand_id ?? null,
+            category_id: pExtended.category_id ?? null,
+            department_id: pExtended.department_id ?? null,
+            range_id: pExtended.range_id ?? null,
+            warranty_description: pExtended.warranty_description ?? null,
+            warranty_period: pExtended.warranty_period ?? null,
+            deleted_at: pExtended.deleted_at ?? null,
+          };
 
           return {
             ...row,
@@ -206,7 +187,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
 
       setProducts(mapped);
     } catch (error: unknown) {
-      console.error("[ProductContext] Failed to fetch products:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[ProductContext] Failed to fetch products:", error);
+      }
       showAlertRef.current?.("Failed to fetch products", "error");
     } finally {
       setLoading(false);
@@ -293,7 +276,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       if (error) {
         // Fail fast: surface the DB error to the user and caller
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw new Error(error.message);
       }
 
@@ -321,7 +306,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product colors: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -338,7 +325,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product sizes: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -354,7 +343,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product categories: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -392,7 +383,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         .eq("product_id", productId);
       if (colorError) {
         showAlertRef.current?.(colorError.message, "error");
-        console.error(colorError);
+        if (process.env.NODE_ENV === "development") {
+          console.error(colorError);
+        }
         throw new Error(colorError.message);
       }
 
@@ -413,7 +406,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to update product colors: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -433,7 +428,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product colors: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
     },
@@ -458,7 +455,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         .eq("product_id", productId);
       if (sizeError) {
         showAlertRef.current?.(sizeError.message, "error");
-        console.error(sizeError);
+        if (process.env.NODE_ENV === "development") {
+          console.error(sizeError);
+        }
         throw new Error(sizeError.message);
       }
 
@@ -479,7 +478,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to update product sizes: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -499,7 +500,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product sizes: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
     },
@@ -524,7 +527,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         .eq("product_id", productId);
       if (categoryError) {
         showAlertRef.current?.(categoryError.message, "error");
-        console.error(categoryError);
+        if (process.env.NODE_ENV === "development") {
+          console.error(categoryError);
+        }
         throw new Error(categoryError.message);
       }
 
@@ -536,7 +541,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to delete existing product categories: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
 
@@ -553,7 +560,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       } catch (error: unknown) {
         const message = `Failed to create product categories: ${getErrorMessage(error)}`;
         showAlertRef.current?.(message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw error instanceof Error ? error : new Error(message);
       }
     },
@@ -596,7 +605,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         .single();
       if (error) {
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         throw new Error(error.message);
       }
 
@@ -628,7 +639,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       await softDeleteById("products", productId);
       showAlertRef.current?.("Product deleted successfully", "success");
     } catch (error: unknown) {
-      console.error("Failed to delete product:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to delete product:", error);
+      }
       showAlertRef.current?.("Failed to delete product", "error");
       throw error instanceof Error ? error : new Error(getErrorMessage(error));
     }
@@ -649,7 +662,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       await restoreById("products", productId);
       showAlertRef.current?.("Product restored successfully", "success");
     } catch (error: unknown) {
-      console.error("Failed to restore product:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to restore product:", error);
+      }
       showAlertRef.current?.("Failed to restore product", "error");
       throw error instanceof Error ? error : new Error(getErrorMessage(error));
     }
@@ -677,7 +692,9 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
         .eq("id", productId);
       if (error) {
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         // Throw so callers can avoid showing a false success alert.
         throw new Error(error.message);
       }

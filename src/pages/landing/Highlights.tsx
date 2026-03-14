@@ -24,10 +24,12 @@ const HighlightsPage: React.FC = () => {
 
   const featuredPosts = useMemo<Post[]>(
     () =>
-      [...posts].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ),
+      [...posts]
+        .filter((p) => p.id !== "")
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
     [posts]
   );
 
@@ -89,7 +91,7 @@ const HighlightsPage: React.FC = () => {
           const heroMedia =
             heroPosts.medias?.[0]?.media_url ??
             postMediaMap.get(heroPosts.id) ??
-            "https://via.placeholder.com/800x600?text=Featured+Highlight";
+            "/default-image.jpg";
 
           return (
             <MediaAwareLink
@@ -125,7 +127,7 @@ const HighlightsPage: React.FC = () => {
           const media =
             post.medias?.[0]?.media_url ??
             postMediaMap.get(post.id) ??
-            "https://via.placeholder.com/800x600?text=Festival+Collection";
+            "/default-image.jpg";
 
           return (
             <MediaAwareLink
@@ -164,7 +166,7 @@ const HighlightsPage: React.FC = () => {
             const media =
               post.medias?.[0]?.media_url ??
               postMediaMap.get(post.id) ??
-              "https://via.placeholder.com/800x500?text=Spring+Vacay";
+              "/default-image.jpg";
 
             return (
               <MediaAwareLink
@@ -199,7 +201,7 @@ const HighlightsPage: React.FC = () => {
               const postMedia =
                 post.medias?.[0]?.media_url ??
                 postMediaMap.get(post.id) ??
-                `https://via.placeholder.com/400x500?text=Spotlight+${index + 1}`;
+                "/default-image.jpg";
 
               const titles = ["时尚拖鞋", "海滩必备"];
 
@@ -249,7 +251,7 @@ const HighlightsPage: React.FC = () => {
               const postMedia =
                 post.medias?.[0]?.media_url ??
                 postMediaMap.get(post.id) ??
-                `https://via.placeholder.com/400x400?text=Product+${index + 1}`;
+                "/default-image.jpg";
 
               return (
                 <MediaAwareLink
@@ -283,7 +285,7 @@ const HighlightsPage: React.FC = () => {
             const media =
               post.medias?.[0]?.media_url ??
               postMediaMap.get(post.id) ??
-              "https://via.placeholder.com/800x400?text=Featured+Collection";
+              "/default-image.jpg";
 
             return (
               <MediaAwareLink
@@ -318,7 +320,7 @@ const HighlightsPage: React.FC = () => {
               const postMedia =
                 post.medias?.[0]?.media_url ??
                 postMediaMap.get(post.id) ??
-                `https://via.placeholder.com/400x600?text=Collection+${index + 1}`;
+                "/default-image.jpg";
 
               const titles = ["打破常规", "个性前卫"];
 
@@ -357,7 +359,7 @@ const HighlightsPage: React.FC = () => {
             const media =
               post.medias?.[0]?.media_url ??
               postMediaMap.get(post.id) ??
-              "https://via.placeholder.com/800x400?text=Street+Meets+Chic";
+              "/default-image.jpg";
 
             return (
               <MediaAwareLink
@@ -393,7 +395,7 @@ const HighlightsPage: React.FC = () => {
           const media =
             post.medias?.[0]?.media_url ??
             postMediaMap.get(post.id) ??
-            "https://via.placeholder.com/800x400?text=Texture+Talks";
+            "/default-image.jpg";
 
           return (
             <MediaAwareLink
@@ -430,7 +432,7 @@ const HighlightsPage: React.FC = () => {
               const postMedia =
                 post.medias?.[0]?.media_url ??
                 postMediaMap.get(post.id) ??
-                `https://via.placeholder.com/400x400?text=Item+${index + 1}`;
+                "/default-image.jpg";
 
               return (
                 <MediaAwareLink

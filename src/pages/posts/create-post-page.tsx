@@ -70,11 +70,11 @@ const CreatePostPage: React.FC = () => {
           // We append the original file extension so that:
           //  1. Supabase Storage serves the file with the correct Content-Type.
           //  2. Our isVideoUrl() helper can detect videos from the URL alone.
-          const randomId = Math.random().toString(36).substring(2);
+          const uploadId = crypto.randomUUID();
           const ext = file.name.includes(".")
             ? `.${file.name.split(".").pop() ?? ""}`
             : "";
-          const storagePath = `${randomId}${ext}`;
+          const storagePath = `${uploadId}${ext}`;
 
           const { data, error } = await supabase.storage
             .from("post_medias")
@@ -85,7 +85,9 @@ const CreatePostPage: React.FC = () => {
             });
 
           if (error) {
-            console.error(error);
+            if (process.env.NODE_ENV === "development") {
+              console.error(error);
+            }
             showAlert("Failed to upload file", "error");
             return;
           }
@@ -103,7 +105,9 @@ const CreatePostPage: React.FC = () => {
             })
             .catch((error) => {
               showAlert(error.message, "error");
-              console.error(error);
+              if (process.env.NODE_ENV === "development") {
+                console.error(error);
+              }
             });
         });
       }
@@ -157,31 +161,27 @@ const CreatePostPage: React.FC = () => {
               )}
             </ReactDropzone>
 
-            {postFolders.map((folder) =>
-              Array(1)
-                .fill(null)
-                .map((_, index) => (
-                  <Card
-                    key={`${folder.id}-${index}`}
-                    onClick={() => {
-                      setSelectedFolder(folder);
-                      setSelectedPost(null);
-                    }}
-                    style={{ height: `calc((100vh - 10rem) / 6)` }}
-                    className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white m-0">
-                        {folder.name}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Photos: {folder.image_count} <br /> Videos:{" "}
-                        {folder.video_count} <br /> Created:{" "}
-                        {folder.created_at.split("T")[0]}
-                      </p>
-                    </div>
-                  </Card>
-                ))
-            )}
+            {postFolders.map((folder) => (
+              <Card
+                key={folder.id}
+                onClick={() => {
+                  setSelectedFolder(folder);
+                  setSelectedPost(null);
+                }}
+                style={{ height: `calc((100vh - 10rem) / 6)` }}
+                className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white m-0">
+                    {folder.name}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Photos: {folder.image_count} <br /> Videos:{" "}
+                    {folder.video_count} <br /> Created:{" "}
+                    {folder.created_at.split("T")[0]}
+                  </p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
 
@@ -214,35 +214,31 @@ const CreatePostPage: React.FC = () => {
             )}
             {posts
               .filter((post) => post.post_folder_id === selectedFolder?.id)
-              .flatMap((post) =>
-                Array(1)
-                  .fill(null)
-                  .map((_, index) => (
-                    <Card
-                      key={`${post.id}-${index}`}
-                      onClick={() => setSelectedPost(post)}
-                      style={{ height: `calc((100vh - 9rem) / 6)` }}
-                      className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
-                      <div className="flex flex-col items-start justify-center h-full">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {post.name}
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Created: {post.created_at.split("T")[0]}{" "}
-                          {post.created_at.split("T")[1].split(".")[0]}
-                        </p>
-                        {/* Schedule Button */}
-                        <Button
-                          onClick={() => {
-                            navigate(`/posts/schedule/${post.id}`);
-                          }}
-                          className="btn btn-primary mt-2">
-                          Schedule
-                        </Button>
-                      </div>
-                    </Card>
-                  ))
-              )}
+              .map((post) => (
+                <Card
+                  key={post.id}
+                  onClick={() => setSelectedPost(post)}
+                  style={{ height: `calc((100vh - 9rem) / 6)` }}
+                  className="bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer dark:bg-gray-900">
+                  <div className="flex flex-col items-start justify-center h-full">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {post.name}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Created: {post.created_at.split("T")[0]}{" "}
+                      {post.created_at.split("T")[1].split(".")[0]}
+                    </p>
+                    {/* Schedule Button */}
+                    <Button
+                      onClick={() => {
+                        navigate(`/posts/schedule/${post.id}`);
+                      }}
+                      className="btn btn-primary mt-2">
+                      Schedule
+                    </Button>
+                  </div>
+                </Card>
+              ))}
           </div>
         </div>
       </div>

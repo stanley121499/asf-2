@@ -5,7 +5,7 @@ import { Card, Badge, Button, Select, Modal, TextInput } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX, HiRefresh, HiCreditCard } from "react-icons/hi";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
 import { usePaymentContext } from "../../context/PaymentContext";
 import type { Database } from "../../database.types";
@@ -234,17 +234,24 @@ const PaymentDetailPage: React.FC = function () {
         let userName = "Unknown User";
         let userEmail = "";
 
-        if (paymentData.user_id) {
-          // Get email from auth users
-          const { data: authData } = await supabaseAdmin.auth.admin.getUserById(paymentData.user_id);
-          if (authData.user?.email) {
-            userEmail = authData.user.email;
-            userName = authData.user.email.split("@")[0];
-          }
-        } else if (paymentData.email) {
-          // Use payment email if no user_id
+        if (paymentData.email) {
+          // Use the payment's own email/name fields first (most reliable)
           userEmail = paymentData.email;
-          userName = paymentData.name || paymentData.email.split("@")[0];
+          userName = paymentData.name ?? paymentData.email.split("@")[0];
+        } else if (paymentData.user_id) {
+          // Fall back to user_details for display name only (no email available without admin API)
+          const { data: userDetailData } = await supabase
+            .from("user_details")
+            .select("first_name, last_name")
+            .eq("id", paymentData.user_id)
+            .single();
+
+          if (userDetailData) {
+            const firstName = userDetailData.first_name ?? "";
+            const lastName = userDetailData.last_name ?? "";
+            const fullName = `${firstName} ${lastName}`.trim();
+            userName = fullName.length > 0 ? fullName : `User ${paymentData.user_id.substring(0, 8)}`;
+          }
         }
 
         const enrichedPayment: PaymentDetailData = {
@@ -260,7 +267,9 @@ const PaymentDetailPage: React.FC = function () {
         setNewRefundStatus(paymentData.refund_status);
 
       } catch (err) {
-        console.error("Error fetching payment details:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching payment details:", err);
+        }
         showAlert(err instanceof Error ? err.message : "Failed to load payment", "error");
         navigate("/payments");
       } finally {
@@ -289,7 +298,9 @@ const PaymentDetailPage: React.FC = function () {
         setIsStatusModalOpen(false);
       }
     } catch (err) {
-      console.error("Error updating status:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error updating status:", err);
+      }
     } finally {
       setUpdatingStatus(false);
     }
@@ -328,7 +339,9 @@ const PaymentDetailPage: React.FC = function () {
         setRefundAmount("");
       }
     } catch (err) {
-      console.error("Error updating refund:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error updating refund:", err);
+      }
     } finally {
       setUpdatingRefund(false);
     }

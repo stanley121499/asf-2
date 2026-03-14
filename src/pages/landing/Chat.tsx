@@ -115,7 +115,6 @@ const LandingSupportChat: React.FC = () => {
     conversations,
     createConversation,
     addParticipant,
-    listMessagesByConversationId,
   } = useConversationContext();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -135,15 +134,6 @@ const LandingSupportChat: React.FC = () => {
   const { createTicket, tickets, loading: ticketsLoading } = useTicketContext();
   const creatingRef = useRef<boolean>(false);
 
-  // Poll as a fail-safe to keep messages fresh if realtime misses
-  useEffect(() => {
-    if (!conversationId) return;
-    const interval = setInterval(async () => {
-      await listMessagesByConversationId(conversationId);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [conversationId, listMessagesByConversationId]);
-
   // Always pick the freshest conversation reference to ensure instant UI updates
   useEffect(() => {
     if (!conversationId) {
@@ -156,14 +146,18 @@ const LandingSupportChat: React.FC = () => {
 
   useEffect(() => {
     if (!user || loading || ticketsLoading) {
-      console.log("[Chat] Waiting for data", { hasUser: !!user, loading, ticketsLoading });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Chat] Waiting for data", { hasUser: !!user, loading, ticketsLoading });
+      }
       return;
     }
     if (creatingRef.current) return;
 
     // Prefer existing open ticket for this user
     const openTicket = tickets.find((t) => t.user_id === user.id && t.status !== "closed");
-    console.log("[Chat] Open ticket lookup", { openTicket, ticketsCount: tickets.length });
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Chat] Open ticket lookup", { openTicket, ticketsCount: tickets.length });
+    }
 
     // Find conversation strictly by the open ticket id first
     const convByOpenTicket = openTicket
@@ -182,7 +176,9 @@ const LandingSupportChat: React.FC = () => {
 
     const existing = convByOpenTicket ?? participantOpenConv;
     if (existing) {
-      console.log("[Chat] Using existing support conversation", { conversationId: existing.id, ticketId: existing.ticket_id, messages: existing.messages?.length ?? 0 });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Chat] Using existing support conversation", { conversationId: existing.id, ticketId: existing.ticket_id, messages: existing.messages?.length ?? 0 });
+      }
       setConversationId(existing.id);
       setShowTicketForm(false);
       return;
@@ -237,7 +233,9 @@ const LandingSupportChat: React.FC = () => {
       });
 
       if (!ticket?.id) {
-        console.error("Failed to create ticket");
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to create ticket");
+        }
         return;
       }
 
@@ -249,7 +247,9 @@ const LandingSupportChat: React.FC = () => {
       });
 
       if (!created?.id) {
-        console.error("Failed to create conversation");
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to create conversation");
+        }
         return;
       }
 
@@ -259,15 +259,19 @@ const LandingSupportChat: React.FC = () => {
         user_id: user.id 
       });
 
-      console.log("[Chat] Created support conversation", { 
-        conversationId: created.id, 
-        ticketId: ticket.id 
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Chat] Created support conversation", { 
+          conversationId: created.id, 
+          ticketId: ticket.id 
+        });
+      }
       
       setConversationId(created.id);
       setShowTicketForm(false);
     } catch (error) {
-      console.error("Error creating ticket and conversation:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error creating ticket and conversation:", error);
+      }
     } finally {
       creatingRef.current = false;
     }

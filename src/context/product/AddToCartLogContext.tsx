@@ -4,6 +4,8 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
+  useCallback,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
@@ -48,6 +50,11 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -56,7 +63,7 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) {
-        showAlert(error.message, "error");
+        showAlertRef.current?.(error.message, "error");
         setLoading(false);
         return;
       }
@@ -97,33 +104,33 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
     return () => {
       channel.unsubscribe();
     };
-  }, [showAlert]);
+  }, []);
 
-  const createAddToCartLog = async (log: AddToCartLogInsert): Promise<void> => {
+  const createAddToCartLog = useCallback(async (log: AddToCartLogInsert): Promise<void> => {
     if (typeof log.product_id !== "string" || log.product_id.length === 0) {
-      showAlert("Invalid product id.", "error");
+      showAlertRef.current?.("Invalid product id.", "error");
       return;
     }
     if (
       typeof log.action_type !== "string" ||
       log.action_type.length === 0
     ) {
-      showAlert("Invalid action type.", "error");
+      showAlertRef.current?.("Invalid action type.", "error");
       return;
     }
     if (typeof log.amount === "number" && log.amount < 0) {
-      showAlert("Amount must be zero or positive.", "error");
+      showAlertRef.current?.("Amount must be zero or positive.", "error");
       return;
     }
     const { error } = await supabase.from("add_to_cart_logs").insert(log);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  };
+  }, []);
 
-  const updateAddToCartLog = async (log: AddToCartLogUpdate): Promise<void> => {
+  const updateAddToCartLog = useCallback(async (log: AddToCartLogUpdate): Promise<void> => {
     if (typeof log.id !== "string") {
-      showAlert("Missing log id for update.", "error");
+      showAlertRef.current?.("Missing log id for update.", "error");
       return;
     }
     const { error } = await supabase
@@ -131,13 +138,13 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
       .update(log)
       .eq("id", log.id);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  };
+  }, []);
 
-  const deleteAddToCartLog = async (logId: string): Promise<void> => {
+  const deleteAddToCartLog = useCallback(async (logId: string): Promise<void> => {
     if (typeof logId !== "string" || logId.length === 0) {
-      showAlert("Invalid log id for delete.", "error");
+      showAlertRef.current?.("Invalid log id for delete.", "error");
       return;
     }
     const { error } = await supabase
@@ -145,15 +152,15 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", logId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     }
-  };
+  }, []);
 
-  const fetchByProductId = async (
+  const fetchByProductId = useCallback(async (
     productId: string
   ): Promise<AddToCartLog[]> => {
     if (typeof productId !== "string" || productId.length === 0) {
-      showAlert("Invalid product id.", "error");
+      showAlertRef.current?.("Invalid product id.", "error");
       return [];
     }
     const { data, error } = await supabase
@@ -162,11 +169,11 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
       .eq("product_id", productId)
       .order("created_at", { ascending: false });
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return [];
     }
     return data ?? [];
-  };
+  }, []);
 
   const value = useMemo<AddToCartLogContextProps>(
     () => ({
@@ -177,7 +184,14 @@ export function AddToCartLogProvider({ children }: PropsWithChildren) {
       fetchByProductId,
       loading,
     }),
-    [add_to_cart_logs, loading] // eslint-disable-line react-hooks/exhaustive-deps
+    [
+      add_to_cart_logs,
+      loading,
+      createAddToCartLog,
+      updateAddToCartLog,
+      deleteAddToCartLog,
+      fetchByProductId,
+    ]
   );
 
   return (

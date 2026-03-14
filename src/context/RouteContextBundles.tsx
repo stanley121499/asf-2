@@ -26,6 +26,7 @@ import { AddToCartProvider } from "./product/CartContext";
 import { OrderProvider } from "./product/OrderContext";
 import { PaymentProvider } from "./PaymentContext";
 import { WishlistProvider } from "./WishlistContext";
+import { PointsMembershipProvider } from "./PointsMembershipContext";
 
 import { CommunityProvider } from "./CommunityContext";
 import { GroupProvider } from "./GroupContext";
@@ -81,15 +82,17 @@ export const PostContextBundle: React.FC<PropsWithChildren> = ({ children }) => 
 );
 
 export const OrderContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <AddToCartLogProvider>
-    <AddToCartProvider>
-      <OrderProvider>
-        <PaymentProvider>
-          <WishlistProvider>{children}</WishlistProvider>
-        </PaymentProvider>
-      </OrderProvider>
-    </AddToCartProvider>
-  </AddToCartLogProvider>
+  <PointsMembershipProvider>
+    <AddToCartLogProvider>
+      <AddToCartProvider>
+        <OrderProvider>
+          <PaymentProvider>
+            <WishlistProvider>{children}</WishlistProvider>
+          </PaymentProvider>
+        </OrderProvider>
+      </AddToCartProvider>
+    </AddToCartLogProvider>
+  </PointsMembershipProvider>
 );
 
 export const CommunityContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
@@ -110,6 +113,67 @@ export const AnalyticsContextBundle: React.FC<PropsWithChildren> = ({ children }
   <ProductContextBundle>
     <OrderContextBundle>{children}</OrderContextBundle>
   </ProductContextBundle>
+);
+
+/**
+ * SlimLandingContextBundle
+ *
+ * A minimal context wrapper for customer-facing / landing pages.
+ * Opens only the Supabase realtime subscriptions that customers actually need:
+ *
+ * Products (browsing):
+ *   CategoryContext, ProductCategoryContext, ProductSizeContext,
+ *   ProductColorContext, ProductMediaContext, ProductContext
+ *
+ * Posts (home page, highlights):
+ *   PostMediaContext, PostContext
+ *
+ * Shopping (cart, orders, wishlist, points):
+ *   PointsMembershipContext, AddToCartProvider, OrderProvider, WishlistProvider
+ *
+ * NOT included (admin-only, not needed by any customer page):
+ *   ProductFolderContext, ProductFolderMediaContext,
+ *   ProductStockContext, ProductStockLogContext,
+ *   ProductEventContext, ProductPurchaseOrderContext, ProductReportContext,
+ *   PostFolderContext, PostFolderMediaContext,
+ *   PaymentContext
+ *
+ * Total channels: ~13 (down from 24 in LandingContextBundle)
+ */
+export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
+  <BrandProvider>
+    <DepartmentProvider>
+      <RangeProvider>
+        <CategoryProvider>
+          <ProductCategoryProvider>
+            <ProductSizeProvider>
+              <ProductColorProvider>
+                <ProductMediaProvider>
+                  <ProductProvider>
+                    <PostMediaProvider>
+                      <PostProvider>
+                        <PointsMembershipProvider>
+                          <AddToCartLogProvider>
+                            <AddToCartProvider>
+                              <OrderProvider>
+                                <WishlistProvider>
+                                  {children}
+                                </WishlistProvider>
+                              </OrderProvider>
+                            </AddToCartProvider>
+                          </AddToCartLogProvider>
+                        </PointsMembershipProvider>
+                      </PostProvider>
+                    </PostMediaProvider>
+                  </ProductProvider>
+                </ProductMediaProvider>
+              </ProductColorProvider>
+            </ProductSizeProvider>
+          </ProductCategoryProvider>
+        </CategoryProvider>
+      </RangeProvider>
+    </DepartmentProvider>
+  </BrandProvider>
 );
 
 /**

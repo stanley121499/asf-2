@@ -79,6 +79,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     showAlertRef.current = showAlert;
   }, [showAlert]);
 
+  const conversationsRef = useRef<Conversation[]>([]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   /**
    * Fetch all conversations with participants (messages are lazy loaded).
    */
@@ -448,7 +453,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     if (!isNonEmptyString(conversationId)) {
       return [];
     }
-    const conv = conversations.find((c) => c.id === conversationId);
+    const conv = conversationsRef.current.find((c) => c.id === conversationId);
     if (conv && conv.messages.length > 0) {
       return conv.messages;
     }
@@ -475,7 +480,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     );
 
     return fetchedMessages;
-  }, [conversations]);
+  }, []);
 
   // Participant CRUD
   /**

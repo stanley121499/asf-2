@@ -32,17 +32,19 @@ const AddCategoryModal: React.FC = function () {
     }
 
     if (file) {
-      const randomId = Math.random().toString(36).substring(2);
+      const uploadId = crypto.randomUUID();
 
       const { data, error } = await supabase.storage
         .from("product_medias")
-        .upload(`${randomId}`, file, {
+        .upload(uploadId, file, {
           cacheControl: "3600",
           upsert: false,
         });
 
       if (error) {
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         showAlert("Failed to upload file", "error");
         return;
       }

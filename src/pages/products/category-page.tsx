@@ -76,7 +76,7 @@ const CategoryListPage: React.FC = function () {
 
   const handleUpdateCategory = async (category: CategoryUpdate) => {
     if (file) {
-      const randomId = Math.random().toString(36).substring(2);
+      const randomId = crypto.randomUUID();
 
       const { data, error } = await supabase.storage
         .from("product_medias")
@@ -86,7 +86,9 @@ const CategoryListPage: React.FC = function () {
         });
 
       if (error) {
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         showAlert("Failed to upload file", "error");
         return;
       }
@@ -173,12 +175,14 @@ const CategoryListPage: React.FC = function () {
       active: brand.active,
     };
     if (brandFile) {
-      const randomId = Math.random().toString(36).substring(2);
+      const randomId = crypto.randomUUID();
       const { data, error } = await supabase.storage
         .from("product_medias")
         .upload(`${randomId}`, brandFile, { cacheControl: "3600", upsert: false });
       if (error) {
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         showAlert("Failed to upload file", "error");
         return;
       }
@@ -212,12 +216,14 @@ const CategoryListPage: React.FC = function () {
       active: department.active,
     };
     if (deptFile) {
-      const randomId = Math.random().toString(36).substring(2);
+      const randomId = crypto.randomUUID();
       const { data, error } = await supabase.storage
         .from("product_medias")
         .upload(`${randomId}`, deptFile, { cacheControl: "3600", upsert: false });
       if (error) {
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         showAlert("Failed to upload file", "error");
         return;
       }
@@ -251,12 +257,14 @@ const CategoryListPage: React.FC = function () {
       active: range.active,
     };
     if (rangeFile) {
-      const randomId = Math.random().toString(36).substring(2);
+      const randomId = crypto.randomUUID();
       const { data, error } = await supabase.storage
         .from("product_medias")
         .upload(`${randomId}`, rangeFile, { cacheControl: "3600", upsert: false });
       if (error) {
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
         showAlert("Failed to upload file", "error");
         return;
       }
@@ -354,7 +362,7 @@ const CategoryListPage: React.FC = function () {
                   <div className="mt-1">
                     <TextInput id="name" name="name" placeholder="Fruits & Vegetables" value={selectedCategory?.name} onChange={(e) => setSelectedCategory({ ...selectedCategory, name: e.target.value })} />
                   </div>
-                  <Button color={"info"} onClick={() => handleUpdateCategory(selectedCategory!)} className="mt-4 w-full">Save</Button>
+                  <Button color={"info"} onClick={() => { if (selectedCategory) handleUpdateCategory(selectedCategory); }} className="mt-4 w-full">Save</Button>
                 </div>
               )}
 

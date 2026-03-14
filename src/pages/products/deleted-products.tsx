@@ -40,7 +40,9 @@ const DeletedProductsPage: React.FC = () => {
 
       setDeletedProducts(data ?? []);
     } catch (error: unknown) {
-      console.error("Failed to fetch deleted products:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to fetch deleted products:", error);
+      }
       showAlert("Failed to fetch deleted products", "error");
     } finally {
       setLoading(false);
@@ -64,7 +66,9 @@ const DeletedProductsPage: React.FC = () => {
         setDeletedProducts((prev) => prev.filter((p) => p.id !== productId));
       } catch (error: unknown) {
         // restoreProduct already alerts; we keep a console entry for debugging.
-        console.error("Restore product failed:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Restore product failed:", error);
+        }
       }
     },
     [restoreProduct, showAlert]

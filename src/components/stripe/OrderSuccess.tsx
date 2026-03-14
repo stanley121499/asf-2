@@ -59,7 +59,9 @@ const OrderSuccess: React.FC = () => {
             try {
               sessionData = JSON.parse(local) as Session;
             } catch (e) {
-              console.error(e);
+              if (process.env.NODE_ENV === "development") {
+                console.error(e);
+              }
             }
           }
         } else {
@@ -141,7 +143,9 @@ const OrderSuccess: React.FC = () => {
                       });
                     } catch (createError) {
                       // If creation fails (e.g., due to race condition), try fetching again
-                      console.warn("Failed to create user_points, attempting to fetch again:", createError);
+                      if (process.env.NODE_ENV === "development") {
+                        console.warn("Failed to create user_points, attempting to fetch again:", createError);
+                      }
                       currentUserPoints = await pointsAPI.getUserPointsByUserId(user.id);
                       if (!currentUserPoints) {
                         throw new Error("Unable to create or fetch user_points record");
@@ -189,7 +193,9 @@ const OrderSuccess: React.FC = () => {
                 localStorage.removeItem("cart");
                 localStorage.removeItem("order_metadata");
               } catch (err) {
-                console.error(err);
+                if (process.env.NODE_ENV === "development") {
+                  console.error(err);
+                }
               } finally {
                 if (storageKey) {
                   localStorage.setItem(storageKey, "true");

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
 import { useOrderContext } from "../../context/product/OrderContext";
-import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 
 
 interface OrderWithUser {
@@ -197,53 +197,74 @@ const OrderListPage: React.FC = function () {
         const userIds = Array.from(userIdSet);
 
         // Fetch user details
-        const { error: usersError } = await supabase
+        const { data: usersData, error: usersError } = await supabase
           .from("user_details")
-          .select("id, profile_image")
-          .in("id", userIds);
+          .select("id, first_name, last_name")
+          .in("id", userIds as string[]);
 
         if (usersError) {
-          console.error("Error fetching users:", usersError);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error fetching users:", usersError);
+          }
         }
 
-        // Get auth users for email
-        const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-        if (authError) {
-          console.error("Error fetching auth users:", authError);
+        const userDetailMap = new Map<string, { first_name: string | null; last_name: string | null }>();
+        if (usersData) {
+          usersData.forEach((u) => {
+            userDetailMap.set(u.id, { first_name: u.first_name, last_name: u.last_name });
+          });
         }
 
-        // Fetch order item counts
-        const orderItemCounts = await Promise.all(
-          orders.map(async (order) => {
-            const { data: items } = await supabase
-              .from("order_items")
-              .select("amount")
-              .eq("order_id", order.id);
+        // Fetch all order items in one query
+        const orderIds = orders.map(order => order.id);
+        const { data: allOrderItems, error: itemsError } = await supabase
+          .from("order_items")
+          .select("order_id, amount")
+          .in("order_id", orderIds);
 
-            const itemCount = (items || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-            return { orderId: order.id, itemCount };
-          })
-        );
+        if (itemsError) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error fetching order items:", itemsError);
+          }
+        }
+
+        const orderItemTotalMap = new Map<string, number>();
+        if (allOrderItems) {
+          allOrderItems.forEach((item) => {
+            if (!item.order_id) return;
+            const currentCount = orderItemTotalMap.get(item.order_id) || 0;
+            orderItemTotalMap.set(item.order_id, currentCount + (item.amount || 0));
+          });
+        }
 
         // Combine order data with user details and item counts
         const enrichedOrders: OrderWithUser[] = orders.map(order => {
-          const authUser = authUsers?.users?.find(u => u.id === order.user_id);
-          const itemData = orderItemCounts.find(item => item.orderId === order.id);
-
-          // Extract name from email (before @)
-          const userName = authUser?.email?.split("@")[0] || "Unknown User";
+          let userName = "Unknown User";
+          if (order.user_id) {
+            const userDetail = userDetailMap.get(order.user_id);
+            if (userDetail) {
+              const firstName = userDetail.first_name ?? "";
+              const lastName = userDetail.last_name ?? "";
+              const fullName = `${firstName} ${lastName}`.trim();
+              userName = fullName || `User ${order.user_id.substring(0, 8)}`;
+            } else {
+               userName = `User ${order.user_id.substring(0, 8)}`;
+            }
+          }
 
           return {
             ...order,
             user_name: userName,
-            user_email: authUser?.email || "",
-            item_count: itemData?.itemCount || 0,
+            user_email: "",
+            item_count: orderItemTotalMap.get(order.id) || 0,
           };
         });
 
         setOrdersWithUsers(enrichedOrders);
       } catch (error) {
-        console.error("Error fetching order details:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching order details:", error);
+        }
       } finally {
         setUsersLoading(false);
       }

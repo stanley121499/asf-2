@@ -15,7 +15,7 @@ export async function uploadToMedias(file: File, folder: string = "misc"): Promi
     .replace(/[^a-z0-9.]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-  const path = `${folder}/${timestamp}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+  const path = `${folder}/${timestamp}-${crypto.randomUUID().slice(0, 8)}-${safeName}`;
 
   const { error: uploadError } = await supabase.storage
     .from("medias")

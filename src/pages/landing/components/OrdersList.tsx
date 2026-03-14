@@ -37,7 +37,9 @@ const OrdersList: React.FC = () => {
             .eq("order_id", o.id);
           
           if (error) {
-            console.error("Error fetching order items:", error);
+            if (process.env.NODE_ENV === "development") {
+              console.error("Error fetching order items:", error);
+            }
           }
           
           const itemsCount = (items || []).reduce((sum, item) => sum + (item.amount || 0), 0);

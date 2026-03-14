@@ -22,7 +22,6 @@ const AddStockModal: React.FC<AddStockModalProps> = function ({ product }) {
   const { showAlert } = useAlertContext();
   const { createProductStockLog } = useProductStockLogContext();
   const { productStocks } = useProductStockContext();
-  // console.log(productStocks);
   const handleAddStock = async () => {
     const stockLogs: ProductStockLogInsert[] = [];
 
@@ -45,7 +44,9 @@ const AddStockModal: React.FC<AddStockModalProps> = function ({ product }) {
         });
       });
     });
-    console.log(stockLogs);
+    if (process.env.NODE_ENV === "development") {
+      console.log(stockLogs);
+    }
     try {      
       await Promise.all(
         stockLogs.map((stockLog) => createProductStockLog(stockLog))

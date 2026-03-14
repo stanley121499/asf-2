@@ -130,11 +130,15 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
       if (error) {
         // TEMPORARY: Silently ignore "table does not exist" errors to prevent spam
         if (error.code === "PGRST204" || error.message?.includes("table") || error.code === "42P01") {
-          console.warn("Wishlist table does not exist yet. Skipping fetch.");
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Wishlist table does not exist yet. Skipping fetch.");
+          }
           setRows([]);
           return;
         }
-        console.error("Failed to fetch wishlist:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to fetch wishlist:", error);
+        }
         showAlert(error.message, "error");
         return;
       }
@@ -179,7 +183,9 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
             showAlert("Already in your wishlist.", "success");
             return;
           }
-          console.error("Failed to add to wishlist:", error);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Failed to add to wishlist:", error);
+          }
           showAlert(error.message, "error");
           return;
         }
@@ -220,7 +226,9 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
           .eq("product_id", productId);
 
         if (error) {
-          console.error("Failed to remove from wishlist:", error);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Failed to remove from wishlist:", error);
+          }
           showAlert(error.message, "error");
           return;
         }

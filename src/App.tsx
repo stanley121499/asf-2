@@ -14,13 +14,13 @@ import {
   CommunityContextBundle,
   AnalyticsContextBundle,
   LandingContextBundle,
+  SlimLandingContextBundle,
 } from "./context/RouteContextBundles";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { HomePageElementProvider } from "./context/HomePageElementContext";
 import OrderSuccess from "./components/stripe/OrderSuccess";
 import OrderCancel from "./components/stripe/OrderCancel";
-import { PointsMembershipProvider } from "./context/PointsMembershipContext";
 import "./index.css";
 import LoadingPage from "./pages/pages/loading";
 
@@ -86,19 +86,18 @@ const App: React.FC = () => {
   return (
     <AlertProvider>
       <AuthProvider>
-        <PointsMembershipProvider>
-          <UserProvider>
-            <AlertComponent />
-            <BrowserRouter>
-              <DndProvider backend={HTML5Backend}>
-                <Suspense fallback={<LoadingPage />}>
+        <AlertComponent />
+        <BrowserRouter>
+          <Suspense fallback={<LoadingPage />}>
                   <Routes>
                     <Route element={<FlowbiteWrapper />}>
                       {/* Protected Routes */}
                       <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/users/list" element={<UserListPage />} />
-                        <Route path="/users/settings" element={<UserSettingsPage />} />
+                        <Route element={<UserProvider><Outlet /></UserProvider>}>
+                          <Route path="/users/list" element={<UserListPage />} />
+                          <Route path="/users/settings" element={<UserSettingsPage />} />
+                        </Route>
                         <Route element={<PostContextBundle><Outlet /></PostContextBundle>}>
                           <Route path="/posts/list" element={<PostListPage />} />
                           <Route
@@ -110,7 +109,7 @@ const App: React.FC = () => {
                             element={<SchedulePostListPage />}
                           />
                         </Route>
-                        <Route element={<ProductContextBundle><Outlet /></ProductContextBundle>}>
+                        <Route element={<DndProvider backend={HTML5Backend}><ProductContextBundle><Outlet /></ProductContextBundle></DndProvider>}>
                           <Route path="/products/list" element={<ProductListPage />} />
                           <Route path="/products/deleted" element={<DeletedProductsPage />} />
                           <Route
@@ -217,7 +216,7 @@ const App: React.FC = () => {
                        * LandingContextBundle provides: ProductContextBundle + PostContextBundle + OrderContextBundle.
                        * This covers all data needs for the home page, product browsing, cart, wishlist, etc.
                        */}
-                      <Route element={<LandingContextBundle><Outlet /></LandingContextBundle>}>
+                      <Route element={<SlimLandingContextBundle><Outlet /></SlimLandingContextBundle>}>
                         {/* Shopping flow */}
                         <Route path="/cart" element={<CartPage />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
@@ -266,10 +265,7 @@ const App: React.FC = () => {
                     </Route>
                   </Routes>
                 </Suspense>
-              </DndProvider>
             </BrowserRouter>
-          </UserProvider>
-        </PointsMembershipProvider>
       </AuthProvider>
     </AlertProvider>
   );

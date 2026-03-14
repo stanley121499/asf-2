@@ -76,8 +76,10 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
       typeof portEnvRaw === "string" && portEnvRaw.trim().length > 0 ? portEnvRaw : undefined;
     const isDev: boolean = env === "development" || env.startsWith("dev") || env.includes("local");
 
-    console.log(env, appUrl, portEnv, isDev);
-    console.log("Condition Check:", isDev);
+    if (process.env.NODE_ENV === "development") {
+      console.log(env, appUrl, portEnv, isDev);
+      console.log("Condition Check:", isDev);
+    }
 
     if (isDev) {
       const port: string = portEnv && /^\d+$/.test(portEnv) ? portEnv : "3000";

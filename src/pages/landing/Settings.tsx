@@ -72,7 +72,9 @@ const ProfileSettingsPage: React.FC = () => {
           const pointsRecord = await pointsAPI.getUserPointsByUserId(user.id);
           setUserPoints(pointsRecord?.amount || 0);
         } catch (err) {
-          console.error("Error fetching user points:", err);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error fetching user points:", err);
+          }
           setUserPoints(0);
         }
       }
@@ -133,7 +135,9 @@ const ProfileSettingsPage: React.FC = () => {
         .from("medias")
         .upload(path, avatarFile, { contentType: getFileContentType(avatarFile), upsert: false });
       if (uploadError) {
-        console.error("Avatar upload error:", uploadError.message);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Avatar upload error:", uploadError.message);
+        }
         return;
       }
       const { data: publicData } = supabase.storage.from("medias").getPublicUrl(path);
@@ -145,13 +149,17 @@ const ProfileSettingsPage: React.FC = () => {
         .eq("id", user.id)
         .single();
       if (updateError) {
-        console.error("Updating profile image failed:", updateError.message);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Updating profile image failed:", updateError.message);
+        }
         return;
       }
       setAvatarUrl(publicUrl);
       setAvatarFile(null);
     } catch (err) {
-      console.error("Unexpected avatar upload error:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Unexpected avatar upload error:", err);
+      }
     }
   };
 
@@ -168,7 +176,9 @@ const ProfileSettingsPage: React.FC = () => {
         .eq("id", user.id)
         .single();
       if (detailErr) {
-        console.error("Updating user_details failed:", detailErr.message);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Updating user_details failed:", detailErr.message);
+        }
         setSaving(false);
         return;
       }
@@ -181,7 +191,9 @@ const ProfileSettingsPage: React.FC = () => {
         },
       });
       if (authErr) {
-        console.error("Updating auth user metadata failed:", authErr.message);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Updating auth user metadata failed:", authErr.message);
+        }
         setSaving(false);
         return;
       }
@@ -189,7 +201,9 @@ const ProfileSettingsPage: React.FC = () => {
       setLastName(lastName);
       setPhone(phone);
     } catch (err) {
-      console.error("Unexpected save profile error:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Unexpected save profile error:", err);
+      }
     } finally {
       setSaving(false);
     }
@@ -203,14 +217,18 @@ const ProfileSettingsPage: React.FC = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password: pwNew });
       if (error) {
-        console.error("Password update error:", error.message);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Password update error:", error.message);
+        }
       } else {
         setPwCurrent("");
         setPwNew("");
         setPwConfirm("");
       }
     } catch (err) {
-      console.error("Unexpected password update error:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Unexpected password update error:", err);
+      }
     } finally {
       setPwSaving(false);
     }

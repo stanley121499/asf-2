@@ -1,5 +1,5 @@
 import { Select } from "flowbite-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import NavbarHome from "../../components/navbar-home";
 import { useCategoryContext } from "../../context/product/CategoryContext";
 import { useProductContext } from "../../context/product/ProductContext";
@@ -35,7 +35,7 @@ const ProductSection: React.FC = () => {
     categories.find((category) => category.id === categoryId)
   );
   const [selectedSort, setSelectedSort] = useState("Newest First");
-  const query = new URLSearchParams(location.search);
+  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const departmentId = query.get("department");
   const rangeId = query.get("range");
   const brandId = query.get("brand");
@@ -70,6 +70,42 @@ const ProductSection: React.FC = () => {
     }
   };
 
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        // Filter strictly by direct foreign keys
+        if (selectedCategory) {
+          return product.category_id === selectedCategory.id;
+        }
+        if (departmentId && departmentId !== "all") {
+          return product.department_id === departmentId;
+        }
+        if (rangeId && rangeId !== "all") {
+          return product.range_id === rangeId;
+        }
+        if (brandId && brandId !== "all") {
+          return product.brand_id === brandId;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (selectedSort === "Price: Low to High") {
+          return a.price - b.price;
+        } else if (selectedSort === "Price: High to Low") {
+          return b.price - a.price;
+        } else {
+          return (
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+          );
+        }
+      });
+  }, [products, selectedCategory, departmentId, rangeId, brandId, selectedSort]);
+
+  const productMediaMap = useMemo(() => {
+    return new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""]));
+  }, [productMedias]);
+
   // ── Loading skeleton ────────────────────────────────────────────────────────
   // Show skeleton cards while products are being fetched from Supabase.
   // We render the full page chrome (navbar + breadcrumb area) so the layout
@@ -97,36 +133,6 @@ const ProductSection: React.FC = () => {
       </>
     );
   }
-
-  const filteredProducts = products
-    .filter((product) => {
-      // Filter strictly by direct foreign keys
-      if (selectedCategory) {
-        return product.category_id === selectedCategory.id;
-      }
-      if (departmentId && departmentId !== "all") {
-        return product.department_id === departmentId;
-      }
-      if (rangeId && rangeId !== "all") {
-        return product.range_id === rangeId;
-      }
-      if (brandId && brandId !== "all") {
-        return product.brand_id === brandId;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (selectedSort === "Price: Low to High") {
-        return a.price - b.price;
-      } else if (selectedSort === "Price: High to Low") {
-        return b.price - a.price;
-      } else {
-        return (
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-        );
-      }
-    });
 
   return (
     <>
@@ -239,9 +245,7 @@ const ProductSection: React.FC = () => {
           {/* Product Cards */}
           <div className="mb-4 grid gap-4 grid-cols-2">
             {filteredProducts.map((product) => {
-              const mediaUrl =
-                productMedias.find((media) => media.product_id === product.id)?.media_url ??
-                "/default-image.jpg";
+              const mediaUrl = productMediaMap.get(product.id) || "/default-image.jpg";
 
               return (
                 <ProductCard

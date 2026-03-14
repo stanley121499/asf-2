@@ -4,6 +4,8 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
+  useCallback,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
@@ -53,6 +55,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   useEffect(() => {
     // Fetch initial state
     const fetchAll = async () => {
@@ -63,7 +70,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
         .order("created_at", { ascending: true });
 
       if (error) {
-        showAlert(error.message, "error");
+        showAlertRef.current?.(error.message, "error");
         setLoading(false);
         return;
       }
@@ -107,20 +114,20 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
     return () => {
       channel.unsubscribe();
     };
-  }, [showAlert]);
+  }, []);
 
   /** Create a new cart item with basic validation. */
-  const createAddToCart = async (addToCart: AddToCartInsert): Promise<void> => {
+  const createAddToCart = useCallback(async (addToCart: AddToCartInsert): Promise<void> => {
     // Validate required fields
     if (
       typeof addToCart.product_id !== "string" ||
       typeof addToCart.user_id !== "string"
     ) {
-      showAlert("Invalid product or user id.", "error");
+      showAlertRef.current?.("Invalid product or user id.", "error");
       return;
     }
     if (typeof addToCart.amount === "number" && addToCart.amount < 1) {
-      showAlert("Amount must be at least 1.", "error");
+      showAlertRef.current?.("Amount must be at least 1.", "error");
       return;
     }
 
@@ -130,19 +137,19 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return;
     }
     if (data) {
       // Optimistically append so UI reflects immediately
       setAddToCarts((prev) => [...prev, data as AddToCart]);
     }
-  };
+  }, []);
 
   /** Update an existing cart item. */
-  const updateAddToCart = async (addToCart: AddToCartUpdate): Promise<void> => {
+  const updateAddToCart = useCallback(async (addToCart: AddToCartUpdate): Promise<void> => {
     if (typeof addToCart.id !== "string") {
-      showAlert("Missing cart id for update.", "error");
+      showAlertRef.current?.("Missing cart id for update.", "error");
       return;
     }
     const { data, error } = await supabase
@@ -152,7 +159,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return;
     }
     if (data) {
@@ -160,12 +167,12 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
         prev.map((row) => (row.id === data.id ? (data as AddToCart) : row))
       );
     }
-  };
+  }, []);
 
   /** Delete a cart item by id. */
-  const deleteAddToCart = async (addToCartId: string): Promise<void> => {
+  const deleteAddToCart = useCallback(async (addToCartId: string): Promise<void> => {
     if (typeof addToCartId !== "string" || addToCartId.length === 0) {
-      showAlert("Invalid cart id for delete.", "error");
+      showAlertRef.current?.("Invalid cart id for delete.", "error");
       return;
     }
     const { error } = await supabase
@@ -173,16 +180,16 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", addToCartId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return;
     }
     setAddToCarts((prev) => prev.filter((row) => row.id !== addToCartId));
-  };
+  }, []);
 
   /** Delete all cart rows for a given user id. */
-  const clearCartByUser = async (userId: string): Promise<void> => {
+  const clearCartByUser = useCallback(async (userId: string): Promise<void> => {
     if (typeof userId !== "string" || userId.length === 0) {
-      showAlert("Invalid user id for clear cart.", "error");
+      showAlertRef.current?.("Invalid user id for clear cart.", "error");
       return;
     }
     const { error } = await supabase
@@ -190,16 +197,16 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("user_id", userId);
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return;
     }
     setAddToCarts((prev) => prev.filter((row) => row.user_id !== userId));
-  };
+  }, []);
 
   /** Fetch all cart rows for a given user id. */
-  const fetchByUser = async (userId: string): Promise<AddToCart[]> => {
+  const fetchByUser = useCallback(async (userId: string): Promise<AddToCart[]> => {
     if (typeof userId !== "string" || userId.length === 0) {
-      showAlert("Invalid user id.", "error");
+      showAlertRef.current?.("Invalid user id.", "error");
       return [];
     }
     const { data, error } = await supabase
@@ -208,11 +215,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
       return [];
     }
     return data ?? [];
-  };
+  }, []);
 
   const value = useMemo<AddToCartContextProps>(
     () => ({
@@ -224,7 +231,15 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       clearCartByUser,
       loading,
     }),
-    [add_to_carts, loading] // eslint-disable-line react-hooks/exhaustive-deps
+    [
+      add_to_carts,
+      loading,
+      createAddToCart,
+      updateAddToCart,
+      deleteAddToCart,
+      fetchByUser,
+      clearCartByUser,
+    ]
   );
 
   return <AddToCartContext.Provider value={value}>{children}</AddToCartContext.Provider>;

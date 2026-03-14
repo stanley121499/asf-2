@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
@@ -58,14 +59,21 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
   const { showAlert } = useAlertContext();
   // const { products } = useProductContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
+  useEffect(() => {
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
+
   useEffect(() => {
     setLoading(true);
     const fetchProductPurchaseOrders = async () => {
       const { data, error } = await supabase.rpc("fetch_purchase_orders");
 
       if (error) {
-        showAlert(error.message, "error");
-        console.error(error);
+        showAlertRef.current?.(error.message, "error");
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
       } else {
         const mapped = (data ?? []) as Array<
           Database["public"]["Functions"]["fetch_purchase_orders"]["Returns"][number]
@@ -81,21 +89,15 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
 
     const handleChanges = (payload: any) => {
       if (payload.eventType === "INSERT") {
-        setProductPurchaseOrders([...product_purchase_orders, payload.new]);
+        setProductPurchaseOrders((prev) => [...prev, payload.new]);
       } else if (payload.eventType === "UPDATE") {
-        const updatedProductPurchaseOrders = product_purchase_orders.map(
-          (product_purchase_order) =>
-            product_purchase_order.id === payload.new.id
-              ? payload.new
-              : product_purchase_order
+        setProductPurchaseOrders((prev) =>
+          prev.map((order) => (order.id === payload.new.id ? payload.new : order))
         );
-        setProductPurchaseOrders(updatedProductPurchaseOrders);
       } else if (payload.eventType === "DELETE") {
-        const updatedProductPurchaseOrders = product_purchase_orders.filter(
-          (product_purchase_order) =>
-            product_purchase_order.id !== payload.old.id
+        setProductPurchaseOrders((prev) =>
+          prev.filter((order) => order.id !== payload.old.id)
         );
-        setProductPurchaseOrders(updatedProductPurchaseOrders);
       }
     };
 
@@ -113,14 +115,12 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [showAlert]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   async function createProductPurchaseOrder(
     product_purchase_order: ProductPurchaseOrderInsert,
     product_purchase_order_entries: any[]
   ) {
-    console.log(product_purchase_order_entries)
-    console.log(product_purchase_order)
     const { data, error } = await supabase
       .from("product_purchase_orders")
       .insert(product_purchase_order)
@@ -128,7 +128,9 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
       .single();
 
     if (error) {
-      console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       showAlert(error.message, "error");
     } else {
       const newProductPurchaseOrder = data as ProductPurchaseOrder;
@@ -159,7 +161,9 @@ export function ProductPurchaseOrderProvider({ children }: PropsWithChildren) {
 
       if (entriesError) {
         showAlert(entriesError.message, "error");
-        console.log(entriesError);
+        if (process.env.NODE_ENV === "development") {
+          console.log(entriesError);
+        }
         return;
       }
 

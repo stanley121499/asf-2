@@ -45,7 +45,9 @@ const AddReturnModal: React.FC<AddReturnModalProps> = function ({ product }) {
         });
       });
     });
-    console.log(stockLogs);
+    if (process.env.NODE_ENV === "development") {
+      console.log(stockLogs);
+    }
     try {
       await Promise.all(
         stockLogs.map((stockLog) => createProductStockLog(stockLog))

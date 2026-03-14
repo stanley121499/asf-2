@@ -146,6 +146,27 @@ const SmartMedia: React.FC<SmartMediaProps> = ({
     }
   }, [isVisible, resolvedType]);
 
+  // Pause video when the page is hidden (screen off, app backgrounded)
+  // to stop continuous GPU decode when the user is not watching.
+  useEffect(() => {
+    if (resolvedType !== "video") return;
+
+    const handleVisibilityChange = (): void => {
+      const video = videoRef.current;
+      if (video === null) return;
+      if (document.visibilityState === "hidden") {
+        video.pause();
+      } else if (isVisible) {
+        void video.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [resolvedType, isVisible]);
+
   /**
    * Called when an image finishes downloading.
    * Writes the URL to the shared session cache so future mounts skip the skeleton.
@@ -215,7 +236,6 @@ const SmartMedia: React.FC<SmartMediaProps> = ({
           src={src}
           aria-label={alt}
           muted
-          loop
           playsInline
           preload="metadata"
           className={`w-full h-full object-cover transition-opacity duration-500 ${

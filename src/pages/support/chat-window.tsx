@@ -47,7 +47,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
         );
       } catch (e) {
         // Failing to upload should not send a broken message; stop here
-        console.error("[SupportChat] Failed to upload attachment(s)", e);
+        if (process.env.NODE_ENV === "development") {
+          console.error("[SupportChat] Failed to upload attachment(s)", e);
+        }
         return;
       }
     }
@@ -148,7 +150,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
     const fileType = fileInputRef.current?.dataset.fileType as FileType || "document";
     
     const newAttachments = Array.from(files).map(file => {
-      const id = Math.random().toString(36).substring(2, 9);
+      const id = crypto.randomUUID().substring(0, 8);
       let preview = "";
 
       if (fileType === "image" || fileType === "video") {

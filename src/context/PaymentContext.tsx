@@ -8,7 +8,7 @@ import React, {
   useState,
   PropsWithChildren,
 } from "react";
-import { supabase, supabaseAdmin } from "../utils/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import { Database } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
@@ -138,25 +138,22 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const userIds = Array.from(new Set(rawPayments.map(getOrderUserId).filter((v): v is string => typeof v === "string")));
 
       // Fetch user details if there are any user IDs
-      let usersData: { id: string; email?: string }[] = [];
+      const userDetailMap = new Map<string, { first_name: string | null; last_name: string | null }>();
       if (userIds.length > 0) {
-        const details = await Promise.all(
-          userIds.map(async (id) => {
-            const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
-            if (error) {
-              console.error(`Error fetching user details for ID ${id}:`, error);
-              return null;
-            }
-            return data.user;
-          })
-        );
+        const { data: usersData, error: usersError } = await supabase
+          .from("user_details")
+          .select("id, first_name, last_name")
+          .in("id", userIds);
 
-        usersData = details
-          .filter((d): d is NonNullable<typeof d> => d !== null)
-          .map((d) => ({
-            id: d.id,
-            email: typeof d.email === "string" ? d.email : undefined,
-          }));
+        if (usersError) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error fetching user details:", usersError);
+          }
+        } else if (usersData) {
+          usersData.forEach((u) => {
+            userDetailMap.set(u.id, { first_name: u.first_name, last_name: u.last_name });
+          });
+        }
       }
 
       // Enrich payments with user details and computed fields
@@ -170,9 +167,20 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
           const orderItemsCount = getOrderItemsAmountSum(payment);
 
           // Find user details
-          const user = typeof userId === "string" ? usersData.find((u) => u.id === userId) : undefined;
-          const email = typeof user?.email === "string" ? user.email : "";
-          const userName = email.includes("@") ? email.split("@")[0] : "Unknown User";
+          let userName = "Unknown User";
+          if (typeof userId === "string") {
+            const userDetail = userDetailMap.get(userId);
+            if (userDetail) {
+              const firstName = userDetail.first_name ?? "";
+              const lastName = userDetail.last_name ?? "";
+              const fullName = `${firstName} ${lastName}`.trim();
+              userName = fullName || `User ${userId.substring(0, 8)}`;
+            } else {
+              userName = userId.length >= 8 ? `User ${userId.substring(0, 8)}` : "Unknown User";
+            }
+          }
+          
+          const email = (payment as PaymentRow).email ?? "";
 
           return {
             ...(payment as PaymentRow),
@@ -188,7 +196,9 @@ export const PaymentProvider: React.FC<PropsWithChildren> = ({ children }) => {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       showAlertRef.current?.(message, "error");
-      console.error("Error fetching payments:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error fetching payments:", err);
+      }
     } finally {
       setLoading(false);
     }

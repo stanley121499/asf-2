@@ -142,7 +142,9 @@ const SchedulePostListPage: React.FC = function () {
       showAlert("Post updated successfully", "success");
     } catch (error: unknown) {
       const message = `Failed to update post schedule: ${getErrorMessage(error)}`;
-      console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       showAlert(message, "error");
     }
   };
@@ -158,7 +160,9 @@ const SchedulePostListPage: React.FC = function () {
       showAlert("Post unpublished successfully", "success");
     } catch (error: unknown) {
       const message = `Failed to unpublish post: ${getErrorMessage(error)}`;
-      console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       showAlert(message, "error");
     }
   };

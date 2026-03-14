@@ -67,7 +67,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
       if (logError) {
         showAlertRef.current?.(logError.message, "error");
-        console.error(logError);
+        if (process.env.NODE_ENV === "development") {
+          console.error(logError);
+        }
         return;
       }
 
@@ -86,7 +88,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
         if (stockError) {
           showAlertRef.current?.(stockError.message, "error");
-          console.error(stockError);
+          if (process.env.NODE_ENV === "development") {
+            console.error(stockError);
+          }
         }
 
         if (stocks) {
@@ -105,7 +109,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
       setProductStockLogs(mapped);
     } catch (error: unknown) {
-      console.error("Failed to fetch product stock logs:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to fetch product stock logs:", error);
+      }
       showAlertRef.current?.("Failed to fetch product stock logs", "error");
     } finally {
       setLoading(false);
@@ -128,7 +134,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
         if (error) {
           showAlertRef.current?.(error.message, "error");
-          console.error(error);
+          if (process.env.NODE_ENV === "development") {
+            console.error(error);
+          }
           return;
         }
 
@@ -198,7 +206,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
         if (error) {
           showAlertRef.current?.(error.message, "error");
-          console.error(error);
+          if (process.env.NODE_ENV === "development") {
+            console.error(error);
+          }
           return undefined;
         }
 
@@ -215,7 +225,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
         if (stockError) {
           showAlertRef.current?.(stockError.message, "error");
-          console.error(stockError);
+          if (process.env.NODE_ENV === "development") {
+            console.error(stockError);
+          }
           return undefined;
         }
 
@@ -226,7 +238,9 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
 
         return { ...created, product_stock: stock };
       } catch (error: unknown) {
-        console.error("Failed to create product stock log:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to create product stock log:", error);
+        }
         showAlertRef.current?.("Failed to create product stock log", "error");
         return undefined;
       }
@@ -248,10 +262,14 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
       const { error } = await supabase.from("product_stock_logs").update(productStockLog).eq("id", id);
       if (error) {
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
       }
     } catch (error: unknown) {
-      console.error("Failed to update product stock log:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to update product stock log:", error);
+      }
       showAlertRef.current?.("Failed to update product stock log", "error");
     }
   }, []);
@@ -269,10 +287,14 @@ export function ProductStockLogProvider({ children }: PropsWithChildren) {
       const { error } = await supabase.from("product_stock_logs").delete().eq("id", productStockLogId);
       if (error) {
         showAlertRef.current?.(error.message, "error");
-        console.error(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
       }
     } catch (error: unknown) {
-      console.error("Failed to delete product stock log:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to delete product stock log:", error);
+      }
       showAlertRef.current?.("Failed to delete product stock log", "error");
     }
   }, []);

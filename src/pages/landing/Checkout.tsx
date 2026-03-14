@@ -150,7 +150,8 @@ const CheckoutPage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Generate a random order number
-      const randomOrderNum = Math.floor(100000 + Math.random() * 900000);
+      // Generate a pseudo-random order number from timestamp
+      const randomOrderNum = Math.floor(100000 + (Date.now() % 900000));
       setOrderNumber(`ORD-${randomOrderNum}`);
 
       // Move to confirmation step

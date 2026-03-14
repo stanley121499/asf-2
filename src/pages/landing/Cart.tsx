@@ -65,7 +65,9 @@ const CartPage: React.FC = () => {
           const pointsRecord = await pointsAPI.getUserPointsByUserId(user.id);
           setUserPoints(pointsRecord?.amount || 0);
         } catch (err) {
-          console.error("Error fetching user points:", err);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error fetching user points:", err);
+          }
           setUserPoints(0);
         }
       }
@@ -144,20 +146,24 @@ const CartPage: React.FC = () => {
       // Basic error handling for each response
       if (productsRes.error) {
         // Keep UI usable even if one query fails
-        // eslint-disable-next-line no-console
-        console.error(productsRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(productsRes.error);
+        }
       }
       if (mediasRes.error) {
-        // eslint-disable-next-line no-console
-        console.error(mediasRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(mediasRes.error);
+        }
       }
       if (colorsRes && "error" in colorsRes && colorsRes.error) {
-        // eslint-disable-next-line no-console
-        console.error(colorsRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(colorsRes.error);
+        }
       }
       if (sizesRes && "error" in sizesRes && sizesRes.error) {
-        // eslint-disable-next-line no-console
-        console.error(sizesRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(sizesRes.error);
+        }
       }
 
       const products = (productsRes.data ?? []).reduce((acc: Record<string, unknown>, p) => {
@@ -336,7 +342,7 @@ const CartPage: React.FC = () => {
       return;
     }
 
-    const fakeId = `cs_test_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    const fakeId = `cs_test_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 
     // Persist a minimal fake session for the success page to render
     const fakeSession = {

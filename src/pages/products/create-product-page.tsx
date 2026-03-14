@@ -86,11 +86,11 @@ const CreateProductPage: React.FC = () => {
             // We append the original file extension so that:
             //  1. Supabase Storage serves the file with the correct Content-Type.
             //  2. Our isVideoUrl() helper can detect videos from the URL alone.
-            const randomId = Math.random().toString(36).substring(2);
+            const uploadId = crypto.randomUUID();
             const ext = file.name.includes(".")
               ? `.${file.name.split(".").pop() ?? ""}`
               : "";
-            const storagePath = `${randomId}${ext}`;
+            const storagePath = `${uploadId}${ext}`;
 
             const { data, error } = await supabase.storage
               .from("product_medias")
@@ -101,7 +101,9 @@ const CreateProductPage: React.FC = () => {
               });
 
             if (error || !data) {
-              console.error(error);
+              if (process.env.NODE_ENV === "development") {
+                console.error(error);
+              }
               showAlert("Failed to upload file", "error");
               return;
             }
@@ -119,7 +121,9 @@ const CreateProductPage: React.FC = () => {
             } catch (err: unknown) {
               const errorMessage = err instanceof Error ? err.message : "Error";
               showAlert(errorMessage, "error");
-              console.error(err);
+              if (process.env.NODE_ENV === "development") {
+                console.error(err);
+              }
             }
           })
         );

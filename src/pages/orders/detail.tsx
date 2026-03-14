@@ -5,7 +5,7 @@ import { Card, Badge, Button, Select, Modal } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX } from "react-icons/hi";
 import NavbarSidebarLayout from "../../layouts/navbar-sidebar";
 import LoadingPage from "../pages/loading";
-import { supabase, supabaseAdmin } from "../../utils/supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 import { useAlertContext } from "../../context/AlertContext";
 import type { Database } from "../../database.types";
 
@@ -155,19 +155,19 @@ const OrderDetailPage: React.FC = function () {
         let userPhone = "";
 
         if (orderData.user_id) {
-          // Get user details from user_details table (for future use)
-          await supabase
+          const { data: userDetailData } = await supabase
             .from("user_details")
-            .select("*")
+            .select("first_name, last_name")
             .eq("id", orderData.user_id)
             .single();
 
-          // Get email from auth users
-          const { data: authData } = await supabaseAdmin.auth.admin.getUserById(orderData.user_id);
-          if (authData.user?.email) {
-            userEmail = authData.user.email;
-            userName = authData.user.email.split("@")[0];
+          if (userDetailData) {
+            const firstName = userDetailData.first_name ?? "";
+            const lastName = userDetailData.last_name ?? "";
+            const fullName = `${firstName} ${lastName}`.trim();
+            userName = fullName.length > 0 ? fullName : `User ${orderData.user_id.substring(0, 8)}`;
           }
+          // Note: email is not available without admin API — leave userEmail as ""
 
           // Note: Phone would come from user_details if available
           // userPhone = userDetails?.phone || "";
@@ -196,7 +196,9 @@ const OrderDetailPage: React.FC = function () {
         setNewStatus(orderData.status || "processing");
 
       } catch (err) {
-        console.error("Error fetching order details:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching order details:", err);
+        }
         showAlert(err instanceof Error ? err.message : "Failed to load order", "error");
         navigate("/orders");
       } finally {
@@ -231,13 +233,15 @@ const OrderDetailPage: React.FC = function () {
 
       // TODO: Add status change log once order_status_logs table is available
       // For now, just log to console
-      console.log("Status change:", {
-        order_id: order.id,
-        old_status: order.status,
-        new_status: newStatus,
-        changed_by: "admin",
-        user_id: order.user_id,
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("Status change:", {
+          order_id: order.id,
+          old_status: order.status,
+          new_status: newStatus,
+          changed_by: "admin",
+          user_id: order.user_id,
+        });
+      }
 
       // Update local state
       setOrder({ ...order, status: newStatus });
@@ -258,7 +262,9 @@ const OrderDetailPage: React.FC = function () {
       setIsStatusModalOpen(false);
 
     } catch (err) {
-      console.error("Error updating status:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error updating status:", err);
+      }
       showAlert(err instanceof Error ? err.message : "Failed to update status", "error");
     } finally {
       setUpdatingStatus(false);
@@ -384,7 +390,7 @@ const OrderDetailPage: React.FC = function () {
                 <div className="space-y-4">
                   {order.items.map((item, index) => (
                     <div
-                      key={index}
+                      key={item.id ?? String(index)}
                       className="flex items-center space-x-4 border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0"
                     >
                       <div className="flex-1">

@@ -83,7 +83,9 @@ const OrderDetailPage: React.FC = () => {
           items: itemsData || [],
         });
       } catch (err) {
-        console.error("Error fetching order details:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching order details:", err);
+        }
         // Could show error state here
       } finally {
         setLoading(false);

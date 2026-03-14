@@ -60,13 +60,15 @@ const InternalChatPage: React.FC = function () {
       .filter((c) => c.type === "direct" && !c.group_id && c.participants.some((p) => p.user_id === user.id))
       .map((c) => {
         // Debug logging for direct messages
-        console.log("[DirectChat Debug]", {
-          conversationId: c.id,
-          currentUserId: user.id,
-          participants: c.participants,
-          messages: c.messages.length,
-          lastMessage: c.messages.at(-1)
-        });
+        if (process.env.NODE_ENV === "development") {
+          console.log("[DirectChat Debug]", {
+            conversationId: c.id,
+            currentUserId: user.id,
+            participants: c.participants,
+            messages: c.messages.length,
+            lastMessage: c.messages.at(-1)
+          });
+        }
         
         // Handle self-conversations (user messaging themselves)
         const participantIds = c.participants.map((p) => p.user_id).filter((id): id is string => typeof id === "string");
@@ -89,13 +91,15 @@ const InternalChatPage: React.FC = function () {
           displayName = otherUser?.email ?? "Unknown user";
         }
         
-        console.log("[DirectChat Debug - Names]", {
-          participantIds,
-          isSelfConversation,
-          targetUserId,
-          displayName,
-          currentUserEmail: user.email
-        });
+        if (process.env.NODE_ENV === "development") {
+          console.log("[DirectChat Debug - Names]", {
+            participantIds,
+            isSelfConversation,
+            targetUserId,
+            displayName,
+            currentUserEmail: user.email
+          });
+        }
         
         const last = c.messages.at(-1);
         let lastPreview = "No messages";
@@ -256,41 +260,55 @@ const InternalChatPage: React.FC = function () {
   const handleStartDirectMessage = async (targetUserId: string, userName: string) => {
     try {
       if (!user) return;
-      console.log("[InternalChat] Creating direct conversation", { targetUserId, userId: user.id });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[InternalChat] Creating direct conversation", { targetUserId, userId: user.id });
+      }
       const created = await createConversation({ type: "direct", active: true });
       if (!created?.id) {
-        console.warn("[InternalChat] Failed to create conversation");
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[InternalChat] Failed to create conversation");
+        }
         return;
       }
       await addParticipant({ conversation_id: created.id, user_id: user.id });
       await addParticipant({ conversation_id: created.id, user_id: targetUserId });
-      console.log("[InternalChat] Direct conversation ready", { conversationId: created.id });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[InternalChat] Direct conversation ready", { conversationId: created.id });
+      }
       setSelectedChat({ id: created.id, name: userName, type: "direct" });
     setIsUserPickerOpen(false);
     setActiveTab("direct");
     } catch (e) {
-      console.error("[InternalChat] Error starting direct message", e);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[InternalChat] Error starting direct message", e);
+      }
     }
   };
 
   const handleInviteToGroup = async (targetUserId: string, userName: string) => {
     try {
       if (!user || !selectedChat || selectedChat.type !== "group") {
-        console.error("[InternalChat] No group selected for invitation");
+        if (process.env.NODE_ENV === "development") {
+          console.error("[InternalChat] No group selected for invitation");
+        }
         return;
       }
 
       // Find the group's conversation
       const groupConversation = conversations.find(c => c.group_id === selectedChat.id);
       if (!groupConversation) {
-        console.error("[InternalChat] No conversation found for group", selectedChat.id);
+        if (process.env.NODE_ENV === "development") {
+          console.error("[InternalChat] No conversation found for group", selectedChat.id);
+        }
         return;
       }
 
       // Check if user is already a participant
       const existingParticipant = groupConversation.participants?.find(p => p.user_id === targetUserId);
       if (existingParticipant) {
-        console.log("[InternalChat] User already in group");
+        if (process.env.NODE_ENV === "development") {
+          console.log("[InternalChat] User already in group");
+        }
         setIsInviteUsersOpen(false);
         return;
       }
@@ -302,12 +320,16 @@ const InternalChatPage: React.FC = function () {
       });
 
       if (participant) {
-        console.log("[InternalChat] User invited to group successfully", { userId: targetUserId, groupId: selectedChat.id });
+        if (process.env.NODE_ENV === "development") {
+          console.log("[InternalChat] User invited to group successfully", { userId: targetUserId, groupId: selectedChat.id });
+        }
       }
 
       setIsInviteUsersOpen(false);
     } catch (e) {
-      console.error("[InternalChat] Error inviting user to group", e);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[InternalChat] Error inviting user to group", e);
+      }
     }
   };
 
@@ -476,7 +498,9 @@ const InternalChatPage: React.FC = function () {
                             }
                           }
                         } catch (error) {
-                          console.error("[InternalChat] Error creating group conversation:", error);
+                          if (process.env.NODE_ENV === "development") {
+                            console.error("[InternalChat] Error creating group conversation:", error);
+                          }
                         } finally {
                           setCreatingConversation(null);
                         }
@@ -730,7 +754,9 @@ const InternalChatPage: React.FC = function () {
                                           }
                                         }
                                       } catch (error) {
-                                        console.error("[InternalChat] Error creating community group conversation:", error);
+                                        if (process.env.NODE_ENV === "development") {
+                                          console.error("[InternalChat] Error creating community group conversation:", error);
+                                        }
                                       } finally {
                                         setCreatingConversation(null);
                                       }

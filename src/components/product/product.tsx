@@ -26,18 +26,42 @@ const ProductComponent: React.FC<PostProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto-scroll images
+  // Auto-scroll images every 3 seconds (reduced from 1s to prevent CPU heating).
+  // Paused when the page is hidden (screen off / app backgrounded).
   useEffect(() => {
     if (medias.length <= 1) {
       setCurrentIndex(0);
       return;
-    } // No need to scroll if there's only one images
+    }
 
-    const intervalId = setInterval(() => {
-      setCurrentIndex((current) => (current + 1) % medias.length);
-    }, 1000);
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(intervalId); // Clean up the interval on component unmount
+    const start = (): void => {
+      if (document.visibilityState === "visible") {
+        intervalId = setInterval(() => {
+          setCurrentIndex((current) => (current + 1) % medias.length);
+        }, 3000);
+      }
+    };
+
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === "hidden") {
+        if (intervalId !== null) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      } else {
+        start();
+      }
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      if (intervalId !== null) clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [medias.length]);
 
   return (

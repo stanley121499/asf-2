@@ -74,6 +74,22 @@ const ScrollableSection = <TItem,>({
 // Add this mock data near the top of the file, after imports
 const mockUnreadNotifications = 2;
 
+/**
+ * Generates a local SVG data-URI placeholder image with centred text.
+ * No external HTTP requests are made — the SVG is embedded directly as a data URI.
+ *
+ * @param text - Label text to display on the placeholder.
+ * @returns A data: URI string safe for use in an <img src> attribute.
+ */
+function makePlaceholderImageUrl(text: string): string {
+  const safeText = text.replace(/[<>&"]/g, (ch) => {
+    const escapes: Record<string, string> = { "<": "&lt;", ">": "&gt;", "&": "&amp;", "\"": "&quot;" };
+    return escapes[ch] ?? ch;
+  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="#e5e7eb"/><text x="150" y="105" font-family="sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">${safeText}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 const HomePage: React.FC = () => {
   const { user, user_detail } = useAuthContext();
   const { posts, loading: postsLoading } = usePostContext();
@@ -96,13 +112,6 @@ const HomePage: React.FC = () => {
     [productMedias]
   );
 
-  /**
-   * Build placeholder image URLs for cards that don't have a usable image.
-   * Using `encodeURIComponent` prevents broken URLs when text contains spaces.
-   */
-  const makePlaceholderImageUrl = (text: string): string => {
-    return `https://via.placeholder.com/300x200?text=${encodeURIComponent(text)}`;
-  };
 
   /**
    * Formats product counts into a human-readable subtitle.
@@ -114,11 +123,13 @@ const HomePage: React.FC = () => {
 
   // Sort posts by latest (created_at or updated_at)
   const sortedPosts = useMemo(() => {
-    return [...posts].sort((a, b) => {
-      const dateA = new Date(a.created_at || 0);
-      const dateB = new Date(b.created_at || 0);
-      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
-    });
+    return [...posts]
+      .filter((p) => p.id !== "")
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at || 0);
+        const dateB = new Date(b.created_at || 0);
+        return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+      });
   }, [posts]);
 
   // Sort categories alphabetically by name
@@ -504,7 +515,7 @@ const HomePage: React.FC = () => {
               // Find media for this post
               const postMedia = post.medias?.[0]?.media_url ||
                 postMediaMap.get(post.id) ||
-                `https://via.placeholder.com/300x200?text=Post+${index + 1}`;
+                "/default-image.jpg";
 
               return (
                 <MediaAwareLink
@@ -696,7 +707,7 @@ const HomePage: React.FC = () => {
                 >
                   <div className="h-44 bg-gray-100 relative">
                     <MediaThumb
-                      src={productMediaUrl || `https://via.placeholder.com/160?text=商品+${index + 1}`}
+                      src={productMediaUrl || "/default-image.jpg"}
                       alt={product.name || `商品 ${index + 1}`}
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -713,7 +724,7 @@ const HomePage: React.FC = () => {
                     </h3>
                     <div className="flex justify-between items-center mt-2">
                       <p className="text-sm font-bold text-indigo-800">
-                        RM {product.price?.toFixed(2) || (Math.random() * 100).toFixed(2)}
+                        RM {product.price?.toFixed(2) ?? "—"}
                       </p>
                       <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-indigo-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">

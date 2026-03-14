@@ -149,7 +149,9 @@ const ScheduleProductListPage: React.FC = function () {
     } catch (error: unknown) {
       // Surface a safe message to the user; details are still logged for debugging.
       const message = `Failed to update product schedule: ${getErrorMessage(error)}`;
-      console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       showAlert(message, "error");
     }
   };
@@ -165,7 +167,9 @@ const ScheduleProductListPage: React.FC = function () {
       showAlert("Product unpublished successfully", "success");
     } catch (error: unknown) {
       const message = `Failed to unpublish product: ${getErrorMessage(error)}`;
-      console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       showAlert(message, "error");
     }
   };

@@ -103,7 +103,9 @@ const ProductDetails: React.FC = () => {
       }
 
       if (error) {
-        console.error("Failed to check product availability:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to check product availability:", error);
+        }
         setAvailability({ status: "missing" });
         return;
       }

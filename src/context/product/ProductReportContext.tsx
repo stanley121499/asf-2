@@ -3,6 +3,9 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
+  useCallback,
+  useMemo,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../../utils/supabaseClient";
@@ -38,24 +41,29 @@ export function ProductReportProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
 
+  const showAlertRef = useRef<typeof showAlert | null>(null);
   useEffect(() => {
-    setLoading(true);
-    fetchProductReports();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    showAlertRef.current = showAlert;
+  }, [showAlert]);
 
-  async function fetchProductReports() {
+  const fetchProductReports = useCallback(async () => {
     const { data, error } = await supabase.from("product_reports").select("*");
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     } else {
       setProductReports(data);
     }
 
     setLoading(false);
-  }
+  }, []);
 
-  async function createProductReport(product_report: ProductReportInsert) {
+  useEffect(() => {
+    setLoading(true);
+    fetchProductReports();
+  }, [fetchProductReports]);
+
+  const createProductReport = useCallback(async (product_report: ProductReportInsert) => {
     const { data, error } = await supabase
       .from("product_reports")
       .insert(product_report)
@@ -63,48 +71,58 @@ export function ProductReportProvider({ children }: PropsWithChildren) {
       .single();
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     } else {
-      showAlert("Product report created successfully", "success");
+      showAlertRef.current?.("Product report created successfully", "success");
       return data;
     }
-  }
+  }, []);
 
-  async function updateProductReport(product_report: ProductReportUpdate) {
+  const updateProductReport = useCallback(async (product_report: ProductReportUpdate) => {
     const { error } = await supabase
       .from("product_reports")
       .update(product_report)
       .match({ id: product_report.id });
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     } else {
-      showAlert("Product report updated successfully", "success");
+      showAlertRef.current?.("Product report updated successfully", "success");
     }
-  }
+  }, []);
 
-  async function deleteProductReport(product_reportId: string) {
+  const deleteProductReport = useCallback(async (product_reportId: string) => {
     const { error } = await supabase
       .from("product_reports")
       .delete()
       .match({ id: product_reportId });
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlertRef.current?.(error.message, "error");
     } else {
-      showAlert("Product report deleted successfully", "success");
+      showAlertRef.current?.("Product report deleted successfully", "success");
     }
-  }
+  }, []);
+
+  const value = useMemo<ProductReportContextProps>(
+    () => ({
+      product_reports,
+      createProductReport,
+      updateProductReport,
+      deleteProductReport,
+      loading,
+    }),
+    [
+      product_reports,
+      loading,
+      createProductReport,
+      updateProductReport,
+      deleteProductReport,
+    ]
+  );
 
   return (
-    <ProductReportContext.Provider
-      value={{
-        product_reports,
-        createProductReport,
-        updateProductReport,
-        deleteProductReport,
-        loading,
-      }}>
+    <ProductReportContext.Provider value={value}>
       {children}
     </ProductReportContext.Provider>
   );
