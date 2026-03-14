@@ -32,7 +32,7 @@ const FloatingChatButton: React.FC = function () {
 };
 
 const CategoriesAnalyticsPage: React.FC = function () {
-  const { products, loading } = useProductContext();
+  const { loading } = useProductContext();
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>("This Month");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
