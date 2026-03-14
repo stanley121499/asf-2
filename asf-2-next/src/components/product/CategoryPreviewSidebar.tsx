@@ -3,7 +3,7 @@ import { Category } from "../../context/product/CategoryContext";
 import type { Department } from "../../context/product/DepartmentContext";
 import type { Range } from "../../context/product/RangeContext";
 import { Brand } from "../../context/product/BrandContext";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 /**
  * CategoryPreviewSidebar component displays a hierarchical list of categories
@@ -58,7 +58,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
   slideFromLeft = false,
   fullWidth = false,
 }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   // Remove activeTab since we're showing all sections
 
   const sortedDepartments = useMemo(() => {
@@ -80,7 +80,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
 
     if (shouldRedirect) {
       const redirectUrl = redirectUrlFormatter("category", category);
-      navigate(redirectUrl);
+      router.push(redirectUrl);
 
       // Close the sidebar if it's mobile
       if (isMobile && onClose) {
@@ -92,7 +92,7 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
   const handleFlatSelect = (tab: SidebarTab, item: Department | Range | Brand) => {
     if (shouldRedirect) {
       const redirectUrl = redirectUrlFormatter(tab, item);
-      navigate(redirectUrl);
+      router.push(redirectUrl);
       if (isMobile && onClose) {
         onClose();
       }

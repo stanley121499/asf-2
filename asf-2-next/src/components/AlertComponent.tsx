@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { useAlertContext } from '../context/AlertContext';
 import { Alert } from 'flowbite-react';
