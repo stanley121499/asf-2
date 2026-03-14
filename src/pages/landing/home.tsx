@@ -63,7 +63,7 @@ const ScrollableSection = <TItem,>({
       <div
         ref={scrollContainerRef}
         className="flex overflow-x-auto hide-scrollbar space-x-4 px-5 pb-2"
-        style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+        style={{ scrollSnapType: "x mandatory" }}
       >
         {items.map((item, index) => renderItem(item, index))}
       </div>

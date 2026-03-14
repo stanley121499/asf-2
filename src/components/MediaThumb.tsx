@@ -148,6 +148,8 @@ const MediaThumb: React.FC<MediaThumbProps> = ({
       alt={alt}
       className={className}
       style={style}
+      loading="lazy"
+      decoding="async"
       onError={handleImageError}
     />
   );
