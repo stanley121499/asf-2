@@ -89,29 +89,26 @@ export function HomeHighlightsCard({
     <Link
       to={to}
       className={[
-        "flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group",
+        "flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 relative group",
         className,
       ].join(" ")}
       style={{ width: "17rem" }}
     >
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-xl"></div>
-
       {/* Optional badge */}
       {typeof badgeText === "string" && badgeText.trim().length > 0 && (
-        <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
           {badgeText}
         </div>
       )}
 
       {/* Image / Video */}
-      <div className="h-48 bg-gray-100 relative">
+      <div className="h-48 bg-gray-100 relative overflow-hidden">
         <MediaThumb
           src={resolvedImageUrl}
           alt={resolvedAlt}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
       </div>
 
       {/* Text content */}

@@ -44,9 +44,9 @@ const ScrollableSection = <TItem,>({
         <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h2>
         {viewAllLink && (
           isHighlightSection ? (
-            <Link to={viewAllLink} className="group bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm transform transition-all duration-300 hover:shadow-md hover:scale-105 hover:from-indigo-800 hover:to-purple-900 flex items-center space-x-1 hover:-translate-y-0.5">
+            <Link to={viewAllLink} className="bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm flex items-center space-x-1">
               <span>查看全部</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -510,7 +510,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="精选推荐"
             viewAllLink="/highlights"
-            items={sortedPosts.slice(0, 10)}
+            items={sortedPosts.slice(0, 4)}
             renderItem={(post, index) => {
               // Find media for this post
               const postMedia = post.medias?.[0]?.media_url ||
@@ -524,20 +524,19 @@ const HomePage: React.FC = () => {
                   caption={post.caption ?? `帖子 ${index + 1}`}
                   ctaLabel="了解更多"
                   key={`post-${post.id !== "" ? post.id : index}`}
-                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 relative group block"
+                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 relative group block"
                   style={{ width: "17rem" }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-xl pointer-events-none"></div>
                   <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10 pointer-events-none">
                     精选
                   </div>
-                  <div className="h-48 bg-gray-100 relative">
+                  <div className="h-48 bg-gray-100 relative overflow-hidden">
                     <MediaThumb
                       src={postMedia}
                       alt={post.caption ?? `帖子 ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30 pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
                   </div>
                   <div className="p-5 relative">
                     <h3 className="font-bold text-gray-900 truncate">
@@ -562,7 +561,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="分类"
             viewAllLink="/product-section"
-            items={sortedCategories.slice(0, 10)}
+            items={sortedCategories.slice(0, 4)}
             renderItem={(category, index) => {
               // Step 1: Determine the best image we can show for this category.
               const placeholder = makePlaceholderImageUrl(`分类 ${index + 1}`);
@@ -595,7 +594,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="部门"
             viewAllLink="/product-section?department=all"
-            items={sortedDepartments.slice(0, 10)}
+            items={sortedDepartments.slice(0, 4)}
             renderItem={(dept, index) => {
               // Step 1: Determine image for this department.
               const placeholder = makePlaceholderImageUrl(`部门 ${index + 1}`);
@@ -625,7 +624,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="系列"
             viewAllLink="/product-section?range=all"
-            items={sortedRanges.slice(0, 10)}
+            items={sortedRanges.slice(0, 4)}
             renderItem={(range, index) => {
               // Step 1: Determine image for this range.
               const placeholder = makePlaceholderImageUrl(`系列 ${index + 1}`);
@@ -655,7 +654,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="品牌"
             viewAllLink="/product-section?brand=all"
-            items={sortedBrands.slice(0, 10)}
+            items={sortedBrands.slice(0, 4)}
             renderItem={(brand, index) => {
               // Step 1: Determine image for this brand.
               const placeholder = makePlaceholderImageUrl(`品牌 ${index + 1}`);
@@ -685,7 +684,7 @@ const HomePage: React.FC = () => {
           <ScrollableSection
             title="商品"
             viewAllLink="/products"
-            items={sortedProducts.slice(0, 10)}
+            items={sortedProducts.slice(0, 4)}
             renderItem={(product, index) => {
               const productMediaUrl = productMediaMap.get(product.id);
 
@@ -703,20 +702,20 @@ const HomePage: React.FC = () => {
                 <Link
                   to={`/product-details/${product.id}`}
                   key={`product-${product.id || index}`}
-                  className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-1 group"
+                  className="flex-shrink-0 w-44 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 group"
                 >
-                  <div className="h-44 bg-gray-100 relative">
+                  <div className="h-44 bg-gray-100 relative overflow-hidden">
                     <MediaThumb
                       src={productMediaUrl || "/default-image.jpg"}
                       alt={product.name || `商品 ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                     {productCategoryNames && (
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
                         {productCategoryNames}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
                   </div>
                   <div className="p-4">
                     <h3 className="font-medium text-gray-900 truncate">
