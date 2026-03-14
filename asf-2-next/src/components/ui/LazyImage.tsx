@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
 export interface LazyImageProps {
   /** The primary image source URL */
@@ -67,20 +68,33 @@ export const LazyImage = ({
       {imageState === "loading" && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
-      <img
-        src={currentSrc}
-        alt={alt}
-        className={`${className} transition-opacity duration-300 ease-in ${imageOpacityClass}`.trim()}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        fetchPriority={fetchpriority as any}
-        width={width}
-        height={height}
-        style={style}
-        onClick={onClick}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
+      {width && height ? (
+        <Image
+          src={currentSrc}
+          alt={alt || ""}
+          width={Number(width)}
+          height={Number(height)}
+          className={`${className} transition-opacity duration-300 ease-in ${imageOpacityClass}`.trim()}
+          priority={eager}
+          style={style}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      ) : (
+        <Image
+          src={currentSrc}
+          alt={alt || ""}
+          fill
+          sizes="100vw"
+          className={`${className} transition-opacity duration-300 ease-in ${imageOpacityClass}`.trim()}
+          priority={eager}
+          style={{ objectFit: 'cover', ...style }}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
     </div>
   );
 };

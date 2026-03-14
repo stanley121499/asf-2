@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { imageCache } from "../utils/imageCache";
 
 export interface SmartImageProps {
@@ -76,18 +77,15 @@ const SmartImage: React.FC<SmartImageProps> = ({
       )}
 
       {/*
-       * The <img> is always in the DOM. loading="lazy" tells the browser to
-       * defer the network request until the element is near the viewport —
-       * using native browser heuristics that account for scroll velocity,
-       * network speed and device capabilities. This is far more reliable on
-       * mobile than a custom IntersectionObserver during fast momentum scroll.
+       * The <Image> handles optimizations, decoding, and caching natively!
        */}
-      <img
+      <Image
         src={src}
-        alt={alt}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        alt={alt || ""}
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        priority={eager}
+        className={`object-cover transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         onLoad={handleLoad}

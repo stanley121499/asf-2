@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { imageCache } from "../utils/imageCache";
 import { isVideoUrl } from "../utils/mediaUtils";
 
@@ -212,11 +213,12 @@ const SmartMedia: React.FC<SmartMediaProps> = ({
        * onError fires for extensionless video files → triggers video fallback.
        */}
       {isVisible && resolvedType === "image" && (
-        <img
+        <Image
           src={src}
-          alt={alt}
-          decoding="async"
-          className={`w-full h-full object-cover transition-opacity duration-500 ${
+          alt={alt || ""}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className={`object-cover transition-opacity duration-500 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
           onLoad={handleImageLoad}

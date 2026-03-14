@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { FaShoppingCart, FaCheck } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
@@ -84,20 +85,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, mediaUrl, onImageLoa
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="w-full">
         <a href={`/product-details/${product.id}`}>
-          <div className="relative overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
+          <div className="relative h-56 w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
             {isNew && (
               <span className="absolute left-2 top-2 z-10 rounded-full bg-green-500 px-2 py-0.5 text-xs font-semibold text-white">
                 新品
               </span>
             )}
-            <img
-              className={`mx-auto h-56 w-full object-cover transition-opacity duration-300 ${
+            <Image
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className={`mx-auto object-cover transition-opacity duration-300 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               src={mediaUrl}
               alt={product.name || "商品"}
-              loading="lazy"
-              decoding="async"
               onLoad={handleImageReady}
               onError={handleImageReady}
             />
