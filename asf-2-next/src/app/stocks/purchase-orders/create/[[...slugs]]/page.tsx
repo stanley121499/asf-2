@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 import React, { useEffect } from "react";
@@ -9,7 +9,7 @@ import {
   useProductContext,
   Product,
 } from "@/context/product/ProductContext";
-import { } from "react-router-dom";
+
 import {
   useProductPurchaseOrderContext,
   ProductPurchaseOrderInsert,
@@ -31,8 +31,8 @@ const CreatePurchaseOrderPage: React.FC = function () {
   const { productId, productEventId } = useParams();
   const { updateProductEvent } = useProductEventContext();
   const [formData, setFormData] = React.useState<ProductPurchaseOrderInsert>({
-    product_id: productId || "",
-    product_event: productEventId || "",
+    product_id: Array.isArray(productId) ? productId[0] : (productId || ""),
+    product_event: Array.isArray(productEventId) ? productEventId[0] : (productEventId || ""),
   });
   const [productData, setProductData] = React.useState<Product | undefined>(
     undefined

@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -212,7 +212,7 @@ const OrderDetailPage: React.FC = function () {
     };
 
     fetchOrderDetails();
-  }, [orderId, navigate, showAlert]);
+  }, [orderId, router, showAlert]);
 
   /**
    * Handle status update

@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 
 import { Select } from "flowbite-react";
 import React, { useEffect, useState, useMemo } from "react";

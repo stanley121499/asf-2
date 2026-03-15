@@ -332,4 +332,10 @@ const LandingSupportChat: React.FC = () => {
   
  );
 };
-export default LandingSupportChat;
+export default function WrappedLandingSupportChat(props: any) {
+  return (
+    <CommunityContextBundle>
+      <LandingSupportChat {...props} />
+    </CommunityContextBundle>
+  );
+}

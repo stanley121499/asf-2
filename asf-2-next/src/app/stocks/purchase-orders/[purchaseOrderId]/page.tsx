@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 import React from "react";

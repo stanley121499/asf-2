@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { Progress } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import NavbarHome from "@/components/navbar-home";
@@ -72,7 +72,7 @@ const StampCard: React.FC<ScratchCardProps> = ({ onComplete, dayNumber, isComple
 
   // Get completed stamps as an array of numbers
   const getCompletedStamps = () => {
-    const stamps = [];
+    const stamps: number[] = [];
     for (let i = 1; i <= completedStamps; i++) {
       stamps.push(i);
     }

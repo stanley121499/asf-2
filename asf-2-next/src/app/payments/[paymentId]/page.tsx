@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -283,7 +283,7 @@ const PaymentDetailPage: React.FC = function () {
     };
 
     fetchPaymentDetails();
-  }, [paymentId, navigate, showAlert]);
+  }, [paymentId, router, showAlert]);
 
   /**
    * Handle status update

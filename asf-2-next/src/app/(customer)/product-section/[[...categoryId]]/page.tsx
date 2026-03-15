@@ -18,7 +18,7 @@ export default async function ProductSectionPage({
   ] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*"),
-    supabase.from("product_medias").select("product_id, media_url"),
+    supabase.from("product_medias").select("*"),
   ]);
 
   return (

@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { PostContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable react/no-unknown-property */

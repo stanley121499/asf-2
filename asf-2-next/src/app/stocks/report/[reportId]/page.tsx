@@ -1,9 +1,9 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 import React from "react";
-import { } from "react-router-dom";
+
 import { useProductReportContext } from "@/context/product/ProductReportContext";
 import LoadingPage from "@/app/loading";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";

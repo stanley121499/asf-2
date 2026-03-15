@@ -1,5 +1,6 @@
 "use client";
 import { HomePageElementProvider } from "@/context/HomePageElementContext";
+import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 // src/components/HomePageBuilder.tsx
 
@@ -139,9 +140,11 @@ const HomePageBuilder: React.FC = () => {
 
 export default function WrappedHomePageBuilder(props: any) {
   return (
-    <HomePageElementProvider>
-      <HomePageBuilder {...props} />
-    </HomePageElementProvider>
+    <ProductContextBundle>
+      <HomePageElementProvider>
+        <HomePageBuilder {...props} />
+      </HomePageElementProvider>
+    </ProductContextBundle>
   );
 }
 

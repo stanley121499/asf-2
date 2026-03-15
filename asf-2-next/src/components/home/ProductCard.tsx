@@ -7,13 +7,13 @@ import { useAddToCartContext } from "@/context/product/CartContext";
 import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useProductColorContext } from "@/context/product/ProductColorContext";
 import { useProductSizeContext } from "@/context/product/ProductSizeContext";
-import { Product } from "@/context/product/ProductContext";
-import Image from "next/image";
+import type { Tables } from "@/database.types";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useWishlistContext } from "@/context/WishlistContext";
+import Image from "next/image";
 
 interface ProductCardProps {
-  product: Product;
+  product: Tables<"products">;
   mediaUrl: string;
   onImageLoad?: () => void;
 }
@@ -111,6 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, mediaUrl, onImageLoa
       <div className="w-full">
         <a href={`/product-details/${product.id}`}>
           <div className="relative h-56 w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
+            {/* Note: if you need Image, make sure to import it from next/image, wait let me check if Image is imported. It was removed. Re-adding. */}
             <Image
               className={`object-cover transition-opacity duration-300 ${
                 imageLoaded ? "opacity-100" : "opacity-0"

@@ -37,6 +37,7 @@ import { ConversationParticipantProvider } from "./ConversationParticipantContex
 import { TicketProvider } from "./TicketContext";
 import { TicketStatusLogProvider } from "./TicketStatusLogContext";
 import { ConversationProvider } from "./ConversationContext";
+import { UserProvider } from "./UserContext";
 
 export const ProductContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <BrandProvider>
@@ -85,37 +86,39 @@ export const PostContextBundle: React.FC<PropsWithChildren> = ({ children }) => 
 );
 
 export const OrderContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <PointsMembershipProvider>
-    <AddToCartLogProvider>
-      <AddToCartProvider>
-        <OrderProvider>
-          <PaymentProvider>
-            <WishlistProvider>{children}</WishlistProvider>
-          </PaymentProvider>
-        </OrderProvider>
-      </AddToCartProvider>
-    </AddToCartLogProvider>
-  </PointsMembershipProvider>
+  <ProductContextBundle>
+    <PointsMembershipProvider>
+      <AddToCartLogProvider>
+        <AddToCartProvider>
+          <OrderProvider>
+            <PaymentProvider>
+              <WishlistProvider>{children}</WishlistProvider>
+            </PaymentProvider>
+          </OrderProvider>
+        </AddToCartProvider>
+      </AddToCartLogProvider>
+    </PointsMembershipProvider>
+  </ProductContextBundle>
 );
 
 export const CommunityContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <CommunityProvider>
-    <GroupProvider>
-      <ConversationParticipantProvider>
-        <TicketProvider>
-          <TicketStatusLogProvider>
-            <ConversationProvider>{children}</ConversationProvider>
-          </TicketStatusLogProvider>
-        </TicketProvider>
-      </ConversationParticipantProvider>
-    </GroupProvider>
-  </CommunityProvider>
+  <UserProvider>
+    <CommunityProvider>
+      <GroupProvider>
+        <ConversationParticipantProvider>
+          <TicketProvider>
+            <TicketStatusLogProvider>
+              <ConversationProvider>{children}</ConversationProvider>
+            </TicketStatusLogProvider>
+          </TicketProvider>
+        </ConversationParticipantProvider>
+      </GroupProvider>
+    </CommunityProvider>
+  </UserProvider>
 );
 
 export const AnalyticsContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <ProductContextBundle>
-    <OrderContextBundle>{children}</OrderContextBundle>
-  </ProductContextBundle>
+  <OrderContextBundle>{children}</OrderContextBundle>
 );
 
 /**

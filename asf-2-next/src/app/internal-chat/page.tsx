@@ -1,5 +1,5 @@
-import { useParams } from "next/navigation";
 "use client";
+import { useParams } from "next/navigation";
 import { CommunityContextBundle } from "@/context/RouteContextBundles";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -855,7 +855,6 @@ const InternalChatPage: React.FC = function () {
         isOpen={isUserPickerOpen}
         onClose={() => setIsUserPickerOpen(false)}
         onSelectUser={handleStartDirectMessage}
-        users={users}
       />
 
       {/* Invite Users to Group Modal */}
@@ -863,7 +862,6 @@ const InternalChatPage: React.FC = function () {
         isOpen={isInviteUsersOpen}
         onClose={() => setIsInviteUsersOpen(false)}
         onSelectUser={handleInviteToGroup}
-        users={users}
       />
 
       <CreateGroupModal

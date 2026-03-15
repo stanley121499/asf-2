@@ -1,9 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 import { useOrderContext } from "@/context/product/OrderContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
+import { useSearchParams } from "next/navigation";
+import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 interface Session {
   id: string;
@@ -37,12 +39,11 @@ interface Address {
  * order into Supabase through OrderContext. The cart is cleared only once per
  * Stripe session using a localStorage flag to prevent duplicates on refresh.
  */
-const OrderSuccess: React.FC = () => {
+const OrderSuccessInner: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const sessionId = new URLSearchParams(window.location.search).get(
-    "session_id"
-  );
-  const mode = new URLSearchParams(window.location.search).get("mode");
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const mode = searchParams.get("mode");
   const { user } = useAuthContext();
   const { createOrderWithItemsAndStock } = useOrderContext();
   const { clearCartByUser } = useAddToCartContext();
@@ -315,4 +316,12 @@ const OrderSuccess: React.FC = () => {
   );
 };
 
-export default OrderSuccess;
+export default function OrderSuccess() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderContextBundle>
+        <OrderSuccessInner />
+      </OrderContextBundle>
+    </Suspense>
+  );
+}

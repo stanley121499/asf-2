@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { FaBox, FaUsers } from "react-icons/fa";
 import { useSidebarContext } from "../context/SidebarContext";
 import { useAuthContext } from "../context/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useRouter } from "next/navigation";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
 import { FaBoxes, FaClipboardList } from "react-icons/fa";
@@ -164,14 +164,14 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
  */
 const MobileUserSection: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { signOut, user } = useAuthContext();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // `user` can be null and `email` can be undefined. Derive safe display strings.
   const email = user?.email ?? "";
   const username = email.includes("@") ? email.split("@")[0] : (email || "Account");
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    router.push(path);
     onClose();
   };
 
@@ -223,8 +223,8 @@ const MobileUserSection: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens, setOpenOnSmallScreens } =
     useSidebarContext();
-  const location = useLocation();
-  const currentPage = location.pathname;
+  const pathname = usePathname();
+  const currentPage = pathname;
   const [isMobile, setIsMobile] = useState(false);
 
   /**
