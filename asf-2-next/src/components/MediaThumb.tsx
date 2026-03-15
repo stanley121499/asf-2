@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { isVideoUrl } from "../utils/mediaUtils";
 
 export interface MediaThumbProps {
@@ -142,16 +143,32 @@ const MediaThumb: React.FC<MediaThumbProps> = ({
     );
   }
 
+  /**
+   * Image path — use Next.js <Image> with fill layout so it inherits the
+   * parent's dimensions (the parent must be `position: relative` with an
+   * explicit height, which all callers already satisfy).
+   *
+   * `sizes` reflects the largest rendered size across all call-sites:
+   * - Homepage horizontal-scroll cards: ~272px wide (17rem)
+   * - Category/brand/range sidebar rows: up to 100vw on mobile
+   * So "(max-width: 768px) 100vw, 272px" is a safe conservative value
+   * that prevents over-fetching on desktop while covering full-bleed mobile.
+   *
+   * onError falls back to the video branch in case the URL is a video
+   * disguised without an extension (Supabase extensionless uploads).
+   */
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      style={style}
-      loading="lazy"
-      decoding="async"
-      onError={handleImageError}
-    />
+    <div className={`relative overflow-hidden ${className}`.trim()} style={style}>
+      <Image
+        src={src || "/default-image.jpg"}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 100vw, 272px"
+        className="object-cover"
+        loading="lazy"
+        onError={handleImageError}
+      />
+    </div>
   );
 };
 

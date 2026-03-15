@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card, Dropdown, Tooltip } from "flowbite-react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   HiDotsVertical,
   HiOutlineHeart,
@@ -324,13 +325,16 @@ const WishlistPage: React.FC = () => {
                   >
                     <div className="relative">
                       <Link href={`/product-details/${item.productId}`}>
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-full h-48 object-cover"
-                          loading="lazy"
-                          decoding="async"
-                        />
+                        {/* Use next/image for automatic resizing — avoids downloading full 2MB originals */}
+                        <div className="relative w-full h-48">
+                          <Image
+                            src={item.imageUrl || "/default-image.jpg"}
+                            alt={item.name}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className="object-cover"
+                          />
+                        </div>
                       </Link>
 
                       <div className="absolute top-2 right-2">

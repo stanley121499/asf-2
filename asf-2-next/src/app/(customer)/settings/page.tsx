@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Button, Card, Avatar, Badge, Tooltip, ToggleSwitch } from "flowbite-react";
+import { Button, Avatar, Badge, ToggleSwitch } from "flowbite-react";
 import NavbarHome from "@/components/navbar-home";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,9 +12,14 @@ import {
   HiOutlineArrowLeft,
   HiOutlineMoon,
   HiOutlineSun,
+  HiOutlineHeart,
+  HiOutlineLockClosed,
+  HiOutlinePhotograph,
+  HiOutlineChevronRight,
+  HiOutlineChevronDown,
+  HiOutlineStar,
 } from "react-icons/hi";
 import { useThemeMode } from "flowbite-react";
-import OrdersList from "./components/OrdersList";
 import { useAuthContext } from "@/context/AuthContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { supabase } from "@/utils/supabaseClient";
@@ -46,7 +51,19 @@ function getFileContentType(file: File): string {
  */
 const ProfileSettingsPage: React.FC = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>("account");
+
+  /** Controls which accordion section is currently expanded. null = all collapsed. */
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  /**
+   * Toggles an accordion section open or closed.
+   * If the clicked section is already open, it closes. Otherwise the new section opens
+   * and the previously open one closes (only one open at a time).
+   */
+  const toggleSection = (section: string): void => {
+    setOpenSection((prev) => (prev === section ? null : section));
+  };
+
   const [userPoints, setUserPoints] = useState<number>(0);
   const { user, user_detail, signOut, loading } = useAuthContext();
   const pointsAPI = usePointsMembership();
@@ -316,366 +333,362 @@ const ProfileSettingsPage: React.FC = () => {
     <>
       <NavbarHome />
       <section
-        className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6"
+        className="min-h-screen bg-gray-100 dark:bg-gray-900"
         style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
       >
-        <div className="w-full max-w-4xl mx-auto">
-          {/* ── Back navigation — primary escape on mobile WebView ── */}
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors py-2 pr-2"
-              aria-label="返回"
-            >
-              <HiOutlineArrowLeft className="h-4 w-4" />
-              <span>返回</span>
-            </button>
+        {/* ── Top bar with back nav and title ── */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors py-2 pr-2"
+            aria-label="返回"
+          >
+            <HiOutlineArrowLeft className="h-4 w-4" />
+            <span>返回</span>
+          </button>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">我的资料</span>
+          {/* Spacer to keep title visually centred */}
+          <div className="w-12" aria-hidden="true" />
+        </div>
 
-            {/* ── Dark / Light mode toggle ── */}
+        <div className="px-4 space-y-4 max-w-lg mx-auto">
+
+          {/* ══ Profile Card ══════════════════════════════════════════════ */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="relative flex-shrink-0">
+              <Avatar
+                img={isNonEmptyString(avatarUrl) ? avatarUrl : undefined}
+                alt="头像"
+                rounded={true}
+                size="lg"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold text-gray-900 dark:text-white truncate">
+                {displayName || "用户"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                {email || ""}
+              </p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge color="info" className="text-xs px-2 py-0.5">
+                  金牌会员
+                </Badge>
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <HiOutlineStar className="h-3.5 w-3.5 text-yellow-400" />
+                  {userPoints.toLocaleString()} 积分
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ 我的账户 ══════════════════════════════════════════════════ */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            <p className="px-4 pt-4 pb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              我的账户
+            </p>
+
+            {/* Orders row */}
+            <Link
+              href="/order-details"
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                <HiOutlineShoppingBag className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                我的订单
+              </span>
+              <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </Link>
+
+            <div className="mx-4 border-t border-gray-100 dark:border-gray-700" />
+
+            {/* Wishlist row — links directly to /wishlist */}
+            <Link
+              href="/wishlist"
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                <HiOutlineHeart className="h-4 w-4 text-red-500 dark:text-red-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                我的收藏
+              </span>
+              <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </Link>
+
+            <div className="mx-4 border-t border-gray-100 dark:border-gray-700" />
+
+            {/* Points & Membership row */}
+            <Link
+              href="/goal"
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center">
+                <HiOutlineStar className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                积分与会员
+              </span>
+              <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </Link>
+          </div>
+
+          {/* ══ 账户设置 ══════════════════════════════════════════════════ */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            <p className="px-4 pt-4 pb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              账户设置
+            </p>
+
+            {/* ── Edit Profile accordion ── */}
             <button
               type="button"
-              onClick={toggleMode}
-              aria-label={isDarkMode ? "切换到浅色模式" : "切换到深色模式"}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              onClick={() => toggleSection("profile")}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600 text-left"
             >
-              {isDarkMode ? (
-                <>
-                  <HiOutlineSun className="h-5 w-5 text-yellow-400" />
-                  <span className="hidden sm:inline">浅色模式</span>
-                </>
-              ) : (
-                <>
-                  <HiOutlineMoon className="h-5 w-5 text-indigo-500" />
-                  <span className="hidden sm:inline">深色模式</span>
-                </>
-              )}
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                <HiOutlineUser className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                编辑个人资料
+              </span>
+              {openSection === "profile"
+                ? <HiOutlineChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                : <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              }
+            </button>
+            {openSection === "profile" && (
+              <div className="px-4 pb-4 space-y-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
+                <div className="pt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      名
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      姓
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    邮箱
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    readOnly
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    电话号码
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <Button
+                  color="blue"
+                  size="sm"
+                  onClick={() => void handleSaveProfile()}
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? "保存中…" : "保存更改"}
+                </Button>
+              </div>
+            )}
+
+            <div className="mx-4 border-t border-gray-100 dark:border-gray-700" />
+
+            {/* ── Change Password accordion ── */}
+            <button
+              type="button"
+              onClick={() => toggleSection("password")}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600 text-left"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+                <HiOutlineLockClosed className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                修改密码
+              </span>
+              {openSection === "password"
+                ? <HiOutlineChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                : <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              }
+            </button>
+            {openSection === "password" && (
+              <div className="px-4 pb-4 space-y-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
+                <div className="pt-3">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    当前密码
+                  </label>
+                  <input
+                    type="password"
+                    value={pwCurrent}
+                    autoComplete="current-password"
+                    onChange={(e) => setPwCurrent(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    新密码
+                  </label>
+                  <input
+                    type="password"
+                    value={pwNew}
+                    autoComplete="new-password"
+                    onChange={(e) => setPwNew(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    确认新密码
+                  </label>
+                  <input
+                    type="password"
+                    value={pwConfirm}
+                    autoComplete="new-password"
+                    onChange={(e) => setPwConfirm(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <Button
+                  color="blue"
+                  size="sm"
+                  onClick={() => void handleUpdatePassword()}
+                  disabled={pwSaving}
+                  className="w-full"
+                >
+                  {pwSaving ? "更新中…" : "更新密码"}
+                </Button>
+              </div>
+            )}
+
+            <div className="mx-4 border-t border-gray-100 dark:border-gray-700" />
+
+            {/* ── Update Avatar accordion ── */}
+            <button
+              type="button"
+              onClick={() => toggleSection("avatar")}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600 text-left"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                <HiOutlinePhotograph className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                更换头像
+              </span>
+              {openSection === "avatar"
+                ? <HiOutlineChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                : <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              }
+            </button>
+            {openSection === "avatar" && (
+              <div className="px-4 pb-4 space-y-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
+                <div className="pt-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onAvatarChange}
+                    className="w-full text-sm text-gray-700 dark:text-gray-300"
+                  />
+                </div>
+                <Button
+                  color="blue"
+                  size="sm"
+                  onClick={() => void handleUploadAvatar()}
+                  disabled={avatarFile === null}
+                  className="w-full"
+                >
+                  上传头像
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* ══ 偏好设置 ══════════════════════════════════════════════════ */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            <p className="px-4 pt-4 pb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              偏好设置
+            </p>
+
+            {/* Dark mode toggle row — inline toggle, no navigation */}
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                {isDarkMode
+                  ? <HiOutlineMoon className="h-4 w-4 text-indigo-400" />
+                  : <HiOutlineSun className="h-4 w-4 text-yellow-500" />
+                }
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                {isDarkMode ? "深色模式" : "浅色模式"}
+              </span>
+              <ToggleSwitch
+                checked={isDarkMode}
+                label=""
+                onChange={toggleMode}
+                color="blue"
+              />
+            </div>
+
+            <div className="mx-4 border-t border-gray-100 dark:border-gray-700" />
+
+            {/* Contact support row */}
+            <Link
+              href="/support-chat"
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:active:bg-gray-600"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
+                <HiOutlineQuestionMarkCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+              <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                联系客服
+              </span>
+              <HiOutlineChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </Link>
+          </div>
+
+          {/* ══ Logout ════════════════════════════════════════════════════ */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            {/* Logout — navigates to "/" so user is not forced to re-authenticate immediately */}
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors active:bg-red-100 dark:active:bg-red-900/30 text-left"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                <HiOutlineLogout className="h-4 w-4 text-red-500" />
+              </div>
+              <span className="flex-1 text-sm font-semibold text-red-500">
+                退出登录
+              </span>
             </button>
           </div>
 
-          <Card className="w-full p-0 rounded-lg shadow-md dark:bg-gray-800">
-            <div className="flex flex-col md:flex-row w-full">
-              {/* ── Left sidebar ────────────────────────────────────── */}
-              <div className="md:w-1/3 p-6 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
-                <div className="flex flex-col items-center mb-6">
-                  <Avatar
-                    img={isNonEmptyString(avatarUrl) ? avatarUrl : undefined}
-                    alt="头像"
-                    rounded={true}
-                    size="xl"
-                    className="mb-4"
-                  />
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    {displayName || "用户"}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    {email || ""}
-                  </p>
-                  <div className="flex items-center mt-1 mb-4">
-                    <Badge color="info" className="px-3 py-1.5">
-                      <div className="flex items-center space-x-1">
-                        <span className="font-medium">金牌会员</span>
-                      </div>
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      积分：
-                    </span>
-                    <Tooltip content="您可以用这些积分兑换折扣">
-                      <span className="text-sm text-gray-800 dark:text-white font-semibold">
-                        {userPoints.toLocaleString()}
-                      </span>
-                    </Tooltip>
-                  </div>
-                </div>
-
-                {/* Navigation Menu */}
-                <div className="flex flex-col space-y-2">
-                  <Button
-                    color={activeTab === "account" ? "blue" : "gray"}
-                    className="justify-start"
-                    onClick={() => setActiveTab("account")}
-                  >
-                    <HiOutlineUser className="mr-2 h-5 w-5" />
-                    账户
-                  </Button>
-                  <Button
-                    color={activeTab === "orders" ? "blue" : "gray"}
-                    className="justify-start"
-                    onClick={() => setActiveTab("orders")}
-                  >
-                    <HiOutlineShoppingBag className="mr-2 h-5 w-5" />
-                    订单
-                  </Button>
-                  <Button
-                    color={activeTab === "appearance" ? "blue" : "gray"}
-                    className="justify-start"
-                    onClick={() => setActiveTab("appearance")}
-                  >
-                    {isDarkMode ? (
-                      <HiOutlineMoon className="mr-2 h-5 w-5" />
-                    ) : (
-                      <HiOutlineSun className="mr-2 h-5 w-5" />
-                    )}
-                    外观
-                  </Button>
-                  <Button
-                    color={activeTab === "support" ? "blue" : "gray"}
-                    className="justify-start"
-                    onClick={() => setActiveTab("support")}
-                  >
-                    <HiOutlineQuestionMarkCircle className="mr-2 h-5 w-5" />
-                    支持
-                  </Button>
-                  {/* Logout — goes to home page, not sign-in, so the user
-                      is not implied to immediately re-authenticate. */}
-                  <Button
-                    color="red"
-                    className="justify-start mt-8"
-                    onClick={() => void handleLogout()}
-                  >
-                    <HiOutlineLogout className="mr-2 h-5 w-5" />
-                    退出登录
-                  </Button>
-                </div>
-              </div>
-
-              {/* ── Right content area ───────────────────────────────── */}
-              <div className="md:w-2/3 p-6">
-
-                {/* Account tab */}
-                {activeTab === "account" && (
-                  <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      账户信息
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          名
-                        </label>
-                        <input
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          姓
-                        </label>
-                        <input
-                          type="text"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          邮箱
-                        </label>
-                        <input
-                          type="email"
-                          value={email}
-                          readOnly
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-600 dark:border-gray-600 dark:text-gray-300 cursor-not-allowed"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          电话号码
-                        </label>
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                    <Button color="blue" onClick={() => void handleSaveProfile()} disabled={saving}>
-                      {saving ? "保存中…" : "保存更改"}
-                    </Button>
-
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        密码
-                      </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            当前密码
-                          </label>
-                          <input
-                            type="password"
-                            value={pwCurrent}
-                            autoComplete="current-password"
-                            onChange={(e) => setPwCurrent(e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            新密码
-                          </label>
-                          <input
-                            type="password"
-                            value={pwNew}
-                            autoComplete="new-password"
-                            onChange={(e) => setPwNew(e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            确认新密码
-                          </label>
-                          <input
-                            type="password"
-                            value={pwConfirm}
-                            autoComplete="new-password"
-                            onChange={(e) => setPwConfirm(e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        color="blue"
-                        className="mt-4"
-                        onClick={() => void handleUpdatePassword()}
-                        disabled={pwSaving}
-                      >
-                        {pwSaving ? "更新中…" : "更新密码"}
-                      </Button>
-                    </div>
-
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        头像
-                      </h3>
-                      <div className="space-y-3">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={onAvatarChange}
-                          className="w-full text-sm text-gray-700 dark:text-gray-300"
-                        />
-                        <Button
-                          color="blue"
-                          onClick={() => void handleUploadAvatar()}
-                          disabled={!avatarFile}
-                        >
-                          上传头像
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Orders tab */}
-                {activeTab === "orders" && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                      订单历史
-                    </h3>
-                    <OrdersList />
-                  </div>
-                )}
-
-                {/* Appearance tab — dark / light mode toggle */}
-                {activeTab === "appearance" && (
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      外观
-                    </h3>
-
-                    {/* ── Theme toggle card ── */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
-                      <div className="flex items-center gap-3">
-                        {isDarkMode ? (
-                          <HiOutlineMoon className="h-6 w-6 text-indigo-400" />
-                        ) : (
-                          <HiOutlineSun className="h-6 w-6 text-yellow-500" />
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {isDarkMode ? "深色模式" : "浅色模式"}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {isDarkMode
-                              ? "切换到浅色主题"
-                              : "切换到深色主题"}
-                          </p>
-                        </div>
-                      </div>
-                      {/* ToggleSwitch from Flowbite — checked = dark mode ON */}
-                      <ToggleSwitch
-                        checked={isDarkMode}
-                        label=""
-                        onChange={toggleMode}
-                        color="blue"
-                      />
-                    </div>
-
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      您的偏好设置已自动保存，下次打开应用时将恢复。
-                    </p>
-                  </div>
-                )}
-
-                {/* Support tab */}
-                {activeTab === "support" && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                      客户支持
-                    </h3>
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        需要订单帮助、退货或商品咨询？我们的客服团队随时为您服务。
-                      </p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Link href="/support-chat">
-                          <Button fullSized color="blue">
-                            <HiOutlineQuestionMarkCircle className="mr-2 h-5 w-5" />
-                            联系客服
-                          </Button>
-                        </Link>
-                        <a href="mailto:support@example.com">
-                          <Button fullSized color="light">
-                            邮件支持
-                          </Button>
-                        </a>
-                      </div>
-
-                      <div className="mt-6">
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                          常见问题
-                        </h4>
-                        <div className="space-y-2">
-                          <Link href="/faq#returns" className="block text-blue-600 hover:underline">
-                            如何退货？
-                          </Link>
-                          <Link href="/faq#shipping" className="block text-blue-600 hover:underline">
-                            有哪些配送方式？
-                          </Link>
-                          <Link href="/faq#payment" className="block text-blue-600 hover:underline">
-                            支持哪些支付方式？
-                          </Link>
-                          <Link href="/faq" className="block text-blue-600 hover:underline mt-2">
-                            查看全部常见问题
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
         </div>
       </section>
     </>

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { HiX } from "react-icons/hi";
 import { useAnnouncementContext } from "@/context/AnnouncementContext";
 
@@ -110,13 +111,15 @@ const AnnouncementBottomSheet: React.FC = () => {
         <div className="px-5 pb-8 pt-2">
           {/* Optional image banner */}
           {typeof announcement.image_url === "string" && announcement.image_url.length > 0 && (
-            <div className="mb-4 rounded-xl overflow-hidden">
-              <img
+            <div className="mb-4 rounded-xl overflow-hidden relative w-full h-40">
+              {/* Use next/image to avoid downloading full-size announcement banners */}
+              <Image
                 src={announcement.image_url}
                 alt={announcement.title}
-                className="w-full h-40 object-cover"
-                loading="lazy"
-                decoding="async"
+                fill
+                sizes="(max-width: 768px) 100vw, 512px"
+                className="object-cover"
+                priority={false}
               />
             </div>
           )}
