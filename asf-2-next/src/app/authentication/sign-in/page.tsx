@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { Button, Card, Label, TextInput } from "flowbite-react";
@@ -30,7 +31,7 @@ import LoadingPage from "@/app/loading";
  */
 const SignInPage: FC = function () {
   const router = useRouter();
-  const pathname = usePathname();
+  const location = useLocation();
   const { signIn, user, loading } = useAuthContext();
 
   const [username, setUsername] = React.useState<string>("");
@@ -44,13 +45,13 @@ const SignInPage: FC = function () {
    * rather than on the admin dashboard.
    */
   const returnTo = useMemo<string>(() => {
-    const params = new URLSearchParams("");
+    const params = new URLSearchParams(location.search);
     const raw = params.get("returnTo");
     if (typeof raw === "string" && raw.length > 0) {
       return decodeURIComponent(raw);
     }
     return "/";
-  }, [""]);
+  }, [location.search]);
 
   /**
    * Handles form submission.

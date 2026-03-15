@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Allow images from Supabase storage
   images: {
     remotePatterns: [
       {
@@ -10,12 +9,9 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
+        hostname: "gswszoljvafugtdikimn.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      }
     ],
   },
 };

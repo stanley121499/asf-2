@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 import { supabase } from "../utils/supabaseClient";
-import { Tables, TablesInsert, TablesUpdate } from "@/database.types";
+import { Tables, TablesInsert, TablesUpdate } from "../../database.types";
 import { useAlertContext } from "./AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 

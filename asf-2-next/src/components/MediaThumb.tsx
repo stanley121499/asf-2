@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { isVideoUrl } from "../utils/mediaUtils";
 
 export interface MediaThumbProps {
@@ -144,14 +143,13 @@ const MediaThumb: React.FC<MediaThumbProps> = ({
   }
 
   return (
-    <Image
+    <img
       src={src}
-      alt={alt || ""}
+      alt={alt}
       className={className}
       style={style}
-      width={600}
-      height={600}
-      priority={false}
+      loading="lazy"
+      decoding="async"
       onError={handleImageError}
     />
   );

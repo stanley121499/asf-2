@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 
 import { Select } from "flowbite-react";
@@ -44,6 +45,7 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
     categories.find((category) => category.id === initialCategoryId)
   );
   
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedSort, setSelectedSort] = useState("Newest First");
   const [selectedFilter, setSelectedFilter] = useState(
     selectedCategory?.name || "All"
@@ -74,7 +76,7 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
   };
 
   const filteredProducts = useMemo(() => {
-    return products
+    const afterFiltersAndSort = products
       .filter((product) => {
         if (selectedCategory) {
           return product.category_id === selectedCategory.id;
@@ -102,7 +104,18 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
           );
         }
       });
-  }, [products, selectedCategory, departmentId, rangeId, brandId, selectedSort]);
+
+    // Apply search query on top of existing filters
+    if (searchQuery.trim().length === 0) {
+      return afterFiltersAndSort;
+    }
+    const query = searchQuery.trim().toLowerCase();
+    return afterFiltersAndSort.filter((product) => {
+      const name = (product.name ?? "").toLowerCase();
+      const articleNumber = (product.article_number ?? "").toLowerCase();
+      return name.includes(query) || articleNumber.includes(query);
+    });
+  }, [products, selectedCategory, departmentId, rangeId, brandId, selectedSort, searchQuery]);
 
   const productMediaMap = useMemo(() => {
     return new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""]));
@@ -187,6 +200,24 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
                 </nav>
               </nav>
             </div>
+            
+            {/* Inline search bar */}
+            <div className="relative w-full md:max-w-sm">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+              </div>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索商品..."
+                className="block w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+              />
+            </div>
+
             <div className="flex items-center space-x-4">
               {!departmentId && !rangeId && !brandId && (
                 <Select
@@ -225,6 +256,15 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
                 />
               );
             })}
+            {filteredProducts.length === 0 && (
+              <div className="col-span-2 py-16 text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {searchQuery.trim().length > 0
+                    ? `未找到与 "${searchQuery}" 相关的商品`
+                    : "此分类暂无商品"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge, Button, Card, Dropdown, Tooltip } from "flowbite-react";
 import Link from "next/link";
 import {
@@ -14,6 +15,11 @@ import { useWishlistContext } from "@/context/WishlistContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
 import type { ProductMedia } from "@/context/product/ProductMediaContext";
 import { useProductMediaContext } from "@/context/product/ProductMediaContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { useAddToCartContext } from "@/context/product/CartContext";
+import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
+import { useProductColorContext } from "@/context/product/ProductColorContext";
+import { useProductSizeContext } from "@/context/product/ProductSizeContext";
 
 type SortBy = "addedOn" | "priceAsc" | "priceDesc" | "nameAsc" | "nameDesc";
 
@@ -37,6 +43,13 @@ const WishlistPage: React.FC = () => {
   const { wishlistItems, loading, removeFromWishlist } = useWishlistContext();
   const { productMedias } = useProductMediaContext();
   const { categories } = useCategoryContext();
+
+  const router = useRouter();
+  const { user } = useAuthContext();
+  const { createAddToCart } = useAddToCartContext();
+  const { createAddToCartLog } = useAddToCartLogContext();
+  const { productColors } = useProductColorContext();
+  const { productSizes } = useProductSizeContext();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortBy>("addedOn");
@@ -176,6 +189,51 @@ const WishlistPage: React.FC = () => {
       await removeFromWishlist(productId);
     },
     [removeFromWishlist]
+  );
+
+  /**
+   * Adds a wishlist item to the cart.
+   * If the product has active color or size variants, redirects to the
+   * product detail page so the user can select them first.
+   */
+  const handleAddToCartFromWishlist = useCallback(
+    async (productId: string): Promise<void> => {
+      if (!user) {
+        router.push("/authentication/sign-in");
+        return;
+      }
+
+      const hasActiveColors = productColors.some(
+        (c) => c.product_id === productId && c.active === true && c.deleted_at === null
+      );
+      const hasActiveSizes = productSizes.some(
+        (s) => s.product_id === productId && s.active === true && s.deleted_at === null
+      );
+
+      if (hasActiveColors || hasActiveSizes) {
+        router.push(`/product-details/${productId}`);
+        return;
+      }
+
+      try {
+        await createAddToCart({
+          product_id: productId,
+          user_id: user.id,
+          amount: 1,
+          color_id: null,
+          size_id: null,
+        });
+        await createAddToCartLog({
+          product_id: productId,
+          action_type: "add",
+          amount: 1,
+        });
+        showAlert("已加入购物车", "success");
+      } catch {
+        showAlert("加入购物车失败，请重试", "error");
+      }
+    },
+    [createAddToCart, createAddToCartLog, productColors, productSizes, router, showAlert, user]
   );
 
   const handleAddAllToCart = useCallback((): void => {
@@ -322,12 +380,14 @@ const WishlistPage: React.FC = () => {
                         </span>
                         <div>
                           {item.inStock ? (
-                            <Tooltip content="购物车流程与收藏列表分开">
-                              <Button size="xs" color="blue" disabled>
-                                <HiOutlineShoppingCart className="mr-1 h-4 w-4" />
-                                加入购物车
-                              </Button>
-                            </Tooltip>
+                            <Button
+                              size="xs"
+                              color="blue"
+                              onClick={() => void handleAddToCartFromWishlist(item.productId)}
+                            >
+                              <HiOutlineShoppingCart className="mr-1 h-4 w-4" />
+                              加入购物车
+                            </Button>
                           ) : (
                             <Tooltip content="此商品目前缺货">
                               <Button size="xs" color="gray" disabled>

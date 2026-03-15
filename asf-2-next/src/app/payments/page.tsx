@@ -1,6 +1,5 @@
 "use client";
-import { AnalyticsContextBundle } from "@/context/RouteContextBundles";
-import { UserProvider } from "@/context/UserContext";
+import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useMemo } from "react";
@@ -571,11 +570,9 @@ const PaymentListPage: React.FC = function () {
 
 export default function WrappedPaymentListPage(props: any) {
   return (
-    <UserProvider>
-      <AnalyticsContextBundle>
+    <OrderContextBundle>
       <PaymentListPage {...props} />
-    </AnalyticsContextBundle>
-    </UserProvider>
+    </OrderContextBundle>
   );
 }
 

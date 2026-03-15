@@ -10,6 +10,7 @@ import type { Tables } from "@/database.types";
 import { HomeHighlightsCard } from "@/components/home/HomeHighlightsCard";
 import MediaThumb from "@/components/MediaThumb";
 import MediaAwareLink from "@/components/MediaAwareLink";
+import AnnouncementBottomSheet from "@/components/AnnouncementBottomSheet";
 
 interface ScrollableSectionProps<TItem> {
   title: string;
@@ -632,6 +633,8 @@ const HomePageClient: React.FC<HomePageProps> = ({
           />
         </div>
       </div>
+      {/* Announcement bottom sheet modal — appears after 1.5s delay */}
+      <AnnouncementBottomSheet />
     </LandingLayout>
   );
 };

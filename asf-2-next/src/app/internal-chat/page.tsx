@@ -1,6 +1,6 @@
+import { useParams } from "next/navigation";
 "use client";
 import { CommunityContextBundle } from "@/context/RouteContextBundles";
-import { UserProvider } from "@/context/UserContext";
 
 import React, { useEffect, useMemo, useState } from "react";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
@@ -61,7 +61,7 @@ const InternalChatPage: React.FC = function () {
   const directChats: ChatItem[] = useMemo(() => {
     if (!user) return [];
     return conversations
-      .filter((c) => c.type === "direct" && !c.group_id && c.participants.some((p: { user_id: string | null }) => p.user_id === user.id))
+      .filter((c) => c.type === "direct" && !c.group_id && c.participants.some((p) => p.user_id === user.id))
       .map((c) => {
         // Debug logging for direct messages
         if (process.env.NODE_ENV === "development") {
@@ -75,7 +75,7 @@ const InternalChatPage: React.FC = function () {
         }
         
         // Handle self-conversations (user messaging themselves)
-        const participantIds = c.participants.map((p: { user_id: string | null }) => p.user_id).filter((id): id is string => typeof id === "string");
+        const participantIds = c.participants.map((p) => p.user_id).filter((id): id is string => typeof id === "string");
         const otherUserId = participantIds.find((id) => id !== user.id) ?? null;
         
         // Check if this is a self-conversation
@@ -855,6 +855,7 @@ const InternalChatPage: React.FC = function () {
         isOpen={isUserPickerOpen}
         onClose={() => setIsUserPickerOpen(false)}
         onSelectUser={handleStartDirectMessage}
+        users={users}
       />
 
       {/* Invite Users to Group Modal */}
@@ -862,6 +863,7 @@ const InternalChatPage: React.FC = function () {
         isOpen={isInviteUsersOpen}
         onClose={() => setIsInviteUsersOpen(false)}
         onSelectUser={handleInviteToGroup}
+        users={users}
       />
 
       <CreateGroupModal
@@ -962,11 +964,9 @@ const InternalChatPage: React.FC = function () {
 
 export default function WrappedInternalChatPage(props: any) {
   return (
-    <UserProvider>
-      <CommunityContextBundle>
+    <CommunityContextBundle>
       <InternalChatPage {...props} />
     </CommunityContextBundle>
-    </UserProvider>
   );
 }
  

@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 import React, { useEffect, useState } from "react";
 import { Card, Badge, Button } from "flowbite-react";
@@ -94,7 +95,7 @@ const OrderDetailPage = ({ params }: { params: { orderId: string } }) => {
     };
 
     fetchOrderDetails();
-  }, [orderId, router]);
+  }, [orderId, navigate]);
 
 
 

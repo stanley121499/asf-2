@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
@@ -5,7 +6,6 @@ import { ProductContextBundle } from "@/context/RouteContextBundles";
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { Badge, Button, Datepicker, Label, TextInput } from "flowbite-react";
 import React, { useEffect } from "react";
-import { useParams } from "next/navigation";
 import { HiPlus } from "react-icons/hi";
 import { IoIosSearch } from "react-icons/io";
 import ProductComponent from "@/components/product/product";

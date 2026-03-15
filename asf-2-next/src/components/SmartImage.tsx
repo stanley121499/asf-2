@@ -77,14 +77,14 @@ const SmartImage: React.FC<SmartImageProps> = ({
       )}
 
       {/*
-       * The <Image> handles optimizations, decoding, and caching natively!
+       * The <Image> component uses Next.js image optimization.
        */}
       <Image
-        src={src}
-        alt={alt || ""}
+        src={src || "/default-image.jpg"}
+        alt={alt}
+        priority={eager}
         fill
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        priority={eager}
         className={`object-cover transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}

@@ -1,7 +1,5 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router-dom"; // TODO: migrate remaining
-import { usePathname } from "next/navigation";
-import LoadingPage from "@/app/loading";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 
 /**
@@ -16,16 +14,16 @@ import { useAuthContext } from "../context/AuthContext";
  */
 const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuthContext();
-  const pathname = usePathname();
+  const location = useLocation();
 
   if (loading) {
-    return <LoadingPage />;
+    return <div>Loading...</div>;
   }
 
   if (!user) {
     // Encode the full current path + search so the sign-in page can redirect
     // back after a successful login.
-    const returnTo = encodeURIComponent(pathname + "");
+    const returnTo = encodeURIComponent(location.pathname + location.search);
     return (
       <Navigate to={`/authentication/sign-in?returnTo=${returnTo}`} replace />
     );

@@ -1,6 +1,5 @@
 "use client";
 import { CommunityContextBundle } from "@/context/RouteContextBundles";
-import { UserProvider } from "@/context/UserContext";
 import React, { useState, useEffect } from "react";
 import { IoChevronBack } from "react-icons/io5";
 import { useRouter } from "next/navigation";
@@ -168,7 +167,7 @@ const LandingSupportChat: React.FC = () => {
 
     // Otherwise, find a participant conversation that is not tied to a closed ticket
     const participantSupportConvs = conversations.filter(
-      (c) => c.type === "support" && c.participants.some((p: { user_id: string | null }) => p.user_id === user.id)
+      (c) => c.type === "support" && c.participants.some((p) => p.user_id === user.id)
     );
     const participantOpenConv = participantSupportConvs.find((c) => {
       if (!c.ticket_id) return true;
@@ -333,13 +332,4 @@ const LandingSupportChat: React.FC = () => {
   
  );
 };
-export default function WrappedLandingSupportChat(props: any) {
-  return (
-    <CommunityContextBundle>
-      <UserProvider>
-        <LandingSupportChat {...props} />
-      </UserProvider>
-    </CommunityContextBundle>
-  );
-}
-
+export default LandingSupportChat;

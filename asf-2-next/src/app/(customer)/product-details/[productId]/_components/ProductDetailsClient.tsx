@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import NavbarHome from "@/components/navbar-home";
 import CheckoutButton from "@/components/stripe/CheckoutButton";
@@ -10,6 +11,8 @@ import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { isSoftDeletedRow, readDeletedAt } from "@/utils/softDeleteRuntime";
 import type { Tables } from "@/database.types";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { useWishlistContext } from "@/context/WishlistContext";
 
 interface ProductDetailsClientProps {
   productId: string;
@@ -35,6 +38,9 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   const { createAddToCartLog } = useAddToCartLogContext();
 
   const product = initialProduct;
+
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
+  const isSaved = product !== null ? isInWishlist(product.id) : false;
 
   type ProductAvailability =
     | { status: "available" }
@@ -170,7 +176,7 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
 
     const validation = validateVariantAndStock();
     if (!validation.ok) {
-      showAlert(validation.message ?? "操作失败。", "error");
+      showAlert(validation.message || "验证失败", "error");
       return;
     }
 
@@ -201,11 +207,28 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
 
     const validation = validateVariantAndStock();
     if (!validation.ok) {
-      showAlert(validation.message ?? "操作失败。", "error");
+      showAlert(validation.message || "验证失败", "error");
       return false;
     }
     return true;
   }, [router, product, showAlert, user?.id, validateVariantAndStock]);
+
+  /**
+   * Toggles the wishlist state for the current product.
+   * Redirects to sign-in if the user is not authenticated.
+   */
+  const handleToggleWishlist = useCallback(async (): Promise<void> => {
+    if (!product) return;
+    if (!user?.id) {
+      router.push("/authentication/sign-in");
+      return;
+    }
+    if (isSaved) {
+      await removeFromWishlist(product.id);
+    } else {
+      await addToWishlist(product.id);
+    }
+  }, [addToWishlist, isSaved, product, removeFromWishlist, router, user?.id]);
 
   if (availability.status === "deleted" || availability.status === "missing") {
     return (
@@ -251,8 +274,10 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
         <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
             <div className="shrink-0 max-w-md lg:max-w-lg mx-auto">
-              <img
-                className="w-full rounded-lg"
+              <Image
+                width={800}
+                height={800}
+                className="w-full h-auto rounded-lg object-cover aspect-square"
                 src={sortedProductMedia[selectedImageIndex]?.media_url || "/default-image.jpg"}
                 alt={product.name ?? ""}
               />
@@ -272,8 +297,10 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
                         ].join(" ")}
                         aria-label={`选择图片 ${index + 1}`}
                       >
-                        <img
-                          src={media.media_url ?? ""}
+                        <Image
+                          width={80}
+                          height={80}
+                          src={media.media_url || "/default-image.jpg"}
                           alt={`${product.name} ${index + 1}`}
                           className="w-20 h-20 object-cover rounded"
                         />
@@ -288,6 +315,18 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
               <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
                 {product.name}
               </h1>
+
+              <button
+                type="button"
+                onClick={() => void handleToggleWishlist()}
+                className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              >
+                {isSaved
+                  ? <FaHeart size={16} className="text-red-500" />
+                  : <FaRegHeart size={16} />
+                }
+                {isSaved ? "已收藏" : "收藏"}
+              </button>
 
               <div className="mt-2 space-y-1">
                 {product.article_number && (

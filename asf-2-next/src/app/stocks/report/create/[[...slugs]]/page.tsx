@@ -1,9 +1,10 @@
+import { useParams } from "next/navigation";
 "use client";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
 import React from "react";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
-import { useParams } from "next/navigation";
+import { } from "react-router-dom";
 import {
   useProductReportContext,
   ProductReportInsert,
@@ -13,13 +14,11 @@ import { useProductEventContext } from "@/context/product/ProductEventContext";
 
 const CreateReportPage: React.FC = function () {
   const { createProductReport } = useProductReportContext();
-  const params = useParams();
-  const productId = (Array.isArray(params.productId) ? params.productId[0] : params.productId) ?? "";
-  const productEventId = (Array.isArray(params.productEventId) ? params.productEventId[0] : params.productEventId) ?? "";
+  const { productId, productEventId } = useParams();
   const { updateProductEvent } = useProductEventContext();
   const [formData, setFormData] = React.useState<ProductReportInsert>({
-    product_id: productId,
-    product_event: productEventId,
+    product_id: productId || "",
+    product_event: productEventId || "",
   });
 
   const saveReport = async () => {

@@ -17,6 +17,8 @@ import { ProductProvider } from "./product/ProductContext";
 import { ProductPurchaseOrderProvider } from "./product/ProductPurchaseOrderContext";
 import { ProductReportProvider } from "./product/ProductReportContext";
 
+import { AnnouncementProvider } from "./AnnouncementContext";
+
 import { PostMediaProvider } from "./post/PostMediaContext";
 import { PostFolderMediaProvider } from "./post/PostFolderMediaContext";
 import { PostFolderProvider } from "./post/PostFolderContext";
@@ -142,8 +144,9 @@ export const AnalyticsContextBundle: React.FC<PropsWithChildren> = ({ children }
  * Total channels: ~13 (down from 24 in LandingContextBundle)
  */
 export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <BrandProvider>
-    <DepartmentProvider>
+  <AnnouncementProvider>
+    <BrandProvider>
+      <DepartmentProvider>
       <RangeProvider>
         <CategoryProvider>
           <ProductCategoryProvider>
@@ -175,6 +178,7 @@ export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children
       </RangeProvider>
     </DepartmentProvider>
   </BrandProvider>
+  </AnnouncementProvider>
 );
 
 /**

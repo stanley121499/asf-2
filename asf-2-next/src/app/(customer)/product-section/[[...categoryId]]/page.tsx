@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import ProductSectionClient from "./_components/ProductSectionClient";
 
@@ -17,7 +18,7 @@ export default async function ProductSectionPage({
   ] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*"),
-    supabase.from("product_medias").select("*"),
+    supabase.from("product_medias").select("product_id, media_url"),
   ]);
 
   return (

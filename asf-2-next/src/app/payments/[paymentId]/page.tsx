@@ -1,10 +1,11 @@
+import { useParams } from "next/navigation";
 "use client";
 import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, Badge, Button, Select, Modal, TextInput } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX, HiRefresh, HiCreditCard } from "react-icons/hi";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
@@ -282,7 +283,7 @@ const PaymentDetailPage: React.FC = function () {
     };
 
     fetchPaymentDetails();
-  }, [paymentId, router, showAlert]);
+  }, [paymentId, navigate, showAlert]);
 
   /**
    * Handle status update

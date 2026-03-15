@@ -4,6 +4,7 @@ import type { Department } from "../../context/product/DepartmentContext";
 import type { Range } from "../../context/product/RangeContext";
 import { Brand } from "../../context/product/BrandContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 /**
  * CategoryPreviewSidebar component displays a hierarchical list of categories
@@ -114,12 +115,12 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
           }}
           onClick={() => handleCategorySelect(category)}
         >
-          <img
-            src={category.media_url}
-            alt={category.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
+          <Image
+            src={category.media_url || "/default-image.jpg"}
+            alt={category.name || "category"}
+            className="object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 30vw"
           />
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">
             <h2 className="text-white text-2xl font-semibold">
@@ -145,12 +146,12 @@ const CategoryPreviewSidebar: React.FC<CategoryPreviewSidebarProps> = ({
         onClick={() => handleFlatSelect(tab, item)}
       >
         {image && (
-          <img
-            src={image}
+          <Image
+            src={image || "/default-image.jpg"}
             alt={label}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
+            className="object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 30vw"
           />
         )}
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center p-4">

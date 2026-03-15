@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 import { ProductContextBundle } from "@/context/RouteContextBundles";
 
@@ -8,7 +9,7 @@ import {
   useProductContext,
   Product,
 } from "@/context/product/ProductContext";
-import { useParams } from "next/navigation";
+import { } from "react-router-dom";
 import {
   useProductPurchaseOrderContext,
   ProductPurchaseOrderInsert,
@@ -27,13 +28,11 @@ import { useProductEventContext } from "@/context/product/ProductEventContext";
 const CreatePurchaseOrderPage: React.FC = function () {
   const { products, loading } = useProductContext();
   const { createProductPurchaseOrder } = useProductPurchaseOrderContext();
-  const params = useParams();
-  const productId = (Array.isArray(params.productId) ? params.productId[0] : params.productId) ?? "";
-  const productEventId = (Array.isArray(params.productEventId) ? params.productEventId[0] : params.productEventId) ?? "";
+  const { productId, productEventId } = useParams();
   const { updateProductEvent } = useProductEventContext();
   const [formData, setFormData] = React.useState<ProductPurchaseOrderInsert>({
-    product_id: productId,
-    product_event: productEventId,
+    product_id: productId || "",
+    product_event: productEventId || "",
   });
   const [productData, setProductData] = React.useState<Product | undefined>(
     undefined

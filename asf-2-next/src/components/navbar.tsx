@@ -7,7 +7,7 @@ import {
 } from "flowbite-react";
 import type { FC } from "react";
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 
 const ExampleNavbar: React.FC = function () {
@@ -19,7 +19,7 @@ const ExampleNavbar: React.FC = function () {
             <Navbar.Brand href="/">
               <img
                 alt=""
-                src="/images/logo.svg"
+                src="../../images/logo.svg"
                 className="mr-3 h-6 sm:h-8"
               />
               <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
@@ -43,7 +43,7 @@ const ExampleNavbar: React.FC = function () {
 
 const UserDropdown: FC = function () {
   const { signOut, user } = useAuthContext();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // `user` can be null and `email` can be undefined. Derive safe display strings.
   const email = user?.email ?? "";
@@ -71,10 +71,10 @@ const UserDropdown: FC = function () {
         </span>
       </Dropdown.Header>
       <Dropdown.Item
-        onClick={() => router.push("/dashboard")}
+        onClick={() => navigate("/dashboard")}
       >Dashboard</Dropdown.Item>
       <Dropdown.Item
-        onClick={() => router.push("/users/settings")}
+        onClick={() => navigate("/users/settings")}
       >Settings</Dropdown.Item>
       <Dropdown.Divider />
       <Dropdown.Item
