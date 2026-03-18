@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card, Dropdown, Tooltip } from "flowbite-react";
 import Link from "next/link";
@@ -10,6 +10,8 @@ import {
   HiOutlineShoppingCart,
   HiOutlineTrash,
 } from "react-icons/hi";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa";
+import MediaThumb from "@/components/MediaThumb";
 import NavbarHome from "@/components/navbar-home";
 import { useAlertContext } from "@/context/AlertContext";
 import { useWishlistContext } from "@/context/WishlistContext";
@@ -21,8 +23,16 @@ import { useAddToCartContext } from "@/context/product/CartContext";
 import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useProductColorContext } from "@/context/product/ProductColorContext";
 import { useProductSizeContext } from "@/context/product/ProductSizeContext";
+import { supabase } from "@/utils/supabaseClient";
 
 type SortBy = "addedOn" | "priceAsc" | "priceDesc" | "nameAsc" | "nameDesc";
+
+/** A saved post read from localStorage and enriched with Supabase data. */
+interface SavedPostItem {
+  postId: string;
+  caption: string;
+  mediaUrl: string;
+}
 
 interface DisplayWishlistItem {
   wishlistId: string;
@@ -54,6 +64,97 @@ const WishlistPage: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortBy>("addedOn");
+
+  /** Post IDs saved to localStorage under the `post:UUID` key pattern. */
+  const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
+  /** Full post data fetched from Supabase for the saved post IDs. */
+  const [savedPosts, setSavedPosts] = useState<SavedPostItem[]>([]);
+  const [savedPostsLoading, setSavedPostsLoading] = useState<boolean>(false);
+
+  /** Read saved post IDs from localStorage on mount. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("saved_items");
+      const keys: string[] = raw !== null ? (JSON.parse(raw) as string[]) : [];
+      const postIds = keys
+        .filter((k) => k.startsWith("post:"))
+        .map((k) => k.replace("post:", ""));
+      setSavedPostIds(postIds);
+    } catch {
+      setSavedPostIds([]);
+    }
+  }, []);
+
+  /** Fetch post details from Supabase whenever savedPostIds changes. */
+  useEffect(() => {
+    if (savedPostIds.length === 0) {
+      setSavedPosts([]);
+      return;
+    }
+
+    let cancelled = false;
+    setSavedPostsLoading(true);
+
+    const fetchSavedPosts = async (): Promise<void> => {
+      try {
+        const { data: postsData, error: postsError } = await supabase
+          .from("posts")
+          .select("id, caption")
+          .in("id", savedPostIds);
+
+        if (postsError !== null || postsData === null) {
+          if (!cancelled) setSavedPosts([]);
+          return;
+        }
+
+        const { data: mediasData } = await supabase
+          .from("post_medias")
+          .select("post_id, media_url")
+          .in("post_id", savedPostIds);
+
+        const mediaByPostId = new Map<string, string>(
+          (mediasData ?? []).map((m) => [m.post_id ?? "", m.media_url ?? ""])
+        );
+
+        if (!cancelled) {
+          setSavedPosts(
+            postsData.map((post) => ({
+              postId: post.id,
+              caption: post.caption ?? "",
+              mediaUrl: mediaByPostId.get(post.id) ?? "/default-image.jpg",
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) setSavedPosts([]);
+      } finally {
+        if (!cancelled) setSavedPostsLoading(false);
+      }
+    };
+
+    void fetchSavedPosts();
+    return () => { cancelled = true; };
+  }, [savedPostIds]);
+
+  /** Remove a saved post from localStorage and local state. */
+  const handleRemoveSavedPost = useCallback((postId: string): void => {
+    setSavedPostIds((prev) => {
+      const next = prev.filter((id) => id !== postId);
+      try {
+        const existingKeys: string[] = (() => {
+          const raw = localStorage.getItem("saved_items");
+          return raw !== null ? (JSON.parse(raw) as string[]) : [];
+        })();
+        const updatedKeys = existingKeys.filter((k) => k !== `post:${postId}`);
+        localStorage.setItem("saved_items", JSON.stringify(updatedKeys));
+      } catch {
+        // localStorage not available
+      }
+      return next;
+    });
+    setSavedPosts((prev) => prev.filter((p) => p.postId !== postId));
+  }, []);
 
   /**
    * Build a fast lookup from product id -> primary media URL.
@@ -401,6 +502,79 @@ const WishlistPage: React.FC = () => {
                           )}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* ── Saved Posts Section ─────────────────────────────────────────── */}
+          <Card className="mt-6">
+            <div className="flex items-center mb-4">
+              <FaBookmark className="mr-2 h-5 w-5 text-indigo-600" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                已保存的帖子
+              </h2>
+              <Badge color="indigo" className="ml-3">
+                {savedPostIds.length} 篇
+              </Badge>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+              在首页收藏的帖子和精选内容将在此处显示
+            </p>
+
+            {savedPostsLoading ? (
+              <div className="text-center py-8 text-gray-600 dark:text-gray-300">
+                正在加载已保存的帖子...
+              </div>
+            ) : savedPosts.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="mx-auto w-14 h-14 mb-3 text-gray-400">
+                  <FaRegBookmark className="w-full h-full" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                  暂无已保存的帖子
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                  在首页点击帖子卡片上的书签图标即可收藏
+                </p>
+                <Link href="/">
+                  <Button color="indigo">浏览首页</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {savedPosts.map((post) => (
+                  <div
+                    key={post.postId}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="relative">
+                      <Link href="/highlights">
+                        <div className="relative w-full h-40 overflow-hidden bg-gray-100">
+                          <MediaThumb
+                            src={post.mediaUrl}
+                            alt={post.caption || "已保存的帖子"}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        </div>
+                      </Link>
+                      <div className="absolute top-2 right-2">
+                        <button
+                          type="button"
+                          aria-label="移除已保存的帖子"
+                          onClick={() => handleRemoveSavedPost(post.postId)}
+                          className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow-md hover:bg-red-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <HiOutlineTrash className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+                        {post.caption !== "" ? post.caption : "精选帖子"}
+                      </p>
                     </div>
                   </div>
                 ))}

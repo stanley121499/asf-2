@@ -3,6 +3,7 @@ import "./globals.css";
 import { AlertProvider } from "../context/AlertContext";
 import { AuthProvider } from "../context/AuthContext";
 import { AlertComponent } from "../components/AlertComponent";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "My App",
@@ -17,6 +18,8 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body>
+        {/* Global page-transition progress bar — visible at the very top of the viewport */}
+        <NextTopLoader color="#6366f1" showSpinner={false} height={3} />
         <AlertProvider>
           <AuthProvider>
             <AlertComponent />

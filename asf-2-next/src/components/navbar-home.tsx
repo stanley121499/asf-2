@@ -8,11 +8,8 @@ import { useDepartmentContext } from "../context/product/DepartmentContext";
 import { useRangeContext } from "../context/product/RangeContext";
 import { useBrandContext } from "../context/product/BrandContext";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
-import { FaSearch } from "react-icons/fa";
-import SearchOverlay from "./SearchOverlay";
 
 const NavbarHome: React.FC = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const { categories, loading } = useCategoryContext();
   const { departments } = useDepartmentContext();
@@ -22,7 +19,7 @@ const NavbarHome: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   // Build hierarchy from flat categories array
-useEffect(() => {
+  useEffect(() => {
     if (!loading && categories.length > 0) {
       // Helper function to build the hierarchy
       const buildHierarchy = (parentCategory: Category) => {
@@ -66,16 +63,6 @@ useEffect(() => {
           </Link>
 
           <div className="flex items-center gap-2">
-            {/* Search button */}
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              aria-label="搜索商品"
-              className="flex items-center justify-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-            >
-              <FaSearch className="w-5 h-5" />
-            </button>
-
             {/* Hamburger Menu Button */}
             <button
               onClick={toggleSidebar}
@@ -117,11 +104,6 @@ useEffect(() => {
       )}
 
       <BottomNavbar />
-
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
     </>
   );
 };

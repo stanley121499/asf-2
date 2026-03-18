@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useMemo, useEffect, useState } from "react";
+import React, { useRef, useMemo, useEffect, useState, useCallback } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
-import { FaQrcode, FaBell } from "react-icons/fa";
+import { FaQrcode, FaBell, FaSearch, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import Link from "next/link";
 import { LandingLayout } from "@/layouts";
 import type { Tables } from "@/database.types";
@@ -11,6 +11,8 @@ import { HomeHighlightsCard } from "@/components/home/HomeHighlightsCard";
 import MediaThumb from "@/components/MediaThumb";
 import MediaAwareLink from "@/components/MediaAwareLink";
 import AnnouncementBottomSheet from "@/components/AnnouncementBottomSheet";
+import SearchOverlay from "@/components/SearchOverlay";
+import { useWishlistContext } from "@/context/WishlistContext";
 
 interface ScrollableSectionProps<TItem> {
   title: string;
@@ -18,6 +20,7 @@ interface ScrollableSectionProps<TItem> {
   items: readonly TItem[];
   renderItem: (item: TItem, index: number) => React.ReactNode;
   isHighlightSection?: boolean;
+  onSearch?: () => void;
 }
 
 const ScrollableSection = <TItem,>({
@@ -26,6 +29,7 @@ const ScrollableSection = <TItem,>({
   items,
   renderItem,
   isHighlightSection = false,
+  onSearch,
 }: ScrollableSectionProps<TItem>): JSX.Element => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -33,23 +37,35 @@ const ScrollableSection = <TItem,>({
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4 px-5">
         <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h2>
-        {viewAllLink && (
-          isHighlightSection ? (
-            <Link href={viewAllLink} className="bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm flex items-center space-x-1">
-              <span>查看全部</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          ) : (
-            <Link href={viewAllLink} className="text-indigo-700 text-sm font-medium hover:text-indigo-900 transition-colors duration-200 flex items-center space-x-1 group">
-              <span>查看全部</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          )
-        )}
+        <div className="flex items-center">
+          {viewAllLink && (
+            isHighlightSection ? (
+              <Link href={viewAllLink} className="bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-sm font-medium px-4 py-1.5 rounded-full shadow-sm flex items-center space-x-1">
+                <span>查看全部</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ) : (
+              <Link href={viewAllLink} className="text-indigo-700 text-sm font-medium hover:text-indigo-900 transition-colors duration-200 flex items-center space-x-1 group">
+                <span>查看全部</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )
+          )}
+          {onSearch !== undefined && (
+            <button
+              type="button"
+              onClick={onSearch}
+              aria-label="搜索"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors ml-2"
+            >
+              <FaSearch className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" />
+            </button>
+          )}
+        </div>
       </div>
       <div
         ref={scrollContainerRef}
@@ -90,6 +106,59 @@ const HomePageClient: React.FC<HomePageProps> = ({
 }) => {
   const { user, user_detail } = useAuthContext();
   const { listMembershipTiers, getUserPointsByUserId } = usePointsMembership();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
+
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  const [localSavedItems, setLocalSavedItems] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set<string>();
+    try {
+      const raw = localStorage.getItem("saved_items");
+      return new Set<string>(raw !== null ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  const toggleLocalSaved = useCallback((key: string): void => {
+    setLocalSavedItems((prev) => {
+      const next = new Set<string>(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      try {
+        localStorage.setItem("saved_items", JSON.stringify(Array.from(next)));
+      } catch {
+        // localStorage not available
+      }
+      return next;
+    });
+  }, []);
+
+  const [dismissedBells, setDismissedBells] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set<string>();
+    try {
+      const raw = localStorage.getItem("dismissed_bells");
+      return new Set<string>(raw !== null ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  const dismissBell = useCallback((id: string): void => {
+    setDismissedBells((prev) => {
+      const next = new Set<string>(prev);
+      next.add(id);
+      try {
+        localStorage.setItem("dismissed_bells", JSON.stringify(Array.from(next)));
+      } catch {
+        // localStorage not available
+      }
+      return next;
+    });
+  }, []);
 
   const postMediaMap = useMemo<Map<string, string>>(
     () => new Map(postMedias.map((m) => [m.post_id, m.media_url ?? ""])),
@@ -402,19 +471,6 @@ const HomePageClient: React.FC<HomePageProps> = ({
                 <FaQrcode size={24} className="text-white" />
               </button>
             </div>
-
-            {!user && (
-              <Link
-                href="/authentication/sign-in?returnTo=%2F"
-                className="mt-6 block py-4 px-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-sm rounded-xl shadow-lg border border-white border-opacity-20 active:bg-opacity-25 transition-all"
-              >
-                <p className="text-sm uppercase tracking-wider font-medium">登录 / 注册</p>
-                <p className="text-xs mt-1 opacity-80 leading-relaxed">
-                  登录以查看您的进度并兑换专属奖励
-                </p>
-                <p className="text-xs mt-2 font-semibold opacity-90">点击登录 →</p>
-              </Link>
-            )}
           </div>
         </div>
       </div>
@@ -424,45 +480,77 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="精选推荐"
             viewAllLink="/highlights"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedPosts.slice(0, 4)}
             renderItem={(post, index) => {
               const postMedia = post.medias?.[0]?.media_url ||
                 postMediaMap.get(post.id) ||
                 "/default-image.jpg";
 
+              /*
+               * The bell button sits OUTSIDE the MediaAwareLink as a sibling so
+               * it has no event-propagation relationship with the link/video wrapper.
+               * Clicking the bell only triggers dismissBell — no navigation fires.
+               */
               return (
-                <MediaAwareLink
-                  to="/product-section"
-                  mediaSrc={postMedia}
-                  caption={post.caption ?? `帖子 ${index + 1}`}
-                  ctaLabel="了解更多"
+                <div
                   key={`post-${post.id !== "" ? post.id : index}`}
-                  className="flex-shrink-0 w-68 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 relative group block"
+                  className="flex-shrink-0 bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 relative group"
                   style={{ width: "17rem" }}
                 >
-                  <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10 pointer-events-none">
-                    精选
-                  </div>
-                  <div className="h-48 bg-gray-100 relative overflow-hidden">
-                    <MediaThumb
-                      src={postMedia}
-                      alt={post.caption ?? `帖子 ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
-                  </div>
-                  <div className="p-5 relative">
-                    <h3 className="font-bold text-gray-900 truncate">
-                      {post.caption !== "" ? post.caption : `精选帖子 ${index + 1}`}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-2 leading-relaxed">
-                      {post.cta_text !== "" ? post.cta_text : "暂无描述"}
-                    </p>
-                    <div className="mt-4 flex justify-end">
-                      <span className="text-xs text-indigo-700 font-medium">了解更多 →</span>
+                  {!dismissedBells.has(post.id) && (
+                    <button
+                      type="button"
+                      onClick={() => dismissBell(post.id)}
+                      aria-label="标记为已读"
+                      className="absolute top-3 right-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors"
+                    >
+                      <FaBell size={13} />
+                    </button>
+                  )}
+                  <MediaAwareLink
+                    to="/product-section"
+                    mediaSrc={postMedia}
+                    caption={post.caption ?? `帖子 ${index + 1}`}
+                    ctaLabel="了解更多"
+                    className="block rounded-xl overflow-hidden"
+                  >
+                    <div className="h-48 bg-gray-100 relative overflow-hidden">
+                      <MediaThumb
+                        src={postMedia}
+                        alt={post.caption ?? `帖子 ${index + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
                     </div>
-                  </div>
-                </MediaAwareLink>
+                    <div className="p-5 relative">
+                      <h3 className="font-bold text-gray-900 truncate">
+                        {post.caption !== "" ? post.caption : `精选帖子 ${index + 1}`}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-2 leading-relaxed">
+                        {post.cta_text !== "" ? post.cta_text : "暂无描述"}
+                      </p>
+                      <div className="mt-4 flex justify-between items-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleLocalSaved(`post:${post.id}`);
+                          }}
+                          aria-label={localSavedItems.has(`post:${post.id}`) ? "取消收藏" : "收藏"}
+                          className="flex items-center justify-center w-7 h-7 rounded-full transition-colors hover:bg-gray-100"
+                        >
+                          {localSavedItems.has(`post:${post.id}`)
+                            ? <FaBookmark size={13} className="text-indigo-600" />
+                            : <FaRegBookmark size={13} className="text-gray-400" />
+                          }
+                        </button>
+                        <span className="text-xs text-indigo-700 font-medium">了解更多 →</span>
+                      </div>
+                    </div>
+                  </MediaAwareLink>
+                </div>
               );
             }}
             isHighlightSection={true}
@@ -473,6 +561,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="分类"
             viewAllLink="/product-section"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedCategories.slice(0, 4)}
             renderItem={(category, index) => {
               const placeholder = makePlaceholderImageUrl(`分类 ${index + 1}`);
@@ -490,6 +579,10 @@ const HomePageClient: React.FC<HomePageProps> = ({
                   fallbackImageUrl={placeholder}
                   title={category.name}
                   subtitle={formatProductCount(count)}
+                  showBell={!dismissedBells.has(`category:${category.id}`)}
+                  onBellDismiss={() => dismissBell(`category:${category.id}`)}
+                  isSaved={localSavedItems.has(`category:${category.id}`)}
+                  onSave={() => toggleLocalSaved(`category:${category.id}`)}
                 />
               );
             }}
@@ -501,6 +594,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="部门"
             viewAllLink="/product-section?department=all"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedDepartments.slice(0, 4)}
             renderItem={(dept, index) => {
               const placeholder = makePlaceholderImageUrl(`部门 ${index + 1}`);
@@ -516,6 +610,10 @@ const HomePageClient: React.FC<HomePageProps> = ({
                   fallbackImageUrl={placeholder}
                   title={dept.name ?? `部门 ${index + 1}`}
                   subtitle={formatProductCount(count)}
+                  showBell={!dismissedBells.has(`department:${dept.id}`)}
+                  onBellDismiss={() => dismissBell(`department:${dept.id}`)}
+                  isSaved={localSavedItems.has(`department:${dept.id}`)}
+                  onSave={() => toggleLocalSaved(`department:${dept.id}`)}
                 />
               );
             }}
@@ -527,6 +625,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="系列"
             viewAllLink="/product-section?range=all"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedRanges.slice(0, 4)}
             renderItem={(range, index) => {
               const placeholder = makePlaceholderImageUrl(`系列 ${index + 1}`);
@@ -542,6 +641,10 @@ const HomePageClient: React.FC<HomePageProps> = ({
                   fallbackImageUrl={placeholder}
                   title={range.name ?? `系列 ${index + 1}`}
                   subtitle={formatProductCount(count)}
+                  showBell={!dismissedBells.has(`range:${range.id}`)}
+                  onBellDismiss={() => dismissBell(`range:${range.id}`)}
+                  isSaved={localSavedItems.has(`range:${range.id}`)}
+                  onSave={() => toggleLocalSaved(`range:${range.id}`)}
                 />
               );
             }}
@@ -553,6 +656,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="品牌"
             viewAllLink="/product-section?brand=all"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedBrands.slice(0, 4)}
             renderItem={(brand, index) => {
               const placeholder = makePlaceholderImageUrl(`品牌 ${index + 1}`);
@@ -568,6 +672,10 @@ const HomePageClient: React.FC<HomePageProps> = ({
                   fallbackImageUrl={placeholder}
                   title={brand.name ?? `品牌 ${index + 1}`}
                   subtitle={formatProductCount(count)}
+                  showBell={!dismissedBells.has(`brand:${brand.id}`)}
+                  onBellDismiss={() => dismissBell(`brand:${brand.id}`)}
+                  isSaved={localSavedItems.has(`brand:${brand.id}`)}
+                  onSave={() => toggleLocalSaved(`brand:${brand.id}`)}
                 />
               );
             }}
@@ -579,6 +687,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           <ScrollableSection
             title="商品"
             viewAllLink="/products"
+            onSearch={() => setIsSearchOpen(true)}
             items={sortedProducts.slice(0, 4)}
             renderItem={(product, index) => {
               const productMediaUrl = productMediaMap.get(product.id);
@@ -625,6 +734,27 @@ const HomePageClient: React.FC<HomePageProps> = ({
                         </svg>
                       </div>
                     </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (isInWishlist(product.id)) {
+                            void removeFromWishlist(product.id);
+                          } else {
+                            void addToWishlist(product.id);
+                          }
+                        }}
+                        aria-label={isInWishlist(product.id) ? "取消收藏" : "收藏"}
+                        className="flex items-center justify-center w-7 h-7 rounded-full transition-colors hover:bg-gray-100"
+                      >
+                        {isInWishlist(product.id)
+                          ? <FaBookmark size={13} className="text-indigo-600" />
+                          : <FaRegBookmark size={13} className="text-gray-400" />
+                        }
+                      </button>
+                    </div>
                   </div>
                 </Link>
               );
@@ -633,6 +763,7 @@ const HomePageClient: React.FC<HomePageProps> = ({
           />
         </div>
       </div>
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       {/* Announcement bottom sheet modal — appears after 1.5s delay */}
       <AnnouncementBottomSheet />
     </LandingLayout>

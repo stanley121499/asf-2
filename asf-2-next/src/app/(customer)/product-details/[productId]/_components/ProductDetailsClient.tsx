@@ -11,7 +11,8 @@ import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { isSoftDeletedRow, readDeletedAt } from "@/utils/softDeleteRuntime";
 import type { Tables } from "@/database.types";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa";
+import { HiOutlineArrowLeft } from "react-icons/hi";
 import { useWishlistContext } from "@/context/WishlistContext";
 
 interface ProductDetailsClientProps {
@@ -234,6 +235,17 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     return (
       <>
         <NavbarHome />
+        <div className="px-4 pt-3 pb-1 bg-gray-50 dark:bg-gray-900">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
+            aria-label="返回"
+          >
+            <HiOutlineArrowLeft className="h-4 w-4" />
+            <span>返回</span>
+          </button>
+        </div>
         <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
           <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -267,6 +279,17 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   return (
     <>
       <NavbarHome />
+      <div className="px-4 pt-3 pb-1 bg-gray-50 dark:bg-gray-900">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
+          aria-label="返回"
+        >
+          <HiOutlineArrowLeft className="h-4 w-4" />
+          <span>返回</span>
+        </button>
+      </div>
       <section
         className="bg-white dark:bg-gray-900 antialiased md:pb-16"
         style={{ paddingBottom: "calc(3.5rem + 4rem + 1rem + env(safe-area-inset-bottom, 0px))" }}
@@ -312,21 +335,22 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
             </div>
 
             <div className="mt-6 sm:mt-8 lg:mt-0">
-              <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
-                {product.name}
-              </h1>
-
-              <button
-                type="button"
-                onClick={() => void handleToggleWishlist()}
-                className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-              >
-                {isSaved
-                  ? <FaHeart size={16} className="text-red-500" />
-                  : <FaRegHeart size={16} />
-                }
-                {isSaved ? "已收藏" : "收藏"}
-              </button>
+              <div className="flex justify-between items-start gap-3">
+                <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
+                  {product.name}
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => void handleToggleWishlist()}
+                  aria-label={isSaved ? "从收藏中移除" : "添加到收藏"}
+                  className="mt-1 flex-shrink-0 p-2 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {isSaved
+                    ? <FaBookmark size={18} className="text-indigo-600" />
+                    : <FaRegBookmark size={18} className="text-gray-500 dark:text-gray-400" />
+                  }
+                </button>
+              </div>
 
               <div className="mt-2 space-y-1">
                 {product.article_number && (
