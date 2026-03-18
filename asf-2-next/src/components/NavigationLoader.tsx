@@ -5,6 +5,16 @@ import { usePathname } from "next/navigation";
 import CustomerLoadingPage from "@/components/CustomerLoadingPage";
 
 /**
+ * Module-level flag so the history.pushState patch is only applied once,
+ * even when React StrictMode mounts this component twice in development.
+ * Using a module variable avoids storing properties on the function itself
+ * (which causes TypeScript type errors on build).
+ */
+let pushStatePatched = false;
+/** The original pushState reference, stored so we can restore it on unmount. */
+let originalPushState: typeof window.history.pushState | null = null;
+
+/**
  * NavigationLoader
  *
  * Renders an instant full-screen loading overlay for EVERY in-app navigation:
@@ -21,18 +31,18 @@ import CustomerLoadingPage from "@/components/CustomerLoadingPage";
  */
 export function NavigationLoader({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}): JSX.Element {
+}>): JSX.Element {
   const pathname = usePathname();
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
 
-  /** Mutable refs so the event handlers always see the latest values. */
+  /** Mutable refs so event handlers always see the latest values. */
   const pathnameRef = useRef<string>(pathname);
   const isNavigatingRef = useRef<boolean>(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /** Show the overlay (idempotent — won't restart the safety timer if already showing). */
+  /** Show the overlay — idempotent, won't restart the timer if already showing. */
   const startLoading = (): void => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
@@ -55,10 +65,7 @@ export function NavigationLoader({
     setIsNavigating(false);
   };
 
-  /**
-   * Detect navigation completion: whenever the pathname changes, the new
-   * page has rendered and we can remove the overlay.
-   */
+  /** When pathname changes, the new page is ready — remove overlay. */
   useEffect(() => {
     if (pathnameRef.current !== pathname) {
       pathnameRef.current = pathname;
@@ -66,20 +73,15 @@ export function NavigationLoader({
     }
   }, [pathname]);
 
-  /**
-   * Wire up all three navigation entry-points.
-   * The history.pushState patch is marked so it is never applied twice
-   * (handles React StrictMode's double-invocation in development).
-   */
+  /** Wire up all three navigation entry-points. */
   useEffect(() => {
-    // ── 1. Anchor / Link click ───────────────────────────────────────────
+    // ── 1. Anchor / <Link> click ─────────────────────────────────────────
     const handleClick = (e: MouseEvent): void => {
       const anchor = (e.target as HTMLElement).closest(
         "a[href]"
       ) as HTMLAnchorElement | null;
       if (anchor === null) return;
 
-      // Skip external, new-tab, download, or non-http links
       if (
         anchor.target === "_blank" ||
         anchor.download !== "" ||
@@ -89,17 +91,13 @@ export function NavigationLoader({
       ) return;
 
       try {
-        const dest = new URL(anchor.href, globalThis.location.href);
-        if (dest.origin !== globalThis.location.origin) return;
+        const dest = new URL(anchor.href, window.location.href);
+        if (dest.origin !== window.location.origin) return;
 
-        const currentPath =
-          globalThis.location.pathname + globalThis.location.search;
+        const currentPath = window.location.pathname + window.location.search;
         const destPath = dest.pathname + dest.search;
-
-        // Skip hash-only jumps (same path, just an anchor scroll)
         const isHashJump =
-          dest.pathname === globalThis.location.pathname &&
-          dest.hash !== "";
+          dest.pathname === window.location.pathname && dest.hash !== "";
 
         if (destPath !== currentPath && !isHashJump) {
           startLoading();
@@ -109,22 +107,22 @@ export function NavigationLoader({
       }
     };
 
-    // ── 2. Programmatic navigation (router.push / router.replace) ────────
-    const PATCH_KEY = "__nav_loader_patched__" as keyof typeof window.history.pushState;
-    const originalPushState = window.history.pushState.bind(window.history);
+    // ── 2. router.push() / router.replace() ──────────────────────────────
+    // Patch history.pushState once at the module level so the flag survives
+    // React StrictMode's double-mount in development.
+    if (!pushStatePatched) {
+      pushStatePatched = true;
+      originalPushState = window.history.pushState.bind(window.history);
 
-    if (!(window.history.pushState as Record<string, unknown>)[PATCH_KEY as string]) {
-      const patched = (
+      window.history.pushState = (
         ...args: Parameters<typeof window.history.pushState>
       ): void => {
-        originalPushState(...args);
+        originalPushState?.(...args);
         startLoading();
       };
-      (patched as Record<string, unknown>)[PATCH_KEY as string] = true;
-      window.history.pushState = patched;
     }
 
-    // ── 3. Back / Forward buttons (also catches router.back()) ───────────
+    // ── 3. Back / Forward / router.back() ────────────────────────────────
     const handlePopState = (): void => startLoading();
 
     document.addEventListener("click", handleClick);
@@ -133,8 +131,14 @@ export function NavigationLoader({
     return (): void => {
       document.removeEventListener("click", handleClick);
       window.removeEventListener("popstate", handlePopState);
-      // Restore original pushState on unmount
-      window.history.pushState = originalPushState;
+
+      // Restore the original pushState and reset the module flag on unmount
+      if (originalPushState !== null) {
+        window.history.pushState = originalPushState;
+        originalPushState = null;
+      }
+      pushStatePatched = false;
+
       if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
     };
   }, []);
