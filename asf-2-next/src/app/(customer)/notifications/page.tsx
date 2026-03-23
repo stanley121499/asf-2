@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import { LandingLayout } from "@/layouts";
+import NavbarHome from "@/components/navbar-home";
+import { useRouter, useSearchParams } from "next/navigation";
+import { HiOutlineArrowLeft } from "react-icons/hi";
+import BottomNavbar from "@/components/home/bottom-nav";
 
-/**
- * Interface for notification data structure
- */
 interface Notification {
   id: string;
   title: string;
@@ -14,9 +14,6 @@ interface Notification {
   type: "info" | "success" | "warning" | "error";
 }
 
-/**
- * Mock notification data
- */
 const mockNotifications: Notification[] = [
   {
     id: "1",
@@ -52,48 +49,48 @@ const mockNotifications: Notification[] = [
   }
 ];
 
-/**
- * Notification page component
- */
 const NotificationsPage: React.FC = () => {
-  const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') ?? '/';
 
   return (
-    <LandingLayout>
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">通知</h1>
-          {unreadCount > 0 && (
-            <span className="bg-indigo-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-              {unreadCount} 条未读
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          {mockNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`bg-white rounded-xl p-4 shadow-sm border ${
-                notification.isRead ? "border-gray-100" : "border-indigo-200"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{notification.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                  <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
-                </div>
-                <div className={`w-2 h-2 rounded-full ${
-                  notification.isRead ? "bg-gray-300" : "bg-indigo-600"
-                }`} />
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="min-h-screen bg-white pb-24">
+      <NavbarHome />
+      
+      {/* Top Bar */}
+      <div className="sticky top-0 z-40 bg-white h-[56px] flex items-center px-4 border-b border-[var(--color-border)]">
+        <button onClick={() => router.push(from)} className="text-[var(--color-text)] text-sm font-medium flex items-center shrink-0">
+          <HiOutlineArrowLeft className="mr-1 h-4 w-4" />
+          返回
+        </button>
+        <h1 className="flex-1 text-center font-display text-lg tracking-wide pr-16">
+          通知
+        </h1>
       </div>
-    </LandingLayout>
+
+      <div className="px-4 py-4 space-y-4">
+        {mockNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className="flex items-start justify-between py-4 border-b border-[var(--color-border)] last:border-0 relative"
+          >
+            <div className="flex-1 pr-4">
+              <div className="flex items-center gap-2 mb-1">
+                {!notification.isRead && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                )}
+                <h3 className="font-medium text-sm text-[var(--color-text)]">{notification.title}</h3>
+              </div>
+              <p className="text-sm text-[var(--color-muted)] leading-relaxed">{notification.message}</p>
+              <p className="text-xs text-gray-400 mt-2">{notification.timestamp}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <BottomNavbar />
+    </div>
   );
 };
 
-export default NotificationsPage; 
+export default NotificationsPage;

@@ -10,9 +10,15 @@ const LoadingPage: React.FC = () => {
         className="lg:max-w-md"
       />
       <h1 className="mb-3 mt-6 w-4/5 text-center text-4xl font-bold dark:text-white">
-        Give us a moment
+        请稍候...
       </h1>
-      <div className="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">loading...</div>
+      <div className="flex items-center justify-center py-12">
+        <div className="flex gap-1.5">
+          {[0, 150, 300].map((delay) => (
+            <span key={delay} className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

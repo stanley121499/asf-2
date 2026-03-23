@@ -1,21 +1,21 @@
 "use client";
 
-import { Select } from "flowbite-react";
 import React, { useEffect, useState, useMemo } from "react";
 import NavbarHome from "@/components/navbar-home";
 import type { Tables } from "@/database.types";
 import { useRouter, useSearchParams } from "next/navigation";
-import ProductCard from "@/components/home/ProductCard"; // Adjusted import path from what might have been local to home/components
-import { HiOutlineArrowLeft } from "react-icons/hi";
-
-// Use the local ProductCard Skeleton logic slightly adapted for Next.js
+import ProductCard from "@/components/home/ProductCard";
+import { HiOutlineSearch, HiX } from "react-icons/hi";
+import Link from "next/link";
+import { useAddToCartContext } from "@/context/product/CartContext";
+import { useAuthContext } from "@/context/AuthContext";
 
 const ProductCardSkeleton: React.FC = () => (
-  <div className="animate-pulse rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-    <div className="h-56 w-full rounded-t-lg bg-gray-200 dark:bg-gray-700" />
-    <div className="p-4 space-y-2">
-      <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
-      <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-700" />
+  <div className="flex flex-col">
+    <div className="w-full pt-[133.33%] bg-gray-200 animate-pulse" />
+    <div className="pt-3 space-y-2">
+      <div className="h-4 w-3/4 bg-gray-200 animate-pulse" />
+      <div className="h-4 w-1/3 bg-gray-200 animate-pulse" />
     </div>
   </div>
 );
@@ -49,6 +49,12 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
   const [selectedFilter, setSelectedFilter] = useState(
     selectedCategory?.name || "All"
   );
+  
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Tables<"products"> | null>(null);
+
+  const { user } = useAuthContext();
+  const { createAddToCart } = useAddToCartContext();
 
   useEffect(() => {
     const category = categories.find((c) => c.id === initialCategoryId);
@@ -59,20 +65,6 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
       setSelectedFilter(category?.name || "All");
     }
   }, [categories, initialCategoryId, departmentId, rangeId, brandId]);
-
-  const handleFilterChange = (filterName: string) => {
-    setSelectedFilter(filterName);
-    if (filterName === "All") {
-      router.push("/product-section");
-      setSelectedCategory(undefined);
-    } else {
-      const category = categories.find((cat) => cat.name === filterName);
-      if (category) {
-        router.push(`/product-section/${category.id}`);
-        setSelectedCategory(category);
-      }
-    }
-  };
 
   const filteredProducts = useMemo(() => {
     const afterFiltersAndSort = products
@@ -104,7 +96,6 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
         }
       });
 
-    // Apply search query on top of existing filters
     if (searchQuery.trim().length === 0) {
       return afterFiltersAndSort;
     }
@@ -120,90 +111,206 @@ const ProductSectionClient: React.FC<ProductSectionClientProps> = ({
     return new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""]));
   }, [productMedias]);
 
+  const handleSortChange = (sort: string) => {
+    setSelectedSort(sort);
+  };
+
+  const handleQuickViewAddCart = async () => {
+    if (!quickViewProduct) return;
+    
+    // For demo: if we don't have variant info, route to PDP for safety
+    // router.push(`/product-details/${quickViewProduct.id}`);
+    
+    try {
+      if (!user?.id) {
+        router.push("/authentication/sign-in");
+        return;
+      }
+      await createAddToCart({
+        product_id: quickViewProduct.id,
+        user_id: user.id,
+        amount: 1,
+      });
+      setQuickViewProduct(null);
+    } catch {
+      // ignore
+    }
+  };
+
+  const CATEGORY_NAMES: Record<string, string> = {
+    "Handbag": "手袋",
+    "Streetwear": "街头服饰",
+    "Spring Collection": "春季新品",
+    "Ladies": "女装",
+    "Men": "男装",
+    "Accessories": "配饰",
+    "Shoes": "鞋履",
+    "Beauty": "美妆",
+    "Pants": "长裤",
+    "Tops": "上衣",
+    "Bottoms": "下装"
+  };
+
   return (
     <>
       <NavbarHome />
-      <div className="px-4 pt-3 pb-1 bg-gray-50 dark:bg-gray-900">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
-          aria-label="返回"
-        >
-          <HiOutlineArrowLeft className="h-4 w-4" />
-          <span>返回</span>
-        </button>
-      </div>
-      <section className="bg-gray-50 antialiased dark:bg-gray-900 min-h-screen">
-        <div className="mx-auto max-w-screen-xl px-4 2xl:px-0 pt-4 pb-12">
-          <div className="mb-4 items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
-            {/* Inline search bar */}
-            <div className="relative w-full md:max-w-sm">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                </svg>
-              </div>
+      <div className="min-h-screen bg-white pb-[64px] flex flex-col">
+        {/* Sticky Search & Nav block */}
+        <div className="sticky top-[56px] z-30 bg-white border-b border-[var(--color-border)]">
+          {/* Sticky search bar */}
+          <div className="px-4 py-3">
+            <div className="relative w-full h-[48px] bg-[var(--color-panel)] rounded-full flex items-center px-4">
+              <HiOutlineSearch className="h-5 w-5 text-[var(--color-muted)] mr-2 shrink-0" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索商品..."
-                className="block w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                placeholder="搜索商品…"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-[var(--color-text)] outline-none w-full"
               />
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {!departmentId && !rangeId && !brandId && (
-                <Select
-                  value={selectedFilter}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                  className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
-                  <option value="All">全部</option>
-                  {categories.map((filter) => (
-                    <option key={filter.id} value={filter.name}>
-                      {filter.name}
-                    </option>
-                  ))}
-                </Select>
-              )}
-              <Select
-                value={selectedSort}
-                onChange={(e) => setSelectedSort(e.target.value)}
-                className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
-                <option value="Price: Low to High">价格：从低到高</option>
-                <option value="Price: High to Low">价格：从高到低</option>
-                <option value="Newest First">最新优先</option>
-              </Select>
             </div>
           </div>
 
-          <div className="mb-4 grid gap-4 grid-cols-2">
-            {filteredProducts.map((product) => {
-              const mediaUrl = productMediaMap.get(product.id) || "/default-image.jpg";
+          {/* Category pills */}
+          <div className="flex overflow-x-auto hide-scrollbar px-4 pb-3 gap-2">
+            <Link
+              href="/product-section"
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border ${
+                !selectedCategory ? 'bg-[var(--color-text)] text-white border-[var(--color-text)]' : 'bg-white text-[var(--color-text)] border-[var(--color-border)]'
+              }`}
+            >
+              全部
+            </Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/product-section/${cat.id}`}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border ${
+                  selectedCategory?.id === cat.id ? 'bg-[var(--color-text)] text-white border-[var(--color-text)]' : 'bg-white text-[var(--color-text)] border-[var(--color-border)]'
+                }`}
+              >
+                {CATEGORY_NAMES[cat.name || ""] ?? cat.name}
+              </Link>
+            ))}
+          </div>
+          
+          {/* Sort & Filter Strip */}
+          <div className="px-4 pb-3 flex justify-end">
+            <button 
+              onClick={() => setIsFilterSheetOpen(true)}
+              className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)]"
+            >
+              筛选 ⚙
+            </button>
+          </div>
+        </div>
 
-              return (
+        {/* Product Grid */}
+        <div className="px-4 py-4">
+          {filteredProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="font-display text-xl text-[var(--color-text)] mb-2">暂无相关商品</p>
+              <button 
+                onClick={() => router.push('/')}
+                className="btn-primary rounded-xl max-w-[200px] mt-4"
+              >
+                回到首页
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filteredProducts.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
-                  mediaUrl={mediaUrl}
-                  onImageLoad={() => {}}
+                  mediaUrl={productMediaMap.get(product.id) || "/default-image.jpg"}
+                  onQuickView={() => setQuickViewProduct(product)}
+                  priority={index < 2}
                 />
-              );
-            })}
-            {filteredProducts.length === 0 && (
-              <div className="col-span-2 py-16 text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  {searchQuery.trim().length > 0
-                    ? `未找到与 "${searchQuery}" 相关的商品`
-                    : "此分类暂无商品"}
-                </p>
-              </div>
-            )}
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Bottom Sheet */}
+      {isFilterSheetOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsFilterSheetOpen(false)} />
+          <div className="relative bg-white rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display text-xl text-[var(--color-text)]">排序方式</h3>
+              <button onClick={() => setIsFilterSheetOpen(false)}>
+                <HiX size={24} className="text-[var(--color-muted)]" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-4 mb-8">
+              {[
+                { label: "最新", value: "Newest First" },
+                { label: "价格从低到高", value: "Price: Low to High" },
+                { label: "价格从高到低", value: "Price: High to Low" }
+              ].map(opt => (
+                <label key={opt.value} className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value={opt.value}
+                    checked={selectedSort === opt.value}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="w-5 h-5 text-[var(--color-accent)] focus:ring-[var(--color-accent)] border-gray-300"
+                  />
+                  <span className="text-base text-[var(--color-text)]">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setIsFilterSheetOpen(false)}
+              className="w-full btn-primary rounded-xl"
+            >
+              完成
+            </button>
           </div>
         </div>
-      </section>
+      )}
+
+      {/* Quick View Bottom Sheet */}
+      {quickViewProduct && (() => {
+        const mediaUrl = productMediaMap.get(quickViewProduct.id) || "/default-image.jpg";
+        return (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setQuickViewProduct(null)} />
+            <div className="relative bg-white rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] w-full">
+              <button 
+                onClick={() => setQuickViewProduct(null)}
+                className="absolute top-4 right-4 bg-[var(--color-panel)] rounded-full p-1 z-10"
+              >
+                <HiX size={20} className="text-[var(--color-text)]" />
+              </button>
+              
+              <div className="flex gap-4 mb-6 mt-2">
+                <div className="relative w-[100px] pt-[150%] bg-[var(--color-panel)] rounded-lg overflow-hidden shrink-0">
+                  <img src={mediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col justify-center">
+                  <h3 className="font-sans font-medium text-lg text-[var(--color-text)]">{quickViewProduct.name}</h3>
+                  <p className="text-[var(--color-accent)] font-medium mt-1">
+                    RM {quickViewProduct.price?.toFixed(2) ?? "—"}
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleQuickViewAddCart}
+                className="w-full btn-primary rounded-xl"
+              >
+                加入购物袋
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 };

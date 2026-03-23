@@ -85,6 +85,32 @@
   /* Provide a 0px fallback for browsers that don't support env() */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+  --color-bg: #FFFFFF;
+  --color-text: #0A0A0A;
+  --color-panel: #F5F5F3;
+  --color-accent: #C9A96E;
+  --color-danger: #E8453C;
+  --color-muted: #6B7280;
+  --color-border: #E5E5E3;
+}
+
+@layer utilities {
+  .btn-primary {
+    @apply w-full h-[56px] bg-black text-white flex items-center justify-center font-medium;
+  }
+  .btn-secondary {
+    @apply w-full h-[56px] border border-black bg-transparent text-black flex items-center justify-center font-medium;
+  }
+  .skeleton {
+    @apply animate-pulse bg-gray-200;
+  }
+  .card-panel {
+    @apply bg-white border border-[var(--color-border)] rounded-2xl;
+  }
+  .font-display {
+    font-family: var(--font-display), serif;
+  }
 }
 
 /* Ensure the WebView honours safe-area env() values */
@@ -137,4 +163,9 @@ html {
 
 .react-datepicker-wrapper {
   width: 100%;
+}
+
+html, body {
+  overscroll-behavior: none; /* Prevent pull-to-refresh in WebView */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling in iOS WebView */
 }

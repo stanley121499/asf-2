@@ -1,22 +1,31 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
 import type { Tables } from "@/database.types";
-import { FaBookmark, FaRegBookmark } from "react-icons/fa";
+import { HiOutlineHeart, HiHeart } from "react-icons/hi";
 import { useWishlistContext } from "@/context/WishlistContext";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ProductCardProps {
   product: Tables<"products">;
   mediaUrl: string;
   onImageLoad?: () => void;
+  onQuickView?: () => void;
+  priority?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, mediaUrl, onImageLoad = () => {} }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ 
+  product, 
+  mediaUrl, 
+  onImageLoad = () => {},
+  onQuickView,
+  priority = false
+}) => {
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
-
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuthContext();
 
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
@@ -27,10 +36,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, mediaUrl, onImageLoa
     onImageLoad();
   };
 
-  /**
-   * Toggles the wishlist state for this product.
-   * Redirects to sign-in if the user is not authenticated.
-   */
   const handleToggleWishlist = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
     e.preventDefault();
     e.stopPropagation();
@@ -48,48 +53,59 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, mediaUrl, onImageLoa
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="w-full">
-        <a href={`/product-details/${product.id}`}>
-          <div className="relative h-56 w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
-            <Image
-              className={`object-cover transition-opacity duration-300 ${
-                imageLoaded ? "opacity-100" : "opacity-0"
-              }`}
-              src={mediaUrl || "/default-image.jpg"}
-              alt={product.name || "商品"}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              onLoad={handleImageReady}
-              onError={handleImageReady}
-            />
+    <div className="flex flex-col bg-white">
+      <Link href={`/product-details/${product.id}?from=${encodeURIComponent(pathname)}`} className="block relative pt-[133.33%] bg-[var(--color-panel)] overflow-hidden">
+        <Image
+          className={`object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+          src={mediaUrl || "/default-image.jpg"}
+          alt={product.name || "商品"}
+          fill
+          sizes="(max-width: 640px) 50vw, 33vw"
+          quality={75}
+          priority={priority}
+          onLoad={handleImageReady}
+          onError={handleImageReady}
+        />
+        {!imageLoaded && <div className="absolute inset-0 skeleton" />}
+      </Link>
+      
+      <div className="pt-3 pb-1 flex flex-col">
+        <Link href={`/product-details/${product.id}?from=${encodeURIComponent(pathname)}`} className="block">
+          <h3 className="font-sans text-base font-medium text-[var(--color-text)] truncate">
+            {product.name}
+          </h3>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[var(--color-accent)] font-medium text-sm">
+              RM {product.price?.toFixed(2) ?? "—"}
+            </span>
+            <button
+              onClick={handleToggleWishlist}
+              className="p-1 -mr-1 shrink-0"
+            >
+              {isSaved ? (
+                <HiHeart size={20} className="text-[var(--color-accent)]" />
+              ) : (
+                <HiOutlineHeart size={20} className="text-[var(--color-muted)]" />
+              )}
+            </button>
           </div>
-        </a>
-        <div className="p-4 flex justify-between items-start gap-2">
-          <a href={`/product-details/${product.id}`} className="flex-1 min-w-0">
-            <h3 className="text-md font-semibold text-gray-900 dark:text-white truncate">
-              {product.name}
-            </h3>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-400">
-              RM {product.price}
-            </p>
-          </a>
-          <button
+        </Link>
+        {onQuickView && (
+          <button 
             type="button"
-            aria-label={isSaved ? "从收藏中移除" : "添加到收藏"}
-            onClick={handleToggleWishlist}
-            className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 mt-0.5"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onQuickView();
+            }}
+            className="text-xs text-[var(--color-muted)] underline underline-offset-2 self-start mt-2 border-none bg-transparent"
           >
-            {isSaved
-              ? <FaBookmark size={14} className="text-indigo-600" />
-              : <FaRegBookmark size={14} className="text-gray-400 dark:text-gray-300" />
-            }
+            快速查看
           </button>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default ProductCard;
-

@@ -2,18 +2,17 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import NavbarHome from "@/components/navbar-home";
-import CheckoutButton from "@/components/stripe/CheckoutButton";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAlertContext } from "@/context/AlertContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useAddToCartLogContext } from "@/context/product/AddToCartLogContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { isSoftDeletedRow, readDeletedAt } from "@/utils/softDeleteRuntime";
 import type { Tables } from "@/database.types";
-import { FaBookmark, FaRegBookmark } from "react-icons/fa";
-import { HiOutlineArrowLeft } from "react-icons/hi";
+import { HiOutlineHeart, HiHeart, HiOutlineChevronDown, HiOutlineArrowLeft } from "react-icons/hi";
 import { useWishlistContext } from "@/context/WishlistContext";
+import ReviewModal from "@/components/ReviewModal";
+import ReviewsList from "@/components/ReviewsList";
 
 interface ProductDetailsClientProps {
   productId: string;
@@ -33,6 +32,8 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   productStocks,
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') ?? '/product-section';
   const { user } = useAuthContext();
   const { showAlert } = useAlertContext();
   const { createAddToCart } = useAddToCartContext();
@@ -49,9 +50,7 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     | { status: "missing" };
 
   const availability: ProductAvailability = useMemo(() => {
-    if (!product) {
-      return { status: "missing" };
-    }
+    if (!product) return { status: "missing" };
     if (isSoftDeletedRow(product)) {
       const deletedAt = readDeletedAt(product);
       return {
@@ -69,13 +68,8 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     return medias;
   }, [productMedias]);
 
-  const activeColorsForProduct = useMemo(() => {
-    return productColors.filter((c) => c.active);
-  }, [productColors]);
-
-  const activeSizesForProduct = useMemo(() => {
-    return productSizes.filter((s) => s.active);
-  }, [productSizes]);
+  const activeColorsForProduct = useMemo(() => productColors.filter((c) => c.active), [productColors]);
+  const activeSizesForProduct = useMemo(() => productSizes.filter((s) => s.active), [productSizes]);
 
   const requiresColor = activeColorsForProduct.length > 0;
   const requiresSize = activeSizesForProduct.length > 0;
@@ -83,6 +77,11 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   const [selectedColor, setSelectedColor] = useState<Tables<"product_colors"> | null>(null);
   const [selectedSize, setSelectedSize] = useState<Tables<"product_sizes"> | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  // Accordion state
+  const [openAccordion, setOpenAccordion] = useState<string>("description");
 
   useEffect(() => {
     if (selectedImageIndex >= sortedProductMedia.length && sortedProductMedia.length > 0) {
@@ -96,14 +95,8 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
       return;
     }
     if (activeColorsForProduct.length === 1) {
-      const only = activeColorsForProduct[0];
-      if (!selectedColor || selectedColor.id !== only.id) {
-        setSelectedColor(only);
-      }
+      setSelectedColor(activeColorsForProduct[0]);
       return;
-    }
-    if (selectedColor && !activeColorsForProduct.some((c) => c.id === selectedColor.id)) {
-      setSelectedColor(null);
     }
   }, [activeColorsForProduct, requiresColor, selectedColor]);
 
@@ -113,14 +106,8 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
       return;
     }
     if (activeSizesForProduct.length === 1) {
-      const only = activeSizesForProduct[0];
-      if (!selectedSize || selectedSize.id !== only.id) {
-        setSelectedSize(only);
-      }
+      setSelectedSize(activeSizesForProduct[0]);
       return;
-    }
-    if (selectedSize && !activeSizesForProduct.some((s) => s.id === selectedSize.id)) {
-      setSelectedSize(null);
     }
   }, [activeSizesForProduct, requiresSize, selectedSize]);
 
@@ -131,21 +118,11 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     const wantedColorId = requiresColor ? selectedColor?.id ?? null : null;
     const wantedSizeId = requiresSize ? selectedSize?.id ?? null : null;
 
-    const match = productStocks.find((s) => {
-      const stockColorId = s.color_id ?? null;
-      const stockSizeId = s.size_id ?? null;
-      return stockColorId === wantedColorId && stockSizeId === wantedSizeId;
-    });
-
-    return match ?? null;
+    return productStocks.find((s) => s.color_id === wantedColorId && s.size_id === wantedSizeId) ?? null;
   }, [productStocks, requiresColor, requiresSize, selectedColor, selectedSize]);
 
-  const hasAllRequiredSelections =
-    (!requiresColor || selectedColor !== null) && (!requiresSize || selectedSize !== null);
-
-  const currentStockQuantity =
-    currentStockRow && typeof currentStockRow.count === "number" ? currentStockRow.count : 0;
-
+  const hasAllRequiredSelections = (!requiresColor || selectedColor !== null) && (!requiresSize || selectedSize !== null);
+  const currentStockQuantity = currentStockRow && typeof currentStockRow.count === "number" ? currentStockRow.count : 0;
   const isInStock = hasAllRequiredSelections && currentStockRow !== null && currentStockQuantity > 0;
   const disableActions = hasAllRequiredSelections && !isInStock;
 
@@ -166,12 +143,13 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   }, [currentStockRow, productId, requiresColor, requiresSize, selectedColor, selectedSize]);
 
   const handleAddToCart = useCallback(async () => {
-    if (!product) {
-      showAlert("未找到商品。", "error");
-      return;
-    }
+    if (!product) return;
     if (!user?.id) {
-      router.push("/authentication/sign-in");
+      const confirmLogin = window.confirm("请先登录或注册账号，即可将此商品加入购物袋。");
+      if (confirmLogin) {
+        const currentPath = `/product-details/${product.id}`;
+        router.push(`/authentication/sign-in?returnTo=${encodeURIComponent(currentPath)}`);
+      }
       return;
     }
 
@@ -196,32 +174,14 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     router.push("/cart");
   }, [createAddToCart, createAddToCartLog, router, product, showAlert, user?.id, validateVariantAndStock]);
 
-  const beforeBuyNow = useCallback(async () => {
-    if (!product) {
-      showAlert("未找到商品。", "error");
-      return false;
-    }
-    if (!user?.id) {
-      router.push("/authentication/sign-in");
-      return false;
-    }
-
-    const validation = validateVariantAndStock();
-    if (!validation.ok) {
-      showAlert(validation.message || "验证失败", "error");
-      return false;
-    }
-    return true;
-  }, [router, product, showAlert, user?.id, validateVariantAndStock]);
-
-  /**
-   * Toggles the wishlist state for the current product.
-   * Redirects to sign-in if the user is not authenticated.
-   */
   const handleToggleWishlist = useCallback(async (): Promise<void> => {
     if (!product) return;
     if (!user?.id) {
-      router.push("/authentication/sign-in");
+      const confirmLogin = window.confirm("请先登录或注册账号，即可收藏此商品。");
+      if (confirmLogin) {
+        const currentPath = `/product-details/${product.id}`;
+        router.push(`/authentication/sign-in?returnTo=${encodeURIComponent(currentPath)}`);
+      }
       return;
     }
     if (isSaved) {
@@ -233,322 +193,196 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
 
   if (availability.status === "deleted" || availability.status === "missing") {
     return (
-      <>
-        <NavbarHome />
-        <div className="px-4 pt-3 pb-1 bg-gray-50 dark:bg-gray-900">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
-            aria-label="返回"
-          >
-            <HiOutlineArrowLeft className="h-4 w-4" />
-            <span>返回</span>
-          </button>
-        </div>
-        <div className="pb-8 md:pb-16 bg-white dark:bg-gray-900 antialiased">
-          <div className="max-w-screen-md px-4 mx-auto py-16 text-center space-y-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {availability.status === "deleted" ? "商品不可用" : "未找到商品"}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              {availability.status === "deleted"
-                ? `${availability.name} 已停止销售。`
-                : "我们找不到此商品。"}
-            </p>
-            {availability.status === "deleted" && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                删除时间：{new Date(availability.deletedAt).toLocaleString()}
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => router.push("/product-section")}
-              className="inline-flex items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700"
-            >
-              继续购物
-            </button>
-          </div>
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
+        <h1 className="text-2xl font-bold text-[var(--color-text)] mb-4">
+          {availability.status === "deleted" ? "商品不可用" : "未找到商品"}
+        </h1>
+        <button
+          onClick={() => router.push("/product-section")}
+          className="btn-primary rounded-xl px-6 py-3"
+        >
+          继续购物
+        </button>
+      </div>
     );
   }
 
   if (!product) return null;
 
   return (
-    <>
-      <NavbarHome />
-      <div className="px-4 pt-3 pb-1 bg-gray-50 dark:bg-gray-900">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
-          aria-label="返回"
-        >
-          <HiOutlineArrowLeft className="h-4 w-4" />
-          <span>返回</span>
-        </button>
-      </div>
-      <section
-        className="bg-white dark:bg-gray-900 antialiased md:pb-16"
-        style={{ paddingBottom: "calc(3.5rem + 4rem + 1rem + env(safe-area-inset-bottom, 0px))" }}
+    <div className="min-h-screen bg-white pb-[100px] relative">
+      <button 
+        onClick={() => router.push(from)}
+        className="absolute top-safe-area left-4 top-4 z-50 w-10 h-10 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center"
       >
-        <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-8">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
-            <div className="shrink-0 max-w-md lg:max-w-lg mx-auto">
-              <Image
-                width={800}
-                height={800}
-                className="w-full h-auto rounded-lg object-cover aspect-square"
-                src={sortedProductMedia[selectedImageIndex]?.media_url || "/default-image.jpg"}
-                alt={product.name ?? ""}
-              />
+        <HiOutlineArrowLeft size={20} className="text-black" />
+      </button>
 
-              {sortedProductMedia.length > 1 && (
-                <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
-                  {sortedProductMedia.map((media, index) => {
-                    const isSelected = index === selectedImageIndex;
-                    return (
-                      <button
-                        key={media.id}
-                        type="button"
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={[
-                          "shrink-0 rounded border",
-                          isSelected ? "border-primary-600" : "border-gray-200 dark:border-gray-700",
-                        ].join(" ")}
-                        aria-label={`选择图片 ${index + 1}`}
-                      >
-                        <Image
-                          width={80}
-                          height={80}
-                          src={media.media_url || "/default-image.jpg"}
-                          alt={`${product.name} ${index + 1}`}
-                          className="w-20 h-20 object-cover rounded"
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+      <div className="relative w-full pt-[100%] bg-gray-100">
+        <Image
+          src={sortedProductMedia[selectedImageIndex]?.media_url || "/default-image.jpg"}
+          alt={product.name ?? ""}
+          fill
+          className="object-cover"
+          priority
+        />
+        {sortedProductMedia.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-medium tracking-widest flex items-center gap-2">
+            <span>{selectedImageIndex + 1} / {sortedProductMedia.length}</span>
+          </div>
+        )}
+        
+        {sortedProductMedia.length > 1 && (
+          <div className="absolute inset-0 flex">
+            <div 
+              className="w-1/2 h-full" 
+              onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : sortedProductMedia.length - 1)} 
+            />
+            <div 
+              className="w-1/2 h-full" 
+              onClick={() => setSelectedImageIndex(prev => prev < sortedProductMedia.length - 1 ? prev + 1 : 0)} 
+            />
+          </div>
+        )}
+      </div>
 
-            <div className="mt-6 sm:mt-8 lg:mt-0">
-              <div className="flex justify-between items-start gap-3">
-                <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
-                  {product.name}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => void handleToggleWishlist()}
-                  aria-label={isSaved ? "从收藏中移除" : "添加到收藏"}
-                  className="mt-1 flex-shrink-0 p-2 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {isSaved
-                    ? <FaBookmark size={18} className="text-indigo-600" />
-                    : <FaRegBookmark size={18} className="text-gray-500 dark:text-gray-400" />
-                  }
-                </button>
-              </div>
+      <div className="px-5 pt-6 pb-8">
+        <div className="flex justify-between items-start gap-4">
+          <h1 className="font-display text-2xl text-[var(--color-text)] leading-snug">
+            {product.name}
+          </h1>
+          <button
+            onClick={() => void handleToggleWishlist()}
+            className="shrink-0 p-1"
+          >
+            {isSaved ? <HiHeart size={24} className="text-red-500" /> : <HiOutlineHeart size={24} className="text-[var(--color-text)]" />}
+          </button>
+        </div>
+        <p className="text-[var(--color-accent)] text-lg font-medium mt-2">
+          RM {(product.price ?? 0).toFixed(2)}
+        </p>
 
-              <div className="mt-2 space-y-1">
-                {product.article_number && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">货号：</span> {product.article_number}
-                  </p>
-                )}
-                {product.festival && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">节日：</span> {product.festival}
-                  </p>
-                )}
-                {product.season && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    <span className="font-medium">季节：</span> {product.season}
-                  </p>
-                )}
-              </div>
+        <div className="mt-4">
+          {!hasAllRequiredSelections && (requiresColor || requiresSize) ? (
+            <p className="text-sm text-[var(--color-muted)]">
+              请选择{[requiresColor && !selectedColor ? "颜色" : "", requiresSize && !selectedSize ? "尺码" : ""].filter(Boolean).join("和")}
+            </p>
+          ) : (
+            <p className={`text-sm font-medium ${isInStock ? "text-green-600" : "text-red-500"}`}>
+              {isInStock ? `有货（剩余 ${currentStockQuantity} 件）` : "缺货"}
+            </p>
+          )}
+        </div>
 
-              <div className="mt-4 sm:items-center sm:gap-4 sm:flex">
-                <p className="text-2xl font-extrabold text-gray-900 sm:text-3xl dark:text-white">
-                  RM {(product.price ?? 0).toFixed(2)}
-                </p>
-              </div>
-
-              <div className="mt-4">
-                {!hasAllRequiredSelections && (requiresColor || requiresSize) ? (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    请选择{[
-                      requiresColor && !selectedColor ? "颜色" : "",
-                      requiresSize && !selectedSize ? "尺码" : "",
-                    ].filter((t) => t.length > 0).join("和")}以查看库存。
-                  </p>
-                ) : (
-                  <p
-                    className={[
-                      "text-sm font-medium",
-                      isInStock ? "text-green-600" : "text-red-600",
-                    ].join(" ")}
+        {requiresColor && (
+          <div className="mt-8">
+            <h3 className="text-sm text-[var(--color-text)] mb-3 font-medium">颜色</h3>
+            <div className="flex flex-wrap gap-4">
+              {activeColorsForProduct.map((color) => {
+                const isSelected = selectedColor?.id === color.id;
+                return (
+                  <button
+                    key={color.id}
+                    onClick={() => setSelectedColor(color)}
+                    className={`h-10 px-4 rounded-full border-2 flex items-center justify-center text-sm transition-colors ${
+                      isSelected ? "border-black text-black font-medium" : "border-gray-200 text-gray-500"
+                    }`}
                   >
-                    {isInStock
-                      ? `有货（剩余 ${currentStockQuantity} 件）`
-                      : "缺货"}
-                  </p>
-                )}
-              </div>
-
-              {requiresColor && (
-                <div className="mt-6">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    颜色
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {activeColorsForProduct.map((color) => {
-                      const isSelected = selectedColor?.id === color.id;
-                      return (
-                        <button
-                          key={color.id}
-                          type="button"
-                          onClick={() => setSelectedColor(color)}
-                          className={[
-                            "px-4 py-2 rounded-lg border text-sm",
-                            isSelected
-                              ? "bg-primary-700 text-white border-primary-700"
-                              : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700",
-                          ].join(" ")}
-                        >
-                          {color.color}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!selectedColor && (
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      请选择颜色。
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {requiresSize && (
-                <div className="mt-6">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    尺码
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {activeSizesForProduct.map((size) => {
-                      const isSelected = selectedSize?.id === size.id;
-                      return (
-                        <button
-                          key={size.id}
-                          type="button"
-                          onClick={() => setSelectedSize(size)}
-                          className={[
-                            "px-4 py-2 rounded-lg border text-sm",
-                            isSelected
-                              ? "bg-primary-700 text-white border-primary-700"
-                              : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700",
-                          ].join(" ")}
-                        >
-                          {size.size}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!selectedSize && (
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      请选择尺码。
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <hr className="my-6 md:my-8 border-gray-200 dark:border-gray-800" />
-
-              <p className="mb-6 text-gray-500 dark:text-gray-400">
-                {product.description}
-              </p>
-
-              {(product.warranty_period || product.warranty_description) && (
-                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    质保信息
-                  </h3>
-                  {product.warranty_period && (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      <span className="font-medium">质保期：</span> {product.warranty_period}
-                    </p>
-                  )}
-                  {product.warranty_description && (
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">条款与条件：</span> {product.warranty_description}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-6 hidden sm:flex sm:gap-4 sm:items-center sm:mt-8">
-                <button
-                  className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 sm:mt-0"
-                  onClick={() => void handleAddToCart()}
-                  disabled={disableActions}
-                  aria-disabled={disableActions}
-                >
-                  加入购物车
-                </button>
-                <CheckoutButton
-                  items={[
-                    {
-                      name: product.name ?? "",
-                      quantity: 1,
-                      price: Math.round((product.price ?? 0) * 100),
-                    },
-                  ]}
-                  customerId={user?.id ?? ""}
-                  beforeCheckout={beforeBuyNow}
-                  disabled={disableActions}
-                  buttonTitle="立即购买"
-                />
-              </div>
+                    {color.color}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        )}
 
-      <div
-        className="fixed left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 flex gap-3 sm:hidden"
-        style={{
-          bottom: "calc(4rem + 1rem + env(safe-area-inset-bottom, 0px))",
-          paddingTop: "0.75rem",
-          paddingBottom: "0.75rem",
-        }}
-      >
+        {requiresSize && (
+          <div className="mt-8">
+            <h3 className="text-sm text-[var(--color-text)] mb-3 font-medium">尺码</h3>
+            <div className="flex flex-wrap gap-3">
+              {activeSizesForProduct.map((size) => {
+                const isSelected = selectedSize?.id === size.id;
+                return (
+                  <button
+                    key={size.id}
+                    onClick={() => setSelectedSize(size)}
+                    className={`h-12 border ${isSelected ? "border-black bg-black text-white" : "border-gray-200 bg-white text-[var(--color-text)]"} px-6 flex items-center justify-center transition-all`}
+                  >
+                    <span className={`text-sm ${isSelected ? "font-medium" : ""}`}>{size.size}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-10 border-t border-[var(--color-border)]">
+          <button 
+            onClick={() => setOpenAccordion(openAccordion === "description" ? "" : "description")}
+            className="w-full py-5 flex justify-between items-center border-b border-[var(--color-border)]"
+          >
+            <span className="text-base text-[var(--color-text)]">商品详情</span>
+            <HiOutlineChevronDown className={`transition-transform ${openAccordion === "description" ? "rotate-180" : ""}`} />
+          </button>
+          {openAccordion === "description" && (
+            <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-line border-b border-[var(--color-border)]">
+              {product.description || "暂无详情介绍。"}
+            </div>
+          )}
+
+          <button 
+            onClick={() => setOpenAccordion(openAccordion === "material" ? "" : "material")}
+            className="w-full py-5 flex justify-between items-center border-b border-[var(--color-border)]"
+          >
+            <span className="text-base text-[var(--color-text)]">材质与保养</span>
+            <HiOutlineChevronDown className={`transition-transform ${openAccordion === "material" ? "rotate-180" : ""}`} />
+          </button>
+          {openAccordion === "material" && (
+            <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-line border-b border-[var(--color-border)]">
+              请手洗或机洗冷水，不可漂白。自然晾干即可。
+            </div>
+          )}
+
+          <button 
+            onClick={() => setOpenAccordion(openAccordion === "shipping" ? "" : "shipping")}
+            className="w-full py-5 flex justify-between items-center border-b border-[var(--color-border)]"
+          >
+            <span className="text-base text-[var(--color-text)]">配送与退货</span>
+            <HiOutlineChevronDown className={`transition-transform ${openAccordion === "shipping" ? "rotate-180" : ""}`} />
+          </button>
+          {openAccordion === "shipping" && (
+            <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-line border-b border-[var(--color-border)]">
+              所有订单提供标准配送。30天内免费退换货服务。
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-medium text-[var(--color-text)]">用户评价 (4.8/5)</h2>
+            <button 
+              onClick={() => setIsReviewModalOpen(true)}
+              className="text-sm font-medium border border-black rounded-full px-4 py-1.5"
+            >
+              撰写评价
+            </button>
+          </div>
+          <ReviewsList />
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-t border-[var(--color-border)] px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         <button
-          type="button"
           onClick={() => void handleAddToCart()}
           disabled={disableActions}
-          aria-disabled={disableActions}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white disabled:opacity-40 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full h-[56px] btn-primary rounded-full disabled:opacity-40 disabled:bg-gray-400"
         >
-          加入购物车
+          加入购物袋
         </button>
-        <CheckoutButton
-          items={[
-            {
-              name: product.name ?? "",
-              quantity: 1,
-              price: Math.round((product.price ?? 0) * 100),
-            },
-          ]}
-          customerId={user?.id ?? ""}
-          beforeCheckout={beforeBuyNow}
-          disabled={disableActions}
-          buttonTitle="立即购买"
-          className="flex-1 py-3 rounded-xl text-sm font-semibold bg-primary-700 hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 text-white disabled:opacity-40 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-        />
       </div>
-    </>
+
+      <ReviewModal isOpen={isReviewModalOpen} onClose={() => setIsReviewModalOpen(false)} />
+    </div>
   );
 };
 

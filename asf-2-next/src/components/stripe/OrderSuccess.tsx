@@ -3,6 +3,8 @@ import { useOrderContext } from "../../context/product/OrderContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useAddToCartContext } from "../../context/product/CartContext";
 import { usePointsMembership } from "../../context/PointsMembershipContext";
+import { HiCheckCircle } from "react-icons/hi";
+import Link from "next/link";
 
 interface Session {
   id: string;
@@ -214,30 +216,16 @@ const OrderSuccess: React.FC = () => {
   }, [sessionId, mode, storageKey, lockKey, user, createOrderWithItemsAndStock, clearCartByUser, pointsAPI]);
 
   if (!session) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-transparent border-t-[var(--color-accent)] rounded-full animate-spin" />
+      </div>
+    );
   }
 
   const formatAddress = (address: Address): string => {
-    const {
-      line1 = "",
-      line2 = "",
-      city = "",
-      state = "",
-      postal_code = "",
-      country = "",
-    } = address;
-
-    // Construct the address array to handle optional values
-    const addressParts = [
-      line1,
-      line2,
-      city,
-      state,
-      postal_code,
-      country,
-    ].filter((part) => part && part.trim() !== ""); // Remove empty or undefined parts
-
-    // Join all non-empty parts with a comma and a space
+    const { line1 = "", line2 = "", city = "", state = "", postal_code = "", country = "" } = address;
+    const addressParts = [line1, line2, city, state, postal_code, country].filter((part) => part && part.trim() !== "");
     return addressParts.join(", ");
   };
 
@@ -248,69 +236,41 @@ const OrderSuccess: React.FC = () => {
   const phone = session.customer_details?.phone || "N/A";
 
   return (
-    <section className="bg-white py-8 antialiased dark:bg-gray-900 md:py-16 h-screen flex flex-col justify-center">
-      <div className="mx-auto max-w-2xl px-4 2xl:px-0">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl mb-2">
-          Thanks for your order!
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-6 md:mb-8">
-          Your order{" "}
-          <span className="font-medium text-gray-900 dark:text-white">
-            #{id}
-          </span>{" "}
-          will be processed within 24 hours during working days. We will notify
-          you by email once your order has been shipped.
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 max-w-lg mx-auto w-full">
+        <HiCheckCircle className="w-20 h-20 text-green-500 mb-6" />
+        <h1 className="font-display text-2xl text-[var(--color-text)] mb-2">订单已确认</h1>
+        <p className="text-[var(--color-muted)] text-sm text-center mb-8">
+          感谢您的购买，订单 <span className="font-medium text-[var(--color-text)]">#{id.slice(0, 8)}</span> 已收到，我们将尽快为您处理发货。
         </p>
 
-        <div className="space-y-4 sm:space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800 mb-6 md:mb-8 max-w-full mx-auto">
-          <dl className="sm:flex items-center justify-between gap-4">
-            <dt className="font-normal mb-1 sm:mb-0 text-gray-500 dark:text-gray-400">
-              Date
-            </dt>
-            <dd className="font-medium text-gray-900 dark:text-white sm:text-end">
-              {date}
-            </dd>
-          </dl>
-          <dl className="sm:flex items-center justify-between gap-4">
-            <dt className="font-normal mb-1 sm:mb-0 text-gray-500 dark:text-gray-400">
-              Name
-            </dt>
-            <dd className="font-medium text-gray-900 dark:text-white sm:text-end">
-              {customerName}
-            </dd>
-          </dl>
-          <dl className="sm:flex items-center justify-between gap-4">
-            <dt className="font-normal mb-1 sm:mb-0 text-gray-500 dark:text-gray-400">
-              Address
-            </dt>
-            <dd className="font-medium text-gray-900 dark:text-white sm:text-end">
-              {address}
-            </dd>
-          </dl>
-          <dl className="sm:flex items-center justify-between gap-4">
-            <dt className="font-normal mb-1 sm:mb-0 text-gray-500 dark:text-gray-400">
-              Phone
-            </dt>
-            <dd className="font-medium text-gray-900 dark:text-white sm:text-end">
-              {phone}
-            </dd>
-          </dl>
+        <div className="w-full card-panel p-6 mb-8">
+          <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4 border-b border-[var(--color-border)] pb-2">订单摘要</h2>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">下单日期</span>
+              <span className="font-medium text-[var(--color-text)]">{date}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">收件人</span>
+              <span className="font-medium text-[var(--color-text)]">{customerName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">联系电话</span>
+              <span className="font-medium text-[var(--color-text)]">{phone}</span>
+            </div>
+            <div className="pt-3 border-t border-[var(--color-border)]">
+              <span className="block text-[var(--color-muted)] mb-1">配送地址</span>
+              <span className="font-medium text-[var(--color-text)] leading-relaxed">{address}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* <a
-            href="#"
-            className="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
-            Track your order
-          </a> */}
-          <a
-            href="/"
-            className="py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-            Return to shopping
-          </a>
-        </div>
+        <Link href="/" className="w-full btn-primary py-4 rounded-xl text-center text-sm font-medium">
+          返回首页继续选购
+        </Link>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -1,27 +1,22 @@
 "use client";
-/* eslint-disable jsx-a11y/anchor-is-valid */
-import { Button, Card, Label, TextInput } from "flowbite-react";
 import type { FC } from "react";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
-import { HiOutlineArrowLeft } from "react-icons/hi";
+import { useSearchParams, useRouter } from "next/navigation";
+import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { useAuthContext } from "@/context/AuthContext";
 import LoadingPage from "@/app/loading";
 
-/**
- * Customer-facing sign-in page.
- */
 const SignInPage: FC = function () {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, user, loading } = useAuthContext();
 
-  const [username, setUsername] = React.useState<string>("stanley121499@gmail.com");
-  const [password, setPassword] = React.useState<string>("12345678");
-  const [error, setError] = React.useState<string>("");
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [username, setUsername] = useState<string>("stanley121499@gmail.com");
+  const [password, setPassword] = useState<string>("12345678");
+  const [error, setError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const returnTo = useMemo<string>(() => {
     const raw = searchParams.get("returnTo");
@@ -42,7 +37,13 @@ const SignInPage: FC = function () {
 
     if (result.error) {
       console.error("Sign in error:", result.error.message);
-      setError(result.error.message);
+      let errorMsg = result.error.message;
+      if (errorMsg.toLowerCase().includes("invalid login credentials")) {
+        errorMsg = "邮箱或密码不正确，请重试";
+      } else {
+        errorMsg = "登录失败，请重试";
+      }
+      setError(errorMsg);
       setIsSubmitting(false);
     } else {
       router.push(returnTo);
@@ -59,92 +60,105 @@ const SignInPage: FC = function () {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6 lg:gap-y-12 bg-gray-50 dark:bg-gray-900">
-
-      <div className="w-full max-w-[1024px] mb-2">
+    <div className="flex flex-col min-h-screen bg-[var(--color-bg)]">
+      {/* Top Hero: 40vh */}
+      <div className="relative h-[25vh] w-full bg-[var(--color-bg)] flex flex-col items-center justify-center">
+        {/* Absolute back button */}
         <button
           type="button"
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors py-2 pr-2"
-          aria-label="返回"
+          onClick={() => router.push("/")}
+          className="absolute top-safe-area left-4 top-4 text-[var(--color-text)] hover:text-black transition-colors z-10 font-medium text-sm"
         >
-          <HiOutlineArrowLeft className="h-4 w-4" />
-          <span>返回</span>
+          ← 返回首页
         </button>
+
+        <h1 className="font-display text-4xl text-[var(--color-text)] tracking-widest mb-2 font-black">ASF</h1>
       </div>
 
-      <Link href="/" className="my-4 flex items-center gap-x-1 lg:my-0">
-        <img alt="Logo" src="/images/logo.svg" className="mr-3 h-10" />
-        <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
-          ASF
-        </span>
-      </Link>
-
-      <Card
-        horizontal
-        imgSrc="/images/authentication/login.jpg"
-        imgAlt=""
-        className="w-full md:max-w-[1024px] md:[&>*]:w-full md:[&>*]:p-16 [&>img]:hidden md:[&>img]:w-96 md:[&>img]:p-0 lg:[&>img]:block">
-
-        <h1 className="mb-3 text-2xl font-bold dark:text-white md:text-3xl">
-          登录平台
-        </h1>
+      {/* Bottom Form Panel: 60vh pulled up to overlap slightly */}
+      <div className="flex-1 w-full bg-white rounded-t-3xl -mt-6 z-20 px-6 py-8 flex flex-col shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+        <h2 className="font-display text-2xl text-[var(--color-text)] mb-6">欢迎回来</h2>
 
         {error.length > 0 && (
-          <div
-            role="alert"
-            className="mb-6 p-3 text-sm text-center text-red-600 bg-red-50 rounded-lg dark:bg-red-900/30 dark:text-red-400"
-          >
+          <div className="mb-4 p-3 text-sm text-[var(--color-danger)] bg-red-50 rounded-lg">
             {error}
           </div>
         )}
 
-        <form onSubmit={(e) => void handleLogin(e)}>
-          <div className="mb-4 flex flex-col gap-y-3">
-            <Label htmlFor="email">邮箱地址</Label>
-            <TextInput
+        <form onSubmit={(e) => void handleLogin(e)} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-sm font-medium text-[var(--color-text)]">邮箱地址</label>
+            <input
               id="email"
               name="email"
-              placeholder="请输入邮箱地址"
+              placeholder="请输入邮箱"
               type="email"
-              // @ts-ignore — standard HTML attributes, not in all Flowbite typings
               inputMode="email"
               autoCapitalize="none"
               autoCorrect="off"
               autoComplete="username email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              className="w-full h-[56px] px-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent outline-none transition-all"
             />
           </div>
 
-          <div className="mb-6 flex flex-col gap-y-3">
-            <Label htmlFor="password">密码</Label>
-            <TextInput
-              id="password"
-              name="password"
-              placeholder="••••••••"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-sm font-medium text-[var(--color-text)]">密码</label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-[56px] pl-4 pr-12 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              >
+                {showPassword ? <HiOutlineEyeOff size={20} /> : <HiOutlineEye size={20} />}
+              </button>
+            </div>
           </div>
 
-          <div className="mb-6">
-            <Button
-              type="submit"
-              className="w-full lg:w-auto"
-              disabled={isSubmitting}
-              isProcessing={isSubmitting}
-            >
-              {isSubmitting ? "登录中…" : "登录账户"}
-            </Button>
+          <div className="flex justify-end mb-2">
+            <span className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] cursor-pointer">
+              忘记密码？
+            </span>
           </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary rounded-xl"
+          >
+            {isSubmitting ? "登录中…" : "登录"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="w-full h-[52px] rounded-xl border border-[var(--color-border)] text-[var(--color-muted)] text-sm font-medium flex items-center justify-center mt-3"
+          >
+            先逛逛，暂不登录
+          </button>
         </form>
-      </Card>
+
+        <div className="mt-6 flex flex-col items-center gap-4 text-sm mt-auto pb-4">
+          <p className="text-[var(--color-muted)] text-sm">
+            还没有账号？{" "}
+            <Link href="/authentication/sign-up" className="text-[var(--color-accent)] font-medium">
+              立即注册 →
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default SignInPage;
-

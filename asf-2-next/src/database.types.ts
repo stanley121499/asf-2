@@ -806,6 +806,7 @@ export type Database = {
           arrangement: number | null
           created_at: string
           id: number
+          media_type: string
           media_url: string
           post_id: string
         }
@@ -813,6 +814,7 @@ export type Database = {
           arrangement?: number | null
           created_at?: string
           id?: number
+          media_type?: string
           media_url: string
           post_id: string
         }
@@ -820,6 +822,7 @@ export type Database = {
           arrangement?: number | null
           created_at?: string
           id?: number
+          media_type?: string
           media_url?: string
           post_id?: string
         }

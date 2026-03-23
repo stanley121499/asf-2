@@ -1,17 +1,17 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaSearch } from "react-icons/fa";
 import { HiX } from "react-icons/hi";
 import { useProductContext } from "@/context/product/ProductContext";
 import { useProductMediaContext } from "@/context/product/ProductMediaContext";
+import Image from "next/image";
 
 interface SearchOverlayProps {
-  /** Whether the overlay is currently visible */
   isOpen: boolean;
-  /** Callback to close the overlay */
   onClose: () => void;
 }
+
+const TRENDING_SEARCHES = ["连衣裙", "夏季新品", "基础款T恤", "配饰", "手袋", "运动鞋"];
 
 const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   const router = useRouter();
@@ -24,7 +24,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       setSearchQuery("");
-      // Add a small delay for the browser to render the input before focusing
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -33,20 +32,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   const productMediaMap = useMemo(() => {
     const map = new Map<string, string>();
     productMedias.forEach((media) => {
-      // Keep first encountered or lowest arrangement
       if (!map.has(media.product_id) && media.media_url) {
         map.set(media.product_id, media.media_url);
       }
@@ -73,73 +61,79 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleTrendingClick = (term: string) => {
+    setSearchQuery(term);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-gray-900">
-      <div className="px-4 py-3 border-b flex items-center gap-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-        <FaSearch className="text-gray-400 w-5 h-5 flex-shrink-0" />
+    <div className="fixed inset-0 z-[100] flex flex-col bg-[var(--color-bg)] pt-safe-area">
+      <div className="px-4 py-3 flex items-center border-b border-[var(--color-border)]">
         <input
           ref={inputRef}
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="搜索商品..."
-          className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 dark:text-white placeholder-gray-400 p-2"
+          className="flex-1 bg-transparent border-none focus:ring-0 text-[var(--color-text)] font-display text-lg placeholder:text-[var(--color-muted)] p-0"
         />
         <button
-          type="button"
           onClick={onClose}
-          aria-label="关闭搜索"
-          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full dark:hover:bg-gray-800 transition-colors"
+          className="ml-4 p-2 text-[var(--color-text)]"
         >
-          <HiX className="w-6 h-6" />
+          <HiX size={24} />
         </button>
       </div>
 
-      <div
-        className="flex-1 overflow-y-auto"
-        onClick={onClose} // Clicking the backdrop area closes the overlay
-      >
-        <div 
-          className="max-w-3xl mx-auto flex flex-col"
-          onClick={(e) => e.stopPropagation()} // Prevent clicks inside results from closing
-        >
-          {searchQuery.trim().length === 0 ? (
-            <div className="py-20 text-center text-gray-400 dark:text-gray-500">
-              输入商品名称开始搜索
-            </div>
-          ) : results.length === 0 ? (
-            <div className="py-20 text-center text-gray-500 dark:text-gray-400">
-              未找到与 "{searchQuery}" 相关的商品
-            </div>
-          ) : (
-            <div className="p-4 flex flex-col gap-2">
-              {results.map((product) => (
+      <div className="flex-1 overflow-y-auto w-full">
+        {searchQuery.trim().length === 0 ? (
+          <div className="p-6">
+            <h3 className="text-sm font-medium text-[var(--color-muted)] mb-4 tracking-wider">热门搜索</h3>
+            <div className="flex flex-wrap gap-2">
+              {TRENDING_SEARCHES.map((term) => (
                 <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => handleResultClick(product.id)}
-                  className="flex items-center gap-4 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
+                  key={term}
+                  onClick={() => handleTrendingClick(term)}
+                  className="bg-[var(--color-panel)] border border-[var(--color-border)] px-4 py-2 rounded-full text-sm text-[var(--color-text)]"
                 >
-                  <img
-                    src={productMediaMap.get(product.id) || "/default-image.jpg"}
-                    alt={product.name || "Product"}
-                    className="w-10 h-10 object-cover rounded bg-gray-200 dark:bg-gray-700 flex-shrink-0"
-                  />
-                  <div className="flex-1 overflow-hidden">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {product.name}
-                    </h4>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-300 flex-shrink-0">
-                    RM {(product.price ?? 0).toFixed(2)}
-                  </div>
+                  {term}
                 </button>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="px-6 py-12 text-center text-[var(--color-muted)]">
+            未找到与 "{searchQuery}" 相关的商品
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            {results.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => handleResultClick(product.id)}
+                className="flex items-center gap-4 p-4 border-b border-[var(--color-border)] last:border-0"
+              >
+                <div className="w-16 h-[85px] shrink-0 bg-gray-100 rounded overflow-hidden relative">
+                  <Image
+                    src={productMediaMap.get(product.id) || "/default-image.jpg"}
+                    alt={product.name || "Product"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-col flex-1 text-left justify-center">
+                  <span className="text-sm font-medium text-[var(--color-text)] line-clamp-1 mb-1">
+                    {product.name}
+                  </span>
+                  <span className="text-sm text-[var(--color-muted)]">
+                    RM {(product.price ?? 0).toFixed(2)}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

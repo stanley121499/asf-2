@@ -1,59 +1,11 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ADMIN_ROUTES = [
-  "/dashboard",
-  "/products",
-  "/posts",
-  "/stocks",
-  "/orders",
-  "/payments",
-  "/analytics",
-  "/users",
-  "/support",
-  "/home-page-builder",
-  "/internal-chat",
-];
-
-function isAdminRoute(pathname: string): boolean {
-  return ADMIN_ROUTES.some((prefix) => pathname.startsWith(prefix));
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (!isAdminRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Admin route: check Supabase session from cookies
-  const response = NextResponse.next();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    const signInUrl = new URL("/authentication/sign-in", request.url);
-    signInUrl.searchParams.set("returnTo", pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  return response;
+// Admin route auth is handled client-side in NavbarSidebarLayout (AuthGuard),
+// because the app uses localStorage for Supabase sessions — the server-side
+// cookie-based client never sees the session, causing false redirects.
+// Middleware just passes all requests through.
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
 }
 
 export const config = {

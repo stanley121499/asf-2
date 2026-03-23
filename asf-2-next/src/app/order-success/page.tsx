@@ -216,7 +216,15 @@ const OrderSuccessInner: React.FC = () => {
   }, [sessionId, mode, storageKey, lockKey, user, createOrderWithItemsAndStock, clearCartByUser, pointsAPI]);
 
   if (!session) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex gap-1.5">
+          {[0, 150, 300].map((delay) => (
+            <span key={delay} className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const formatAddress = (address: Address): string => {
@@ -318,7 +326,15 @@ const OrderSuccessInner: React.FC = () => {
 
 export default function OrderSuccess() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="flex gap-1.5">
+          {[0, 150, 300].map((delay) => (
+            <span key={delay} className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+          ))}
+        </div>
+      </div>
+    }>
       <OrderContextBundle>
         <OrderSuccessInner />
       </OrderContextBundle>
