@@ -458,11 +458,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          body: string
+          read_at: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          body: string
+          read_at?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          body?: string
+          read_at?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           amount: number | null
           color_id: string | null
           created_at: string
+          deleted_at: string | null
           id: string
           order_id: string | null
           product_id: string | null
@@ -472,6 +506,7 @@ export type Database = {
           amount?: number | null
           color_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           order_id?: string | null
           product_id?: string | null
@@ -481,6 +516,7 @@ export type Database = {
           amount?: number | null
           color_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           order_id?: string | null
           product_id?: string | null
@@ -554,39 +590,66 @@ export type Database = {
       }
       orders: {
         Row: {
+          courier_code: string | null
           created_at: string
+          deleted_at: string | null
+          discount_amount: number | null
           discount_type: string | null
           discounted_amount: number | null
+          delyva_order_id: string | null
           id: string
           points_earned: number | null
           points_spent: number | null
+          promo_code: string | null
           shipping_address: string | null
+          shipping_address_structured: Json | null
+          shipping_label_url: string | null
+          shipping_rate: number | null
           status: string | null
           total_amount: number | null
+          tracking_number: string | null
           user_id: string | null
         }
         Insert: {
+          courier_code?: string | null
           created_at?: string
+          deleted_at?: string | null
+          discount_amount?: number | null
           discount_type?: string | null
           discounted_amount?: number | null
+          delyva_order_id?: string | null
           id?: string
           points_earned?: number | null
           points_spent?: number | null
+          promo_code?: string | null
           shipping_address?: string | null
+          shipping_address_structured?: Json | null
+          shipping_label_url?: string | null
+          shipping_rate?: number | null
           status?: string | null
           total_amount?: number | null
+          tracking_number?: string | null
           user_id?: string | null
         }
         Update: {
+          courier_code?: string | null
           created_at?: string
+          deleted_at?: string | null
+          discount_amount?: number | null
           discount_type?: string | null
           discounted_amount?: number | null
+          delyva_order_id?: string | null
           id?: string
           points_earned?: number | null
           points_spent?: number | null
+          promo_code?: string | null
           shipping_address?: string | null
+          shipping_address_structured?: Json | null
+          shipping_label_url?: string | null
+          shipping_rate?: number | null
           status?: string | null
           total_amount?: number | null
+          tracking_number?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -806,6 +869,7 @@ export type Database = {
           arrangement: number | null
           created_at: string
           id: number
+          media_type: string
           media_url: string
           post_id: string
         }
@@ -813,6 +877,7 @@ export type Database = {
           arrangement?: number | null
           created_at?: string
           id?: number
+          media_type?: string
           media_url: string
           post_id: string
         }
@@ -820,6 +885,7 @@ export type Database = {
           arrangement?: number | null
           created_at?: string
           id?: number
+          media_type?: string
           media_url?: string
           post_id?: string
         }
@@ -1585,41 +1651,29 @@ export type Database = {
         }
         Relationships: []
       }
-      promotion_product: {
+      promotion_products: {
         Row: {
-          auto_apply: boolean
-          created_at: string
-          expiry: string | null
-          id: string
           product_id: string
           promotion_id: string
         }
         Insert: {
-          auto_apply?: boolean
-          created_at?: string
-          expiry?: string | null
-          id?: string
           product_id: string
           promotion_id: string
         }
         Update: {
-          auto_apply?: boolean
-          created_at?: string
-          expiry?: string | null
-          id?: string
           product_id?: string
           promotion_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "promotion_product_product_id_fkey"
+            foreignKeyName: "promotion_products_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "promotion_product_promotion_id_fkey"
+            foreignKeyName: "promotion_products_promotion_id_fkey"
             columns: ["promotion_id"]
             isOneToOne: false
             referencedRelation: "promotions"
@@ -1629,40 +1683,49 @@ export type Database = {
       }
       promotions: {
         Row: {
-          amount: number
-          auto_apply: boolean
-          code: string
+          active: boolean
+          code: string | null
           created_at: string
+          deleted_at: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
           end_date: string | null
           id: string
-          minimum_purchase_amount: number
-          start_date: string
-          status: string
-          type: string
+          max_uses: number | null
+          name: string
+          start_date: string | null
+          uses_count: number
         }
         Insert: {
-          amount: number
-          auto_apply?: boolean
-          code: string
+          active?: boolean
+          code?: string | null
           created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
           end_date?: string | null
           id?: string
-          minimum_purchase_amount?: number
-          start_date: string
-          status?: string
-          type: string
+          max_uses?: number | null
+          name: string
+          start_date?: string | null
+          uses_count?: number
         }
         Update: {
-          amount?: number
-          auto_apply?: boolean
-          code?: string
+          active?: boolean
+          code?: string | null
           created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
           end_date?: string | null
           id?: string
-          minimum_purchase_amount?: number
-          start_date?: string
-          status?: string
-          type?: string
+          max_uses?: number | null
+          name?: string
+          start_date?: string | null
+          uses_count?: number
         }
         Relationships: []
       }
@@ -1727,6 +1790,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       ticket_status_change_logs: {
         Row: {
@@ -1845,6 +1929,7 @@ export type Database = {
         Row: {
           birthdate: string | null
           city: string | null
+          created_at: string
           first_name: string | null
           id: string
           last_name: string | null
@@ -1857,6 +1942,7 @@ export type Database = {
         Insert: {
           birthdate?: string | null
           city?: string | null
+          created_at?: string
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -1869,6 +1955,7 @@ export type Database = {
         Update: {
           birthdate?: string | null
           city?: string | null
+          created_at?: string
           first_name?: string | null
           id?: string
           last_name?: string | null
@@ -1932,6 +2019,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_stamps: {
+        Row: {
+          id: string
+          user_id: string
+          stamps: boolean[]
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stamps?: boolean[]
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stamps?: boolean[]
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

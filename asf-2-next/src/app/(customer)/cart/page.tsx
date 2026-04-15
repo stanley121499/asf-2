@@ -12,6 +12,12 @@ import type { Database } from "@/database.types";
 import { readDeletedAt } from "@/utils/softDeleteRuntime";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { formatCurrency, pointsToRM, rmToPoints, calculatePointsEarned } from "@/utils/pointsConfig";
+import {
+  writeCheckoutPromo,
+  clearCheckoutPromo,
+  readCheckoutPromo,
+} from "@/utils/checkoutPromoStorage";
+import { usePromotionContext } from "@/context/PromotionContext";
 import Image from "next/image";
 import { LandingLayout } from "@/layouts";
 
@@ -36,12 +42,22 @@ const CartPage: React.FC = () => {
   const { add_to_carts, updateAddToCart, deleteAddToCart } = useAddToCartContext();
   const { createAddToCartLog } = useAddToCartLogContext();
   const pointsAPI = usePointsMembership();
+  const { validatePromoCode } = usePromotionContext();
 
   const [cartItems, setCartItems] = useState<CartItemViewModel[]>([]);
   const hasDeletedProducts: boolean = useMemo(() => cartItems.some((item) => item.isDeleted), [cartItems]);
   const [pointsToUse, setPointsToUse] = useState<number>(0);
   const [userPoints, setUserPoints] = useState<number>(0);
   const [pointsInput, setPointsInput] = useState("");
+
+  const [couponInput, setCouponInput] = useState("");
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    promoCode: string;
+    promotionId: string;
+    discountAmountMyr: number;
+  } | null>(null);
 
   useEffect(() => {
     const fetchUserPoints = async () => {
@@ -82,8 +98,10 @@ const CartPage: React.FC = () => {
         sizeIds.length > 0 ? supabase.from("product_sizes").select("id,size").in("id", sizeIds) : Promise.resolve({ data: [] }),
       ]);
 
-      const products = (productsRes.data ?? []).reduce((acc: Record<string, any>, p: any) => {
-        if (p?.id) acc[p.id] = p;
+      const products = (productsRes.data ?? []).reduce<
+        Record<string, Database["public"]["Tables"]["products"]["Row"]>
+      >((acc, p) => {
+        acc[p.id] = p;
         return acc;
       }, {});
 
@@ -97,9 +115,13 @@ const CartPage: React.FC = () => {
         });
 
       const colorLabelById: Record<string, string> = {};
-      (colorsRes.data ?? []).forEach((c: any) => { colorLabelById[c.id] = c.color; });
+      (colorsRes.data ?? []).forEach((c) => {
+        colorLabelById[c.id] = typeof c.color === "string" ? c.color : "";
+      });
       const sizeLabelById: Record<string, string> = {};
-      (sizesRes.data ?? []).forEach((s: any) => { sizeLabelById[s.id] = s.size; });
+      (sizesRes.data ?? []).forEach((s) => {
+        sizeLabelById[s.id] = typeof s.size === "string" ? s.size : "";
+      });
 
       const hydrated: CartItemViewModel[] = userCartRows.map((row) => {
         const product = products[row.product_id] || {};
@@ -134,16 +156,82 @@ const CartPage: React.FC = () => {
     return () => { isCancelled = true; };
   }, [user, userCartRows]);
 
+  /**
+   * Restores an applied promo from sessionStorage when returning from checkout.
+   */
+  useEffect(() => {
+    const stored = readCheckoutPromo();
+    if (stored !== null) {
+      setAppliedPromo(stored);
+    }
+  }, []);
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const promoDiscountMyr = appliedPromo !== null ? appliedPromo.discountAmountMyr : 0;
+  const merchandiseAfterPromo = Math.max(0, subtotal - promoDiscountMyr);
   const availablePoints = userPoints;
   const pointsDiscount = pointsToRM(pointsToUse);
-  const total = Math.max(0, subtotal - pointsDiscount);
+  const total = Math.max(0, merchandiseAfterPromo - pointsDiscount);
   const pointsEarned = pointsToUse > 0 ? 0 : calculatePointsEarned(total);
 
   const handleApplyPoints = () => {
-    const pts = parseInt(pointsInput) || 0;
-    const maxUsablePoints = Math.min(availablePoints, rmToPoints(subtotal));
+    const pts = parseInt(pointsInput, 10) || 0;
+    const maxUsablePoints = Math.min(availablePoints, rmToPoints(merchandiseAfterPromo));
     setPointsToUse(Math.max(0, Math.min(pts, maxUsablePoints)));
+  };
+
+  /**
+   * Validates the coupon against the current cart via the promotions API.
+   */
+  const handleApplyCoupon = async (): Promise<void> => {
+    setPromoError(null);
+    if (user === null) {
+      return;
+    }
+    if (userCartRows.length === 0) {
+      setPromoError("购物车为空。");
+      return;
+    }
+    setPromoApplying(true);
+    try {
+      const cartLines = userCartRows.map((row) => ({
+        product_id: row.product_id,
+        amount: row.amount,
+      }));
+      const result = await validatePromoCode(couponInput, cartLines);
+      if (result.valid === false) {
+        setAppliedPromo(null);
+        setPromoError(result.reason);
+        return;
+      }
+      setAppliedPromo({
+        promoCode: couponInput.trim(),
+        promotionId: result.promotionId,
+        discountAmountMyr: result.discountAmountMyr,
+      });
+      setCouponInput("");
+    } finally {
+      setPromoApplying(false);
+    }
+  };
+
+  /**
+   * Persists promo metadata for checkout and navigates to the checkout page.
+   */
+  const handleGoToCheckout = (): void => {
+    if (cartItems.length === 0) {
+      return;
+    }
+    if (appliedPromo !== null) {
+      writeCheckoutPromo({
+        promoCode: appliedPromo.promoCode,
+        promotionId: appliedPromo.promotionId,
+        discountAmountMyr: appliedPromo.discountAmountMyr,
+      });
+    } else {
+      clearCheckoutPromo();
+    }
+    router.push("/checkout");
   };
 
   const handleQuantityChange = async (id: string, newQuantity: number): Promise<void> => {
@@ -298,6 +386,49 @@ const CartPage: React.FC = () => {
               ))}
             </div>
 
+            <div className="mt-6 space-y-2">
+              <p className="text-xs text-[var(--color-muted)]">优惠码</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value);
+                    setPromoError(null);
+                  }}
+                  placeholder="输入代码"
+                  className="flex-1 bg-white border border-[var(--color-border)] text-sm px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-black"
+                  disabled={promoApplying}
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleApplyCoupon()}
+                  disabled={promoApplying || couponInput.trim().length === 0}
+                  className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                >
+                  {promoApplying ? "…" : "应用"}
+                </button>
+              </div>
+              {promoError !== null ? (
+                <p className="text-xs text-red-600">{promoError}</p>
+              ) : null}
+              {appliedPromo !== null ? (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>已应用: {appliedPromo.promoCode}</span>
+                  <button
+                    type="button"
+                    className="text-xs underline"
+                    onClick={() => {
+                      setAppliedPromo(null);
+                      clearCheckoutPromo();
+                    }}
+                  >
+                    移除
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
             <div className="mt-8 border-t border-[var(--color-border)] pt-6">
               <h3 className="font-display text-lg mb-4 text-[var(--color-text)]">订单摘要</h3>
               
@@ -306,6 +437,12 @@ const CartPage: React.FC = () => {
                   <span className="text-[var(--color-muted)]">小计</span>
                   <span className="font-medium">RM {subtotal.toFixed(2)}</span>
                 </div>
+                {appliedPromo !== null && promoDiscountMyr > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>优惠</span>
+                    <span>-RM {promoDiscountMyr.toFixed(2)}</span>
+                  </div>
+                )}
                 {pointsToUse > 0 && (
                   <div className="flex justify-between text-[var(--color-accent)]">
                     <span>积分抵扣 (-{pointsToUse})</span>
@@ -345,12 +482,20 @@ const CartPage: React.FC = () => {
               )}
             </div>
             
-            <div className="mt-8">
-              <button 
-                onClick={handleTestPayNow}
+            <div className="mt-8 space-y-3">
+              <button
+                type="button"
+                onClick={handleGoToCheckout}
                 className="w-full btn-primary h-[56px] rounded-full text-lg"
               >
                 前往结账
+              </button>
+              <button
+                type="button"
+                onClick={handleTestPayNow}
+                className="w-full text-xs text-[var(--color-muted)] underline py-2"
+              >
+                测试支付（模拟成功）
               </button>
             </div>
           </div>

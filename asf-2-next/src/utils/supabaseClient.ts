@@ -57,4 +57,32 @@ const supabaseAdmin = createClient<Database>(supabaseUrl, serviceRoleKey, {
   },
 });
 
-export { supabase, supabaseAdmin };
+/**
+ * Public (anon) key client for browser operations that must respect RLS as the
+ * signed-in user. Uses the same `storageKey` as `supabase` so the session from
+ * AuthContext is shared. Omit when `NEXT_PUBLIC_SUPABASE_ANON_KEY` is unset.
+ */
+const publicSupabaseUrl: string =
+  typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" &&
+  process.env.NEXT_PUBLIC_SUPABASE_URL.trim().length > 0
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL.trim()
+    : supabaseUrl;
+
+const anonPublicKey: string =
+  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string"
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim()
+    : "";
+
+const supabaseAnon: ReturnType<typeof createClient<Database>> | null =
+  anonPublicKey.length > 0
+    ? createClient<Database>(publicSupabaseUrl, anonPublicKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: false,
+          detectSessionInUrl: true,
+          storageKey: "sb-app-session",
+        },
+      })
+    : null;
+
+export { supabase, supabaseAdmin, supabaseAnon };

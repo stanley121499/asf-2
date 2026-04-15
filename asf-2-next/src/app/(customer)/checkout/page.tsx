@@ -1,29 +1,51 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Elements } from "@stripe/react-stripe-js";
 import {
+  Alert,
   Button,
   Card,
-  TextInput,
-  Label,
   Checkbox,
-  Select,
-  Accordion,
+  Label,
   Spinner,
-  Alert,
+  TextInput,
 } from "flowbite-react";
-import NavbarHome from "@/components/navbar-home";
-import Link from "next/link";
 import {
-  HiOutlineShoppingCart,
-  HiOutlineLocationMarker,
-  HiOutlineDocumentText,
-  HiOutlineCurrencyDollar,
   HiOutlineChevronLeft,
-  HiOutlineShieldCheck,
+  HiOutlineDocumentText,
+  HiOutlineLocationMarker,
+  HiOutlineShoppingCart,
 } from "react-icons/hi";
 
-// TypeScript interfaces
-interface Address {
+import NavbarHome from "@/components/navbar-home";
+import { useAuthContext } from "@/context/AuthContext";
+import { useAddToCartContext } from "@/context/product/CartContext";
+import type { Database } from "@/database.types";
+import { formatCurrency } from "@/utils/pointsConfig";
+import { readDeletedAt } from "@/utils/softDeleteRuntime";
+import { supabase } from "@/utils/supabaseClient";
+
+import {
+  readCheckoutPromo,
+  type CheckoutPromoPayload,
+} from "@/utils/checkoutPromoStorage";
+
+import { CheckoutStripePaymentInner } from "./_components/CheckoutStripePayment";
+import { stripePromise } from "./_components/stripeClient";
+
+/** Fixed shipping in MYR until Delivery UI (Step 9). */
+const FLAT_SHIPPING_MYR = 10;
+
+enum CheckoutStep {
+  Shipping = "shipping",
+  Review = "review",
+}
+
+interface AddressFormState {
   firstName: string;
   lastName: string;
   address1: string;
@@ -35,702 +57,644 @@ interface Address {
   phone: string;
 }
 
-interface CartItem {
-  id: string;
+interface CartLineViewModel {
+  cartRowId: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
   image: string;
   variant: string;
+  isDeleted: boolean;
 }
 
-enum CheckoutStep {
-  Shipping = "shipping",
-  Review = "review",
-  Confirmation = "confirmation",
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/**
+ * Reads the first matching string from user metadata for address prefill.
+ */
+function readMetaString(meta: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const v = meta[key];
+    if (isNonEmptyString(v)) {
+      return v.trim();
+    }
+  }
+  return "";
+}
+
+/**
+ * Builds display and structured payloads for the pending-order API.
+ */
+function buildShippingPayload(address: AddressFormState): {
+  shipping_address: string;
+  shipping_address_structured: {
+    address1: string;
+    address2: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+    recipientName: string;
+    recipientPhone: string;
+  };
+} {
+  const recipientName = `${address.firstName} ${address.lastName}`.trim();
+  const parts = [
+    recipientName,
+    address.address1,
+    address.address2,
+    address.city,
+    address.state,
+    address.postalCode,
+    address.country,
+    address.phone,
+  ].filter((p) => p.trim().length > 0);
+  const shipping_address = parts.join(", ");
+  return {
+    shipping_address,
+    shipping_address_structured: {
+      address1: address.address1.trim(),
+      address2: address.address2.trim(),
+      city: address.city.trim(),
+      state: address.state.trim(),
+      postcode: address.postalCode.trim(),
+      country: address.country.trim(),
+      recipientName: recipientName.length > 0 ? recipientName : "Customer",
+      recipientPhone: address.phone.trim(),
+    },
+  };
 }
 
 const CheckoutPage: React.FC = () => {
-  // Mock data for cart items
-  const cartItems: CartItem[] = [
-    {
-      id: "p1",
-      name: "Wireless Noise-Cancelling Headphones",
-      price: 99.99,
-      quantity: 1,
-      image: "/images/products/product-1.jpg",
-      variant: "Black",
-    },
-    {
-      id: "p2",
-      name: "Smart Watch Series 5",
-      price: 199.99,
-      quantity: 2,
-      image: "/images/products/product-2.jpg",
-      variant: "Silver",
-    },
-    {
-      id: "p3",
-      name: "Premium Leather Wallet",
-      price: 49.99,
-      quantity: 1,
-      image: "/images/products/product-3.jpg",
-      variant: "Brown",
-    },
-  ];
+  const router = useRouter();
+  const { user, user_detail, loading: authLoading } = useAuthContext();
+  const { add_to_carts, loading: cartLoading } = useAddToCartContext();
 
-  // Checkout state
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>(
-    CheckoutStep.Shipping
-  );
-
-  // Shipping details
-  const [shippingAddress, setShippingAddress] = useState<Address>({
-    firstName: "John",
-    lastName: "Doe",
-    address1: "123 Main Street",
-    address2: "Apt 4B",
-    city: "New York",
-    state: "NY",
-    postalCode: "10001",
-    country: "United States",
-    phone: "555-123-4567",
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.Shipping);
+  const [address, setAddress] = useState<AddressFormState>({
+    firstName: "",
+    lastName: "",
+    address1: "",
+    address2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "MY",
+    phone: "",
   });
+  const [addressInitialized, setAddressInitialized] = useState(false);
 
-  const [useAsBilling, setUseAsBilling] = useState<boolean>(true);
-  const [billingAddress, setBillingAddress] =
-    useState<Address>(shippingAddress);
-  // Payment step and methods removed
+  const [cartLines, setCartLines] = useState<CartLineViewModel[]>([]);
+  const [cartHydrateError, setCartHydrateError] = useState<string | null>(null);
 
-  // Order details
-  const [orderNotes, setOrderNotes] = useState<string>("");
-  const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [orderNumber, setOrderNumber] = useState<string>("");
-  const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [prepareError, setPrepareError] = useState<string | null>(null);
+  const [preparingCheckout, setPreparingCheckout] = useState(false);
 
-  // Calculate totals
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const total = subtotal;
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
+  /** Promo carried from cart via sessionStorage; totals are re-validated on the server. */
+  const [checkoutPromo, setCheckoutPromo] = useState<CheckoutPromoPayload | null>(null);
 
-  // Handle form submission for each step
-  const handleShippingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!useAsBilling) {
-      // In a real app, validate billing address here
+  useEffect(() => {
+    setCheckoutPromo(readCheckoutPromo());
+  }, []);
+
+  useEffect(() => {
+    if (authLoading || user === null || addressInitialized) {
+      return;
     }
-    setCurrentStep(CheckoutStep.Review);
-    window.scrollTo(0, 0);
-  };
-  
+    const meta: Record<string, unknown> =
+      user.user_metadata && typeof user.user_metadata === "object" && !Array.isArray(user.user_metadata)
+        ? (user.user_metadata as Record<string, unknown>)
+        : {};
 
-  const handlePlaceOrder = async () => {
-    if (!agreeToTerms) {
-      setOrderError(
-        "请同意服务条款和条件后再提交订单。"
+    setAddress((prev) => ({
+      ...prev,
+      firstName: isNonEmptyString(user_detail?.first_name) ? String(user_detail.first_name) : prev.firstName,
+      lastName: isNonEmptyString(user_detail?.last_name) ? String(user_detail.last_name) : prev.lastName,
+      city: isNonEmptyString(user_detail?.city) ? String(user_detail.city) : prev.city,
+      state: isNonEmptyString(user_detail?.state) ? String(user_detail.state) : prev.state,
+      address1: readMetaString(meta, ["address_line1", "line1", "address1"]) || prev.address1,
+      address2: readMetaString(meta, ["address_line2", "line2", "address2"]) || prev.address2,
+      postalCode: readMetaString(meta, ["postcode", "postal_code", "zip"]) || prev.postalCode,
+      country: readMetaString(meta, ["country"]) || prev.country,
+      phone: readMetaString(meta, ["phone"]) || prev.phone,
+    }));
+    setAddressInitialized(true);
+  }, [authLoading, user, user_detail, addressInitialized]);
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+    if (user === null) {
+      router.replace("/authentication/sign-in?next=/checkout");
+    }
+  }, [authLoading, user, router]);
+
+  const userCartRows = useMemo((): Database["public"]["Tables"]["add_to_carts"]["Row"][] => {
+    if (user === null) {
+      return [];
+    }
+    return add_to_carts.filter((row) => row.user_id === user.id);
+  }, [add_to_carts, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateCart(): Promise<void> {
+      if (user === null || userCartRows.length === 0) {
+        setCartLines([]);
+        setCartHydrateError(null);
+        return;
+      }
+
+      const productIds = Array.from(new Set(userCartRows.map((r) => r.product_id)));
+      const colorIds = Array.from(
+        new Set(userCartRows.map((r) => r.color_id).filter((v): v is string => typeof v === "string")),
       );
+      const sizeIds = Array.from(
+        new Set(userCartRows.map((r) => r.size_id).filter((v): v is string => typeof v === "string")),
+      );
+
+      const [productsRes, mediasRes, colorsRes, sizesRes] = await Promise.all([
+        supabase.from("products").select("*").in("id", productIds),
+        supabase.from("product_medias").select("product_id,media_url,arrangement").in("product_id", productIds),
+        colorIds.length > 0
+          ? supabase.from("product_colors").select("id,color").in("id", colorIds)
+          : Promise.resolve({ data: [] as { id: string; color: string | null }[], error: null }),
+        sizeIds.length > 0
+          ? supabase.from("product_sizes").select("id,size").in("id", sizeIds)
+          : Promise.resolve({ data: [] as { id: string; size: string | null }[], error: null }),
+      ]);
+
+      if (productsRes.error !== null) {
+        if (!cancelled) {
+          setCartHydrateError(productsRes.error.message);
+        }
+        return;
+      }
+
+      const products = (productsRes.data ?? []).reduce(
+        (acc: Record<string, Database["public"]["Tables"]["products"]["Row"]>, p) => {
+          acc[p.id] = p;
+          return acc;
+        },
+        {},
+      );
+
+      const firstMediaByProduct: Record<string, string> = {};
+      (mediasRes.data ?? [])
+        .sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0))
+        .forEach((m) => {
+          if (firstMediaByProduct[m.product_id] === undefined && typeof m.media_url === "string") {
+            firstMediaByProduct[m.product_id] = m.media_url;
+          }
+        });
+
+      const colorLabelById: Record<string, string> = {};
+      (colorsRes.data ?? []).forEach((c) => {
+        colorLabelById[c.id] = typeof c.color === "string" ? c.color : "";
+      });
+      const sizeLabelById: Record<string, string> = {};
+      (sizesRes.data ?? []).forEach((s) => {
+        sizeLabelById[s.id] = typeof s.size === "string" ? s.size : "";
+      });
+
+      const hydrated: CartLineViewModel[] = userCartRows.map((row) => {
+        const product = products[row.product_id];
+        const imageUrl =
+          firstMediaByProduct[row.product_id] !== undefined
+            ? firstMediaByProduct[row.product_id]
+            : "/default-image.jpg";
+        const colorText = row.color_id ? colorLabelById[row.color_id] : "";
+        const sizeText = row.size_id ? sizeLabelById[row.size_id] : "";
+        const variant = [colorText, sizeText].filter((x) => x.length > 0).join(" / ");
+
+        const deletedAtIso = product !== undefined ? readDeletedAt(product) : null;
+        const isDeleted = typeof deletedAtIso === "string" && deletedAtIso.length > 0;
+
+        return {
+          cartRowId: row.id,
+          productId: row.product_id,
+          name: product?.name ?? "Product",
+          price: typeof product?.price === "number" ? product.price : 0,
+          quantity: row.amount ?? 1,
+          image: imageUrl,
+          variant: variant.length > 0 ? variant : "默认规格",
+          isDeleted,
+        };
+      });
+
+      if (!cancelled) {
+        setCartHydrateError(null);
+        setCartLines(hydrated);
+      }
+    }
+
+    void hydrateCart();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, userCartRows]);
+
+  const subtotal = useMemo(() => {
+    return cartLines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  }, [cartLines]);
+
+  const hasBlockingDeleted = useMemo(() => cartLines.some((l) => l.isDeleted), [cartLines]);
+
+  const promoDiscountMyr =
+    checkoutPromo !== null && Number.isFinite(checkoutPromo.discountAmountMyr)
+      ? checkoutPromo.discountAmountMyr
+      : 0;
+
+  const grandTotal = Math.max(
+    0,
+    subtotal + FLAT_SHIPPING_MYR - promoDiscountMyr
+  );
+
+  const handleAddressField = (field: keyof AddressFormState, value: string): void => {
+    setAddress((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleShippingContinue = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    setPrepareError(null);
+    if (user === null) {
+      return;
+    }
+    if (!isNonEmptyString(address.firstName) || !isNonEmptyString(address.lastName)) {
+      setPrepareError("请填写收件人姓名。");
+      return;
+    }
+    if (!isNonEmptyString(address.address1) || !isNonEmptyString(address.city)) {
+      setPrepareError("请填写完整地址。");
+      return;
+    }
+    if (!isNonEmptyString(address.phone)) {
+      setPrepareError("请填写电话号码。");
+      return;
+    }
+    if (hasBlockingDeleted) {
+      setPrepareError("购物车包含已下架商品，请返回购物车移除后再结账。");
       return;
     }
 
-    setIsSubmitting(true);
-    setOrderError(null);
-
+    setPreparingCheckout(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { shipping_address, shipping_address_structured } = buildShippingPayload(address);
 
-      // Generate a random order number
-      // Generate a pseudo-random order number from timestamp
-      const randomOrderNum = Math.floor(100000 + (Date.now() % 900000));
-      setOrderNumber(`ORD-${randomOrderNum}`);
+      const pendingBody: Record<string, unknown> = {
+        userId: user.id,
+        shipping_address,
+        shipping_address_structured,
+      };
+      if (checkoutPromo !== null) {
+        pendingBody["promoCode"] = checkoutPromo.promoCode;
+        pendingBody["promotionId"] = checkoutPromo.promotionId;
+      }
 
-      // Move to confirmation step
-      setCurrentStep(CheckoutStep.Confirmation);
+      const pendingRes = await fetch("/api/checkout/create-pending-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pendingBody),
+      });
+      const pendingJson = (await pendingRes.json()) as { orderId?: string; error?: string };
+      if (!pendingRes.ok || typeof pendingJson.orderId !== "string") {
+        setPrepareError(typeof pendingJson.error === "string" ? pendingJson.error : "无法创建待支付订单");
+        return;
+      }
+
+      const piRes = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          orderId: pendingJson.orderId,
+        }),
+      });
+      const piJson = (await piRes.json()) as { clientSecret?: string; error?: string };
+      if (!piRes.ok || typeof piJson.clientSecret !== "string") {
+        setPrepareError(typeof piJson.error === "string" ? piJson.error : "无法启动支付");
+        return;
+      }
+
+      setOrderId(pendingJson.orderId);
+      setClientSecret(piJson.clientSecret);
+      setCurrentStep(CheckoutStep.Review);
       window.scrollTo(0, 0);
-    } catch (error) {
-      setOrderError(
-        "处理订单时出错，请重试。"
-      );
     } finally {
-      setIsSubmitting(false);
+      setPreparingCheckout(false);
     }
   };
 
-  // Handle navigation between steps
-  const goToPreviousStep = () => {
-    if (currentStep === CheckoutStep.Review) {
-      setCurrentStep(CheckoutStep.Shipping);
-    }
+  const goToPreviousStep = (): void => {
+    setCurrentStep(CheckoutStep.Shipping);
+    setOrderId(null);
+    setClientSecret(null);
+    setPrepareError(null);
     window.scrollTo(0, 0);
   };
 
-  // Handle address field changes
-  const handleAddressChange = (
-    field: keyof Address,
-    value: string,
-    addressType: "shipping" | "billing"
-  ) => {
-    if (addressType === "shipping") {
-      setShippingAddress({
-        ...shippingAddress,
-        [field]: value,
-      });
-
-      // Update billing address if using same as shipping
-      if (useAsBilling) {
-        setBillingAddress({
-          ...shippingAddress,
-          [field]: value,
-        });
-      }
-    } else {
-      setBillingAddress({
-        ...billingAddress,
-        [field]: value,
-      });
-    }
-  };
-
-  // Toggle using same address for billing
-  const handleUseAsBillingChange = (checked: boolean) => {
-    setUseAsBilling(checked);
-    if (checked) {
-      setBillingAddress(shippingAddress);
-    }
-  };
-
-  // Render shipping address form
-  const renderAddressForm = (addressType: "shipping" | "billing") => {
-    const address =
-      addressType === "shipping" ? shippingAddress : billingAddress;
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-firstName`}>名</Label>
-            <TextInput
-              id={`${addressType}-firstName`}
-              type="text"
-              value={address.firstName}
-              onChange={(e) =>
-                handleAddressChange("firstName", e.target.value, addressType)
-              }
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-lastName`}>姓</Label>
-            <TextInput
-              id={`${addressType}-lastName`}
-              type="text"
-              value={address.lastName}
-              onChange={(e) =>
-                handleAddressChange("lastName", e.target.value, addressType)
-              }
-              required
-            />
-          </div>
-        </div>
-        <div className="md:col-span-2">
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-address1`}>地址行 1</Label>
-            <TextInput
-              id={`${addressType}-address1`}
-              type="text"
-              value={address.address1}
-              onChange={(e) =>
-                handleAddressChange("address1", e.target.value, addressType)
-              }
-              required
-            />
-          </div>
-        </div>
-        <div className="md:col-span-2">
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-address2`}>
-              地址行 2（可选）
-            </Label>
-            <TextInput
-              id={`${addressType}-address2`}
-              type="text"
-              value={address.address2}
-              onChange={(e) =>
-                handleAddressChange("address2", e.target.value, addressType)
-              }
-            />
-          </div>
-        </div>
-        <div>
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-city`}>城市</Label>
-            <TextInput
-              id={`${addressType}-city`}
-              type="text"
-              value={address.city}
-              onChange={(e) =>
-                handleAddressChange("city", e.target.value, addressType)
-              }
-              required
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <div className="mb-2">
-              <Label htmlFor={`${addressType}-state`}>州/省</Label>
-              <Select
-                id={`${addressType}-state`}
-                value={address.state}
-                onChange={(e) =>
-                  handleAddressChange("state", e.target.value, addressType)
-                }
-                required>
-                <option value="AL">Alabama</option>
-                <option value="AK">Alaska</option>
-                <option value="AZ">Arizona</option>
-                <option value="CA">California</option>
-                <option value="CO">Colorado</option>
-                <option value="NY">New York</option>
-                {/* Add more states as needed */}
-              </Select>
-            </div>
-          </div>
-          <div>
-            <div className="mb-2">
-              <Label htmlFor={`${addressType}-postalCode`}>邮政编码</Label>
-              <TextInput
-                id={`${addressType}-postalCode`}
-                type="text"
-                value={address.postalCode}
-                onChange={(e) =>
-                  handleAddressChange("postalCode", e.target.value, addressType)
-                }
-                required
-              />
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-country`}>国家</Label>
-            <Select
-              id={`${addressType}-country`}
-              value={address.country}
-              onChange={(e) =>
-                handleAddressChange("country", e.target.value, addressType)
-              }
-              required>
-              <option value="United States">United States</option>
-              <option value="Canada">Canada</option>
-              <option value="United Kingdom">United Kingdom</option>
-              {/* Add more countries as needed */}
-            </Select>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2">
-            <Label htmlFor={`${addressType}-phone`}>电话号码</Label>
-            <TextInput
-              id={`${addressType}-phone`}
-              type="tel"
-              value={address.phone}
-              onChange={(e) =>
-                handleAddressChange("phone", e.target.value, addressType)
-              }
-              required
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Payment method capture removed
-
-  // Render order summary for sidebar
-  const renderOrderSummary = () => {
+  const renderOrderSummary = (): React.ReactElement => {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex justify-between items-center">
-              <div className="flex items-center">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {item.quantity}x
-                </span>
-                <span className="ml-2 text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
-                  {item.name}
-                </span>
+          {cartLines.map((item) => (
+            <div key={item.cartRowId} className="flex justify-between items-center">
+              <div className="flex items-center min-w-0">
+                <span className="font-medium text-gray-900 dark:text-white shrink-0">{item.quantity}x</span>
+                <span className="ml-2 text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{item.name}</span>
               </div>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-gray-900 dark:text-white font-medium shrink-0">
                 {formatCurrency(item.price * item.quantity)}
               </span>
             </div>
           ))}
         </div>
-
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">小计</span>
-            <span className="text-gray-900 dark:text-white">
-              {formatCurrency(subtotal)}
-            </span>
+            <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 dark:text-gray-400">运费（固定）</span>
+            <span className="text-gray-900 dark:text-white">{formatCurrency(FLAT_SHIPPING_MYR)}</span>
+          </div>
+          {promoDiscountMyr > 0 ? (
+            <div className="flex justify-between text-green-600 dark:text-green-400">
+              <span>优惠码</span>
+              <span>-{formatCurrency(promoDiscountMyr)}</span>
+            </div>
+          ) : null}
         </div>
-
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
-              总计
-            </span>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(total)}
-            </span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">总计</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(grandTotal)}</span>
           </div>
         </div>
       </div>
     );
   };
 
-  // Different content based on the current step
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case CheckoutStep.Shipping:
-        return (
-          <form onSubmit={handleShippingSubmit}>
-            <Card className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <HiOutlineLocationMarker className="mr-2 h-6 w-6" />
-                配送信息
-              </h2>
-
-              {renderAddressForm("shipping")}
-
-              <div className="mt-4">
-                <Checkbox
-                  id="useAsBilling"
-                  checked={useAsBilling}
-                  onChange={(e) => handleUseAsBillingChange(e.target.checked)}
-                  className="mr-2"
-                />
-                <Label htmlFor="useAsBilling">用作账单地址</Label>
-              </div>
-            </Card>
-
-            {!useAsBilling && (
-              <Card className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  账单信息
-                </h2>
-
-                {renderAddressForm("billing")}
-              </Card>
-            )}
-
-            
-
-            <div className="flex justify-end">
-              <Button type="submit" color="blue">
-                继续付款
-              </Button>
-            </div>
-          </form>
-        );
-
-      
-
-      case CheckoutStep.Review:
-        return (
-          <>
-            <Card className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <HiOutlineDocumentText className="mr-2 h-6 w-6" />
-                确认订单
-              </h2>
-
-              <div className="space-y-6">
-                <Accordion>
-                  <Accordion.Panel key="shipping">
-                    <Accordion.Title>配送信息</Accordion.Title>
-                    <Accordion.Content>
-                      <div className="space-y-2">
-                        <p className="font-medium">
-                          {shippingAddress.firstName} {shippingAddress.lastName}
-                        </p>
-                        <p>{shippingAddress.address1}</p>
-                        {shippingAddress.address2 && (
-                          <p>{shippingAddress.address2}</p>
-                        )}
-                        <p>
-                          {shippingAddress.city}, {shippingAddress.state}{" "}
-                          {shippingAddress.postalCode}
-                        </p>
-                        <p>{shippingAddress.country}</p>
-                        <p>{shippingAddress.phone}</p>
-                      </div>
-
-                      
-                    </Accordion.Content>
-                  </Accordion.Panel>
-
-                  <Accordion.Panel key="billing">
-                    <Accordion.Title>账单信息</Accordion.Title>
-                    <Accordion.Content>
-                      <div className="space-y-2">
-                        <p className="font-medium">
-                          {billingAddress.firstName} {billingAddress.lastName}
-                        </p>
-                        <p>{billingAddress.address1}</p>
-                        {billingAddress.address2 && (
-                          <p>{billingAddress.address2}</p>
-                        )}
-                        <p>
-                          {billingAddress.city}, {billingAddress.state}{" "}
-                          {billingAddress.postalCode}
-                        </p>
-                        <p>{billingAddress.country}</p>
-                        <p>{billingAddress.phone}</p>
-                      </div>
-                    </Accordion.Content>
-                  </Accordion.Panel>
-
-                  
-
-                  <Accordion.Panel key="items">
-                    <Accordion.Title>订单商品</Accordion.Title>
-                    <Accordion.Content>
-                      <div className="space-y-4">
-                        {cartItems.map((item) => (
-                          <div key={item.id} className="flex items-start">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-16 h-16 object-cover rounded-md mr-4"
-                            />
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                规格：{item.variant}
-                              </p>
-                              <div className="flex items-center mt-1">
-                                <span className="text-sm">
-                                  {item.quantity} x {formatCurrency(item.price)}
-                                </span>
-                                <span className="ml-2 font-medium">
-                                  = {formatCurrency(item.price * item.quantity)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Accordion.Content>
-                  </Accordion.Panel>
-                </Accordion>
-
-                <div className="mt-6">
-                  <Label htmlFor="orderNotes">订单备注（可选）</Label>
-                  <textarea
-                    id="orderNotes"
-                    rows={3}
-                    className="block w-full border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="配送特殊说明或其他备注"
-                    value={orderNotes}
-                    onChange={(e) => setOrderNotes(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex items-start mt-4">
-                  <div className="flex items-center h-5">
-                    <Checkbox
-                      id="terms"
-                      checked={agreeToTerms}
-                      onChange={(e) => setAgreeToTerms(e.target.checked)}
-                      className="mr-2"
-                    />
-                  </div>
-                  <Label htmlFor="terms" className="text-sm">
-                    我同意{" "}
-                    <Link href="/terms" className="text-blue-600 hover:underline">
-                      服务条款
-                    </Link>{" "}
-                    和{" "}
-                    <Link href="/privacy"
-                      className="text-blue-600 hover:underline">
-                      隐私政策
-                    </Link>
-                  </Label>
-                </div>
-
-                {orderError && (
-                  <Alert color="failure">
-                    <span className="font-medium">错误！</span> {orderError}
-                  </Alert>
-                )}
-              </div>
-            </Card>
-
-            <div className="flex justify-between">
-              <Button type="button" color="light" onClick={goToPreviousStep}>
-                <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
-                返回配送
-              </Button>
-              <Button
-                type="button"
-                color="blue"
-                onClick={handlePlaceOrder}
-                disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Spinner size="sm" className="mr-2" />
-                    处理中...
-                  </>
-                ) : (
-                  <>
-                    <HiOutlineCurrencyDollar className="mr-2 h-5 w-5" />
-                    提交订单（{formatCurrency(total)}）
-                  </>
-                )}
-              </Button>
-            </div>
-          </>
-        );
-
-      case CheckoutStep.Confirmation:
-        return (
-          <Card>
-            <div className="text-center">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                  <HiOutlineShieldCheck className="h-10 w-10 text-green-600 dark:text-green-300" />
-                </div>
-              </div>
-
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                订单已确认！
-              </h2>
-
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                感谢您的购买，您的订单已收到并正在处理中。
-              </p>
-
-              <div className="mb-6">
-                <div className="inline-block bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 mb-4">
-                  <p className="text-gray-800 dark:text-gray-200">
-                    订单编号：
-                  </p>
-                  <p className="text-xl font-bold">{orderNumber}</p>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  订单摘要
-                </h3>
-                {renderOrderSummary()}
-              </div>
-
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                确认邮件已发送至您的邮箱。
-              </p>
-
-              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
-                <Link href="/orders">
-                  <Button color="blue">查看订单</Button>
-                </Link>
-                <Link href="/">
-                  <Button color="light">继续购物</Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Steps indicator
-  const renderStepsIndicator = () => {
+  const renderShippingForm = (): React.ReactElement => {
     return (
-      <div className="mb-8">
-        <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
-          {[
-            { key: CheckoutStep.Shipping, label: "配送" },
-            { key: CheckoutStep.Review, label: "确认" },
-            { key: CheckoutStep.Confirmation, label: "已完成" },
-          ].map((step, index) => {
-            const isActive = currentStep === step.key;
-            const isPassed =
-              (currentStep === CheckoutStep.Review &&
-                step.key === CheckoutStep.Shipping) ||
-              currentStep === CheckoutStep.Confirmation;
-
-            return (
-              <li
-                key={step.key}
-                className={`flex md:w-full items-center ${
-                  isPassed ? "text-blue-600 dark:text-blue-500" : ""
-                } ${isActive ? "text-blue-600 dark:text-blue-500" : ""} ${
-                  index === 3
-                    ? "sm:flex-auto"
-                    : 'after:content-[""] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10 dark:after:border-gray-700'
-                }`}>
-                <span
-                  className={`flex items-center justify-center w-8 h-8 ${
-                    isPassed || isActive
-                      ? "bg-blue-100 dark:bg-blue-800"
-                      : "bg-gray-100 dark:bg-gray-700"
-                  } rounded-full shrink-0`}>
-                  {isPassed ? (
-                    <svg
-                      className="w-3.5 h-3.5 text-blue-600 dark:text-blue-500"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 16 12">
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M1 5.917 5.724 10.5 15 1.5"
-                      />
-                    </svg>
-                  ) : (
-                    <span
-                      className={
-                        isActive ? "text-blue-600 dark:text-blue-500" : ""
-                      }>
-                      {index + 1}
-                    </span>
-                  )}
-                </span>
-                <span className="hidden sm:inline-flex sm:ml-2">
-                  {step.label}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
+      <form onSubmit={(e) => void handleShippingContinue(e)}>
+        <Card className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <HiOutlineLocationMarker className="mr-2 h-6 w-6" />
+            配送信息
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="ship-firstName">名</Label>
+              <TextInput
+                id="ship-firstName"
+                value={address.firstName}
+                onChange={(e) => handleAddressField("firstName", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-lastName">姓</Label>
+              <TextInput
+                id="ship-lastName"
+                value={address.lastName}
+                onChange={(e) => handleAddressField("lastName", e.target.value)}
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="ship-address1">地址行 1</Label>
+              <TextInput
+                id="ship-address1"
+                value={address.address1}
+                onChange={(e) => handleAddressField("address1", e.target.value)}
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="ship-address2">地址行 2（可选）</Label>
+              <TextInput
+                id="ship-address2"
+                value={address.address2}
+                onChange={(e) => handleAddressField("address2", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-city">城市</Label>
+              <TextInput
+                id="ship-city"
+                value={address.city}
+                onChange={(e) => handleAddressField("city", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-state">州 / 省</Label>
+              <TextInput
+                id="ship-state"
+                value={address.state}
+                onChange={(e) => handleAddressField("state", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-postal">邮政编码</Label>
+              <TextInput
+                id="ship-postal"
+                value={address.postalCode}
+                onChange={(e) => handleAddressField("postalCode", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-country">国家</Label>
+              <TextInput
+                id="ship-country"
+                value={address.country}
+                onChange={(e) => handleAddressField("country", e.target.value)}
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="ship-phone">电话号码</Label>
+              <TextInput
+                id="ship-phone"
+                type="tel"
+                value={address.phone}
+                onChange={(e) => handleAddressField("phone", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </Card>
+        {prepareError !== null ? (
+          <Alert color="failure" className="mb-4">
+            {prepareError}
+          </Alert>
+        ) : null}
+        <div className="flex justify-end">
+          <Button type="submit" color="blue" disabled={preparingCheckout || cartLines.length === 0 || hasBlockingDeleted}>
+            {preparingCheckout ? (
+              <>
+                <Spinner size="sm" className="mr-2" />
+                准备付款…
+              </>
+            ) : (
+              "继续付款"
+            )}
+          </Button>
+        </div>
+      </form>
     );
   };
+
+  const renderReview = (): React.ReactElement => {
+    return (
+      <>
+        <Card className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <HiOutlineDocumentText className="mr-2 h-6 w-6" />
+            确认并付款
+          </h2>
+          <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 mb-6">
+            <p>
+              <span className="font-medium text-gray-900 dark:text-white">收件人：</span>
+              {address.firstName} {address.lastName}
+            </p>
+            <p>{address.address1}</p>
+            {address.address2.trim().length > 0 ? <p>{address.address2}</p> : null}
+            <p>
+              {address.city}, {address.state} {address.postalCode}
+            </p>
+            <p>{address.country}</p>
+            <p>{address.phone}</p>
+          </div>
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+            <h3 className="font-medium text-gray-900 dark:text-white mb-3">商品</h3>
+            <div className="space-y-4">
+              {cartLines.map((item) => (
+                <div key={item.cartRowId} className="flex items-start gap-3">
+                  <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-gray-100">
+                    <Image src={item.image} alt={item.name} fill className="object-cover" sizes="64px" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">规格：{item.variant}</p>
+                    <p className="text-sm mt-1">
+                      {item.quantity} × {formatCurrency(item.price)} = {formatCurrency(item.price * item.quantity)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-start mb-6">
+            <Checkbox
+              id="terms"
+              checked={agreeToTerms}
+              onChange={(e) => setAgreeToTerms(e.target.checked)}
+              className="mr-2"
+            />
+            <Label htmlFor="terms" className="text-sm">
+              我同意{" "}
+              <Link href="/terms" className="text-blue-600 hover:underline">
+                服务条款
+              </Link>{" "}
+              和{" "}
+              <Link href="/privacy" className="text-blue-600 hover:underline">
+                隐私政策
+              </Link>
+            </Label>
+          </div>
+
+          {stripePromise === null ? (
+            <Alert color="failure">缺少 Stripe 配置（NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY）。</Alert>
+          ) : clientSecret !== null && orderId !== null ? (
+            agreeToTerms ? (
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <CheckoutStripePaymentInner orderId={orderId} />
+              </Elements>
+            ) : (
+              <Alert color="warning">请勾选同意服务条款与隐私政策后再付款。</Alert>
+            )
+          ) : (
+            <Alert color="failure">无法加载支付表单，请返回上一步重试。</Alert>
+          )}
+        </Card>
+        <div className="flex justify-between">
+          <Button type="button" color="light" onClick={goToPreviousStep}>
+            <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
+            返回配送
+          </Button>
+        </div>
+      </>
+    );
+  };
+
+  if (authLoading || cartLoading) {
+    return (
+      <>
+        <NavbarHome />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <Spinner size="lg" />
+        </div>
+      </>
+    );
+  }
+
+  if (user === null) {
+    return null;
+  }
+
+  if (cartHydrateError !== null) {
+    return (
+      <>
+        <NavbarHome />
+        <div className="min-h-screen p-6">
+          <Alert color="failure">{cartHydrateError}</Alert>
+        </div>
+      </>
+    );
+  }
+
+  const awaitingCartHydration = userCartRows.length > 0 && cartLines.length === 0;
+  if (awaitingCartHydration) {
+    return (
+      <>
+        <NavbarHome />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <Spinner size="lg" />
+        </div>
+      </>
+    );
+  }
+
+  if (userCartRows.length === 0 || cartLines.length === 0) {
+    return (
+      <>
+        <NavbarHome />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+          <div className="max-w-xl mx-auto text-center">
+            <p className="text-gray-700 dark:text-gray-300 mb-4">购物车是空的。</p>
+            <Link href="/cart" className="text-blue-600 hover:underline">
+              返回购物车
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -738,8 +702,7 @@ const CheckoutPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
-            <Link href="/cart"
-              className="inline-flex items-center text-blue-600 hover:underline">
+            <Link href="/cart" className="inline-flex items-center text-blue-600 hover:underline">
               <HiOutlineChevronLeft className="mr-2 h-5 w-5" />
               返回购物车
             </Link>
@@ -750,24 +713,61 @@ const CheckoutPage: React.FC = () => {
             结账
           </h1>
 
-          {/* Steps indicator */}
-          {currentStep !== CheckoutStep.Confirmation && renderStepsIndicator()}
+          <div className="mb-8">
+            <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
+              {[
+                { key: CheckoutStep.Shipping, label: "配送" },
+                { key: CheckoutStep.Review, label: "付款" },
+              ].map((step, index) => {
+                const isActive = currentStep === step.key;
+                const isPassed = currentStep === CheckoutStep.Review && step.key === CheckoutStep.Shipping;
+                return (
+                  <li
+                    key={step.key}
+                    className={`flex md:w-full items-center ${isPassed ? "text-blue-600 dark:text-blue-500" : ""} ${
+                      isActive ? "text-blue-600 dark:text-blue-500" : ""
+                    } after:content-[""] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10 dark:after:border-gray-700 last:after:hidden`}>
+                    <span
+                      className={`flex items-center justify-center w-8 h-8 ${
+                        isPassed || isActive ? "bg-blue-100 dark:bg-blue-800" : "bg-gray-100 dark:bg-gray-700"
+                      } rounded-full shrink-0`}>
+                      {isPassed ? (
+                        <svg
+                          className="w-3.5 h-3.5 text-blue-600 dark:text-blue-500"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 16 12">
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M1 5.917 5.724 10.5 15 1.5"
+                          />
+                        </svg>
+                      ) : (
+                        <span className={isActive ? "text-blue-600 dark:text-blue-500" : ""}>{index + 1}</span>
+                      )}
+                    </span>
+                    <span className="hidden sm:inline-flex sm:ml-2">{step.label}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
 
-          {/* Main content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">{renderStepContent()}</div>
-
-            {currentStep !== CheckoutStep.Confirmation && (
-              <div className="lg:col-span-1">
-                <Card>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    订单摘要
-                  </h2>
-
-                  {renderOrderSummary()}
-                </Card>
-              </div>
-            )}
+            <div className="lg:col-span-2">
+              {currentStep === CheckoutStep.Shipping ? renderShippingForm() : null}
+              {currentStep === CheckoutStep.Review ? renderReview() : null}
+            </div>
+            <div className="lg:col-span-1">
+              <Card>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">订单摘要</h2>
+                {renderOrderSummary()}
+              </Card>
+            </div>
           </div>
         </div>
       </div>

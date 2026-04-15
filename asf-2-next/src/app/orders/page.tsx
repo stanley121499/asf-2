@@ -223,7 +223,8 @@ const OrderListPage: React.FC = function () {
         const { data: allOrderItems, error: itemsError } = await supabase
           .from("order_items")
           .select("order_id, amount")
-          .in("order_id", orderIds);
+          .in("order_id", orderIds)
+          .is("deleted_at", null);
 
         if (itemsError) {
           if (process.env.NODE_ENV === "development") {

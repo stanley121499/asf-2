@@ -22,6 +22,7 @@ export type OrderItemInsert = Database["public"]["Tables"]["order_items"]["Inser
 export type ProductStockRow = Database["public"]["Tables"]["product_stock"]["Row"];
 export type ProductStockUpdate = Database["public"]["Tables"]["product_stock"]["Update"];
 export type ProductStockLogInsert = Database["public"]["Tables"]["product_stock_logs"]["Insert"];
+export type OrderStatusLogInsert = Database["public"]["Tables"]["order_status_logs"]["Insert"];
 
 export interface CartLineInput {
   id: string; // product_id
@@ -79,6 +80,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const { data, error } = await supabase
         .from("orders")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) {
         throw error;
@@ -229,9 +231,7 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
         };
         const { error: logErr } = await supabase
           .from("product_stock_logs")
-          .insert(logInsert)
-          .select()
-          .single();
+          .insert(logInsert);
         if (logErr) {
           throw new Error(logErr.message);
         }
@@ -274,6 +274,20 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
       if (updateError) {
         throw new Error(updateError.message);
+      }
+
+      // Log the status change — order_status_logs is an append-only audit trail
+      const statusLogInsert: OrderStatusLogInsert = {
+        order_id: orderId,
+        old_status: currentOrder.status,
+        new_status: newStatus,
+        changed_by: changedBy ?? null,
+      };
+      const { error: logError } = await supabase
+        .from("order_status_logs")
+        .insert(statusLogInsert);
+      if (logError && process.env.NODE_ENV === "development") {
+        console.error("order_status_logs insert failed:", logError.message);
       }
 
       // Update local state

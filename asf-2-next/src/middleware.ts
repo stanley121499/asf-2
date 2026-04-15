@@ -1,10 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// Admin route auth is handled client-side in NavbarSidebarLayout (AuthGuard),
-// because the app uses localStorage for Supabase sessions — the server-side
-// cookie-based client never sees the session, causing false redirects.
-// Middleware just passes all requests through.
-export function middleware(request: NextRequest) {
+import { rbacMiddlewareResponse } from "./middlewareAuth";
+
+/**
+ * Edge RBAC: best-effort session from `sb-app-session` cookie (mirrored from
+ * localStorage in AuthContext). Client-side auth remains authoritative.
+ */
+export async function middleware(request: NextRequest) {
+  const rbac = await rbacMiddlewareResponse(request);
+  if (rbac !== null) {
+    return rbac;
+  }
   return NextResponse.next();
 }
 

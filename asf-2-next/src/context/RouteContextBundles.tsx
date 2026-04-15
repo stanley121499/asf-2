@@ -29,7 +29,9 @@ import { AddToCartProvider } from "./product/CartContext";
 import { OrderProvider } from "./product/OrderContext";
 import { PaymentProvider } from "./PaymentContext";
 import { WishlistProvider } from "./WishlistContext";
+import { NotificationProvider } from "./NotificationContext";
 import { PointsMembershipProvider } from "./PointsMembershipContext";
+import { PromotionProvider } from "./PromotionContext";
 
 import { CommunityProvider } from "./CommunityContext";
 import { GroupProvider } from "./GroupContext";
@@ -164,7 +166,9 @@ export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children
                             <AddToCartProvider>
                               <OrderProvider>
                                 <WishlistProvider>
-                                  {children}
+                                  <PromotionProvider>
+                                    <NotificationProvider>{children}</NotificationProvider>
+                                  </PromotionProvider>
                                 </WishlistProvider>
                               </OrderProvider>
                             </AddToCartProvider>
@@ -182,6 +186,15 @@ export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children
     </DepartmentProvider>
   </BrandProvider>
   </AnnouncementProvider>
+);
+
+/**
+ * Admin routes that need catalog + promotion management (e.g. /promotions).
+ */
+export const FullAdminContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
+  <ProductContextBundle>
+    <PromotionProvider>{children}</PromotionProvider>
+  </ProductContextBundle>
 );
 
 /**

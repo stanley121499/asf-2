@@ -428,9 +428,11 @@ const SupportPage: React.FC = function () {
                     >
                       <option value="">Unassigned</option>
                       {users
-                        .filter(u => {
-                          const roleRaw = (u.user_detail as any)?.role;
-                          const role = typeof roleRaw === "string" ? roleRaw.toLowerCase() : "";
+                        .filter((u) => {
+                          const role =
+                            typeof u.user_detail.role === "string"
+                              ? u.user_detail.role.toLowerCase()
+                              : "";
                           return role !== "customer";
                         })
                         .map(u => (
@@ -500,10 +502,10 @@ const SupportPage: React.FC = function () {
 };
 
 
-export default function WrappedSupportPage(props: any) {
+export default function WrappedSupportPage() {
   return (
     <CommunityContextBundle>
-      <SupportPage {...props} />
+      <SupportPage />
     </CommunityContextBundle>
   );
 }

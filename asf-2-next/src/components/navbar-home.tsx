@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import BottomNavbar from "./home/bottom-nav";
 import { HiOutlineSearch, HiOutlineShoppingCart, HiOutlineBell } from "react-icons/hi";
 import { useAddToCartContext } from "../context/product/CartContext";
+import { useNotificationContext } from "../context/NotificationContext";
 import SearchOverlay from "./SearchOverlay";
 
 const NavbarHome: React.FC = () => {
@@ -15,6 +16,7 @@ const NavbarHome: React.FC = () => {
   
   const cartContext = useAddToCartContext();
   const cartCount = cartContext?.add_to_carts?.length || 0;
+  const { unreadCount } = useNotificationContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,7 +70,11 @@ const NavbarHome: React.FC = () => {
               className="relative flex min-h-[44px] min-w-[44px] items-center justify-center"
             >
               <HiOutlineBell className="h-6 w-6" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--color-danger)]"></span>
+              {unreadCount > 0 ? (
+                <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-danger)] text-[10px] text-white">
+                  {unreadCount > 9 ? "9+" : String(unreadCount)}
+                </span>
+              ) : null}
             </button>
           </div>
         </div>

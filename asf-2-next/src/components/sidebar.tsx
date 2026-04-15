@@ -8,7 +8,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
-import { FaBoxes, FaClipboardList } from "react-icons/fa";
+import { FaBoxes, FaClipboardList, FaTags } from "react-icons/fa";
 import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
@@ -83,6 +83,18 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
               : ""
           }>
           Products
+        </Sidebar.Item>
+
+        <Sidebar.Item
+          icon={FaTags}
+          href="/promotions"
+          onClick={onItemClick}
+          className={
+            "/promotions" === currentPage || currentPage.startsWith("/promotions/")
+              ? "bg-gray-100 dark:bg-gray-700"
+              : ""
+          }>
+          Promotions
         </Sidebar.Item>
 
         <Sidebar.Item

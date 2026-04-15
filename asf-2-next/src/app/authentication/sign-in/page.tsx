@@ -7,6 +7,33 @@ import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { useAuthContext } from "@/context/AuthContext";
 import LoadingPage from "@/app/loading";
 
+/**
+ * Resolves post-login navigation: prefers `next`, then `returnTo`, then `/`.
+ * Rejects open redirects (must start with `/`, not `//`).
+ */
+function resolvePostAuthRedirect(params: URLSearchParams): string {
+  const candidates: Array<string | null> = [params.get("next"), params.get("returnTo")];
+  for (const raw of candidates) {
+    if (typeof raw !== "string" || raw.length === 0) {
+      continue;
+    }
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      continue;
+    }
+    if (!decoded.startsWith("/")) {
+      continue;
+    }
+    if (decoded.startsWith("//")) {
+      continue;
+    }
+    return decoded;
+  }
+  return "/";
+}
+
 const SignInPage: FC = function () {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,13 +45,7 @@ const SignInPage: FC = function () {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const returnTo = useMemo<string>(() => {
-    const raw = searchParams.get("returnTo");
-    if (typeof raw === "string" && raw.length > 0) {
-      return decodeURIComponent(raw);
-    }
-    return "/";
-  }, [searchParams]);
+  const postAuthPath = useMemo<string>(() => resolvePostAuthRedirect(searchParams), [searchParams]);
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -46,7 +67,7 @@ const SignInPage: FC = function () {
       setError(errorMsg);
       setIsSubmitting(false);
     } else {
-      router.push(returnTo);
+      router.push(postAuthPath);
     }
   };
 
@@ -55,7 +76,7 @@ const SignInPage: FC = function () {
   }
 
   if (user) {
-    router.push(returnTo);
+    router.push(postAuthPath);
     return null;
   }
 
@@ -127,9 +148,12 @@ const SignInPage: FC = function () {
           </div>
 
           <div className="flex justify-end mb-2">
-            <span className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] cursor-pointer">
+            <Link
+              href="/authentication/forgot-password"
+              className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] cursor-pointer"
+            >
               忘记密码？
-            </span>
+            </Link>
           </div>
 
           <button

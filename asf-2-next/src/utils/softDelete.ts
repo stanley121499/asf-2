@@ -5,7 +5,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
  * Tables in this application that support soft delete via a `deleted_at` column.
  *
  * IMPORTANT:
- * - Do NOT include transactional/audit tables here (orders, order_items, payments, *_logs).
+ * - Exclude payments and append-only *_logs tables.
  * - `add_to_carts` is intentionally excluded (temporary data; hard delete is OK).
  */
 export type SoftDeletableTable =
@@ -18,7 +18,9 @@ export type SoftDeletableTable =
   | "ranges"
   | "posts"
   | "product_folders"
-  | "post_folders";
+  | "post_folders"
+  | "orders"
+  | "order_items";
 
 /**
  * Subset of soft deletable tables that also have an `active` flag we want to toggle
@@ -179,6 +181,16 @@ export async function softDeleteById<TTable extends SoftDeletableTable>(
       error = res.error;
       break;
     }
+    case "orders": {
+      const res = await supabase.from("orders").update({ deleted_at: deletedAtIso }).eq("id", id);
+      error = res.error;
+      break;
+    }
+    case "order_items": {
+      const res = await supabase.from("order_items").update({ deleted_at: deletedAtIso }).eq("id", id);
+      error = res.error;
+      break;
+    }
     default: {
       // Defensive fallback; should be unreachable due to the union type.
       throw new Error("Unsupported table for soft delete.");
@@ -266,6 +278,16 @@ export async function restoreById<TTable extends SoftDeletableTable>(
     case "post_folders": {
       const payload = options.setActive ? { deleted_at: null, active: true } : { deleted_at: null };
       const res = await supabase.from("post_folders").update(payload).eq("id", id);
+      error = res.error;
+      break;
+    }
+    case "orders": {
+      const res = await supabase.from("orders").update({ deleted_at: null }).eq("id", id);
+      error = res.error;
+      break;
+    }
+    case "order_items": {
+      const res = await supabase.from("order_items").update({ deleted_at: null }).eq("id", id);
       error = res.error;
       break;
     }

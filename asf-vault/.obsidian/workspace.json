@@ -1,0 +1,218 @@
+{
+  "main": {
+    "id": "e6816d5feb799af8",
+    "type": "split",
+    "children": [
+      {
+        "id": "c2d71f125f2ba633",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "327567ac3afc4e36",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "20fee7e5f6268e6c",
+    "type": "split",
+    "children": [
+      {
+        "id": "3095128d085221b0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a214aae164b41bed",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "e60e931e67200034",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "b102172919a18498",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "cbaee921bad28c11",
+    "type": "split",
+    "children": [
+      {
+        "id": "9cd20d58f6afc614",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f00f2039f4611577",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "d2e14b02ede6c3b7",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "fca59d26d9d6ad82",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "13e5c65b15e489fe",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "a73e6f1496c35014",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "a214aae164b41bed",
+  "lastOpenFiles": [
+    "raw/sources/market-research/zero-to-one-costs-zh-CN.md",
+    "raw/sources/market-research/shopify-apps-catalog-zh-CN.md",
+    "raw/sources/market-research/shopify-competitor-primer-zh-CN.md",
+    "raw/sources/market-research/shopify-apps-catalog.md",
+    "raw/sources/market-research/self-hosted-and-niche-platforms.md",
+    "raw/sources/market-research/marketplaces-shopee-lazada-tiktok.md",
+    "raw/sources/market-research/other-saas-wix-squarespace-bigcommerce.md",
+    "raw/sources/market-research/malaysia-local-platforms.md",
+    "raw/sources/market-research/wordpress-woocommerce.md",
+    "raw/sources/market-research/shopify.md",
+    "raw/sources/market-research/malaysia-ecommerce-overview.md",
+    "raw/sources/market-research/README.md",
+    "raw/sources/market-research",
+    "_index-sources-block.txt",
+    "wiki/sources/doc-repo-root-readme.md",
+    "wiki/sources/doc-unused-code.md",
+    "wiki/sources/doc-testing-guide.md",
+    "wiki/sources/doc-soft-delete-strategy.md",
+    "wiki/sources/doc-setup.md",
+    "wiki/sources/doc-settings-redesign-plan-2026.md",
+    "wiki/sources/doc-settings-redesign-agent-prompts-2026.md",
+    "wiki/sources/doc-readme.md",
+    "wiki/sources/doc-product-section-enhancements.md",
+    "wiki/sources/doc-product-section-agent-prompts.md",
+    "wiki/sources/doc-performance-issues.md",
+    "wiki/sources/doc-performance-fix-plan-2026-round8.md",
+    "wiki/sources/doc-performance-fix-plan-2026-round7.md",
+    "wiki/sources/doc-performance-fix-plan-2026-round6.md",
+    "wiki/entities",
+    "raw/sources/root",
+    "raw/sources/docs",
+    "wiki/sources",
+    "wiki/concepts",
+    "wiki",
+    "raw/sources",
+    "raw/assets"
+  ]
+}

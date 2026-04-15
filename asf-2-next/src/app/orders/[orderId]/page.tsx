@@ -3,16 +3,18 @@ import { useParams } from "next/navigation";
 import { OrderContextBundle } from "@/context/RouteContextBundles";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, Badge, Button, Select, Modal } from "flowbite-react";
+import { Card, Badge, Button, Select, Modal, Label } from "flowbite-react";
 import { HiArrowLeft, HiPencilAlt, HiCheck, HiX } from "react-icons/hi";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import LoadingPage from "@/app/loading";
 import { supabase } from "@/utils/supabaseClient";
 import { useAlertContext } from "@/context/AlertContext";
 import type { Database } from "@/database.types";
+import { parseShippingAddressStructured } from "@/app/api/_lib/shippingAddress";
+import type { NormalizedRate } from "@/app/api/_lib/delyvaQuoteMappers";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
@@ -40,13 +42,66 @@ interface OrderDetail extends OrderRow {
   user_phone?: string;
 }
 
+/** Matches the `order_status_logs` table schema exactly (no user_id column in DB). */
 interface StatusHistory {
   id: string;
   old_status: string | null;
   new_status: string | null;
   changed_by: string | null;
   created_at: string;
-  user_id: string | null;
+}
+
+/** One row for admin display of Delyva tracking history (loosely typed API payload). */
+interface TrackingEventDisplay {
+  id: string;
+  summary: string;
+  when: string | null;
+}
+
+/**
+ * Maps Delyva tracking history entries to display rows.
+ */
+function mapTrackingEventsToDisplay(raw: unknown): TrackingEventDisplay[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out: TrackingEventDisplay[] = [];
+  let index = 0;
+  for (const item of raw) {
+    const id = `ev-${index}`;
+    index += 1;
+    if (typeof item !== "object" || item === null) {
+      out.push({ id, summary: JSON.stringify(item), when: null });
+      continue;
+    }
+    const o = item as Record<string, unknown>;
+    const desc =
+      typeof o.description === "string"
+        ? o.description
+        : typeof o.message === "string"
+          ? o.message
+          : typeof o.status === "string"
+            ? o.status
+            : typeof o.event === "string"
+              ? o.event
+              : null;
+    const when =
+      typeof o.date === "string"
+        ? o.date
+        : typeof o.timestamp === "string"
+          ? o.timestamp
+          : typeof o.createdAt === "string"
+            ? o.createdAt
+            : typeof o.time === "string"
+              ? o.time
+              : null;
+    out.push({
+      id,
+      summary: desc ?? JSON.stringify(o),
+      when,
+    });
+  }
+  return out;
 }
 
 /**
@@ -107,6 +162,18 @@ const OrderDetailPage: React.FC = function () {
   const [newStatus, setNewStatus] = useState<string>("");
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
 
+  const [isShipModalOpen, setIsShipModalOpen] = useState<boolean>(false);
+  const [shipWeightKg, setShipWeightKg] = useState<number>(1);
+  const [shipRates, setShipRates] = useState<NormalizedRate[]>([]);
+  const [shipRatesLoading, setShipRatesLoading] = useState<boolean>(false);
+  const [shipRatesError, setShipRatesError] = useState<string | null>(null);
+  const [selectedServiceCode, setSelectedServiceCode] = useState<string>("");
+  const [shipSubmitting, setShipSubmitting] = useState<boolean>(false);
+  const [trackingLoading, setTrackingLoading] = useState<boolean>(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+  const [trackingEventsDisplay, setTrackingEventsDisplay] = useState<TrackingEventDisplay[]>([]);
+  const [trackingStatusLine, setTrackingStatusLine] = useState<string | null>(null);
+
   const statusOptions = [
     { value: "pending", label: "Pending" },
     { value: "processing", label: "Processing" },
@@ -115,31 +182,36 @@ const OrderDetailPage: React.FC = function () {
     { value: "cancelled", label: "Cancelled" },
   ];
 
+  type LoadOrderOptions = {
+    isInitial: boolean;
+  };
+
   /**
-   * Fetch order details including items and customer information
+   * Loads order row, line items, customer name, and status logs from Supabase.
    */
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
+  const loadOrderDetails = useCallback(
+    async (opts: LoadOrderOptions): Promise<void> => {
       if (!orderId) {
         router.push("/orders");
         return;
       }
 
       try {
-        setLoading(true);
+        if (opts.isInitial) {
+          setLoading(true);
+        }
 
-        // Fetch order
         const { data: orderData, error: orderError } = await supabase
           .from("orders")
           .select("*")
           .eq("id", orderId)
+          .is("deleted_at", null)
           .single();
 
-        if (orderError || !orderData) {
-          throw new Error(orderError?.message || "Order not found");
+        if (orderError !== null || orderData === null) {
+          throw new Error(orderError?.message ?? "Order not found");
         }
 
-        // Fetch order items with product details
         const { data: itemsData, error: itemsError } = await supabase
           .from("order_items")
           .select(`
@@ -148,71 +220,224 @@ const OrderDetailPage: React.FC = function () {
             color:product_colors(id, color),
             size:product_sizes(id, size)
           `)
-          .eq("order_id", orderId);
+          .eq("order_id", orderId)
+          .is("deleted_at", null);
 
-        if (itemsError) {
+        if (itemsError !== null) {
           throw new Error(itemsError.message);
         }
 
-        // Fetch customer details
         let userName = "Unknown User";
-        let userEmail = "";
-        let userPhone = "";
+        const userEmail = "";
+        const userPhone = "";
 
-        if (orderData.user_id) {
+        if (orderData.user_id !== null) {
           const { data: userDetailData } = await supabase
             .from("user_details")
             .select("first_name, last_name")
             .eq("id", orderData.user_id)
             .single();
 
-          if (userDetailData) {
+          if (userDetailData !== null) {
             const firstName = userDetailData.first_name ?? "";
             const lastName = userDetailData.last_name ?? "";
             const fullName = `${firstName} ${lastName}`.trim();
-            userName = fullName.length > 0 ? fullName : `User ${orderData.user_id.substring(0, 8)}`;
+            userName =
+              fullName.length > 0 ? fullName : `User ${orderData.user_id.substring(0, 8)}`;
           }
-          // Note: email is not available without admin API — leave userEmail as ""
-
-          // Note: Phone would come from user_details if available
-          // userPhone = userDetails?.phone || "";
         }
 
-        // TODO: Fetch status history once order_status_logs table is available
-        // For now, create a mock status history based on current status
-        const mockStatusHistory: StatusHistory[] = orderData.status ? [{
-          id: "mock-1",
-          old_status: null,
-          new_status: orderData.status,
-          changed_by: "system",
-          created_at: orderData.created_at,
-          user_id: orderData.user_id,
-        }] : [];
+        const { data: historyData } = await supabase
+          .from("order_status_logs")
+          .select("id, old_status, new_status, changed_by, created_at")
+          .eq("order_id", orderId)
+          .order("created_at", { ascending: false });
+
+        const nextHistory: StatusHistory[] = historyData ?? [];
 
         setOrder({
           ...orderData,
-          items: itemsData || [],
+          items: itemsData ?? [],
           user_name: userName,
           user_email: userEmail,
           user_phone: userPhone,
         });
-        
-        setStatusHistory(mockStatusHistory);
-        setNewStatus(orderData.status || "processing");
 
+        setStatusHistory(nextHistory);
+        setNewStatus(orderData.status ?? "processing");
       } catch (err) {
         if (process.env.NODE_ENV === "development") {
           console.error("Error fetching order details:", err);
         }
-        showAlert(err instanceof Error ? err.message : "Failed to load order", "error");
-        router.push("/orders");
+        const message = err instanceof Error ? err.message : "Failed to load order";
+        showAlert(message, "error");
+        if (opts.isInitial) {
+          router.push("/orders");
+        }
       } finally {
-        setLoading(false);
+        if (opts.isInitial) {
+          setLoading(false);
+        }
+      }
+    },
+    [orderId, router, showAlert],
+  );
+
+  useEffect(() => {
+    void loadOrderDetails({ isInitial: true });
+  }, [loadOrderDetails]);
+
+  /**
+   * Loads Delyva courier quotes for the ship modal (destination + weight).
+   */
+  const fetchShipRates = useCallback(async (): Promise<void> => {
+    if (order === null) {
+      return;
+    }
+    const structured = parseShippingAddressStructured(order.shipping_address_structured);
+    if (structured === null) {
+      setShipRatesError(
+        "Order is missing structured shipping address. Customer must check out with a saved address first.",
+      );
+      setShipRates([]);
+      return;
+    }
+    setShipRatesLoading(true);
+    setShipRatesError(null);
+    try {
+      const destination = {
+        address1: structured.address1,
+        city: structured.city,
+        state: structured.state,
+        postcode: structured.postcode,
+        country: structured.country,
+      };
+      const res = await fetch("/api/delivery/rates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination,
+          weight: { unit: "kg", value: shipWeightKg },
+        }),
+      });
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        const msg =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof (data as { error?: unknown }).error === "string"
+            ? (data as { error: string }).error
+            : "Failed to fetch rates";
+        setShipRatesError(msg);
+        setShipRates([]);
+        return;
+      }
+      const ratesRaw =
+        typeof data === "object" &&
+        data !== null &&
+        "rates" in data &&
+        Array.isArray((data as { rates: unknown }).rates)
+          ? (data as { rates: NormalizedRate[] }).rates
+          : [];
+      setShipRates(ratesRaw);
+      setSelectedServiceCode((prev) => {
+        if (ratesRaw.length === 0) {
+          return "";
+        }
+        const codes = ratesRaw.map((r) => r.serviceCode);
+        if (prev !== "" && codes.includes(prev)) {
+          return prev;
+        }
+        return ratesRaw[0].serviceCode;
+      });
+    } catch {
+      setShipRatesError("Failed to fetch rates");
+      setShipRates([]);
+    } finally {
+      setShipRatesLoading(false);
+    }
+  }, [order, shipWeightKg]);
+
+  /**
+   * Debounced refresh of courier quotes when the ship modal is open and weight changes.
+   */
+  useEffect(() => {
+    if (!isShipModalOpen || order === null) {
+      return undefined;
+    }
+    const handle = setTimeout(() => {
+      void fetchShipRates();
+    }, 350);
+    return () => {
+      clearTimeout(handle);
+    };
+  }, [isShipModalOpen, order, shipWeightKg, fetchShipRates]);
+
+  /**
+   * Loads carrier tracking events for orders that already have a tracking number.
+   */
+  useEffect(() => {
+    if (orderId === undefined || orderId === "") {
+      return undefined;
+    }
+    if (order === null) {
+      return undefined;
+    }
+    const tn = order.tracking_number;
+    if (tn === null || tn === "") {
+      setTrackingEventsDisplay([]);
+      setTrackingStatusLine(null);
+      setTrackingError(null);
+      setTrackingLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const run = async (): Promise<void> => {
+      setTrackingLoading(true);
+      setTrackingError(null);
+      try {
+        const res = await fetch(`/api/delivery/tracking/${orderId}`);
+        const data: unknown = await res.json();
+        if (cancelled) {
+          return;
+        }
+        if (!res.ok) {
+          const msg =
+            typeof data === "object" &&
+            data !== null &&
+            "error" in data &&
+            typeof (data as { error?: unknown }).error === "string"
+              ? (data as { error: string }).error
+              : "Failed to load tracking";
+          setTrackingError(msg);
+          setTrackingEventsDisplay([]);
+          setTrackingStatusLine(null);
+          return;
+        }
+        const payload = data as {
+          status?: unknown;
+          trackingEvents?: unknown;
+        };
+        setTrackingStatusLine(typeof payload.status === "string" ? payload.status : null);
+        setTrackingEventsDisplay(mapTrackingEventsToDisplay(payload.trackingEvents));
+      } catch {
+        if (!cancelled) {
+          setTrackingError("Failed to load tracking");
+        }
+      } finally {
+        if (!cancelled) {
+          setTrackingLoading(false);
+        }
       }
     };
 
-    fetchOrderDetails();
-  }, [orderId, router, showAlert]);
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, order, order?.tracking_number]);
 
   /**
    * Handle status update
@@ -236,32 +461,28 @@ const OrderDetailPage: React.FC = function () {
         throw new Error(updateError.message);
       }
 
-      // TODO: Add status change log once order_status_logs table is available
-      // For now, just log to console
-      if (process.env.NODE_ENV === "development") {
-        console.log("Status change:", {
+      // Persist status change to order_status_logs audit trail
+      const { data: logData, error: logError } = await supabase
+        .from("order_status_logs")
+        .insert({
           order_id: order.id,
           old_status: order.status,
           new_status: newStatus,
           changed_by: "admin",
-          user_id: order.user_id,
-        });
+        })
+        .select("id, old_status, new_status, changed_by, created_at")
+        .single();
+
+      if (logError && process.env.NODE_ENV === "development") {
+        console.error("order_status_logs insert failed:", logError.message);
       }
 
       // Update local state
       setOrder({ ...order, status: newStatus });
-      
-      // Update status history with new entry
-      const newHistoryEntry: StatusHistory = {
-        id: `mock-${Date.now()}`,
-        old_status: order.status,
-        new_status: newStatus,
-        changed_by: "admin",
-        created_at: new Date().toISOString(),
-        user_id: order.user_id,
-      };
-      
-      setStatusHistory(prev => [newHistoryEntry, ...prev]);
+
+      if (logData) {
+        setStatusHistory(prev => [logData, ...prev]);
+      }
 
       showAlert("Order status updated successfully", "success");
       setIsStatusModalOpen(false);
@@ -273,6 +494,53 @@ const OrderDetailPage: React.FC = function () {
       showAlert(err instanceof Error ? err.message : "Failed to update status", "error");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  /**
+   * Books shipment via Delyva and refreshes the order row from the database.
+   */
+  const handleConfirmShip = async (): Promise<void> => {
+    if (order === null) {
+      return;
+    }
+    if (selectedServiceCode === "") {
+      showAlert("Select a courier service.", "error");
+      return;
+    }
+    if (!Number.isFinite(shipWeightKg) || shipWeightKg <= 0) {
+      showAlert("Enter a valid weight in kilograms.", "error");
+      return;
+    }
+    setShipSubmitting(true);
+    try {
+      const res = await fetch("/api/delivery/create-shipment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.id,
+          serviceCode: selectedServiceCode,
+          weight: { unit: "kg", value: shipWeightKg },
+        }),
+      });
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        const msg =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof (data as { error?: unknown }).error === "string"
+            ? (data as { error: string }).error
+            : "Failed to create shipment";
+        throw new Error(msg);
+      }
+      showAlert("Shipment created successfully.", "success");
+      setIsShipModalOpen(false);
+      await loadOrderDetails({ isInitial: false });
+    } catch (err) {
+      showAlert(err instanceof Error ? err.message : "Failed to create shipment", "error");
+    } finally {
+      setShipSubmitting(false);
     }
   };
 
@@ -525,6 +793,100 @@ const OrderDetailPage: React.FC = function () {
             </Card>
           </div>
         </div>
+
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Shipment</h2>
+
+          {order.tracking_number !== null &&
+          order.tracking_number !== undefined &&
+          order.tracking_number.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-gray-700 dark:text-gray-300">Courier (service code)</p>
+                  <p className="text-gray-900 dark:text-white">{order.courier_code ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700 dark:text-gray-300">Tracking number</p>
+                  <p className="text-gray-900 dark:text-white font-mono">{order.tracking_number}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  color="blue"
+                  disabled={
+                    order.shipping_label_url === null || order.shipping_label_url === ""
+                  }
+                  onClick={() => {
+                    const url = order.shipping_label_url;
+                    if (url !== null && url !== "") {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                >
+                  Print Label
+                </Button>
+                {order.shipping_label_url === null || order.shipping_label_url === "" ? (
+                  <span className="text-sm text-gray-500 self-center">Label URL not available</span>
+                ) : null}
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                  Tracking updates
+                </h3>
+                {trackingLoading ? (
+                  <p className="text-sm text-gray-500">Loading tracking…</p>
+                ) : trackingError !== null ? (
+                  <p className="text-sm text-red-600">{trackingError}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {trackingStatusLine !== null && trackingStatusLine !== "" ? (
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Status: {trackingStatusLine}
+                      </p>
+                    ) : null}
+                    {trackingEventsDisplay.length === 0 ? (
+                      <p className="text-sm text-gray-500">No tracking events yet.</p>
+                    ) : (
+                      <ul className="border border-gray-200 dark:border-gray-600 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
+                        {trackingEventsDisplay.map((ev) => (
+                          <li key={ev.id} className="p-3 text-sm">
+                            {ev.when !== null && ev.when !== "" ? (
+                              <p className="text-xs text-gray-500 mb-1">{ev.when}</p>
+                            ) : null}
+                            <p className="text-gray-900 dark:text-white">{ev.summary}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (order.status ?? "").toLowerCase() === "processing" ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Book a courier pickup when the parcel is packed. Weight and service are sent to Delyva.
+              </p>
+              <Button
+                color="blue"
+                onClick={() => {
+                  setShipWeightKg(1);
+                  setShipRates([]);
+                  setShipRatesError(null);
+                  setIsShipModalOpen(true);
+                }}
+              >
+                Ship This Order
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Shipment booking is available when the order status is Processing and no tracking number is
+              set yet.
+            </p>
+          )}
+        </Card>
       </div>
 
       {/* Status Update Modal */}
@@ -570,15 +932,100 @@ const OrderDetailPage: React.FC = function () {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <Modal
+        show={isShipModalOpen}
+        onClose={() => {
+          setIsShipModalOpen(false);
+        }}
+      >
+        <Modal.Header>Ship this order</Modal.Header>
+        <Modal.Body>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="ship-weight-kg" value="Parcel weight (kg)" />
+              <input
+                id="ship-weight-kg"
+                type="number"
+                min={0.1}
+                step={0.1}
+                className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                value={Number.isFinite(shipWeightKg) ? shipWeightKg : ""}
+                onChange={(e) => {
+                  const v = Number.parseFloat(e.target.value);
+                  if (Number.isFinite(v) && v > 0) {
+                    setShipWeightKg(v);
+                  } else if (e.target.value === "") {
+                    setShipWeightKg(0);
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ship-service" value="Courier" />
+              {shipRatesLoading ? (
+                <p className="text-sm text-gray-500 mt-2">Loading courier options…</p>
+              ) : shipRatesError !== null ? (
+                <p className="text-sm text-red-600 mt-2">{shipRatesError}</p>
+              ) : (
+                <Select
+                  id="ship-service"
+                  className="mt-1"
+                  value={selectedServiceCode}
+                  onChange={(e) => {
+                    setSelectedServiceCode(e.target.value);
+                  }}
+                >
+                  {shipRates.map((r) => (
+                    <option key={r.serviceCode} value={r.serviceCode}>
+                      {r.name} — {r.currency} {r.price.toFixed(2)}
+                      {r.etaDays !== null ? ` (~${r.etaDays} d)` : ""}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {!shipRatesLoading && shipRates.length === 0 && shipRatesError === null ? (
+                <p className="text-sm text-gray-500 mt-2">No courier options returned.</p>
+              ) : null}
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            color="blue"
+            onClick={() => {
+              void handleConfirmShip();
+            }}
+            disabled={
+              shipSubmitting ||
+              shipRatesLoading ||
+              selectedServiceCode === "" ||
+              shipRates.length === 0 ||
+              shipRatesError !== null
+            }
+          >
+            <HiCheck className="mr-2 h-4 w-4" />
+            {shipSubmitting ? "Creating…" : "Confirm shipment"}
+          </Button>
+          <Button
+            color="gray"
+            onClick={() => {
+              setIsShipModalOpen(false);
+            }}
+          >
+            <HiX className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </NavbarSidebarLayout>
   );
 };
 
-
-export default function WrappedOrderDetailPage(props: any) {
+export default function WrappedOrderDetailPage(): React.ReactElement {
   return (
     <OrderContextBundle>
-      <OrderDetailPage {...props} />
+      <OrderDetailPage />
     </OrderContextBundle>
   );
 }

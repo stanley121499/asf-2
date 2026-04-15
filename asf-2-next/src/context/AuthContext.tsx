@@ -11,6 +11,10 @@ import React, {
 } from "react";
 import type { AuthError, User } from "@supabase/supabase-js";
 import { supabase } from "../utils/supabaseClient";
+import {
+  clearSessionCookie,
+  syncSessionCookieFromStorage,
+} from "../utils/sessionCookieSync";
 import { Database } from "../../database.types";
 
 type UserDetail = Database["public"]["Tables"]["user_details"]["Row"];
@@ -78,6 +82,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       if (sessionError) {
         console.error("Error getting session:", sessionError);
+        clearSessionCookie();
         setUser(null);
         setUserDetail(null);
         return;
@@ -95,6 +100,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (sessionIsExpired) {
         // Clear the stale entry from localStorage to speed up the next check.
         localStorage.removeItem("sb-app-session");
+        clearSessionCookie();
         setUser(null);
         setUserDetail(null);
         prevUserIdRef.current = null;
@@ -102,6 +108,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       const currentUser = session?.user ?? null;
+
+      if (currentUser === null) {
+        clearSessionCookie();
+      }
 
       // Step 2: fetch user_details if we have a user
       if (currentUser) {
@@ -124,6 +134,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // Step 3: set user state last to reduce intermediate re-renders
       setUser(currentUser);
       prevUserIdRef.current = currentUser?.id ?? null;
+
+      if (currentUser !== null) {
+        syncSessionCookieFromStorage();
+      }
     } finally {
       setLoading(false);
     }
@@ -168,6 +182,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUserDetail(null);
       }
 
+      syncSessionCookieFromStorage();
+
       return { user: data.user, error: null };
     } finally {
       setLoading(false);
@@ -191,6 +207,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(null);
       setUserDetail(null);
       prevUserIdRef.current = null;
+      clearSessionCookie();
       return { error: null };
     } finally {
       setLoading(false);
@@ -217,6 +234,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!newUser) {
         prevUserIdRef.current = null;
         setUserDetail(null);
+        clearSessionCookie();
+      } else {
+        syncSessionCookieFromStorage();
       }
     });
 
