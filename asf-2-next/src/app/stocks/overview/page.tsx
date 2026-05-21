@@ -72,7 +72,7 @@ const StockOverviewPage: React.FC = () => {
                 }
                 className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                 <div className="flex items-center gap-4">
-                  {productMediaMap.get(productEvent.product.id) ? (
+                  {productMediaMap.get(productEvent.product.id) && (
                     <img
                       src={productMediaMap.get(productEvent.product.id)}
                       alt={productEvent.product.name}
@@ -80,12 +80,6 @@ const StockOverviewPage: React.FC = () => {
                       loading="lazy"
                       decoding="async"
                     />
-                  ) : (
-                    <div className="w-16 h-16 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl font-bold text-gray-400 dark:text-gray-500 select-none">
-                        {productEvent.product.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
                   )}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">

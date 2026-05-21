@@ -200,15 +200,31 @@ const ProductsTable: React.FC<ProductsTableProps> = function ({
         <Card
           key={product.id}
           className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-          renderImage={() => (
-            <div className="relative w-full h-48 p-4">
-              <img
-                src={mediaByProductId[product.id]}
-                alt={product.name}
-                className="object-cover w-full h-48 rounded-lg"
-              />
-            </div>
-          )}
+          renderImage={() => {
+            const rawUrl = mediaByProductId[product.id];
+            const thumbUrl = rawUrl
+              ? `${rawUrl}?width=384&height=384&resize=cover`
+              : null;
+            return (
+              <div className="relative w-full h-48 p-4">
+                {thumbUrl ? (
+                  <img
+                    src={thumbUrl}
+                    alt={product.name}
+                    className="object-cover w-full h-48 rounded-lg"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="w-full h-48 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-gray-300 dark:text-gray-500 select-none">
+                      {product.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          }}
           style={{
             height: `calc((100vh - 190px) / 2)`,
             backgroundColor: "transparent",

@@ -13,6 +13,42 @@ import LoadingPage from "@/app/loading";
 import PostComponent from "@/components/post/post";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
+/**
+ * Renders a 64×64 thumbnail for a post/product list row.
+ * Uses the Supabase Storage image transform to serve a small preview instead
+ * of the full-resolution original, and falls back to an initial-letter avatar
+ * when no media URL is available.
+ */
+function ListThumbnail({
+  rawUrl,
+  name,
+}: Readonly<{
+  rawUrl: string | null | undefined;
+  name: string;
+}>): React.ReactElement {
+  const thumbUrl = rawUrl
+    ? `${rawUrl}?width=128&height=128&resize=cover`
+    : null;
+  if (thumbUrl) {
+    return (
+      <img
+        src={thumbUrl}
+        alt={name}
+        className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+  return (
+    <div className="w-16 h-16 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+      <span className="text-xl font-bold text-gray-400 dark:text-gray-500 select-none">
+        {name.charAt(0).toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
 const PostListPage: React.FC = function () {
   const { posts, loading } = usePostContext();
   const [searchValue, setSearchValue] = React.useState("");
@@ -164,13 +200,9 @@ const PostsTable: React.FC<PostsTableProps> = function ({
 
                   {/* Post Content */}
                   <div className="flex items-center gap-4">
-                    <img
-                      src={
-                        postMedias.find((media) => media.post_id === post.id)
-                          ?.media_url
-                      }
-                      alt={post.name}
-                      className="w-16 h-16 object-cover rounded-md"
+                    <ListThumbnail
+                      rawUrl={postMedias.find((media) => media.post_id === post.id)?.media_url}
+                      name={post.name}
                     />
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
                       {post.name}

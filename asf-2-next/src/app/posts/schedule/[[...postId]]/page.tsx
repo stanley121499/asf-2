@@ -80,6 +80,35 @@ const getErrorMessage = (error: unknown): string => {
   return "Unknown error";
 };
 
+/** Renders a 64×64 lazy-loaded thumbnail with an initial-letter fallback. */
+function ListThumbnail({
+  rawUrl,
+  name,
+}: Readonly<{
+  rawUrl: string | null | undefined;
+  name: string;
+}>): React.ReactElement {
+  const thumbUrl = rawUrl ? `${rawUrl}?width=128&height=128&resize=cover` : null;
+  if (thumbUrl) {
+    return (
+      <img
+        src={thumbUrl}
+        alt={name}
+        className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+  return (
+    <div className="w-16 h-16 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+      <span className="text-xl font-bold text-gray-400 dark:text-gray-500 select-none">
+        {name.charAt(0).toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
 const SchedulePostListPage: React.FC = function () {
   const { posts, loading, updatePost } = usePostContext();
   const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
@@ -347,14 +376,9 @@ const SchedulePostListPage: React.FC = function () {
                           style={{ height: `calc((100vh - 11rem) / 8)` }}
                           className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg">
                           <div className="flex items-center gap-4">
-                            <img
-                              src={
-                                postMedias.find(
-                                  (media) => media.post_id === post.id
-                                )?.media_url
-                              }
-                              alt={post.name}
-                              className="w-16 h-16 object-cover rounded-md"
+                            <ListThumbnail
+                              rawUrl={postMedias.find((media) => media.post_id === post.id)?.media_url}
+                              name={post.name}
                             />
                             <div className="w-[20vw]" style={{ maxWidth: "50%" }}>
                               <div className="flex items-center gap-x-5">

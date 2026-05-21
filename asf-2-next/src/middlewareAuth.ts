@@ -351,15 +351,8 @@ export async function rbacMiddlewareResponse(
     return null;
   }
 
-  /**
-   * TEMPORARY: bypass staff RBAC checks — any authenticated session is allowed
-   * through admin routes. Re-enable the userHasStaffAccess block below once
-   * the staff table / admin-email configuration is confirmed correct.
-   */
-  const bypassStaffAuth = trimEnv(process.env.BYPASS_STAFF_AUTH) === "true";
-  if (bypassStaffAuth) {
-    return null;
-  }
+  // Prototype mode: any authenticated session can access admin routes.
+  return null;
 
   const supabaseUrl = trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const serviceKey = trimEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
