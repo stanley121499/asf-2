@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { createPaymentIntentBodySchema } from "@/app/api/_lib/apiSchemas";
+import { parseJsonBody, validationErrorResponse } from "@/app/api/_lib/apiJson";
+import { getPaymentIntentRateLimiter, getClientIp } from "@/app/api/_lib/rateLimit";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 import { getStripe } from "@/app/api/_lib/stripe";
 import { myrToSen } from "@/app/api/_lib/money";
-import { isUuid } from "@/app/api/_lib/validation";
 
 import type { Database } from "@/database.types";
 
@@ -36,32 +38,25 @@ function subtotalMyrFromRows(rows: CartRow[]): number {
  * Computes the charge server-side and creates a Stripe PaymentIntent in MYR.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  let body: unknown;
-  try {
-    body = (await request.json()) as unknown;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
-  }
-  const userId = (body as { userId?: unknown }).userId;
-  const orderIdRaw = (body as { orderId?: unknown }).orderId;
-
-  if (typeof userId !== "string" || !isUuid(userId)) {
-    return NextResponse.json({ error: "userId must be a valid UUID" }, { status: 400 });
+  const ip = getClientIp(request);
+  const limiter = getPaymentIntentRateLimiter();
+  const limited = await limiter(ip);
+  if (limited.ok === false) {
+    return limited.response;
   }
 
-  const orderId =
-    orderIdRaw === undefined
-      ? null
-      : typeof orderIdRaw === "string" && isUuid(orderIdRaw)
-        ? orderIdRaw
-        : null;
-
-  if (orderIdRaw !== undefined && orderId === null) {
-    return NextResponse.json({ error: "orderId must be a valid UUID when provided" }, { status: 400 });
+  const parsedBody = await parseJsonBody(request);
+  if (parsedBody.ok === false) {
+    return parsedBody.response;
   }
+
+  const validated = createPaymentIntentBodySchema.safeParse(parsedBody.data);
+  if (validated.success === false) {
+    return validationErrorResponse(validated.error);
+  }
+
+  const { userId, orderId: orderIdOptional } = validated.data;
+  const orderId = orderIdOptional ?? null;
 
   const supabase = createServiceRoleClient();
   const { data: cartRows, error: cartError } = await supabase

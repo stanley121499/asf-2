@@ -190,7 +190,7 @@ const SchedulePostListPage: React.FC = function () {
                 Schedule
               </a>
             </div>
-            <Button href="/posts/create" className="btn btn-primary">
+            <Button href="/posts/create" size="sm" color="dark">
               <HiPlus className="text-xl" />
               Add Post
             </Button>

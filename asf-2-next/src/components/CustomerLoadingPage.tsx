@@ -1,19 +1,21 @@
 /**
  * App-wide loading screen shown during page transitions.
- * Uses only Tailwind CSS — no external animation libraries needed.
+ * Uses the maintenance illustration consistent with the route-level loading.tsx.
  */
 export default function CustomerLoadingPage(): JSX.Element {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)]">
-      <h1 className="font-display text-[28px] text-[var(--color-text)] mb-6 tracking-wide">
-        SYSTEM APP FORMULA
+    <div className="flex min-h-screen flex-col items-center justify-center py-16 bg-white dark:bg-gray-900">
+      <img
+        alt=""
+        src="/images/illustrations/maintenance.svg"
+        className="lg:max-w-md"
+      />
+      <h1 className="mb-3 mt-6 w-4/5 text-center text-4xl font-bold dark:text-white">
+        Give us a moment
       </h1>
-      <div className="flex mb-4">
-        <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce inline-block mx-1" style={{ animationDelay: '0ms' }} />
-        <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce inline-block mx-1" style={{ animationDelay: '150ms' }} />
-        <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-bounce inline-block mx-1" style={{ animationDelay: '300ms' }} />
+      <div className="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
+        loading...
       </div>
-      <p className="text-[14px] text-[var(--color-muted)]">正在加载…</p>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { orderIdParamSchema } from "@/app/api/_lib/apiSchemas";
+import { validationErrorResponse } from "@/app/api/_lib/apiJson";
 import { delyvaGetOrder } from "@/app/api/_lib/delyva";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
-import { isUuid } from "@/app/api/_lib/validation";
 
 import type { Json } from "@/database.types";
 
@@ -51,10 +52,11 @@ type RouteParams = { params: { orderId: string } };
  * tracking payload for the customer/admin UI (Step 9).
  */
 export async function GET(_request: Request, context: RouteParams): Promise<NextResponse> {
-  const orderId = context.params.orderId;
-  if (typeof orderId !== "string" || !isUuid(orderId)) {
-    return NextResponse.json({ error: "Invalid order id" }, { status: 400 });
+  const paramParsed = orderIdParamSchema.safeParse({ orderId: context.params.orderId });
+  if (paramParsed.success === false) {
+    return validationErrorResponse(paramParsed.error);
   }
+  const { orderId } = paramParsed.data;
 
   const supabase = createServiceRoleClient();
   const { data: orderRow, error } = await supabase

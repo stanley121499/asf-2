@@ -10,7 +10,7 @@ const LoadingPage: React.FC = () => {
         className="lg:max-w-md"
       />
       <h1 className="mb-3 mt-6 w-4/5 text-center text-4xl font-bold dark:text-white">
-        请稍候...
+        Please wait...
       </h1>
       <div className="flex items-center justify-center py-12">
         <div className="flex gap-1.5">
@@ -24,9 +24,7 @@ const LoadingPage: React.FC = () => {
 }
 
 
- export default function WrappedLoadingPage(props: any) {
-   return (
-     <LoadingPage {...props} />
-   );
- }
+export default function WrappedLoadingPage() {
+  return <LoadingPage />;
+}
  

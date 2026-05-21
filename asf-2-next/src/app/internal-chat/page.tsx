@@ -1,5 +1,4 @@
 "use client";
-import { useParams } from "next/navigation";
 import { CommunityContextBundle } from "@/context/RouteContextBundles";
 
 import React, { useEffect, useMemo, useState } from "react";

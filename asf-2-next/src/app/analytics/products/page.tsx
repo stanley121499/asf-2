@@ -6,11 +6,25 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import BarChart from "@/components/analytics/BarChart";
+import PieChart from "@/components/analytics/PieChart";
 import ListWidget from "@/components/analytics/ListWidget";
 import { FiMessageCircle } from "react-icons/fi";
 import { supabase } from "@/utils/supabaseClient";
 import { getDateRange } from "@/utils/analyticsDateRange";
 import type { Json } from "@/database.types";
+import {
+  MOCK_REVENUE_BAR_DATA,
+  MOCK_REVENUE_TOTAL,
+  MOCK_BEST_PRODUCTS,
+  MOCK_UNSELLABLE_PRODUCTS,
+  MOCK_BEST_STATES,
+  MOCK_BEST_CITIES,
+  MOCK_SALE_VS_STOCK,
+  MOCK_PRICE_DISTRIBUTION,
+  MOCK_MONTHLY_BAR_TITLES,
+  MOCK_MONTHLY_BAR_DATA,
+  MOCK_MONTHLY_BAR_TOTAL,
+} from "@/app/analytics/_lib/analyticsMock";
 
 /** Shape of a structured shipping address stored as JSONB in orders. */
 interface ShippingAddressJson {
@@ -163,8 +177,8 @@ const ProductAnalyticsPage: React.FC = function () {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, revenue]) => ({ x: date, y: revenue }));
 
-      setRevenueBarData(sortedBarData);
-      setRevenueTotal(totalRevenue);
+      setRevenueBarData(sortedBarData.length > 0 ? sortedBarData : MOCK_REVENUE_BAR_DATA);
+      setRevenueTotal(sortedBarData.length > 0 ? totalRevenue : MOCK_REVENUE_TOTAL);
 
       // ── 2. Best performing products ────────────────────────────────────────
       // Fetch order_items joined to orders (for date/status filter) and products
@@ -210,7 +224,7 @@ const ProductAnalyticsPage: React.FC = function () {
           unit: "units",
         }));
 
-      setBestProducts(topProducts);
+      setBestProducts(topProducts.length > 0 ? topProducts : MOCK_BEST_PRODUCTS);
 
       // ── 3. Highest unsellable products ─────────────────────────────────────
       // Products that have stock (count > 0) but zero orders in the period
@@ -260,13 +274,11 @@ const ProductAnalyticsPage: React.FC = function () {
         .slice(0, 10)
         .map(([id]) => id);
 
-      setUnsellableProducts(
-        topUnsellable.map((entry, i) => ({
-          ...entry,
-          // redirectUrl stored in title for now; ListWidget only takes title/amount/unit/media_url
-          title: `${entry.title} (${topUnsellableIds[i] ? topUnsellableIds[i].slice(0, 6) : "?"})`,
-        }))
-      );
+      const mappedUnsellable = topUnsellable.map((entry, i) => ({
+        ...entry,
+        title: `${entry.title} (${topUnsellableIds[i] ? topUnsellableIds[i].slice(0, 6) : "?"})`,
+      }));
+      setUnsellableProducts(mappedUnsellable.length > 0 ? mappedUnsellable : MOCK_UNSELLABLE_PRODUCTS);
 
       // ── 4. Best State / Best City ───────────────────────────────────────────
       const { data: ordersWithAddress } = await supabase
@@ -302,8 +314,8 @@ const ProductAnalyticsPage: React.FC = function () {
         .slice(0, 5)
         .map(([name, revenue]) => ({ title: name, amount: revenue, unit: "MYR" }));
 
-      setBestStates(topStates);
-      setBestCities(topCities);
+      setBestStates(topStates.length > 0 ? topStates : MOCK_BEST_STATES);
+      setBestCities(topCities.length > 0 ? topCities : MOCK_BEST_CITIES);
 
       setLoading(false);
     }
@@ -314,6 +326,24 @@ const ProductAnalyticsPage: React.FC = function () {
   // Build the best-products redirect URLs separately (ListWidget needs per-item redirectUrl via the wrapper below)
   // Since ListWidget only supports a single redirectUrl prop, we'll pass the list with dynamic id embedded in title
   // and provide a static redirectUrl pointing to the products-inner base path.
+
+  /** Revenue bar chart body — two-series mock when no real data, single-series otherwise. */
+  const revenueIsMock = revenueBarData === MOCK_REVENUE_BAR_DATA;
+  const revenueBarChartNode = revenueIsMock ? (
+    <BarChart
+      total={MOCK_MONTHLY_BAR_TOTAL}
+      description="Monthly Add to Cart vs Checkout (Jan–Dec)"
+      titles={MOCK_MONTHLY_BAR_TITLES}
+      data={MOCK_MONTHLY_BAR_DATA}
+    />
+  ) : (
+    <BarChart
+      total={Math.round(revenueTotal)}
+      description={`Revenue (RM) — ${selectedTimeRange}`}
+      titles={["Revenue (RM)"]}
+      data={[revenueBarData]}
+    />
+  );
 
   return (
     <NavbarSidebarLayout>
@@ -410,23 +440,28 @@ const ProductAnalyticsPage: React.FC = function () {
           <div className="inline-block min-w-full align-middle">
             <div className="overflow-hidden shadow">
 
-              {/* Revenue Bar Chart */}
+              {/* Sale vs Stock & Price Distribution PieCharts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <PieChart
+                  title="Sale vs Stock"
+                  dateRange={selectedTimeRange}
+                  chartData={MOCK_SALE_VS_STOCK}
+                />
+                <PieChart
+                  title="Price Distribution"
+                  dateRange={selectedTimeRange}
+                  chartData={MOCK_PRICE_DISTRIBUTION}
+                />
+              </div>
+
+              {/* Revenue / Monthly Bar Chart */}
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl mb-2">
-                  Revenue — {selectedTimeRange}
+                  {revenueIsMock ? "Monthly Sale vs Stock" : `Revenue — ${selectedTimeRange}`}
                 </h2>
                 {loading ? (
                   <div className="h-40 flex items-center justify-center text-gray-400">Loading…</div>
-                ) : revenueBarData.length === 0 ? (
-                  <div className="h-40 flex items-center justify-center text-gray-400">No revenue data for this period.</div>
-                ) : (
-                  <BarChart
-                    total={Math.round(revenueTotal)}
-                    description={`Revenue (RM) — ${selectedTimeRange}`}
-                    titles={["Revenue (RM)"]}
-                    data={[revenueBarData]}
-                  />
-                )}
+                ) : revenueBarChartNode}
               </div>
 
               {/* Best Performing & Unsellable Products */}

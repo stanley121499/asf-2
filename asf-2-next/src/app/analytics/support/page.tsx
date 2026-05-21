@@ -7,9 +7,22 @@ import { useRouter } from "next/navigation";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import PieChart from "@/components/analytics/PieChart";
 import LineChart from "@/components/analytics/LineChart";
+import BarChart from "@/components/analytics/BarChart";
 import { FiMessageCircle } from "react-icons/fi";
 import { supabase } from "@/utils/supabaseClient";
 import { getDateRange } from "@/utils/analyticsDateRange";
+import {
+  MOCK_VOLUME_CHART_DATA,
+  MOCK_VOLUME_CATEGORIES,
+  MOCK_STATUS_LABELS,
+  MOCK_STATUS_SERIES,
+  MOCK_OPEN_COUNT,
+  MOCK_CLOSED_COUNT,
+  MOCK_SUPPORT_BAR_TITLES,
+  MOCK_SUPPORT_BAR_DATA,
+  MOCK_SUPPORT_BAR_TOTAL,
+  MOCK_AGENT_LIST,
+} from "@/app/analytics/_lib/analyticsMock";
 
 /**
  * Floating Chat Button — navigates to internal chat.
@@ -141,8 +154,9 @@ const SupportAnalyticsPage: React.FC = function () {
       }
 
       const sortedDates = Array.from(volumeByDate.keys()).sort();
-      setVolumeChartData(sortedDates.map((d) => volumeByDate.get(d) ?? 0));
-      setVolumeCategories(sortedDates);
+      const volumeData = sortedDates.map((d) => volumeByDate.get(d) ?? 0);
+      setVolumeChartData(volumeData.length > 0 ? volumeData : MOCK_VOLUME_CHART_DATA);
+      setVolumeCategories(sortedDates.length > 0 ? sortedDates : MOCK_VOLUME_CATEGORIES);
 
       // ── Status breakdown (snapshot) ────────────────────────────────────────
       const allTickets = statusResult.data ?? [];
@@ -155,7 +169,8 @@ const SupportAnalyticsPage: React.FC = function () {
             .filter((id): id is string => id !== null)
         )
       );
-      setAgentList(["All Agents", ...uniqueAgentIds]);
+      // Use mock agent list when no real agents exist in the DB
+      setAgentList(uniqueAgentIds.length > 0 ? ["All Agents", ...uniqueAgentIds] : MOCK_AGENT_LIST);
 
       const statusCounts = new Map<string, number>();
       for (const ticket of allTickets) {
@@ -166,14 +181,16 @@ const SupportAnalyticsPage: React.FC = function () {
       const sortedStatuses = Array.from(statusCounts.entries()).sort(
         ([, a], [, b]) => b - a
       );
-      setStatusLabels(sortedStatuses.map(([s]) => s));
-      setStatusSeries(sortedStatuses.map(([, c]) => c));
+      const labels = sortedStatuses.map(([s]) => s);
+      const series = sortedStatuses.map(([, c]) => c);
+      setStatusLabels(labels.length > 0 ? labels : MOCK_STATUS_LABELS);
+      setStatusSeries(series.length > 0 ? series : MOCK_STATUS_SERIES);
 
       // Open / closed KPIs from snapshot
-      setOpenCount(statusCounts.get("open") ?? 0);
-      setClosedCount(
-        (statusCounts.get("resolved") ?? 0) + (statusCounts.get("closed") ?? 0)
-      );
+      const realOpen = statusCounts.get("open") ?? 0;
+      const realClosed = (statusCounts.get("resolved") ?? 0) + (statusCounts.get("closed") ?? 0);
+      setOpenCount(realOpen > 0 || realClosed > 0 ? realOpen : MOCK_OPEN_COUNT);
+      setClosedCount(realOpen > 0 || realClosed > 0 ? realClosed : MOCK_CLOSED_COUNT);
 
       setLoading(false);
     }
@@ -403,6 +420,19 @@ const SupportAnalyticsPage: React.FC = function () {
                     chartData={{ series: statusSeries, labels: statusLabels }}
                   />
                 )}
+              </div>
+
+              {/* Ticket Resolution Funnel */}
+              <div className="mb-6">
+                <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                  Resolution Funnel (Last 7 Days)
+                </h2>
+                <BarChart
+                  total={MOCK_SUPPORT_BAR_TOTAL}
+                  description="Received → In Progress → Resolved"
+                  titles={MOCK_SUPPORT_BAR_TITLES}
+                  data={MOCK_SUPPORT_BAR_DATA}
+                />
               </div>
 
             </div>

@@ -68,10 +68,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setLoading(true);
 
     try {
-      // Use getSession() instead of getUser() — the service_role key has no `sub` claim,
-      // so getUser() always returns 403 "invalid claim: missing sub claim".
-      // getSession() reads the user session from local storage which works correctly
-      // regardless of which API key the Supabase client is configured with.
+      // Prefer getSession() for bootstrapping: it reads the persisted session from
+      // storage without requiring a round-trip. (With the anon browser client,
+      // getUser() is also valid when you need the server to verify the JWT.)
       //
       // With autoRefreshToken: false (see supabaseClient.ts) this call returns
       // immediately without any network round-trip, even for expired sessions.
@@ -93,9 +92,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // session" so the user is prompted to sign in again rather than ending up
       // in an indeterminate state where the UI thinks they're logged in but every
       // API request returns 401.
+      const nowSec = Math.floor(Date.now() / 1000);
       const sessionIsExpired =
-        typeof session?.expires_at === "number" &&
-        session.expires_at < Date.now() / 1000;
+        typeof session?.expires_at === "number" && session.expires_at < nowSec;
 
       if (sessionIsExpired) {
         // Clear the stale entry from localStorage to speed up the next check.
@@ -111,33 +110,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       if (currentUser === null) {
         clearSessionCookie();
-      }
-
-      // Step 2: fetch user_details if we have a user
-      if (currentUser) {
-        const { data: detail, error: detailError } = await supabase
-          .from("user_details")
-          .select("*")
-          .eq("id", currentUser.id)
-          .maybeSingle();
-
-        if (detailError) {
-          console.error("Error fetching user details:", detailError);
-          setUserDetail(null);
-        } else {
-          setUserDetail(detail);
-        }
-      } else {
         setUserDetail(null);
-      }
-
-      // Step 3: set user state last to reduce intermediate re-renders
-      setUser(currentUser);
-      prevUserIdRef.current = currentUser?.id ?? null;
-
-      if (currentUser !== null) {
+        prevUserIdRef.current = null;
+      } else {
         syncSessionCookieFromStorage();
       }
+
+      // Set user last; `user_details` is loaded in the dedicated `useEffect` below so a
+      // slow `user_details` query never blocks `loading` → sign-in page.
+      setUser(currentUser);
     } finally {
       setLoading(false);
     }
@@ -162,27 +143,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       // Keep state in sync with Supabase response.
       setUser(data.user);
-      prevUserIdRef.current = data.user?.id ?? null;
 
-      // Fetch user_detail after sign-in (if we have a user id).
-      if (data.user) {
-        const { data: detail, error: detailError } = await supabase
-          .from("user_details")
-          .select("*")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-        if (detailError) {
-          console.error("Error fetching user details after sign in:", detailError);
-          setUserDetail(null);
-        } else {
-          setUserDetail(detail);
-        }
-      } else {
+      if (data.user === null) {
         setUserDetail(null);
+        prevUserIdRef.current = null;
+      } else {
+        syncSessionCookieFromStorage();
       }
 
-      syncSessionCookieFromStorage();
+      // `user_details` is loaded by the `useEffect` on `user` (do not await here — avoids
+      // hanging the sign-in flow if the profile query stalls).
 
       return { user: data.user, error: null };
     } finally {
@@ -248,9 +218,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Fetch user_detail whenever the authenticated user ID changes.
   // This runs outside the auth lock so supabase.from() can proceed safely.
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      prevUserIdRef.current = null;
+      return;
+    }
     const userId = user.id;
-    if (userId === prevUserIdRef.current) return; // already fetched for this user
+    if (userId === prevUserIdRef.current) {
+      return;
+    }
     prevUserIdRef.current = userId;
 
     supabase

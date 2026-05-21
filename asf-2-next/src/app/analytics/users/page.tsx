@@ -6,9 +6,27 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import LineChart from "@/components/analytics/LineChart";
+import PieChart from "@/components/analytics/PieChart";
+import BarChart from "@/components/analytics/BarChart";
 import { FiMessageCircle } from "react-icons/fi";
 import { supabase } from "@/utils/supabaseClient";
 import { getDateRange } from "@/utils/analyticsDateRange";
+import {
+  MOCK_NEW_USERS_CHART_DATA,
+  MOCK_NEW_USERS_CATEGORIES,
+  MOCK_TOTAL_USERS,
+  MOCK_ACTIVE_USERS,
+  MOCK_RACE_PIE,
+  MOCK_AGE_PIE,
+  MOCK_STATE_PIE,
+  MOCK_CITY_PIE,
+  MOCK_USER_LINE_CHART_DATA,
+  MOCK_USER_LINE_TITLE_DATA,
+  MOCK_USER_LINE_CATEGORIES,
+  MOCK_USER_FUNNEL_TITLES,
+  MOCK_USER_FUNNEL_DATA,
+  MOCK_USER_FUNNEL_TOTAL,
+} from "@/app/analytics/_lib/analyticsMock";
 
 /**
  * Floating Chat Button — navigates to internal chat.
@@ -125,11 +143,13 @@ const UserAnalyticsPage: React.FC = function () {
       }
 
       const sortedDates = Array.from(countByDate.keys()).sort();
-      setNewUsersChartData(sortedDates.map((d) => countByDate.get(d) ?? 0));
-      setNewUsersCategories(sortedDates);
+      const chartData = sortedDates.map((d) => countByDate.get(d) ?? 0);
+      setNewUsersChartData(chartData.length > 0 ? chartData : MOCK_NEW_USERS_CHART_DATA);
+      setNewUsersCategories(sortedDates.length > 0 ? sortedDates : MOCK_NEW_USERS_CATEGORIES);
 
       // Total users
-      setTotalUsers(totalUsersResult.error ? 0 : (totalUsersResult.count ?? 0));
+      const realTotalUsers = totalUsersResult.error ? 0 : (totalUsersResult.count ?? 0);
+      setTotalUsers(realTotalUsers > 0 ? realTotalUsers : MOCK_TOTAL_USERS);
 
       // Active users: count distinct user_ids
       const activeUserIds = new Set<string>(
@@ -137,13 +157,37 @@ const UserAnalyticsPage: React.FC = function () {
           .map((row) => row.user_id)
           .filter((uid): uid is string => uid !== null)
       );
-      setActiveUsers(activeUserIds.size);
+      setActiveUsers(activeUserIds.size > 0 ? activeUserIds.size : MOCK_ACTIVE_USERS);
 
       setLoading(false);
     }
 
     void fetchUserAnalytics();
   }, [selectedTimeRange]);
+
+  /** Line chart node — mock VIP/Normal series when no real data, real new-user series otherwise. */
+  const userLineIsMock = newUsersChartData === MOCK_NEW_USERS_CHART_DATA;
+  const userLineChartNode = userLineIsMock ? (
+    <LineChart
+      dateRange={selectedTimeRange}
+      titleData={MOCK_USER_LINE_TITLE_DATA}
+      chartData={MOCK_USER_LINE_CHART_DATA}
+      categories={MOCK_USER_LINE_CATEGORIES}
+    />
+  ) : (
+    <LineChart
+      dateRange={selectedTimeRange}
+      titleData={[
+        {
+          title: "New Registrations",
+          value: newUsersChartData.reduce((a, b) => a + b, 0),
+          unit: "users",
+        },
+      ]}
+      chartData={[{ name: "New Users", data: newUsersChartData }]}
+      categories={newUsersCategories}
+    />
+  );
 
   return (
     <NavbarSidebarLayout>
@@ -240,49 +284,55 @@ const UserAnalyticsPage: React.FC = function () {
           <div className="inline-block min-w-full align-middle">
             <div className="overflow-hidden shadow">
 
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Users (All Time)</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {loading ? "—" : totalUsers.toLocaleString()}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                    Active Users — {selectedTimeRange}
-                  </p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {loading ? "—" : activeUsers.toLocaleString()}
-                  </p>
-                </div>
+              {/* Demographic PieCharts — Race & Age */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <PieChart
+                  title="Customers by Ethnicity"
+                  dateRange="All Time"
+                  chartData={MOCK_RACE_PIE}
+                />
+                <PieChart
+                  title="Customers by Age Group"
+                  dateRange="All Time"
+                  chartData={MOCK_AGE_PIE}
+                />
               </div>
 
-              {/* New Users Over Time Line Chart */}
+              {/* Geographic PieCharts — State & City */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <PieChart
+                  title="Orders by State"
+                  dateRange={selectedTimeRange}
+                  chartData={MOCK_STATE_PIE}
+                />
+                <PieChart
+                  title="Orders by City"
+                  dateRange={selectedTimeRange}
+                  chartData={MOCK_CITY_PIE}
+                />
+              </div>
+
+              {/* VIP vs Normal LineChart (real new-user data as fallback, mock VIP/Normal otherwise) */}
               <div className="mb-4">
                 <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
-                  New Users — {selectedTimeRange}
+                  {userLineIsMock ? "VIP vs Normal Customers" : `New Users — ${selectedTimeRange}`}
                 </h2>
                 {loading ? (
                   <div className="h-64 flex items-center justify-center text-gray-400">Loading…</div>
-                ) : newUsersChartData.length === 0 ? (
-                  <div className="h-64 flex items-center justify-center text-gray-400">
-                    No new user registrations in this period.
-                  </div>
-                ) : (
-                  <LineChart
-                    dateRange={selectedTimeRange}
-                    titleData={[
-                      {
-                        title: "New Registrations",
-                        value: newUsersChartData.reduce((a, b) => a + b, 0),
-                        unit: "users",
-                      },
-                    ]}
-                    chartData={[{ name: "New Users", data: newUsersChartData }]}
-                    categories={newUsersCategories}
-                  />
-                )}
+                ) : userLineChartNode}
+              </div>
+
+              {/* Product View → Add to Cart → Payment funnel BarChart */}
+              <div className="mb-4">
+                <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                  Conversion Funnel (Last 7 Days)
+                </h2>
+                <BarChart
+                  total={MOCK_USER_FUNNEL_TOTAL}
+                  description="Product View → Add to Cart → Payment"
+                  titles={MOCK_USER_FUNNEL_TITLES}
+                  data={MOCK_USER_FUNNEL_DATA}
+                />
               </div>
 
             </div>

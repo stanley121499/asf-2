@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { deliveryCreateShipmentBodySchema } from "@/app/api/_lib/apiSchemas";
+import { parseJsonBody, validationErrorResponse } from "@/app/api/_lib/apiJson";
 import {
   delyvaCreateOrder,
   delyvaGetLabelUrl,
@@ -11,11 +13,9 @@ import {
 } from "@/app/api/_lib/delyva";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 import { parseShippingAddressStructured } from "@/app/api/_lib/shippingAddress";
-import { isUuid } from "@/app/api/_lib/validation";
 
 import type { Database } from "@/database.types";
 
-type WeightInput = { unit: "kg"; value: number };
 type DimInput = { unit: "cm"; width: number; length: number; height: number };
 
 /** Default parcel box when the client omits `dimensions` (Step 9 admin ship modal). */
@@ -31,33 +31,6 @@ type OrderShipmentPick = Pick<
   OrderRow,
   "id" | "total_amount" | "shipping_address" | "shipping_address_structured" | "user_id"
 >;
-
-function isWeight(value: unknown): value is WeightInput {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  const o = value as Record<string, unknown>;
-  return o.unit === "kg" && typeof o.value === "number" && Number.isFinite(o.value) && o.value > 0;
-}
-
-function isDimensions(value: unknown): value is DimInput {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  const o = value as Record<string, unknown>;
-  return (
-    o.unit === "cm" &&
-    typeof o.width === "number" &&
-    typeof o.length === "number" &&
-    typeof o.height === "number" &&
-    Number.isFinite(o.width) &&
-    Number.isFinite(o.length) &&
-    Number.isFinite(o.height) &&
-    o.width > 0 &&
-    o.length > 0 &&
-    o.height > 0
-  );
-}
 
 function readDelyvaOrderId(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -91,40 +64,21 @@ function readStringField(obj: Record<string, unknown>, keys: string[]): string |
  * **Security:** Route is not behind RBAC yet; restrict network access or add auth in Step 9/12.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  let body: unknown;
-  try {
-    body = (await request.json()) as unknown;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  const parsedBody = await parseJsonBody(request);
+  if (parsedBody.ok === false) {
+    return parsedBody.response;
   }
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
+  const validated = deliveryCreateShipmentBodySchema.safeParse(parsedBody.data);
+  if (validated.success === false) {
+    return validationErrorResponse(validated.error);
   }
-  const orderIdRaw = (body as { orderId?: unknown }).orderId;
-  const serviceCode = (body as { serviceCode?: unknown }).serviceCode;
-  const weight = (body as { weight?: unknown }).weight;
-  const dimensions = (body as { dimensions?: unknown }).dimensions;
-
-  if (typeof orderIdRaw !== "string" || !isUuid(orderIdRaw)) {
-    return NextResponse.json({ error: "orderId must be a UUID" }, { status: 400 });
-  }
-  if (typeof serviceCode !== "string" || serviceCode.length === 0) {
-    return NextResponse.json({ error: "serviceCode is required" }, { status: 400 });
-  }
-  if (!isWeight(weight)) {
-    return NextResponse.json({ error: "weight must be { unit: \"kg\", value: positive number }" }, { status: 400 });
-  }
+  const { orderId: orderIdRaw, serviceCode, weight, dimensions } = validated.data;
 
   let resolvedDimensions: DimInput;
   if (dimensions === undefined) {
     resolvedDimensions = DEFAULT_PARCEL_DIMENSIONS_CM;
-  } else if (isDimensions(dimensions)) {
-    resolvedDimensions = dimensions;
   } else {
-    return NextResponse.json(
-      { error: "dimensions must be omitted or { unit: \"cm\", width, length, height: positive numbers }" },
-      { status: 400 },
-    );
+    resolvedDimensions = dimensions;
   }
 
   const supabase = createServiceRoleClient();

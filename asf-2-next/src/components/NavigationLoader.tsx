@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import CustomerLoadingPage from "@/components/CustomerLoadingPage";
+import { syncSessionCookieFromStorage } from "@/utils/sessionCookieSync";
 
 /**
  * Module-level flag so the history.pushState patch is only applied once,
@@ -13,6 +14,7 @@ import CustomerLoadingPage from "@/components/CustomerLoadingPage";
 let pushStatePatched = false;
 /** The original pushState reference, stored so we can restore it on unmount. */
 let originalPushState: typeof window.history.pushState | null = null;
+let originalReplaceState: typeof window.history.replaceState | null = null;
 
 /**
  * NavigationLoader
@@ -100,6 +102,8 @@ export function NavigationLoader({
           dest.pathname === window.location.pathname && dest.hash !== "";
 
         if (destPath !== currentPath && !isHashJump) {
+          /** Edge middleware reads `sb-app-session`; refresh before same-origin nav. */
+          syncSessionCookieFromStorage();
           startLoading();
         }
       } catch {
@@ -117,13 +121,27 @@ export function NavigationLoader({
       window.history.pushState = (
         ...args: Parameters<typeof window.history.pushState>
       ): void => {
+        /** Next.js client navigations call pushState; cookie must exist before the RSC request. */
+        syncSessionCookieFromStorage();
         originalPushState?.(...args);
+        startLoading();
+      };
+
+      originalReplaceState = window.history.replaceState.bind(window.history);
+      window.history.replaceState = (
+        ...args: Parameters<typeof window.history.replaceState>
+      ): void => {
+        syncSessionCookieFromStorage();
+        originalReplaceState?.(...args);
         startLoading();
       };
     }
 
     // ── 3. Back / Forward / router.back() ────────────────────────────────
-    const handlePopState = (): void => startLoading();
+    const handlePopState = (): void => {
+      syncSessionCookieFromStorage();
+      startLoading();
+    };
 
     document.addEventListener("click", handleClick);
     window.addEventListener("popstate", handlePopState);
@@ -136,6 +154,10 @@ export function NavigationLoader({
       if (originalPushState !== null) {
         window.history.pushState = originalPushState;
         originalPushState = null;
+      }
+      if (originalReplaceState !== null) {
+        window.history.replaceState = originalReplaceState;
+        originalReplaceState = null;
       }
       pushStatePatched = false;
 

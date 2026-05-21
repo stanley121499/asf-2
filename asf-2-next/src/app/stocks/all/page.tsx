@@ -13,10 +13,14 @@ import { useProductMediaContext } from "@/context/product/ProductMediaContext";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import LoadingPage from "@/app/loading";
 import { useRouter } from "next/navigation";
+import { MOCK_PRODUCTS } from "@/app/stocks/_lib/stocksMock";
 
 const StockAllProductPage: React.FC = function () {
-  const { products, loading } = useProductContext();
+  const { products: rawProducts, loading } = useProductContext();
   const [searchValue, setSearchValue] = React.useState("");
+
+  /** Fall back to mock products when loading is done but DB returned nothing. */
+  const products: Product[] = rawProducts.length > 0 ? rawProducts : MOCK_PRODUCTS;
 
   if (loading) {
     return <LoadingPage />;

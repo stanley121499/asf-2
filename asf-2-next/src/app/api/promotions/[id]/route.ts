@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 
+import { promotionIdParamSchema, promotionPatchBodySchema } from "@/app/api/_lib/apiSchemas";
+import { parseJsonBody, validationErrorResponse } from "@/app/api/_lib/apiJson";
 import { normalizePromoCode } from "@/app/api/_lib/promotions";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
-import { isUuid } from "@/app/api/_lib/validation";
 
 import type { Database } from "@/database.types";
 
 type PromotionRow = Database["public"]["Tables"]["promotions"]["Row"];
-
-function isDiscountType(value: unknown): value is "percentage" | "fixed" {
-  return value === "percentage" || value === "fixed";
-}
 
 type RouteParams = { params: { id: string } };
 
@@ -21,10 +18,11 @@ export async function GET(
   _request: Request,
   context: RouteParams
 ): Promise<NextResponse> {
-  const { id } = context.params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const paramParsed = promotionIdParamSchema.safeParse({ id: context.params.id });
+  if (paramParsed.success === false) {
+    return validationErrorResponse(paramParsed.error);
   }
+  const { id } = paramParsed.data;
 
   const supabase = createServiceRoleClient();
   const { data: promotion, error: promoError } = await supabase
@@ -65,122 +63,69 @@ export async function PATCH(
   request: Request,
   context: RouteParams
 ): Promise<NextResponse> {
-  const { id } = context.params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const paramParsed = promotionIdParamSchema.safeParse({ id: context.params.id });
+  if (paramParsed.success === false) {
+    return validationErrorResponse(paramParsed.error);
+  }
+  const { id } = paramParsed.data;
+
+  const parsedBody = await parseJsonBody(request);
+  if (parsedBody.ok === false) {
+    return parsedBody.response;
   }
 
-  let body: unknown;
-  try {
-    body = (await request.json()) as unknown;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  const validated = promotionPatchBodySchema.safeParse(parsedBody.data);
+  if (validated.success === false) {
+    return validationErrorResponse(validated.error);
   }
 
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
-  }
-
-  const o = body as Record<string, unknown>;
+  const d = validated.data;
   const patch: Database["public"]["Tables"]["promotions"]["Update"] = {};
 
-  if (o["name"] !== undefined) {
-    if (typeof o["name"] !== "string" || o["name"].trim().length === 0) {
-      return NextResponse.json({ error: "name must be a non-empty string" }, { status: 400 });
-    }
-    patch.name = o["name"].trim();
+  if (d.name !== undefined) {
+    patch.name = d.name;
   }
 
-  if (o["description"] !== undefined) {
-    if (o["description"] === null) {
+  if (d.description !== undefined) {
+    if (d.description === null) {
       patch.description = null;
-    } else if (typeof o["description"] === "string") {
-      patch.description =
-        o["description"].trim().length === 0 ? null : o["description"].trim();
     } else {
-      return NextResponse.json({ error: "description must be a string or null" }, { status: 400 });
+      const t = d.description.trim();
+      patch.description = t.length === 0 ? null : t;
     }
   }
 
-  if (o["code"] !== undefined) {
-    if (o["code"] === null) {
+  if (d.code !== undefined) {
+    if (d.code === null) {
       patch.code = null;
-    } else if (typeof o["code"] === "string") {
-      const t = o["code"].trim();
+    } else {
+      const t = d.code.trim();
       patch.code = t.length === 0 ? null : normalizePromoCode(t);
-    } else {
-      return NextResponse.json({ error: "code must be a string or null" }, { status: 400 });
     }
   }
 
-  if (o["discount_type"] !== undefined) {
-    if (!isDiscountType(o["discount_type"])) {
-      return NextResponse.json(
-        { error: "discount_type must be 'percentage' or 'fixed'" },
-        { status: 400 }
-      );
-    }
-    patch.discount_type = o["discount_type"];
+  if (d.discount_type !== undefined) {
+    patch.discount_type = d.discount_type;
   }
 
-  if (o["discount_value"] !== undefined) {
-    const v =
-      typeof o["discount_value"] === "number"
-        ? o["discount_value"]
-        : typeof o["discount_value"] === "string"
-          ? Number(o["discount_value"])
-          : NaN;
-    if (!Number.isFinite(v) || v < 0) {
-      return NextResponse.json(
-        { error: "discount_value must be a non-negative number" },
-        { status: 400 }
-      );
-    }
-    patch.discount_value = v;
+  if (d.discount_value !== undefined) {
+    patch.discount_value = d.discount_value;
   }
 
-  if (o["start_date"] !== undefined) {
-    if (o["start_date"] === null) {
-      patch.start_date = null;
-    } else if (typeof o["start_date"] === "string") {
-      patch.start_date = o["start_date"].length === 0 ? null : o["start_date"];
-    } else {
-      return NextResponse.json({ error: "start_date invalid" }, { status: 400 });
-    }
+  if (d.start_date !== undefined) {
+    patch.start_date = d.start_date;
   }
 
-  if (o["end_date"] !== undefined) {
-    if (o["end_date"] === null) {
-      patch.end_date = null;
-    } else if (typeof o["end_date"] === "string") {
-      patch.end_date = o["end_date"].length === 0 ? null : o["end_date"];
-    } else {
-      return NextResponse.json({ error: "end_date invalid" }, { status: 400 });
-    }
+  if (d.end_date !== undefined) {
+    patch.end_date = d.end_date;
   }
 
-  if (o["active"] !== undefined) {
-    if (typeof o["active"] !== "boolean") {
-      return NextResponse.json({ error: "active must be a boolean" }, { status: 400 });
-    }
-    patch.active = o["active"];
+  if (d.active !== undefined) {
+    patch.active = d.active;
   }
 
-  if (o["max_uses"] !== undefined) {
-    if (o["max_uses"] === null) {
-      patch.max_uses = null;
-    } else if (
-      typeof o["max_uses"] === "number" &&
-      Number.isInteger(o["max_uses"]) &&
-      o["max_uses"] > 0
-    ) {
-      patch.max_uses = o["max_uses"];
-    } else {
-      return NextResponse.json(
-        { error: "max_uses must be a positive integer or null" },
-        { status: 400 }
-      );
-    }
+  if (d.max_uses !== undefined) {
+    patch.max_uses = d.max_uses;
   }
 
   const supabase = createServiceRoleClient();
@@ -200,20 +145,8 @@ export async function PATCH(
     );
   }
 
-  if (o["product_ids"] !== undefined) {
-    if (!Array.isArray(o["product_ids"])) {
-      return NextResponse.json({ error: "product_ids must be an array" }, { status: 400 });
-    }
-    const productIds: string[] = [];
-    for (const pid of o["product_ids"]) {
-      if (typeof pid !== "string" || !isUuid(pid)) {
-        return NextResponse.json(
-          { error: "Each product_ids entry must be a UUID string" },
-          { status: 400 }
-        );
-      }
-      productIds.push(pid);
-    }
+  if (d.product_ids !== undefined) {
+    const productIds = d.product_ids;
 
     const { error: delError } = await supabase
       .from("promotion_products")
@@ -257,10 +190,11 @@ export async function DELETE(
   _request: Request,
   context: RouteParams
 ): Promise<NextResponse> {
-  const { id } = context.params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const paramParsed = promotionIdParamSchema.safeParse({ id: context.params.id });
+  if (paramParsed.success === false) {
+    return validationErrorResponse(paramParsed.error);
   }
+  const { id } = paramParsed.data;
 
   const supabase = createServiceRoleClient();
   const nowIso = new Date().toISOString();

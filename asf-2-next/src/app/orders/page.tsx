@@ -10,6 +10,7 @@ import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import LoadingPage from "@/app/loading";
 import { useOrderContext } from "@/context/product/OrderContext";
 import { supabase } from "@/utils/supabaseClient";
+import { MOCK_ORDERS } from "@/app/orders/_lib/ordersMock";
 
 
 interface OrderWithUser {
@@ -188,7 +189,7 @@ const OrderListPage: React.FC = function () {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       if (orders.length === 0) {
-        setOrdersWithUsers([]);
+        setOrdersWithUsers(MOCK_ORDERS);
         return;
       }
 

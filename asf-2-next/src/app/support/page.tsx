@@ -9,6 +9,7 @@ import LoadingPage from "@/app/loading";
 import { useUserContext } from "@/context/UserContext";
 import { useTicketContext } from "@/context/TicketContext";
 import { useAuthContext } from "@/context/AuthContext";
+import { useAlertContext } from "@/context/AlertContext";
 import { 
   FiHeadphones, 
   FiSearch, 
@@ -24,11 +25,20 @@ import CreateSupportTicketModal from "@/components/CreateSupportTicketModal";
 type SupportTicketStatus = "open" | "closed";
 
 const SupportPage: React.FC = function () {
-  const { conversations, loading } = useConversationContext();
+  const {
+    conversations,
+    loading,
+    createConversation,
+    addParticipant,
+    createMessage,
+    listMessagesByConversationId,
+  } = useConversationContext();
   const { users } = useUserContext();
   const { tickets, updateTicket } = useTicketContext();
   const { user: authUser } = useAuthContext();
+  const { showAlert } = useAlertContext();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [isStartingConversation, setIsStartingConversation] = useState(false);
   
   // Navigation state
   const [activeTicketTab, setActiveTicketTab] = useState<SupportTicketStatus>("open");
@@ -100,6 +110,35 @@ const SupportPage: React.FC = function () {
     const latest = conversations.find((c) => c.ticket_id === selectedTicketId) ?? null;
     setSelectedConversation(latest);
   }, [conversations, selectedTicketId]);
+
+  /**
+   * Hydrate messages when a ticket with a linked conversation is selected.
+   */
+  useEffect(() => {
+    if (selectedConversation === null) {
+      return;
+    }
+    void listMessagesByConversationId(selectedConversation.id);
+  }, [selectedConversation, listMessagesByConversationId]);
+
+  /**
+   * Staff must be a participant to send messages under typical RLS rules.
+   */
+  useEffect(() => {
+    if (selectedConversation === null || authUser === null) {
+      return;
+    }
+    const alreadyJoined = selectedConversation.participants.some(
+      (p) => p.user_id === authUser.id
+    );
+    if (alreadyJoined) {
+      return;
+    }
+    void addParticipant({
+      conversation_id: selectedConversation.id,
+      user_id: authUser.id,
+    });
+  }, [selectedConversation, authUser, addParticipant]);
   
   // Function to create a support ticket
   const handleCreateSupportTicket = () => {
@@ -112,18 +151,63 @@ const SupportPage: React.FC = function () {
     setActiveTicketTab("open");
   };
 
-  // Function to create a mock conversation object for tickets without actual conversations
-  const createMockConversation = (ticketId: string): Conversation => {
-    return {
-      id: ticketId,
-      created_at: new Date().toISOString(),
-      active: true,
-      group_id: null,
-      ticket_id: ticketId,
-      type: "support",
-      messages: [],
-      participants: [],
-    };
+  /**
+   * Creates a linked conversation for the selected ticket (mirrors CreateSupportTicketModal).
+   */
+  const handleStartConversation = async (): Promise<void> => {
+    if (selectedTicketId === null || authUser === null) {
+      return;
+    }
+    const ticket = tickets.find((t) => t.id === selectedTicketId);
+    if (ticket === undefined) {
+      showAlert("Ticket not found.", "error");
+      return;
+    }
+    const customerId = ticket.user_id;
+    if (customerId === null || customerId.length === 0) {
+      showAlert("This ticket has no customer user id; cannot start a conversation.", "error");
+      return;
+    }
+    setIsStartingConversation(true);
+    try {
+      const conversation = await createConversation({
+        type: "support",
+        ticket_id: selectedTicketId,
+        active: true,
+        created_at: new Date().toISOString(),
+      });
+      if (conversation === undefined) {
+        return;
+      }
+      await addParticipant({
+        conversation_id: conversation.id,
+        user_id: customerId,
+      });
+      await addParticipant({
+        conversation_id: conversation.id,
+        user_id: authUser.id,
+      });
+      const subjectLine = ticket.subject ?? "No Subject";
+      const description = ticket.description ?? "";
+      const initialContent = [
+        "Support conversation started.",
+        "",
+        `Subject: ${subjectLine}`,
+        `Type: ${ticket.type ?? "general"}`,
+        "",
+        description,
+      ].join("\n");
+      await createMessage({
+        conversation_id: conversation.id,
+        content: initialContent,
+        created_at: new Date().toISOString(),
+        user_id: authUser.id,
+        type: "text",
+        media_url: null,
+      });
+    } finally {
+      setIsStartingConversation(false);
+    }
   };
 
   if (loading) {
@@ -465,10 +549,22 @@ const SupportPage: React.FC = function () {
                   messages={selectedConversation.messages}
                 />
               ) : (
-                <ChatWindow
-                  conversation={createMockConversation(selectedTicketId)}
-                  messages={createMockConversation(selectedTicketId).messages}
-                />
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 min-h-[240px]">
+                  <p className="text-gray-600 dark:text-gray-300 text-center text-sm max-w-md">
+                    No conversation is linked to this ticket yet. Start one to message the customer in real time.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleStartConversation()}
+                    disabled={
+                      isStartingConversation ||
+                      authUser === null
+                    }
+                    className="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isStartingConversation ? "Starting…" : "Start conversation"}
+                  </button>
+                </div>
               )}
             </div>
           ) : (

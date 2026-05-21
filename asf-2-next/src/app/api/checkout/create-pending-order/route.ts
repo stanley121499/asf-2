@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { createPendingOrderBodySchema } from "@/app/api/_lib/apiSchemas";
+import { parseJsonBody, validationErrorResponse } from "@/app/api/_lib/apiJson";
 import {
   normalizePromoCode,
   validatePromotionForCart,
@@ -46,97 +48,26 @@ function structuredToJson(s: ShippingAddressStructured): Json {
   };
 }
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-/**
- * Validates request body and returns a typed structured address or an error message.
- */
-function parseStructuredAddress(value: unknown): ShippingAddressStructured | string {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return "shipping_address_structured must be an object";
-  }
-  const o = value as Record<string, unknown>;
-  const address1 = o["address1"];
-  const address2 = o["address2"];
-  const city = o["city"];
-  const state = o["state"];
-  const postcode = o["postcode"];
-  const country = o["country"];
-  const recipientName = o["recipientName"];
-  const recipientPhone = o["recipientPhone"];
-
-  if (!isNonEmptyString(address1)) {
-    return "address1 is required";
-  }
-  if (typeof address2 !== "string") {
-    return "address2 must be a string";
-  }
-  if (!isNonEmptyString(city)) {
-    return "city is required";
-  }
-  if (!isNonEmptyString(state)) {
-    return "state is required";
-  }
-  if (!isNonEmptyString(postcode)) {
-    return "postcode is required";
-  }
-  if (!isNonEmptyString(country)) {
-    return "country is required";
-  }
-  if (!isNonEmptyString(recipientName)) {
-    return "recipientName is required";
-  }
-  if (!isNonEmptyString(recipientPhone)) {
-    return "recipientPhone is required";
-  }
-
-  return {
-    address1: address1.trim(),
-    address2: address2.trim(),
-    city: city.trim(),
-    state: state.trim(),
-    postcode: postcode.trim(),
-    country: country.trim(),
-    recipientName: recipientName.trim(),
-    recipientPhone: recipientPhone.trim(),
-  };
-}
-
 /**
  * POST /api/checkout/create-pending-order
  *
  * Creates a `pending` order with shipping addresses and server-computed totals (cart + flat shipping).
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  let body: unknown;
-  try {
-    body = (await request.json()) as unknown;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
+  const parsedBody = await parseJsonBody(request);
+  if (parsedBody.ok === false) {
+    return parsedBody.response;
   }
 
-  const userId = (body as { userId?: unknown }).userId;
-  const shippingAddress = (body as { shipping_address?: unknown }).shipping_address;
-  const structuredRaw = (body as { shipping_address_structured?: unknown }).shipping_address_structured;
-  const promoCodeRaw = (body as { promoCode?: unknown }).promoCode;
-  const promotionIdRaw = (body as { promotionId?: unknown }).promotionId;
-
-  if (typeof userId !== "string" || !isUuid(userId)) {
-    return NextResponse.json({ error: "userId must be a valid UUID" }, { status: 400 });
-  }
-  if (typeof shippingAddress !== "string" || !isNonEmptyString(shippingAddress)) {
-    return NextResponse.json({ error: "shipping_address must be a non-empty string" }, { status: 400 });
+  const validated = createPendingOrderBodySchema.safeParse(parsedBody.data);
+  if (validated.success === false) {
+    return validationErrorResponse(validated.error);
   }
 
-  const structured = parseStructuredAddress(structuredRaw);
-  if (typeof structured === "string") {
-    return NextResponse.json({ error: structured }, { status: 400 });
-  }
+  const { userId, shipping_address: shippingAddress, shipping_address_structured: structured } =
+    validated.data;
+  const promoCodeRaw = validated.data.promoCode;
+  const promotionIdRaw = validated.data.promotionId;
 
   const supabase = createServiceRoleClient();
 

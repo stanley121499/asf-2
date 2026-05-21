@@ -5,11 +5,26 @@ import { AnalyticsContextBundle } from "@/context/RouteContextBundles";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
-import BarChart from "@/components/analytics/BarChart";
-import PieChart from "@/components/analytics/PieChart";
+import LineChart from "@/components/analytics/LineChart";
 import { FiMessageCircle } from "react-icons/fi";
 import { supabase } from "@/utils/supabaseClient";
 import { getDateRange } from "@/utils/analyticsDateRange";
+import {
+  MOCK_CATEGORY_STATS,
+  MOCK_CAT_DEPARTMENT_CHART,
+  MOCK_CAT_DEPARTMENT_TITLE,
+  MOCK_CAT_DATES,
+  MOCK_CAT_BRAND_CHART,
+  MOCK_CAT_BRAND_TITLE,
+  MOCK_CAT_SEASONAL_CHART,
+  MOCK_CAT_SEASONAL_TITLE,
+  MOCK_CAT_CATEGORY_CHART,
+  MOCK_CAT_CATEGORY_TITLE,
+  MOCK_CAT_FLAVOUR_CHART,
+  MOCK_CAT_FLAVOUR_TITLE,
+  MOCK_CAT_PACK_CHART,
+  MOCK_CAT_PACK_TITLE,
+} from "@/app/analytics/_lib/analyticsMock";
 
 /** Aggregated per-category analytics. */
 interface CategoryStats {
@@ -171,22 +186,23 @@ const CategoriesAnalyticsPage: React.FC = function () {
         (a, b) => b.revenue - a.revenue
       );
 
-      setCategoryStats(stats);
+      setCategoryStats(stats.length > 0 ? stats : MOCK_CATEGORY_STATS);
       setLoading(false);
     }
 
     void fetchCategoryAnalytics();
   }, [selectedTimeRange]);
 
-  // Build chart props from aggregated stats
-  const revenueBarData = categoryStats.map((s) => ({
-    x: s.name,
-    y: Math.round(s.revenue),
-  }));
-  const totalRevenue = categoryStats.reduce((acc, s) => acc + s.revenue, 0);
-
-  const pieLabels = categoryStats.map((s) => s.name);
-  const pieSeries = categoryStats.map((s) => s.unitsSold);
+  /** Builds LineChart chartData from real categoryStats when available, else use mock. */
+  const categoryLineData = categoryStats.length > 0
+    ? [{ name: "Revenue (RM)", data: categoryStats.map((s) => Math.round(s.revenue)) }]
+    : MOCK_CAT_CATEGORY_CHART;
+  const categoryLineTitleData = categoryStats.length > 0
+    ? [{ title: "Total Revenue", value: Math.round(categoryStats.reduce((a, s) => a + s.revenue, 0)), unit: "MYR" }]
+    : MOCK_CAT_CATEGORY_TITLE;
+  const categoryLineCategories = categoryStats.length > 0
+    ? categoryStats.map((s) => s.name)
+    : MOCK_CAT_DATES;
 
   return (
     <NavbarSidebarLayout>
@@ -287,41 +303,91 @@ const CategoriesAnalyticsPage: React.FC = function () {
                 <div className="h-64 flex items-center justify-center text-gray-400">
                   Loading category analytics…
                 </div>
-              ) : categoryStats.length === 0 ? (
-                <div className="h-64 flex items-center justify-center text-gray-400">
-                  No category data for this period.
-                </div>
               ) : (
                 <>
-                  {/* Revenue by Category (Bar Chart) */}
-                  <div className="mb-6">
-                    <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
-                      Revenue by Category
-                    </h2>
-                    <BarChart
-                      total={Math.round(totalRevenue)}
-                      description={`Total Revenue (RM) — ${selectedTimeRange}`}
-                      titles={["Revenue (RM)"]}
-                      data={[revenueBarData]}
-                    />
+                  {/* Row 1: Department & Brand */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Department
+                      </h2>
+                      <LineChart
+                        dateRange={selectedTimeRange}
+                        titleData={MOCK_CAT_DEPARTMENT_TITLE}
+                        chartData={MOCK_CAT_DEPARTMENT_CHART}
+                        categories={MOCK_CAT_DATES}
+                        redirectText="Department Trends"
+                      />
+                    </div>
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Brand
+                      </h2>
+                      <LineChart
+                        dateRange={selectedTimeRange}
+                        titleData={MOCK_CAT_BRAND_TITLE}
+                        chartData={MOCK_CAT_BRAND_CHART}
+                        categories={MOCK_CAT_DATES}
+                        redirectText="Brand Trends"
+                      />
+                    </div>
                   </div>
 
-                  {/* Units Sold by Category (Pie Chart) */}
-                  <div className="mb-6">
-                    <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
-                      Units Sold by Category
-                    </h2>
-                    {pieSeries.length > 0 ? (
-                      <PieChart
-                        title="Units Sold by Category"
+                  {/* Row 2: Seasonal Sales & Product Category */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Seasonal Sales
+                      </h2>
+                      <LineChart
                         dateRange={selectedTimeRange}
-                        chartData={{ series: pieSeries, labels: pieLabels }}
+                        titleData={MOCK_CAT_SEASONAL_TITLE}
+                        chartData={MOCK_CAT_SEASONAL_CHART}
+                        categories={MOCK_CAT_DATES}
+                        redirectText="Seasonal Trends"
                       />
-                    ) : (
-                      <div className="h-40 flex items-center justify-center text-gray-400">
-                        No units sold data.
-                      </div>
-                    )}
+                    </div>
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Product Category
+                      </h2>
+                      {/* Uses real DB data when available, mock otherwise */}
+                      <LineChart
+                        dateRange={selectedTimeRange}
+                        titleData={categoryLineTitleData}
+                        chartData={categoryLineData}
+                        categories={categoryLineCategories}
+                        redirectText="Category Trends"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Popular Flavours & Pack Sizes */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Popular Flavours / Variants
+                      </h2>
+                      <LineChart
+                        dateRange={selectedTimeRange}
+                        titleData={MOCK_CAT_FLAVOUR_TITLE}
+                        chartData={MOCK_CAT_FLAVOUR_CHART}
+                        categories={MOCK_CAT_DATES}
+                        redirectText="Flavour Trends"
+                      />
+                    </div>
+                    <div>
+                      <h2 className="mb-2 text-xl font-bold leading-none text-gray-900 dark:text-white">
+                        Sizes / Pack Sizes
+                      </h2>
+                      <LineChart
+                        dateRange={selectedTimeRange}
+                        titleData={MOCK_CAT_PACK_TITLE}
+                        chartData={MOCK_CAT_PACK_CHART}
+                        categories={MOCK_CAT_DATES}
+                        redirectText="Pack Size Trends"
+                      />
+                    </div>
                   </div>
                 </>
               )}

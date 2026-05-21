@@ -1,6 +1,6 @@
 "use client";
 import type { FC } from "react";
-import React, { useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
@@ -34,7 +34,11 @@ function resolvePostAuthRedirect(params: URLSearchParams): string {
   return "/";
 }
 
-const SignInPage: FC = function () {
+/**
+ * Sign-in UI. Must be wrapped in `<Suspense>` because `useSearchParams()` can suspend
+ * the App Router tree until search params are available on the client.
+ */
+const SignInPageInner: FC = function () {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, user, loading } = useAuthContext();
@@ -46,6 +50,20 @@ const SignInPage: FC = function () {
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const postAuthPath = useMemo<string>(() => resolvePostAuthRedirect(searchParams), [searchParams]);
+
+  /**
+   * When already signed in, redirect off the sign-in page. Must run in an effect —
+   * calling `router.replace` during render causes unstable behavior and blank screens.
+   */
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    if (user === null) {
+      return;
+    }
+    router.replace(postAuthPath);
+  }, [loading, user, postAuthPath, router]);
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -67,7 +85,8 @@ const SignInPage: FC = function () {
       setError(errorMsg);
       setIsSubmitting(false);
     } else {
-      router.push(postAuthPath);
+      router.replace(postAuthPath);
+      setIsSubmitting(false);
     }
   };
 
@@ -75,16 +94,13 @@ const SignInPage: FC = function () {
     return <LoadingPage />;
   }
 
-  if (user) {
-    router.push(postAuthPath);
-    return null;
+  if (user !== null) {
+    return <LoadingPage />;
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-bg)]">
-      {/* Top Hero: 40vh */}
       <div className="relative h-[25vh] w-full bg-[var(--color-bg)] flex flex-col items-center justify-center">
-        {/* Absolute back button */}
         <button
           type="button"
           onClick={() => router.push("/")}
@@ -96,7 +112,6 @@ const SignInPage: FC = function () {
         <h1 className="font-display text-4xl text-[var(--color-text)] tracking-widest mb-2 font-black">ASF</h1>
       </div>
 
-      {/* Bottom Form Panel: 60vh pulled up to overlap slightly */}
       <div className="flex-1 w-full bg-white rounded-t-3xl -mt-6 z-20 px-6 py-8 flex flex-col shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
         <h2 className="font-display text-2xl text-[var(--color-text)] mb-6">欢迎回来</h2>
 
@@ -182,6 +197,17 @@ const SignInPage: FC = function () {
         </div>
       </div>
     </div>
+  );
+};
+
+/**
+ * Wraps the sign-in client in `Suspense` for `useSearchParams()` (Next.js App Router).
+ */
+const SignInPage: FC = function () {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <SignInPageInner />
+    </Suspense>
   );
 };
 

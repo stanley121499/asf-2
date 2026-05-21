@@ -1,54 +1,68 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../database.types";
 
-const supabaseUrl: string =
-  (process.env.REACT_APP_SUPABASE_URL as string) || "https://gswszoljvafugtdikimn.supabase.co";
+function trimEnv(value: string | undefined): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+}
 
-// The service_role key — used ONLY by supabaseAdmin for admin operations.
-// ⚠️  Never use this key in regular data-fetching contexts.
-const serviceRoleKey: string =
-  (process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY as string) ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3N6b2xqdmFmdWd0ZGlraW1uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMTc0MTA3OSwiZXhwIjoyMDE3MzE3MDc5fQ.MG8C8G69ArDou5hnAjip848052-xtd3mIa7Hp7jlq60";
+const supabaseUrl: string =
+  trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
+  trimEnv(process.env.REACT_APP_SUPABASE_URL as string | undefined) ||
+  "https://gswszoljvafugtdikimn.supabase.co";
 
 /**
- * Main Supabase client — used for all regular data fetching and user auth.
- *
- * `autoRefreshToken: false` is intentional and critical.
- *
- * When autoRefreshToken is true, every call to `supabase.auth.getSession()`
- * acquires an exclusive `navigator.locks` initialization lock.  If the stored
- * session is expired the client fires a network request to refresh the token
- * while holding that lock.  If the Supabase server is unreachable (paused
- * project, network outage, WebView network restrictions) that request hangs
- * indefinitely — deadlocking every subsequent auth operation that needs the
- * same lock (including sign-in itself).
- *
- * With autoRefreshToken: false, getSession() returns the session immediately
- * without any network round-trip.  AuthContext.fetchCurrentUser() checks
- * session expiry and treats expired sessions as "no session", prompting the
- * user to sign in again.  This matches the original developer intent described
- * in this comment.
- *
- * `persistSession: true` + `storageKey: "sb-app-session"` ensure that a
- * freshly acquired session (from signInWithPassword) survives page reloads.
+ * Public anon key — **required** for the browser client and must match
+ * `NEXT_PUBLIC_SUPABASE_ANON_KEY` used in `middlewareAuth` session reads.
+ * Never use `service_role` here: JWTs from service-role sign-in are not valid
+ * for `getSession()` when the edge uses the anon key → middleware redirect loops.
  */
-const supabase = createClient<Database>(supabaseUrl, serviceRoleKey, {
+const anonPublicKey: string = trimEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+if (anonPublicKey.length === 0) {
+  throw new Error(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Copy .env.example to .env.local and set the anon key from Supabase → Project Settings → API."
+  );
+}
+
+/**
+ * Main browser Supabase client — anon key + user session + RLS.
+ *
+ * `autoRefreshToken: false` is intentional (see prior comments in git history):
+ * avoids navigator.locks deadlocks when refresh hangs offline.
+ *
+ * `persistSession: true` + `storageKey: "sb-app-session"` match `sessionCookieSync`
+ * and edge middleware.
+ */
+const supabase = createClient<Database>(supabaseUrl, anonPublicKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: false, // See comment above — must stay false
+    autoRefreshToken: false,
     detectSessionInUrl: true,
     storageKey: "sb-app-session",
   },
 });
 
 /**
- * Admin-only Supabase client — used ONLY for operations that require
- * service_role privileges (e.g. auth.admin.listUsers, auth.admin.createUser).
- *
- * Session persistence is fully disabled here so this client never interferes
- * with the navigator.locks used by the main client.
+ * Alias of {@link supabase} so existing imports keep working without creating a
+ * second GoTrueClient (same `storageKey` would warn: "Multiple GoTrueClient instances").
  */
-const supabaseAdmin = createClient<Database>(supabaseUrl, serviceRoleKey, {
+const supabaseAnon = supabase;
+
+/**
+ * Service role key — **server / admin only**. Read from env; never hardcode.
+ * If unset, `supabaseAdmin` falls back to the anon key so the module still loads
+ * in dev; `auth.admin.*` and RLS-bypassing calls will fail until the key is set.
+ */
+const serviceRoleKey: string =
+  trimEnv(process.env.SUPABASE_SERVICE_ROLE_KEY) ||
+  trimEnv(process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY as string | undefined);
+
+const adminApiKey: string = serviceRoleKey.length > 0 ? serviceRoleKey : anonPublicKey;
+
+const supabaseAdmin = createClient<Database>(supabaseUrl, adminApiKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -56,33 +70,5 @@ const supabaseAdmin = createClient<Database>(supabaseUrl, serviceRoleKey, {
     storageKey: "sb-admin-session",
   },
 });
-
-/**
- * Public (anon) key client for browser operations that must respect RLS as the
- * signed-in user. Uses the same `storageKey` as `supabase` so the session from
- * AuthContext is shared. Omit when `NEXT_PUBLIC_SUPABASE_ANON_KEY` is unset.
- */
-const publicSupabaseUrl: string =
-  typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL.trim().length > 0
-    ? process.env.NEXT_PUBLIC_SUPABASE_URL.trim()
-    : supabaseUrl;
-
-const anonPublicKey: string =
-  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string"
-    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.trim()
-    : "";
-
-const supabaseAnon: ReturnType<typeof createClient<Database>> | null =
-  anonPublicKey.length > 0
-    ? createClient<Database>(publicSupabaseUrl, anonPublicKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: false,
-          detectSessionInUrl: true,
-          storageKey: "sb-app-session",
-        },
-      })
-    : null;
 
 export { supabase, supabaseAdmin, supabaseAnon };

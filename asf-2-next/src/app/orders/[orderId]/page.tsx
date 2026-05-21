@@ -15,6 +15,7 @@ import { useAlertContext } from "@/context/AlertContext";
 import type { Database } from "@/database.types";
 import { parseShippingAddressStructured } from "@/app/api/_lib/shippingAddress";
 import type { NormalizedRate } from "@/app/api/_lib/delyvaQuoteMappers";
+import { MOCK_ORDERS, buildMockOrderRow } from "@/app/orders/_lib/ordersMock";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
@@ -200,6 +201,26 @@ const OrderDetailPage: React.FC = function () {
         if (opts.isInitial) {
           setLoading(true);
         }
+
+        // ── Mock order interception ──────────────────────────────────────────
+        // When the order list fell back to MOCK_ORDERS, the IDs are fake UUIDs
+        // that don't exist in Supabase. Detect them here and build a detail
+        // view from the mock data so the page doesn't crash.
+        const mockMatch = MOCK_ORDERS.find((o) => o.id === orderId);
+        if (mockMatch !== undefined) {
+          const mockRow = buildMockOrderRow(mockMatch);
+          setOrder({
+            ...mockRow,
+            items: [],
+            user_name: mockMatch.user_name,
+            user_email: mockMatch.user_email,
+            user_phone: undefined,
+          });
+          setStatusHistory([]);
+          setNewStatus(mockMatch.status ?? "processing");
+          return;
+        }
+        // ────────────────────────────────────────────────────────────────────
 
         const { data: orderData, error: orderError } = await supabase
           .from("orders")

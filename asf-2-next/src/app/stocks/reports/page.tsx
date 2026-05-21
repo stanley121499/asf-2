@@ -10,15 +10,23 @@ import { IoIosSearch } from "react-icons/io";
 import { useProductPurchaseOrderContext } from "@/context/product/ProductPurchaseOrderContext";
 import { useProductReportContext } from "@/context/product/ProductReportContext";
 import { useProductEventContext } from "@/context/product/ProductEventContext";
+import {
+  MOCK_PURCHASE_ORDERS,
+  MOCK_PRODUCT_REPORTS,
+} from "@/app/stocks/_lib/stocksMock";
 
 const StockReportPage: React.FC = function () {
   const [searchPurchaseOrder, setSearchPurchaseOrder] = React.useState("");
   const [searchReport, setSearchReport] = React.useState("");
-  const { product_purchase_orders } = useProductPurchaseOrderContext();
-  const { product_reports } = useProductReportContext();
-  const { productEvents } = useProductEventContext();
+  const { product_purchase_orders: rawPurchaseOrders } = useProductPurchaseOrderContext();
+  const { product_reports: rawReports } = useProductReportContext();
+  const { loading: eventsLoading } = useProductEventContext();
 
-  if (!productEvents || productEvents.length === 0) {
+  const product_purchase_orders =
+    rawPurchaseOrders.length > 0 ? rawPurchaseOrders : MOCK_PURCHASE_ORDERS;
+  const product_reports = rawReports.length > 0 ? rawReports : MOCK_PRODUCT_REPORTS;
+
+  if (eventsLoading) {
     return <LoadingPage />;
   }
 
@@ -84,56 +92,47 @@ const StockReportPage: React.FC = function () {
                   </div>
                 </form>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
-                  {product_reports
-                    .flatMap((report) =>
-                      Array(10)
-                        .fill(null)
-                        .map((_, index) => (
-                          <div
-                            key={`${report.id}-${index}`}
-                            style={{ height: `calc((100vh - 167px) / 8)` }}
-                            className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                  {report.company}
-                                </h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
-                                  {new Date(
-                                    report.created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <Button
-                                color={"info"}
-                                className="w-40"
-                                href={`/stocks/report/${report.id}`}>
-                                View
-                              </Button>
-
-                              {report.status === "PENDING" && (
-                                <Button
-                                  color={"green"}
-                                  className="w-40"
-                                  href={`/stocks/report/${report.id}/edit`}>
-                                  Approve
-                                </Button>
-                              )}
-
-                              {report.status === "PENDING" && (
-                                <Button
-                                  color={"red"}
-                                  className="w-40"
-                                  href={`/stocks/report/${report.id}/edit`}>
-                                  Reject
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                    )}
+                  {product_reports.map((report) => (
+                    <div
+                      key={report.id}
+                      style={{ height: `calc((100vh - 167px) / 8)` }}
+                      className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                            {report.company}
+                          </h2>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
+                            {new Date(report.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          color={"info"}
+                          className="w-40"
+                          href={`/stocks/report/${report.id}`}>
+                          View
+                        </Button>
+                        {report.status === "PENDING" && (
+                          <Button
+                            color={"green"}
+                            className="w-40"
+                            href={`/stocks/report/${report.id}/edit`}>
+                            Approve
+                          </Button>
+                        )}
+                        {report.status === "PENDING" && (
+                          <Button
+                            color={"red"}
+                            className="w-40"
+                            href={`/stocks/report/${report.id}/edit`}>
+                            Reject
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -160,64 +159,47 @@ const StockReportPage: React.FC = function () {
                   </div>
                 </form>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(100vh-167px)] overflow-y-auto hide-scrollbar">
-                  {product_purchase_orders
-                    .filter((purchase_order) => {
-                      // Only Get those that are with the product Event where the type is "Fast"
-                      const productEvent = productEvents.find(
-                        (event) => event.purchase_order_id === purchase_order.id
-                      );
-
-                      return productEvent?.type === "Fast";
-                    })
-                    .flatMap((purchase_order) =>
-                      Array(10)
-                        .fill(null)
-                        .map((_, index) => (
-                          <div
-                            key={`${purchase_order.id}-${index}`}
-                            style={{ height: `calc((100vh - 167px) / 8)` }}
-                            className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                  {purchase_order.purchase_order_no}
-                                </h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
-                                  {new Date(
-                                    purchase_order.created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <Button
-                                color={"info"}
-                                className="w-40"
-                                href={`/stocks/purchase-orders/${purchase_order.id}`}>
-                                View
-                              </Button>
-
-                              {purchase_order.status === "PENDING" && (
-                                <Button
-                                  color={"green"}
-                                  className="w-40"
-                                  href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
-                                  Approve
-                                </Button>
-                              )}
-
-                              {purchase_order.status === "PENDING" && (
-                                <Button
-                                  color={"red"}
-                                  className="w-40"
-                                  href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
-                                  Reject
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                    )}
+                  {product_purchase_orders.map((purchase_order) => (
+                    <div
+                      key={purchase_order.id}
+                      style={{ height: `calc((100vh - 167px) / 8)` }}
+                      className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
+                            {purchase_order.purchase_order_no}
+                          </h2>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate text-ellipsis whitespace-nowrap">
+                            {new Date(purchase_order.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          color={"info"}
+                          className="w-40"
+                          href={`/stocks/purchase-orders/${purchase_order.id}`}>
+                          View
+                        </Button>
+                        {purchase_order.status === "PENDING" && (
+                          <Button
+                            color={"green"}
+                            className="w-40"
+                            href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
+                            Approve
+                          </Button>
+                        )}
+                        {purchase_order.status === "PENDING" && (
+                          <Button
+                            color={"red"}
+                            className="w-40"
+                            href={`/stocks/purchase-orders/${purchase_order.id}/edit`}>
+                            Reject
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

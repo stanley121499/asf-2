@@ -21,6 +21,9 @@ const AMOUNT_TOLERANCE_SEN = 1;
 /**
  * POST /api/stripe/webhook
  *
+ * **Note:** This handler reads the **raw** request body for Stripe signature verification.
+ * It does not use JSON + Zod validation (unlike other `/api/*` routes).
+ *
  * Verifies `Stripe-Signature`, then processes `payment_intent.succeeded` and
  * `payment_intent.payment_failed` events. On success: creates or updates `orders`,
  * `order_items`, `payments`, decrements `product_stock.count`, clears `add_to_carts`, inserts a

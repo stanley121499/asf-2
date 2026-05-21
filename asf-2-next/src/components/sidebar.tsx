@@ -2,13 +2,13 @@
 import classNames from "classnames";
 import { Sidebar, Avatar } from "flowbite-react";
 import React, { useEffect, useState } from "react";
-import { FaBox, FaUsers } from "react-icons/fa";
+import { FaBox } from "react-icons/fa";
 import { useSidebarContext } from "../context/SidebarContext";
 import { useAuthContext } from "../context/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
-import { FaBoxes, FaClipboardList, FaTags } from "react-icons/fa";
+import { FaBoxes, FaClipboardList } from "react-icons/fa";
 import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
@@ -49,17 +49,6 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
           Dashboard
         </Sidebar.Item>
 
-        <Sidebar.Item
-          href="/users/list"
-          icon={FaUsers}
-          onClick={onItemClick}
-          className={
-            "/users/list" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Users
-        </Sidebar.Item>
 
         <Sidebar.Item
           icon={BsFillFilePostFill}
@@ -83,18 +72,6 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
               : ""
           }>
           Products
-        </Sidebar.Item>
-
-        <Sidebar.Item
-          icon={FaTags}
-          href="/promotions"
-          onClick={onItemClick}
-          className={
-            "/promotions" === currentPage || currentPage.startsWith("/promotions/")
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Promotions
         </Sidebar.Item>
 
         <Sidebar.Item

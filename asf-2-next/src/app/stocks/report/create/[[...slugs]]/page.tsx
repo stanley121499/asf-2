@@ -60,12 +60,7 @@ const CreateReportPage: React.FC = function () {
                 className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
                 Reports
               </a>
-              {/* Product Events */}
-              <a
-                href="/stocks/events"
-                className="text-sm text-grey-500 dark:text-grey-400 hover:underline">
-                Product Events
-              </a>
+              {/* Product Events — hidden */}
             </div>
           </div>
         </div>

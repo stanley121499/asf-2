@@ -1,39 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { deliveryRatesBodySchema } from "@/app/api/_lib/apiSchemas";
+import { parseJsonBody, validationErrorResponse } from "@/app/api/_lib/apiJson";
 import { delyvaInstantQuote, getDelyvaCustomerId, getDelyvaOriginAddress } from "@/app/api/_lib/delyva";
 import { mapInstantQuoteServices } from "@/app/api/_lib/delyvaQuoteMappers";
-
-type DestinationInput = {
-  address1: string;
-  city: string;
-  state: string;
-  postcode: string;
-  country: string;
-};
-
-type WeightInput = { unit: "kg"; value: number };
-
-function isDestination(value: unknown): value is DestinationInput {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.address1 === "string" &&
-    typeof o.city === "string" &&
-    typeof o.state === "string" &&
-    typeof o.postcode === "string" &&
-    typeof o.country === "string"
-  );
-}
-
-function isWeight(value: unknown): value is WeightInput {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  const o = value as Record<string, unknown>;
-  return o.unit === "kg" && typeof o.value === "number" && Number.isFinite(o.value) && o.value > 0;
-}
 
 /**
  * POST /api/delivery/rates
@@ -41,26 +11,15 @@ function isWeight(value: unknown): value is WeightInput {
  * Body: `{ destination, weight }` — returns normalized courier options from Delyva `instantQuote`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  let body: unknown;
-  try {
-    body = (await request.json()) as unknown;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  const parsedBody = await parseJsonBody(request);
+  if (parsedBody.ok === false) {
+    return parsedBody.response;
   }
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
+  const validated = deliveryRatesBodySchema.safeParse(parsedBody.data);
+  if (validated.success === false) {
+    return validationErrorResponse(validated.error);
   }
-  const dest = (body as { destination?: unknown }).destination;
-  const weight = (body as { weight?: unknown }).weight;
-  if (!isDestination(dest)) {
-    return NextResponse.json(
-      { error: "destination must include address1, city, state, postcode, country" },
-      { status: 400 },
-    );
-  }
-  if (!isWeight(weight)) {
-    return NextResponse.json({ error: "weight must be { unit: \"kg\", value: positive number }" }, { status: 400 });
-  }
+  const { destination: dest, weight } = validated.data;
 
   let origin;
   let customerId: number;

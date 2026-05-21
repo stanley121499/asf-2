@@ -1,16 +1,24 @@
 /**
- * Mirrors the Supabase browser session from `localStorage` into a host cookie
- * named `sb-app-session` (same key as `storageKey` in supabaseClient.ts) so
- * Next.js middleware can perform a best-effort session read at the edge.
+ * Mirrors the Supabase browser session from `localStorage` into host cookies
+ * so Next.js middleware can read a best-effort session at the edge.
  *
- * **Cookie size (~4KB):** Large JWTs or user metadata can exceed browser cookie
- * limits; in that case the cookie may be truncated and middleware may treat the
- * user as unauthenticated until the payload fits. Client-side auth remains
- * authoritative.
+ * When the URI-encoded JSON exceeds browser per-cookie limits (~4KB), the
+ * payload is stored as base64url in multiple `sb-app-session-ch-N` cookies plus
+ * `sb-app-session-cnt`; see {@link ../utils/sessionMirrorEncoding}.
  */
 
+import {
+  SESSION_MIRROR_COUNT_COOKIE,
+  SESSION_MIRROR_MAIN_COOKIE,
+  SESSION_MIRROR_MAX_CHUNKS,
+  SESSION_MIRROR_SINGLE_MAX_ENCODED_CHARS,
+  sessionMirrorChunkCookieName,
+  splitForCookieChunks,
+  utf8ToBase64Url,
+} from "./sessionMirrorEncoding";
+
 /** Must match `storageKey` on the browser Supabase client. */
-export const SESSION_STORAGE_AND_COOKIE_KEY = "sb-app-session";
+export const SESSION_STORAGE_AND_COOKIE_KEY = SESSION_MIRROR_MAIN_COOKIE;
 
 const DEFAULT_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
@@ -60,9 +68,47 @@ function cookieSecureSuffix(): string {
   return window.isSecureContext ? "; Secure" : "";
 }
 
+function buildCookiePair(name: string, value: string, maxAge: number): string {
+  return [
+    `${name}=${value}`,
+    "Path=/",
+    "SameSite=Lax",
+    `Max-Age=${String(maxAge)}`,
+    cookieSecureSuffix(),
+  ]
+    .filter((part) => part.length > 0)
+    .join("; ");
+}
+
+function expireCookiePair(name: string): string {
+  return [
+    `${name}=`,
+    "Path=/",
+    "SameSite=Lax",
+    "Max-Age=0",
+    cookieSecureSuffix(),
+  ]
+    .filter((part) => part.length > 0)
+    .join("; ");
+}
+
 /**
- * Writes `localStorage["sb-app-session"]` into document cookie `sb-app-session`,
- * URI-encoding the value for safe `Set-Cookie` semantics. No-ops on the server.
+ * Clears chunked mirror cookies (`sb-app-session-cnt`, `sb-app-session-ch-*`).
+ */
+function clearChunkMirrorCookies(): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.cookie = expireCookiePair(SESSION_MIRROR_COUNT_COOKIE);
+  for (let i = 0; i < SESSION_MIRROR_MAX_CHUNKS; i += 1) {
+    document.cookie = expireCookiePair(sessionMirrorChunkCookieName(i));
+  }
+}
+
+/**
+ * Writes `localStorage["sb-app-session"]` into host cookies so middleware can
+ * read the session. Uses a single cookie when small enough; otherwise chunked
+ * base64url cookies (see `sessionMirrorEncoding.ts`).
  */
 export function syncSessionCookieFromStorage(): void {
   if (typeof window === "undefined" || typeof document === "undefined") {
@@ -75,31 +121,43 @@ export function syncSessionCookieFromStorage(): void {
   }
   const maxAge = computeMaxAgeSeconds(raw);
   const encoded = encodeURIComponent(raw);
-  document.cookie = [
-    `${SESSION_STORAGE_AND_COOKIE_KEY}=${encoded}`,
-    "Path=/",
-    "SameSite=Lax",
-    `Max-Age=${String(maxAge)}`,
-    cookieSecureSuffix(),
-  ]
-    .filter((part) => part.length > 0)
-    .join("; ");
+
+  if (encoded.length <= SESSION_MIRROR_SINGLE_MAX_ENCODED_CHARS) {
+    clearChunkMirrorCookies();
+    document.cookie = buildCookiePair(SESSION_MIRROR_MAIN_COOKIE, encoded, maxAge);
+    return;
+  }
+
+  const b64 = utf8ToBase64Url(raw);
+  const parts = splitForCookieChunks(b64);
+  if (parts.length > SESSION_MIRROR_MAX_CHUNKS) {
+    clearSessionCookie();
+    return;
+  }
+
+  document.cookie = expireCookiePair(SESSION_MIRROR_MAIN_COOKIE);
+  clearChunkMirrorCookies();
+
+  document.cookie = buildCookiePair(
+    SESSION_MIRROR_COUNT_COOKIE,
+    encodeURIComponent(String(parts.length)),
+    maxAge
+  );
+  for (let i = 0; i < parts.length; i += 1) {
+    document.cookie = buildCookiePair(sessionMirrorChunkCookieName(i), parts[i] ?? "", maxAge);
+  }
 }
 
 /**
- * Removes the mirrored session cookie. No-ops on the server.
+ * Removes the mirrored session cookies (single, count, and all chunk slots).
  */
 export function clearSessionCookie(): void {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return;
   }
-  document.cookie = [
-    `${SESSION_STORAGE_AND_COOKIE_KEY}=`,
-    "Path=/",
-    "SameSite=Lax",
-    "Max-Age=0",
-    cookieSecureSuffix(),
-  ]
-    .filter((part) => part.length > 0)
-    .join("; ");
+  document.cookie = expireCookiePair(SESSION_MIRROR_MAIN_COOKIE);
+  document.cookie = expireCookiePair(SESSION_MIRROR_COUNT_COOKIE);
+  for (let i = 0; i < SESSION_MIRROR_MAX_CHUNKS; i += 1) {
+    document.cookie = expireCookiePair(sessionMirrorChunkCookieName(i));
+  }
 }

@@ -203,7 +203,7 @@ const ScheduleProductListPage: React.FC = function () {
                 Schedule
               </a>
             </div>
-            <Button href="/products/create" className="btn btn-primary">
+            <Button href="/products/create" size="sm" color="dark">
               <HiPlus className="text-xl" />
               Add Product
             </Button>

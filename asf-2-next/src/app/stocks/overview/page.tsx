@@ -11,20 +11,42 @@ import { useProductPurchaseOrderContext } from "@/context/product/ProductPurchas
 import { useProductReportContext } from "@/context/product/ProductReportContext";
 import NavbarSidebarLayout from "@/layouts/navbar-sidebar";
 import LoadingPage from "@/app/loading";
+import {
+  MOCK_PRODUCT_EVENTS,
+  MOCK_PURCHASE_ORDERS,
+  MOCK_PRODUCT_REPORTS,
+} from "@/app/stocks/_lib/stocksMock";
 
 const StockOverviewPage: React.FC = () => {
-  const { productEvents } = useProductEventContext();
+  const { productEvents: rawProductEvents, loading: eventsLoading } = useProductEventContext();
   const { productMedias } = useProductMediaContext();
-  const { product_purchase_orders } = useProductPurchaseOrderContext();
-  const { product_reports } = useProductReportContext();
+  const { product_purchase_orders: rawPurchaseOrders } = useProductPurchaseOrderContext();
+  const { product_reports: rawReports } = useProductReportContext();
   const router = useRouter();
+
+  /**
+   * Fall back to mock data when DB returns nothing useful.
+   * We check not just emptiness but also whether any real events have the four
+   * type values this page actually renders — if the DB has events with unknown
+   * types, all four sections would still show "No items", so we fall back.
+   * PO sources must stay consistent with the event source so ID lookups work.
+   */
+  const OVERVIEW_TYPES = new Set(["Low", "Keep Stock", "Fast", "Normal"]);
+  const hasMatchingRealEvents = rawProductEvents.some(
+    (e) => OVERVIEW_TYPES.has(e.type ?? "")
+  );
+  const usingMockEvents = !hasMatchingRealEvents;
+  const productEvents = usingMockEvents ? MOCK_PRODUCT_EVENTS : rawProductEvents;
+  const usingMockPOs = rawPurchaseOrders.length === 0;
+  const product_purchase_orders = usingMockPOs ? MOCK_PURCHASE_ORDERS : rawPurchaseOrders;
+  const product_reports = rawReports.length > 0 ? rawReports : MOCK_PRODUCT_REPORTS;
 
   const productMediaMap = React.useMemo<Map<string, string>>(
     () => new Map(productMedias.map((m) => [m.product_id, m.media_url ?? ""])),
     [productMedias]
   );
 
-  if (!productEvents || productEvents.length === 0) {
+  if (eventsLoading) {
     return <LoadingPage />;
   }
 
@@ -36,6 +58,9 @@ const StockOverviewPage: React.FC = () => {
           {title}
         </h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1 max-h-[calc(50vh-108px)] overflow-y-auto hide-scrollbar">
+          {productEvents.filter((productEvent) => productEvent.type === type).length === 0 && (
+            <p className="text-sm text-gray-400 dark:text-gray-500 italic py-2">No items.</p>
+          )}
           {productEvents
             .filter((productEvent) => productEvent.type === type)
             .map((productEvent) => (
@@ -47,13 +72,21 @@ const StockOverviewPage: React.FC = () => {
                 }
                 className="rounded-lg shadow-md p-4 flex justify-between border border-gray-200 dark:border-gray-500 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                 <div className="flex items-center gap-4">
-                  <img
-                    src={productMediaMap.get(productEvent.product.id) ?? ""}
-                    alt={productEvent.product.name}
-                    className="w-16 h-16 object-cover rounded-md"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  {productMediaMap.get(productEvent.product.id) ? (
+                    <img
+                      src={productMediaMap.get(productEvent.product.id)}
+                      alt={productEvent.product.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl font-bold text-gray-400 dark:text-gray-500 select-none">
+                        {productEvent.product.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">
                       {productEvent.product.name}
@@ -136,10 +169,16 @@ const StockOverviewPage: React.FC = () => {
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
               Stock Overview
             </h1>
-            {["Overview", "All Products", "Reports"].map((label, i) => (
+            {(
+              [
+                { label: "Overview", href: "/stocks/overview" },
+                { label: "All Products", href: "/stocks/all" },
+                { label: "Reports", href: "/stocks/reports" },
+              ] as const
+            ).map(({ label, href }) => (
               <a
-                key={i}
-                href={`/stocks/${label.toLowerCase().replace(" ", "-")}`}
+                key={href}
+                href={href}
                 className="text-sm text-gray-500 dark:text-gray-400 hover:underline">
                 {label}
               </a>

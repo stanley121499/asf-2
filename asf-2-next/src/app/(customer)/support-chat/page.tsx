@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
 import { useAlertContext } from "@/context/AlertContext";
 import { useTicketContext } from "@/context/TicketContext";
+import {
+  useConversationContext,
+  type Conversation,
+} from "@/context/ConversationContext";
 import { LandingLayout } from "@/layouts";
 import BottomNavbar from "@/components/home/bottom-nav";
-import { supabaseAnon } from "@/utils/supabaseClient";
+import ChatWindow from "@/components/ChatWindow";
+import { supabase } from "@/utils/supabaseClient";
 import type { TablesInsert } from "@/database.types";
 
 /**
@@ -19,11 +24,39 @@ function formatTicketLabel(ticketId: string): string {
   return `TK-${slice.toUpperCase()}`;
 }
 
+/**
+ * Prefer live context data (messages + realtime) once the conversation appears in state.
+ */
+function resolveConversationForChat(
+  conversations: Conversation[],
+  fallback: Conversation | null,
+  conversationId: string | null
+): Conversation | null {
+  if (conversationId === null || conversationId.length === 0) {
+    return null;
+  }
+  const fromContext = conversations.find((c) => c.id === conversationId);
+  if (fromContext !== undefined) {
+    return fromContext;
+  }
+  if (fallback !== null && fallback.id === conversationId) {
+    return fallback;
+  }
+  return null;
+}
+
 export default function SupportChatPage() {
   const router = useRouter();
   const { user, loading } = useAuthContext();
   const { showAlert } = useAlertContext();
   const { createTicket } = useTicketContext();
+  const {
+    conversations,
+    createConversation,
+    addParticipant,
+    createMessage,
+    listMessagesByConversationId,
+  } = useConversationContext();
 
   const [formData, setFormData] = useState({
     type: "订单问题",
@@ -33,6 +66,24 @@ export default function SupportChatPage() {
   const [submitted, setSubmitted] = useState(false);
   const [createdTicketLabel, setCreatedTicketLabel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  /** Conversation snapshot right after create; superseded by `conversations` when synced. */
+  const [localConversation, setLocalConversation] = useState<Conversation | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  const displayConversation = useMemo(
+    () => resolveConversationForChat(conversations, localConversation, activeConversationId),
+    [conversations, localConversation, activeConversationId]
+  );
+
+  /**
+   * Load historical messages once we know the conversation id (realtime handles new rows).
+   */
+  useEffect(() => {
+    if (activeConversationId === null || activeConversationId.length === 0) {
+      return;
+    }
+    void listMessagesByConversationId(activeConversationId);
+  }, [activeConversationId, listMessagesByConversationId]);
 
   if (loading) {
     return (
@@ -61,36 +112,50 @@ export default function SupportChatPage() {
           <div className="sticky top-0 z-40 bg-white h-[56px] flex items-center justify-center border-b border-[var(--color-border)]">
             <h1 className="font-display text-lg tracking-wide">提交成功</h1>
           </div>
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full min-h-0">
+            <div className="shrink-0 text-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-medium text-[var(--color-text)] mb-2">您的请求已提交</h2>
+              {createdTicketLabel.length > 0 ? (
+                <p className="text-[var(--color-text)] font-medium mb-2">
+                  工单编号：<span className="tracking-wide">{createdTicketLabel}</span>
+                </p>
+              ) : null}
+              <p className="text-[var(--color-muted)] text-sm mb-2">您可以在下方继续与客服对话</p>
+              <button
+                type="button"
+                onClick={() => router.push("/settings")}
+                className="btn-primary rounded-xl px-6 py-2 text-sm"
+              >
+                返回设置
+              </button>
             </div>
-            <h2 className="text-xl font-medium text-[var(--color-text)] mb-2">您的请求已提交</h2>
-            {createdTicketLabel.length > 0 ? (
-              <p className="text-[var(--color-text)] font-medium mb-2">
-                工单编号：<span className="tracking-wide">{createdTicketLabel}</span>
-              </p>
-            ) : null}
-            <p className="text-[var(--color-muted)] mb-8">我们将在24小时内与您联系</p>
-            <button
-              type="button"
-              onClick={() => router.push("/settings")}
-              className="btn-primary rounded-xl px-8 py-3 w-full max-w-xs"
-            >
-              返回设置
-            </button>
+            {displayConversation !== null ? (
+              <div className="flex-1 min-h-[320px] flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] overflow-hidden">
+                <ChatWindow
+                  conversation={displayConversation}
+                  messages={displayConversation.messages}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-[var(--color-muted)] text-sm">
+                正在加载对话…
+              </div>
+            )}
           </div>
         </div>
+        <BottomNavbar />
       </LandingLayout>
     );
   }
 
   /**
-   * Persists the ticket via TicketContext, then inserts a user notification using
-   * the anon client so RLS applies. Ticket creation is treated as authoritative;
-   * if the notification insert fails, we still show success but warn the user.
+   * Persists the ticket via TicketContext, creates a support conversation linked by
+   * `ticket_id`, adds the customer as participant, seeds the thread, then notifies.
    */
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -121,27 +186,56 @@ export default function SupportChatPage() {
       const label = formatTicketLabel(ticket.id);
       setCreatedTicketLabel(label);
 
-      if (supabaseAnon === null) {
-        showAlert(
-          "工单已创建，但通知暂不可用（缺少 NEXT_PUBLIC_SUPABASE_ANON_KEY）。",
-          "warning"
-        );
-      } else {
-        const body = `Your ticket #${label} has been received.`;
-        const row: TablesInsert<"notifications"> = {
-          user_id: user.id,
-          type: "ticket_created",
-          title: "Support Ticket Created",
-          body,
-        };
-        const { error: notificationError } = await supabaseAnon.from("notifications").insert(row);
-        if (notificationError !== null) {
-          // Ticket already exists — surface notification failure without blocking success UX.
-          showAlert(
-            `工单已创建，但通知发送失败：${notificationError.message}`,
-            "warning"
-          );
-        }
+      const conversation = await createConversation({
+        type: "support",
+        ticket_id: ticket.id,
+        active: true,
+        created_at: new Date().toISOString(),
+      });
+
+      if (conversation === undefined) {
+        showAlert("工单已创建，但对话创建失败，请重试或稍后再试。", "warning");
+        return;
+      }
+
+      const participant = await addParticipant({
+        conversation_id: conversation.id,
+        user_id: user.id,
+      });
+
+      if (participant === undefined) {
+        showAlert("工单与对话已创建，但加入会话失败。", "warning");
+      }
+
+      const seedLines = [
+        `主题：${subjectTrimmed}`,
+        `类型：${formData.type}`,
+        "",
+        descriptionTrimmed,
+      ];
+      const seedBody = seedLines.join("\n");
+      await createMessage({
+        conversation_id: conversation.id,
+        content: seedBody,
+        created_at: new Date().toISOString(),
+        user_id: user.id,
+        type: "text",
+        media_url: null,
+      });
+
+      setLocalConversation(conversation);
+      setActiveConversationId(conversation.id);
+
+      const body = `Your ticket #${label} has been received.`;
+      const row: TablesInsert<"notifications"> = {
+        user_id: user.id,
+        type: "ticket_created",
+        title: "Support Ticket Created",
+        body,
+      };
+      const { error: notificationError } = await supabase.from("notifications").insert(row);
+      if (notificationError !== null) {
+        showAlert(`工单已创建，但通知发送失败：${notificationError.message}`, "warning");
       }
 
       setSubmitted(true);
