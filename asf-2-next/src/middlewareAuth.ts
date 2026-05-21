@@ -1,7 +1,5 @@
-import { createClient, type Session, type User } from "@supabase/supabase-js";
+import { type Session, type User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-
-import type { Database } from "@/database.types";
 
 /**
  * Decodes a base64url string to a UTF-8 string without using Buffer (Edge-safe).
@@ -78,13 +76,6 @@ import {
 /** Same name as browser `storageKey` / primary session cookie mirror. */
 const SESSION_COOKIE_NAME = SESSION_MIRROR_MAIN_COOKIE;
 
-function trimEnv(value: string | undefined): string {
-  if (typeof value !== "string") {
-    return "";
-  }
-  return value.trim();
-}
-
 /**
  * Public routes — no session required (edge allows immediately).
  */
@@ -157,13 +148,6 @@ function decodeCookieValue(encoded: string): string {
   } catch {
     return encoded;
   }
-}
-
-function sessionExpired(session: Session): boolean {
-  if (typeof session.expires_at !== "number") {
-    return false;
-  }
-  return session.expires_at < Math.floor(Date.now() / 1000);
 }
 
 /**
@@ -284,45 +268,6 @@ function redirectToSignIn(request: NextRequest): NextResponse {
 }
 
 /**
- * One DB round-trip: `staff_roles` by `user_id`. Falls back to `ADMIN_EMAIL`.
- * If the service role key is missing, returns false (fail closed for admin).
- */
-async function userHasStaffAccess(
-  userId: string,
-  email: string | undefined,
-  supabaseUrl: string,
-  serviceRoleKey: string,
-  adminEmailRaw: string | undefined
-): Promise<boolean> {
-  const adminEmail = trimEnv(adminEmailRaw).toLowerCase();
-  if (adminEmail.length > 0 && typeof email === "string") {
-    if (email.trim().toLowerCase() === adminEmail) {
-      return true;
-    }
-  }
-  if (serviceRoleKey.length === 0) {
-    return false;
-  }
-  const adminClient = createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-  });
-  const { data, error } = await adminClient
-    .from("staff_roles")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error !== null) {
-    return false;
-  }
-  return data !== null;
-}
-
-/**
  * Returns a redirect response when RBAC applies; otherwise `null` to continue.
  */
 export async function rbacMiddlewareResponse(
@@ -353,21 +298,4 @@ export async function rbacMiddlewareResponse(
 
   // Prototype mode: any authenticated session can access admin routes.
   return null;
-
-  const supabaseUrl = trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const serviceKey = trimEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-  const allowed = await userHasStaffAccess(
-    session.user.id,
-    typeof session.user.email === "string" ? session.user.email : undefined,
-    supabaseUrl,
-    serviceKey,
-    process.env.ADMIN_EMAIL
-  );
-
-  if (allowed) {
-    return null;
-  }
-
-  return NextResponse.redirect(new URL("/", request.url));
 }
