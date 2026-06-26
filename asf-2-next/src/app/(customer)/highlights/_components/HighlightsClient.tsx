@@ -1,6 +1,8 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { Tables } from "@/database.types";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import PostCard from "@/components/PostCard";
 import BottomNavbar from "@/components/home/bottom-nav";
 
@@ -10,6 +12,16 @@ interface HighlightsClientProps {
 }
 
 const HighlightsClient: React.FC<HighlightsClientProps> = ({ posts, postMedias }) => {
+  const router = useRouter();
+  const { isEnabled } = useFeatureFlags();
+
+  useEffect(() => {
+    if (!isEnabled("highlights")) {
+      router.replace("/");
+    }
+  }, [isEnabled, router]);
+
+  if (!isEnabled("highlights")) return null;
   const featuredPosts = useMemo(() =>
     [...posts]
       .filter((p) => p.id !== "")

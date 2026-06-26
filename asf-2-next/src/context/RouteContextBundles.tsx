@@ -1,5 +1,6 @@
 "use client";
 import React, { PropsWithChildren } from "react";
+import { useFeatureFlags } from "./FeatureFlagsContext";
 import { BrandProvider } from "./product/BrandContext";
 import { DepartmentProvider } from "./product/DepartmentContext";
 import { RangeProvider } from "./product/RangeContext";
@@ -32,6 +33,7 @@ import { WishlistProvider } from "./WishlistContext";
 import { NotificationProvider } from "./NotificationContext";
 import { PointsMembershipProvider } from "./PointsMembershipContext";
 import { PromotionProvider } from "./PromotionContext";
+import { StoreLocationProvider } from "./StoreLocationContext";
 
 import { CommunityProvider } from "./CommunityContext";
 import { GroupProvider } from "./GroupContext";
@@ -40,6 +42,8 @@ import { TicketProvider } from "./TicketContext";
 import { TicketStatusLogProvider } from "./TicketStatusLogContext";
 import { ConversationProvider } from "./ConversationContext";
 import { UserProvider } from "./UserContext";
+import { ClaimProvider } from "./ClaimContext";
+import { ClaimStatusLogProvider } from "./ClaimStatusLogContext";
 
 export const ProductContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <BrandProvider>
@@ -119,6 +123,30 @@ export const CommunityContextBundle: React.FC<PropsWithChildren> = ({ children }
   </UserProvider>
 );
 
+/**
+ * Claims module: claim CRUD, status logs, and user list for staff assignment.
+ */
+export const ClaimsContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
+  <UserProvider>
+    <ClaimProvider>
+      <ClaimStatusLogProvider>{children}</ClaimStatusLogProvider>
+    </ClaimProvider>
+  </UserProvider>
+);
+
+/**
+ * Staff claims review with optional support conversation integration.
+ */
+export const ClaimsWithSupportContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
+  <ClaimsContextBundle>
+    <ConversationParticipantProvider>
+      <TicketProvider>
+        <ConversationProvider>{children}</ConversationProvider>
+      </TicketProvider>
+    </ConversationParticipantProvider>
+  </ClaimsContextBundle>
+);
+
 export const AnalyticsContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <OrderContextBundle>{children}</OrderContextBundle>
 );
@@ -148,52 +176,95 @@ export const AnalyticsContextBundle: React.FC<PropsWithChildren> = ({ children }
  *
  * Total channels: ~13 (down from 24 in LandingContextBundle)
  */
-export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
-  <AnnouncementProvider>
-    <BrandProvider>
-      <DepartmentProvider>
-      <RangeProvider>
-        <CategoryProvider>
-          <ProductCategoryProvider>
-            <ProductSizeProvider>
-              <ProductColorProvider>
-                <ProductMediaProvider>
-                  <ProductProvider>
-                    <PostMediaProvider>
-                      <PostProvider>
-                        <PointsMembershipProvider>
-                          <AddToCartLogProvider>
-                            <AddToCartProvider>
-                              <OrderProvider>
-                                <WishlistProvider>
-                                  <PromotionProvider>
-                                    <NotificationProvider>{children}</NotificationProvider>
-                                  </PromotionProvider>
-                                </WishlistProvider>
-                              </OrderProvider>
-                            </AddToCartProvider>
-                          </AddToCartLogProvider>
-                        </PointsMembershipProvider>
-                      </PostProvider>
-                    </PostMediaProvider>
-                  </ProductProvider>
-                </ProductMediaProvider>
-              </ProductColorProvider>
-            </ProductSizeProvider>
-          </ProductCategoryProvider>
-        </CategoryProvider>
-      </RangeProvider>
-    </DepartmentProvider>
-  </BrandProvider>
-  </AnnouncementProvider>
+/**
+ * Customer-facing claims providers (claim CRUD + status logs).
+ */
+export const ClaimsCustomerProviders: React.FC<PropsWithChildren> = ({ children }) => (
+  <ClaimProvider>
+    <ClaimStatusLogProvider>{children}</ClaimStatusLogProvider>
+  </ClaimProvider>
 );
+
+export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children }) => {
+  const { isEnabled } = useFeatureFlags();
+
+  function Gate({
+    flag,
+    Provider,
+    kids,
+    children: gateChildren,
+  }: {
+    flag: Parameters<typeof isEnabled>[0];
+    Provider: React.FC<PropsWithChildren>;
+    kids?: React.ReactNode;
+    children?: React.ReactNode;
+  }): React.ReactElement {
+    const content = kids ?? gateChildren;
+    if (!isEnabled(flag)) {
+      return <>{content}</>;
+    }
+    return <Provider>{content}</Provider>;
+  }
+
+  return (
+    <AnnouncementProvider>
+      <BrandProvider>
+        <DepartmentProvider>
+        <RangeProvider>
+          <CategoryProvider>
+            <ProductCategoryProvider>
+              <ProductSizeProvider>
+                <ProductColorProvider>
+                  <ProductMediaProvider>
+                    <ProductProvider>
+                      <PostMediaProvider>
+                        <PostProvider>
+                          <PointsMembershipProvider>
+                            <AddToCartLogProvider>
+                              <AddToCartProvider>
+                                <OrderProvider>
+                                  <WishlistProvider>
+                                    <PromotionProvider>
+                                      <Gate
+                                        flag="claims"
+                                        Provider={ClaimsCustomerProviders}
+                                        kids={
+                                          <Gate
+                                            flag="store_locations"
+                                            Provider={StoreLocationProvider}
+                                            kids={<NotificationProvider>{children}</NotificationProvider>}
+                                          />
+                                        }
+                                      />
+                                    </PromotionProvider>
+                                  </WishlistProvider>
+                                </OrderProvider>
+                              </AddToCartProvider>
+                            </AddToCartLogProvider>
+                          </PointsMembershipProvider>
+                        </PostProvider>
+                      </PostMediaProvider>
+                    </ProductProvider>
+                  </ProductMediaProvider>
+                </ProductColorProvider>
+              </ProductSizeProvider>
+            </ProductCategoryProvider>
+          </CategoryProvider>
+        </RangeProvider>
+      </DepartmentProvider>
+    </BrandProvider>
+    </AnnouncementProvider>
+  );
+};
 
 /**
  * Admin routes that need catalog + promotion management (e.g. /promotions).
  */
 export const FullAdminContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <ProductContextBundle>
-    <PromotionProvider>{children}</PromotionProvider>
+    <PromotionProvider>
+      <StoreLocationProvider>{children}</StoreLocationProvider>
+    </PromotionProvider>
   </ProductContextBundle>
 );
 

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
 import { useAlertContext } from "@/context/AlertContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTicketContext } from "@/context/TicketContext";
 import {
   useConversationContext,
@@ -49,7 +50,16 @@ export default function SupportChatPage() {
   const router = useRouter();
   const { user, loading } = useAuthContext();
   const { showAlert } = useAlertContext();
+  const { isEnabled } = useFeatureFlags();
   const { createTicket } = useTicketContext();
+
+  useEffect(() => {
+    if (!isEnabled("support_chat")) {
+      router.replace("/");
+    }
+  }, [isEnabled, router]);
+
+  if (!isEnabled("support_chat")) return null;
   const {
     conversations,
     createConversation,

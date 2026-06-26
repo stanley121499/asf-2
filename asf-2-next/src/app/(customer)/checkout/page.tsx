@@ -23,6 +23,7 @@ import {
 
 import NavbarHome from "@/components/navbar-home";
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import type { Database } from "@/database.types";
 import { formatCurrency } from "@/utils/pointsConfig";
@@ -131,7 +132,16 @@ function buildShippingPayload(address: AddressFormState): {
 const CheckoutPage: React.FC = () => {
   const router = useRouter();
   const { user, user_detail, loading: authLoading } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
   const { add_to_carts, loading: cartLoading } = useAddToCartContext();
+
+  useEffect(() => {
+    if (!isEnabled("cart")) {
+      router.replace("/");
+    }
+  }, [isEnabled, router]);
+
+  if (!isEnabled("cart")) return null;
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.Shipping);
   const [address, setAddress] = useState<AddressFormState>({

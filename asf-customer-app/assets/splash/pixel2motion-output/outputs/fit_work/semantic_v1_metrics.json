@@ -1,0 +1,33 @@
+{
+  "parts": [
+    "letter-m",
+    "number-2",
+    "word-model",
+    "word-match"
+  ],
+  "letter_parts": [
+    "letter-m",
+    "number-2",
+    "model-m",
+    "model-o",
+    "model-d",
+    "model-e",
+    "model-l",
+    "match-m",
+    "match-a",
+    "match-t",
+    "match-c",
+    "match-h"
+  ],
+  "metrics": {
+    "source_foreground_pixels": 91783,
+    "vector_foreground_pixels": 1048576,
+    "intersection_pixels": 91783,
+    "union_pixels": 1048576,
+    "iou": 0.087531,
+    "recall_source_covered_by_vector": 1.0,
+    "precision_vector_inside_source": 0.087531
+  },
+  "svg": "E:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\logo_semantic_v1.svg",
+  "letter_svg": "E:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\logo_letters.svg"
+}

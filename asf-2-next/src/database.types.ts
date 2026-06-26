@@ -200,6 +200,149 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_status_change_logs: {
+        Row: {
+          changed_by: string | null
+          claim_id: string
+          created_at: string
+          id: string
+          new_status: string | null
+          notes: string | null
+          old_status: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          claim_id: string
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          old_status?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          claim_id?: string
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          old_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_status_change_logs_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claims: {
+        Row: {
+          approved_resolution: string | null
+          assigned_agent_id: string | null
+          claim_type: string
+          conversation_id: string | null
+          created_at: string
+          description: string | null
+          evidence_urls: string[]
+          id: string
+          order_id: string | null
+          order_item_id: string | null
+          product_id: string | null
+          reason: string | null
+          rejection_reason: string | null
+          requested_resolution: string | null
+          resolved_at: string | null
+          staff_notes: string | null
+          status: string
+          ticket_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_resolution?: string | null
+          assigned_agent_id?: string | null
+          claim_type: string
+          conversation_id?: string | null
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[]
+          id?: string
+          order_id?: string | null
+          order_item_id?: string | null
+          product_id?: string | null
+          reason?: string | null
+          rejection_reason?: string | null
+          requested_resolution?: string | null
+          resolved_at?: string | null
+          staff_notes?: string | null
+          status?: string
+          ticket_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_resolution?: string | null
+          assigned_agent_id?: string | null
+          claim_type?: string
+          conversation_id?: string | null
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[]
+          id?: string
+          order_id?: string | null
+          order_item_id?: string | null
+          product_id?: string | null
+          reason?: string | null
+          rejection_reason?: string | null
+          requested_resolution?: string | null
+          resolved_at?: string | null
+          staff_notes?: string | null
+          status?: string
+          ticket_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claims_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string | null
@@ -360,6 +503,30 @@ export type Database = {
           id?: string
           media_url?: string | null
           name?: string | null
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          label?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1790,6 +1957,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      store_locations: {
+        Row: {
+          active: boolean
+          address_line_1: string
+          address_line_2: string | null
+          city: string
+          country: string
+          created_at: string
+          deleted_at: string | null
+          google_maps_url: string | null
+          id: string
+          image_urls: string[]
+          latitude: number | null
+          longitude: number | null
+          mall_name: string
+          name: string
+          opening_hours: string | null
+          phone: string | null
+          postcode: string | null
+          sort_order: number
+          state: string
+          waze_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          address_line_1: string
+          address_line_2?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          deleted_at?: string | null
+          google_maps_url?: string | null
+          id?: string
+          image_urls?: string[]
+          latitude?: number | null
+          longitude?: number | null
+          mall_name: string
+          name: string
+          opening_hours?: string | null
+          phone?: string | null
+          postcode?: string | null
+          sort_order?: number
+          state: string
+          waze_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          address_line_1?: string
+          address_line_2?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          deleted_at?: string | null
+          google_maps_url?: string | null
+          id?: string
+          image_urls?: string[]
+          latitude?: number | null
+          longitude?: number | null
+          mall_name?: string
+          name?: string
+          opening_hours?: string | null
+          phone?: string | null
+          postcode?: string | null
+          sort_order?: number
+          state?: string
+          waze_url?: string | null
+        }
+        Relationships: []
       }
       staff_roles: {
         Row: {

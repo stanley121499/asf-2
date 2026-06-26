@@ -11,6 +11,7 @@ const cormorant = Cormorant_Garamond({
 });
 import { AlertProvider } from "../context/AlertContext";
 import { AuthProvider } from "../context/AuthContext";
+import { FeatureFlagsProvider } from "../context/FeatureFlagsContext";
 import { AlertComponent } from "../components/AlertComponent";
 import NextTopLoader from "nextjs-toploader";
 
@@ -46,8 +47,10 @@ export default function RootLayout({
         <NextTopLoader color="#6366f1" showSpinner={false} height={3} />
         <AlertProvider>
           <AuthProvider>
-            <AlertComponent />
-            {children}
+            <FeatureFlagsProvider>
+              <AlertComponent />
+              {children}
+            </FeatureFlagsProvider>
           </AuthProvider>
         </AlertProvider>
       </body>

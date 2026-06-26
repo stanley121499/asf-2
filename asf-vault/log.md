@@ -66,3 +66,53 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
 - Security notes documented in wiki (intentional design, not bugs):
   - `staff_roles` SELECT-own only — bootstrap owner via Supabase SQL editor
   - `notifications` no client INSERT — all inserts use service role key from server
+
+## [2026-04-25] ingest | Mobile apps progress — both Expo apps built (Apr 13–25)
+
+- Source: `raw/sources/2026-04-25-mobile-apps-progress.md`
+- Wiki touched:
+  - [[wiki/sources/2026-04-25-mobile-apps-progress]] (new)
+  - [[wiki/entities/asf-2]] (updated: codebases table, production readiness section, sources 71→73)
+  - [[wiki/00-overview]] (updated: current focus section, sources 72→73)
+  - [[index.md]] (added 1 new source entry + raw layout table entry)
+- Notes: Documents all work between 2026-04-13 and 2026-04-25 — customer app APK shipped, staff app feature-complete via Expo Go. Critical schema corrections captured (products.status not active; product_stock.count not quantity; announcements and promotion_products tables newly documented). Expo Router lesson: every `(tabs)/` subdirectory must have `_layout.tsx`. Next priority: demo data (Malaysia minimart) + fix staff bottom nav dashboard tab.
+
+## [2026-04-25] ingest | Demo data plan — Malaysia minimart (KK Mart / 99 Speed Mart)
+
+- Source: `raw/sources/2026-04-25-demo-data-plan.md`
+- Wiki touched: [[index.md]] (added entry)
+- Notes: Planning document for seeding Supabase with ~50 Malaysian minimart products across 7 categories, 10 brands, historical orders, promotions, and announcements. Includes verified schema column names from `database.types.ts`. Will be used as context for demo data agent.
+
+## [2026-06-26] ingest | Store locations feature — cross-platform implementation
+
+- Source: `raw/sources/2026-06-26-store-locations-feature.md`
+- Wiki touched:
+  - [[wiki/sources/2026-06-26-store-locations-feature]] (new)
+  - [[wiki/concepts/store-locations-feature-asf-2]] (new)
+  - [[wiki/entities/asf-2]] (updated: store locations module, sources 73→74)
+  - [[wiki/00-overview]] (updated: current focus, sources 73→74)
+  - [[index.md]] (added concept + source entries)
+- Notes: Documents full store locator build — `store_locations` + `feature_flags` migrations on ASF Supabase, customer `/stores` vs admin `/store-locations` route split, mobile wishlist→门店 tab, staff apiFetch CRUD, integration tests, production deploy still pending.
+
+## [2026-06-26] ingest | Pixel2Motion MODEL MATCH animated splash
+
+- Source: `raw/sources/2026-06-26-pixel2motion-model-match-splash.md`
+- Wiki touched:
+  - [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]] (new)
+  - [[wiki/concepts/pixel2motion-splash-asf-2]] (new)
+  - [[wiki/entities/asf-2]] (updated: animated splash, mobile app status, sources 74→75)
+  - [[wiki/concepts/mobile-app-architecture-asf-2]] (updated: splash section, sources 2→3)
+  - [[wiki/00-overview]] (updated: current focus, sources 74→75)
+  - [[index.md]] (added concept + source entries)
+- Notes: Documents full Pixel2Motion pipeline for Simon footwear pilot — semantic SVG trace (IoU 0.9972), 7 client variations, Variation 7 letter cascade chosen, WebView embed on both Expo apps, build:splash regeneration from customer motion SOT.
+
+## [2026-06-26] ingest | Post-purchase claims module — modular warranty/returns
+
+- Source: `raw/sources/2026-06-26-post-purchase-claims-module.md`
+- Wiki touched:
+  - [[wiki/sources/2026-06-26-post-purchase-claims-module]] (new)
+  - [[wiki/concepts/post-purchase-claims-module-asf-2]] (new)
+  - [[wiki/entities/asf-2]] (updated: claims module, sources 75→76)
+  - [[wiki/00-overview]] (updated: current focus, sources 75→76)
+  - [[index.md]] (added concept + source entries)
+- Notes: Source-of-truth for `claims` module implementation — config portability via `claimPolicyConfig.ts`, SQL `step_11_claims.sql`, customer order-item entry, staff queue mirroring Support; migration must be run before production use.

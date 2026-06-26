@@ -1,0 +1,103 @@
+/* V5 — Luxury fade (premium footwear / fashion norm) */
+
+:root {
+  --p2m-duration: 1800ms;
+}
+
+#logo {
+  transform-box: view-box;
+  transform-origin: 50% 48%;
+  animation: p2m-luxury-fade var(--p2m-duration) both;
+}
+
+@keyframes p2m-luxury-fade {
+  0% {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(10px) brightness(1.15);
+  }
+  22% {
+    opacity: 0;
+    transform: scale(1.03);
+    filter: blur(12px) brightness(1.1);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Subtle accent bloom after the lockup clears */
+#number-2 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: p2m-accent-bloom var(--p2m-duration) both;
+}
+
+@keyframes p2m-accent-bloom {
+  0%,
+  55% {
+    opacity: 0.35;
+    filter: brightness(0.85);
+  }
+  72% {
+    opacity: 0.85;
+    filter: brightness(1.05);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.atom-hover #logo {
+  animation: p2m-atom-hover 1200ms cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+
+@keyframes p2m-atom-hover {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.015);
+  }
+}
+
+.atom-pulse #number-2 {
+  animation: p2m-atom-pulse 2000ms ease-in-out infinite;
+}
+
+@keyframes p2m-atom-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.atom-words #word-model,
+.atom-words #word-match {
+  animation: p2m-atom-words 1600ms ease-in-out infinite alternate;
+}
+
+@keyframes p2m-atom-words {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
+}

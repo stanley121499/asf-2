@@ -1,0 +1,129 @@
+/* MODEL MATCH — Variation 2: Letter cascade (1500ms) */
+
+:root {
+  --p2m-duration: 1500ms;
+  --p2m-overshoot: 1.05;
+}
+
+#letter-m, #number-2,
+#model-m, #model-o, #model-d, #model-e, #model-l, #match-m, #match-a, #match-t, #match-c, #match-h {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-duration: var(--p2m-duration);
+  animation-fill-mode: both;
+}
+
+#letter-m { animation-name: p2m-letter-m; }
+@keyframes p2m-letter-m {
+  0% { opacity: 0; transform: translateY(16px) scale(0.9); }
+  18% { opacity: 0; transform: translateY(16px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  48% { opacity: 1; transform: translateY(-2px) scale(1.02); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  72% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#number-2 { animation-name: p2m-number-2; }
+@keyframes p2m-number-2 {
+  0%, 10% { opacity: 0; transform: translateX(16px) scale(0.78); }
+  18% { opacity: 0; transform: translateX(16px) scale(0.75); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  52% { opacity: 1; transform: translateX(-2px) scale(var(--p2m-overshoot)); animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  74% { transform: translateX(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateX(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#model-m { animation-name: p2m-model-m; }
+@keyframes p2m-model-m {
+  0%, 39% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  40% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  47% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  52% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#model-o { animation-name: p2m-model-o; }
+@keyframes p2m-model-o {
+  0%, 42% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  43% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  50% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  55% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#model-d { animation-name: p2m-model-d; }
+@keyframes p2m-model-d {
+  0%, 45% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  46% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  53% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  58% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#model-e { animation-name: p2m-model-e; }
+@keyframes p2m-model-e {
+  0%, 48% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  49% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  56% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  61% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#model-l { animation-name: p2m-model-l; }
+@keyframes p2m-model-l {
+  0%, 51% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  52% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  59% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  64% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#match-m { animation-name: p2m-match-m; }
+@keyframes p2m-match-m {
+  0%, 55% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  56% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  63% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  68% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#match-a { animation-name: p2m-match-a; }
+@keyframes p2m-match-a {
+  0%, 58% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  59% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  66% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  71% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#match-t { animation-name: p2m-match-t; }
+@keyframes p2m-match-t {
+  0%, 61% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  62% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  69% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  74% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#match-c { animation-name: p2m-match-c; }
+@keyframes p2m-match-c {
+  0%, 64% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  65% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  72% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  77% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+#match-h { animation-name: p2m-match-h; }
+@keyframes p2m-match-h {
+  0%, 67% { opacity: 0; transform: translateY(10px) scale(0.9); }
+  68% { opacity: 0; transform: translateY(10px) scale(0.88); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  75% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+  80% { transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+.atom-hover #letter-m { animation: p2m-atom-hover 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite alternate; }
+@keyframes p2m-atom-hover { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+.atom-pulse #number-2 { animation: p2m-atom-pulse 1400ms ease-in-out infinite; }
+@keyframes p2m-atom-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.04); opacity: 0.92; } }
+.atom-words #model-l, .atom-words #match-h { animation: p2m-atom-words 1200ms ease-in-out infinite alternate; }
+@keyframes p2m-atom-words { from { opacity: 0.82; } to { opacity: 1; } }

@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MODEL MATCH — Ink Reveal</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #000000;
+      --surface: #f5f5f3;
+      --border: rgba(0,0,0,0.08);
+      --text-primary: #0d0d0d;
+      --text-secondary: #777;
+      --text-tertiary: #aaa;
+      --accent: #e64036;
+      --speed-progress: 9%;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    #logo-root {
+      width: min(92vw, 716.8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #logo-root svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+      text-rendering: geometricPrecision;
+    }
+
+    .atomic-motions {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-end;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .atom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .atom-stage {
+      width: 74px;
+      height: 74px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .atom-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 260ms cubic-bezier(0.34,1.56,0.64,1);
+      transform-origin: center;
+    }
+
+    .atom-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .principles {
+      max-width: 760px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pill {
+      font-size: 11px;
+      line-height: 1;
+      padding: 5px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: 12px/1.2 inherit;
+      letter-spacing: 0.04em;
+      padding: 8px 18px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--bg);
+      background: var(--text-primary);
+      border-color: var(--text-primary);
+    }
+
+    .speed-control {
+      width: min(340px, 80vw);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+    }
+
+    .speed-caption,
+    .speed-value {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .speed-value {
+      min-width: 46px;
+      text-align: right;
+      color: var(--text-primary);
+      text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      min-width: 120px;
+      height: 24px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: grab;
+      accent-color: var(--accent);
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--speed-progress), var(--border) var(--speed-progress), var(--border) 100%);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-top: -6.5px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      background: var(--accent);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+    }
+
+    .footer {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .p2m-chromeless .atomic-motions,
+    .p2m-chromeless .principles,
+    .p2m-chromeless .controls,
+    .p2m-chromeless .footer {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      /* V7 — Progressive ink reveal (draw-on style, industry luxury/craft norm) */
+
+      :root {
+        --p2m-duration: 1600ms;
+      }
+
+      #letter-m,
+      #number-2,
+      #word-model,
+      #word-match {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation-duration: var(--p2m-duration);
+        animation-fill-mode: both;
+        clip-path: inset(0 100% 0 0);
+      }
+
+      #letter-m {
+        animation-name: p2m-ink-m;
+      }
+
+      @keyframes p2m-ink-m {
+        0%,
+        8% {
+          clip-path: inset(0 100% 0 0);
+          opacity: 1;
+        }
+        38% {
+          clip-path: inset(0 0 0 0);
+          animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        100% {
+          clip-path: inset(0 0 0 0);
+          opacity: 1;
+          animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      }
+
+      #number-2 {
+        animation-name: p2m-ink-2;
+      }
+
+      @keyframes p2m-ink-2 {
+        0%,
+        28% {
+          clip-path: inset(0 100% 0 0);
+          opacity: 1;
+        }
+        52% {
+          clip-path: inset(0 0 0 0);
+          animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        100% {
+          clip-path: inset(0 0 0 0);
+          opacity: 1;
+          animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      }
+
+      #word-model {
+        animation-name: p2m-ink-model;
+      }
+
+      @keyframes p2m-ink-model {
+        0%,
+        48% {
+          clip-path: inset(0 100% 0 0);
+          opacity: 1;
+        }
+        68% {
+          clip-path: inset(0 0 0 0);
+          animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        100% {
+          clip-path: inset(0 0 0 0);
+          opacity: 1;
+          animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      }
+
+      #word-match {
+        animation-name: p2m-ink-match;
+      }
+
+      @keyframes p2m-ink-match {
+        0%,
+        62% {
+          clip-path: inset(0 100% 0 0);
+          opacity: 1;
+        }
+        82% {
+          clip-path: inset(0 0 0 0);
+          animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        100% {
+          clip-path: inset(0 0 0 0);
+          opacity: 1;
+          animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+      }
+
+      .atom-hover #letter-m {
+        animation: p2m-atom-hover 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+      }
+
+      @keyframes p2m-atom-hover {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-5px);
+        }
+      }
+
+      .atom-pulse #number-2 {
+        animation: p2m-atom-pulse 1400ms ease-in-out infinite;
+      }
+
+      @keyframes p2m-atom-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+
+      .atom-words #word-model,
+      .atom-words #word-match {
+        animation: p2m-atom-words 1200ms ease-in-out infinite alternate;
+      }
+
+      @keyframes p2m-atom-words {
+        from {
+          opacity: 0.82;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="theme-bridge.css">
+</head>
+<body>
+  <main id="logo-root" aria-label="Animated logo" data-p2m-duration="1600"></main>
+
+  <section class="atomic-motions" aria-label="Atomic motion studies">
+    <div class="atom" data-atom="hover"><div class="atom-stage"></div><span class="atom-label">Hover</span></div>
+    <div class="atom" data-atom="pulse"><div class="atom-stage"></div><span class="atom-label">Pulse</span></div>
+    <div class="atom" data-atom="arc"><div class="atom-stage"></div><span class="atom-label">Arc</span></div>
+    <div class="atom" data-atom="press"><div class="atom-stage"></div><span class="atom-label">Press</span></div>
+  </section>
+
+  <div class="principles" id="principlesRow">
+    <span class="pill" data-p="squashstretch">Squash &amp; stretch</span>
+    <span class="pill" data-p="anticipation">Anticipation</span>
+    <span class="pill" data-p="staging">Staging</span>
+    <span class="pill" data-p="followthrough">Follow through</span>
+    <span class="pill" data-p="overlap">Overlapping</span>
+    <span class="pill" data-p="slowinout">Slow in / out</span>
+    <span class="pill" data-p="arc">Arc</span>
+    <span class="pill" data-p="secondary">Secondary action</span>
+    <span class="pill" data-p="timing">Timing</span>
+    <span class="pill" data-p="appeal">Appeal</span>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="btnReplay" type="button">Replay</button>
+    <button id="btnSlow" type="button">Slow motion</button>
+    <label class="speed-control" for="speedSlider">
+      <span class="speed-caption">Speed</span>
+      <input id="speedSlider" type="range" min="0.25" max="2.5" step="0.05" value="0.45" aria-label="Animation speed">
+      <span class="speed-value" id="speedValue">0.45x</span>
+    </label>
+  </div>
+
+  <p class="footer">Click the main logo to replay | Drag speed | Try atomic motions</p>
+
+  <script>
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const LOGO = {"tag":"svg","attrs":{"width":"1024","height":"1024","viewBox":"0 0 1024 1024"},"children":[{"tag":"title","attrs":{},"children":[],"text":"MODEL MATCH logo"},{"tag":"rect","attrs":{"width":"100%","height":"100%","fill":"#000000"},"children":[]},{"tag":"g","attrs":{"id":"logo","fill-rule":"evenodd","shape-rendering":"geometricPrecision"},"children":[{"tag":"g","attrs":{"id":"letter-m"},"children":[{"tag":"path","attrs":{"d":"M 215 244 L 318 245 L 449 530 L 580 245 L 684 244 L 684 253 L 655 255 L 637 268 L 632 291 L 632 385 L 605 395 L 582 415 L 579 303 L 440 609 L 429 606 L 289 302 L 291 578 L 305 596 L 341 600 L 341 609 L 215 609 L 215 600 L 241 599 L 254 593 L 263 581 L 266 566 L 266 290 L 261 271 L 253 262 L 238 255 L 215 253 Z M 630 426 L 635 581 L 651 597 L 684 600 L 684 609 L 529 609 L 529 600 L 556 599 L 576 585 L 581 564 L 581 454 L 601 437 Z","fill":"#ffffff"},"children":[]}]},{"tag":"g","attrs":{"id":"number-2"},"children":[{"tag":"path","attrs":{"d":"M 654 381 L 681 382 L 707 389 L 729 401 L 747 417 L 762 438 L 769 455 L 773 478 L 772 501 L 759 544 L 720 607 L 601 736 L 752 734 L 772 723 L 786 705 L 796 705 L 770 779 L 539 778 L 539 769 L 592 720 L 662 646 L 694 602 L 718 550 L 724 518 L 718 474 L 702 449 L 689 437 L 673 429 L 635 425 L 609 432 L 581 453 L 561 491 L 551 490 L 559 453 L 577 420 L 606 395 L 632 384 Z M 551 490 L 551 491 L 550 491 L 550 490 Z","fill":"#ee73c4"},"children":[]}]},{"tag":"g","attrs":{"id":"word-model"},"children":[{"tag":"path","attrs":{"d":"M 311 649 L 322 650 L 330 654 L 338 663 L 341 672 L 341 686 L 335 699 L 328 705 L 316 709 L 305 708 L 297 704 L 290 697 L 286 687 L 286 671 L 289 663 L 300 652 Z M 350 651 L 382 651 L 395 656 L 404 672 L 404 685 L 399 697 L 394 702 L 382 707 L 351 707 L 355 704 L 355 654 Z M 307 652 L 300 657 L 295 668 L 295 689 L 302 703 L 315 707 L 326 702 L 331 694 L 332 669 L 325 655 L 319 652 Z M 366 653 L 362 655 L 362 703 L 378 705 L 391 696 L 395 687 L 395 672 L 391 662 L 383 655 Z M 208 651 L 223 651 L 242 695 L 245 694 L 264 651 L 277 651 L 272 654 L 272 704 L 276 707 L 260 707 L 265 700 L 265 660 L 261 663 L 242 707 L 240 707 L 218 660 L 218 704 L 222 707 L 210 707 L 215 703 L 215 656 Z M 413 651 L 454 651 L 454 662 L 448 653 L 425 654 L 426 677 L 445 676 L 449 668 L 449 687 L 444 679 L 425 680 L 426 704 L 448 705 L 458 694 L 454 707 L 413 707 L 418 704 L 418 654 Z M 466 651 L 486 651 L 479 655 L 480 704 L 502 704 L 511 694 L 507 707 L 467 707 L 472 701 L 472 657 Z","fill":"#ffffff"},"children":[]}]},{"tag":"g","attrs":{"id":"word-match"},"children":[{"tag":"path","attrs":{"d":"M 208 719 L 223 719 L 242 763 L 245 762 L 264 719 L 277 719 L 272 722 L 272 772 L 276 775 L 260 775 L 265 768 L 265 728 L 262 729 L 242 775 L 240 775 L 218 728 L 218 772 L 222 775 L 210 775 L 215 771 L 215 724 Z M 451 719 L 470 719 L 464 723 L 465 746 L 491 746 L 492 724 L 486 719 L 505 719 L 499 723 L 499 772 L 504 775 L 487 775 L 492 771 L 491 747 L 465 747 L 464 771 L 469 775 L 452 775 L 457 771 L 457 723 Z M 313 717 L 334 767 L 342 775 L 324 775 L 328 770 L 322 756 L 299 756 L 294 767 L 294 773 L 299 775 L 284 775 L 290 771 Z M 413 718 L 428 718 L 433 721 L 438 721 L 441 718 L 442 736 L 437 726 L 428 720 L 411 722 L 402 735 L 402 759 L 412 772 L 431 773 L 443 762 L 440 768 L 429 776 L 408 775 L 397 766 L 393 758 L 394 735 L 403 723 Z M 339 719 L 385 719 L 386 731 L 380 722 L 366 721 L 366 772 L 370 775 L 354 775 L 359 768 L 359 722 L 344 722 L 339 730 Z M 310 730 L 301 754 L 321 754 L 312 730 Z","fill":"#ffffff"},"children":[]}]}]}]};
+    const SVG_TEXT = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1024\" height=\"1024\" viewBox=\"0 0 1024 1024\"><style>:root,svg{--bg:#ffffff;--surface:#f5f5f3;--text-primary:#0d0d0d;--text-secondary:#777;--text-tertiary:#aaa;--logo-wordmark:#363e47;--accent:#e64036;--red:#e64036;--red-bright:#ff493f;}<\/style>\n  <title>MODEL MATCH logo<\/title>\n  <rect width=\"100%\" height=\"100%\" fill=\"#000000\"/>\n  <g id=\"logo\" fill-rule=\"evenodd\" shape-rendering=\"geometricPrecision\">\n    <g id=\"letter-m\"><path d=\"M 215 244 L 318 245 L 449 530 L 580 245 L 684 244 L 684 253 L 655 255 L 637 268 L 632 291 L 632 385 L 605 395 L 582 415 L 579 303 L 440 609 L 429 606 L 289 302 L 291 578 L 305 596 L 341 600 L 341 609 L 215 609 L 215 600 L 241 599 L 254 593 L 263 581 L 266 566 L 266 290 L 261 271 L 253 262 L 238 255 L 215 253 Z M 630 426 L 635 581 L 651 597 L 684 600 L 684 609 L 529 609 L 529 600 L 556 599 L 576 585 L 581 564 L 581 454 L 601 437 Z\" fill=\"#ffffff\"/><\/g>\n    <g id=\"number-2\"><path d=\"M 654 381 L 681 382 L 707 389 L 729 401 L 747 417 L 762 438 L 769 455 L 773 478 L 772 501 L 759 544 L 720 607 L 601 736 L 752 734 L 772 723 L 786 705 L 796 705 L 770 779 L 539 778 L 539 769 L 592 720 L 662 646 L 694 602 L 718 550 L 724 518 L 718 474 L 702 449 L 689 437 L 673 429 L 635 425 L 609 432 L 581 453 L 561 491 L 551 490 L 559 453 L 577 420 L 606 395 L 632 384 Z M 551 490 L 551 491 L 550 491 L 550 490 Z\" fill=\"#ee73c4\"/><\/g>\n    <g id=\"word-model\"><path d=\"M 311 649 L 322 650 L 330 654 L 338 663 L 341 672 L 341 686 L 335 699 L 328 705 L 316 709 L 305 708 L 297 704 L 290 697 L 286 687 L 286 671 L 289 663 L 300 652 Z M 350 651 L 382 651 L 395 656 L 404 672 L 404 685 L 399 697 L 394 702 L 382 707 L 351 707 L 355 704 L 355 654 Z M 307 652 L 300 657 L 295 668 L 295 689 L 302 703 L 315 707 L 326 702 L 331 694 L 332 669 L 325 655 L 319 652 Z M 366 653 L 362 655 L 362 703 L 378 705 L 391 696 L 395 687 L 395 672 L 391 662 L 383 655 Z M 208 651 L 223 651 L 242 695 L 245 694 L 264 651 L 277 651 L 272 654 L 272 704 L 276 707 L 260 707 L 265 700 L 265 660 L 261 663 L 242 707 L 240 707 L 218 660 L 218 704 L 222 707 L 210 707 L 215 703 L 215 656 Z M 413 651 L 454 651 L 454 662 L 448 653 L 425 654 L 426 677 L 445 676 L 449 668 L 449 687 L 444 679 L 425 680 L 426 704 L 448 705 L 458 694 L 454 707 L 413 707 L 418 704 L 418 654 Z M 466 651 L 486 651 L 479 655 L 480 704 L 502 704 L 511 694 L 507 707 L 467 707 L 472 701 L 472 657 Z\" fill=\"#ffffff\"/><\/g>\n    <g id=\"word-match\"><path d=\"M 208 719 L 223 719 L 242 763 L 245 762 L 264 719 L 277 719 L 272 722 L 272 772 L 276 775 L 260 775 L 265 768 L 265 728 L 262 729 L 242 775 L 240 775 L 218 728 L 218 772 L 222 775 L 210 775 L 215 771 L 215 724 Z M 451 719 L 470 719 L 464 723 L 465 746 L 491 746 L 492 724 L 486 719 L 505 719 L 499 723 L 499 772 L 504 775 L 487 775 L 492 771 L 491 747 L 465 747 L 464 771 L 469 775 L 452 775 L 457 771 L 457 723 Z M 313 717 L 334 767 L 342 775 L 324 775 L 328 770 L 322 756 L 299 756 L 294 767 L 294 773 L 299 775 L 284 775 L 290 771 Z M 413 718 L 428 718 L 433 721 L 438 721 L 441 718 L 442 736 L 437 726 L 428 720 L 411 722 L 402 735 L 402 759 L 412 772 L 431 773 L 443 762 L 440 768 L 429 776 L 408 775 L 397 766 L 393 758 L 394 735 L 403 723 Z M 339 719 L 385 719 L 386 731 L 380 722 L 366 721 L 366 772 L 370 775 L 354 775 L 359 768 L 359 722 L 344 722 L 339 730 Z M 310 730 L 301 754 L 321 754 L 312 730 Z\" fill=\"#ffffff\"/><\/g>\n  <\/g>\n<\/svg>\n";
+    const SVG_URI = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SVG_TEXT);
+    const DURATION = 1600;
+
+    let playbackRate = 0.45;
+    let pulseRaf = null;
+    let arcRaf = null;
+    window.__p2mReady = false;
+
+    function createSvgNode(node) {
+      const element = document.createElementNS(SVG_NS, node.tag);
+      for (const [name, value] of Object.entries(node.attrs || {})) {
+        element.setAttribute(name, value);
+      }
+      if (node.text) {
+        element.appendChild(document.createTextNode(node.text));
+      }
+      for (const child of node.children || []) {
+        element.appendChild(createSvgNode(child));
+      }
+      return element;
+    }
+
+    function heroAnimations() {
+      const root = document.getElementById("logo-root");
+      if (root.getAnimations) return root.getAnimations({ subtree: true });
+      return document.getAnimations().filter(animation => {
+        const target = animation.effect && animation.effect.target;
+        return target && root.contains(target);
+      });
+    }
+
+    function applyPlaybackRate() {
+      for (const animation of heroAnimations()) {
+        if (animation.updatePlaybackRate) animation.updatePlaybackRate(playbackRate);
+        else animation.playbackRate = playbackRate;
+      }
+    }
+
+    function renderHero() {
+      const root = document.getElementById("logo-root");
+      root.replaceChildren(createSvgNode(LOGO));
+      const svg = root.querySelector("svg");
+      if (svg) {
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+        svg.style.width = "100%";
+        svg.style.height = "auto";
+        svg.style.overflow = "visible";
+      }
+      requestAnimationFrame(() => requestAnimationFrame(applyPlaybackRate));
+    }
+
+    function flashPills(...names) {
+      document.querySelectorAll(".pill").forEach(pill => pill.classList.remove("active"));
+      names.forEach(name => {
+        const pill = document.querySelector(`[data-p="${name}"]`);
+        if (pill) pill.classList.add("active");
+      });
+    }
+
+    function cyclePrinciples() {
+      const phases = [
+        ["staging", "timing"],
+        ["anticipation", "squashstretch"],
+        ["arc", "slowinout"],
+        ["overlap", "followthrough"],
+        ["appeal"]
+      ];
+      let i = 0;
+      flashPills(...phases[0]);
+      return setInterval(() => {
+        i = (i + 1) % phases.length;
+        flashPills(...phases[i]);
+      }, Math.max(240, DURATION / phases.length / Math.max(playbackRate, 0.25)));
+    }
+
+    let pillTimer = null;
+    function replayMain() {
+      clearInterval(pillTimer);
+      renderHero();
+      pillTimer = cyclePrinciples();
+      setTimeout(() => {
+        clearInterval(pillTimer);
+        document.querySelectorAll(".pill").forEach(pill => pill.classList.remove("active"));
+      }, DURATION / Math.max(playbackRate, 0.25) + 600);
+    }
+
+    function formatSpeed(rate) {
+      return `${rate.toFixed(2)}x`;
+    }
+
+    function updateSpeedUI() {
+      const slider = document.getElementById("speedSlider");
+      const value = Number(slider.value);
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const progress = ((value - min) / (max - min)) * 100;
+      document.getElementById("speedValue").textContent = formatSpeed(value);
+      slider.style.setProperty("--speed-progress", `${progress}%`);
+      const slow = value <= 0.251;
+      const btnSlow = document.getElementById("btnSlow");
+      btnSlow.textContent = slow ? "Normal speed" : "Slow motion";
+      btnSlow.style.background = slow ? "var(--surface)" : "";
+      btnSlow.style.borderColor = slow ? "var(--text-secondary)" : "";
+    }
+
+    function setPlaybackRate(rate, replay = false) {
+      const slider = document.getElementById("speedSlider");
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      playbackRate = Math.min(max, Math.max(min, Number(rate)));
+      slider.value = String(playbackRate);
+      updateSpeedUI();
+      applyPlaybackRate();
+      if (replay) replayMain();
+    }
+
+    function setupAtomImages() {
+      document.querySelectorAll(".atom-stage").forEach(stage => {
+        const img = new Image();
+        img.src = SVG_URI;
+        img.alt = "";
+        stage.appendChild(img);
+      });
+    }
+
+    function setupAtoms() {
+      const hover = document.querySelector('[data-atom="hover"] img');
+      const pulse = document.querySelector('[data-atom="pulse"] img');
+      const arc = document.querySelector('[data-atom="arc"] img');
+      const press = document.querySelector('[data-atom="press"] img');
+
+      hover.parentElement.addEventListener("mouseenter", () => {
+        flashPills("squashstretch", "appeal");
+        hover.style.transform = "scale(1.08) rotate(-1.5deg)";
+      });
+      hover.parentElement.addEventListener("mouseleave", () => {
+        hover.style.transform = "scale(1)";
+      });
+
+      function pulseTick(ts) {
+        const p = (Math.sin(ts / 900) + 1) / 2;
+        pulse.style.transform = `scale(${1 + 0.1 * p})`;
+        pulseRaf = requestAnimationFrame(pulseTick);
+      }
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        pulseRaf = requestAnimationFrame(pulseTick);
+      }
+
+      let arcAngle = -14;
+      let arcVel = 0;
+      function arcTick() {
+        arcVel += (0 - arcAngle) * 0.08;
+        arcVel *= 0.86;
+        arcAngle += arcVel;
+        arc.style.transform = `rotate(${arcAngle}deg)`;
+        arcRaf = requestAnimationFrame(arcTick);
+      }
+      arc.parentElement.addEventListener("mouseenter", () => {
+        flashPills("arc", "anticipation", "appeal");
+        cancelAnimationFrame(arcRaf);
+        arcAngle = 28;
+        arcVel = 0;
+        arcTick();
+      });
+      arc.parentElement.addEventListener("mouseleave", () => {
+        arcAngle = 0;
+      });
+
+      press.parentElement.addEventListener("mousedown", () => {
+        flashPills("squashstretch", "anticipation");
+        press.style.transform = "scaleX(1.10) scaleY(0.88)";
+      });
+      ["mouseup", "mouseleave"].forEach(ev => {
+        press.parentElement.addEventListener(ev, () => {
+          press.style.transform = "scale(1)";
+        });
+      });
+    }
+
+    function applyQaMode() {
+      const params = new URLSearchParams(location.search);
+      const seekMs = params.get("t");
+      const staticMode = params.get("static");
+      if (seekMs === null && staticMode === null) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          applyPlaybackRate();
+          window.__p2mReady = true;
+        }));
+        return;
+      }
+
+      document.documentElement.classList.add("p2m-chromeless");
+      cancelAnimationFrame(pulseRaf);
+      cancelAnimationFrame(arcRaf);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        for (const animation of heroAnimations()) {
+          if (staticMode !== null) {
+            try {
+              animation.finish();
+            } catch (err) {
+              animation.cancel();
+            }
+          } else {
+            animation.pause();
+            animation.currentTime = Number(seekMs);
+          }
+        }
+        window.__p2mReady = true;
+      }));
+    }
+
+    document.getElementById("btnReplay").addEventListener("click", replayMain);
+    document.getElementById("logo-root").addEventListener("click", replayMain);
+    document.getElementById("speedSlider").addEventListener("input", event => {
+      setPlaybackRate(event.target.value, false);
+    });
+    document.getElementById("btnSlow").addEventListener("click", () => {
+      const slow = Number(document.getElementById("speedSlider").value) <= 0.251;
+      setPlaybackRate(slow ? 0.45 : 0.25, true);
+    });
+
+    setupAtomImages();
+    setupAtoms();
+    setPlaybackRate(0.45, false);
+    renderHero();
+    applyQaMode();
+  </script>
+  <script src="theme-bridge.js"></script>
+</body>
+</html>

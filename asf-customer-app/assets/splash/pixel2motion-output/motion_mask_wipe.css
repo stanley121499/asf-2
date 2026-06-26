@@ -1,0 +1,113 @@
+/* V4 — Left-to-right mask wipe (broadcast / fashion campaign norm) */
+
+:root {
+  --p2m-duration: 1400ms;
+}
+
+#logo {
+  transform-box: view-box;
+  transform-origin: center;
+  clip-path: inset(0 100% 0 0);
+  animation: p2m-mask-wipe var(--p2m-duration) both;
+}
+
+@keyframes p2m-mask-wipe {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.6;
+    transform: translateX(-8px);
+  }
+  12% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.6;
+    transform: translateX(-8px);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  72% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateX(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateX(0);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Pink accent trails the wipe slightly */
+#number-2 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: p2m-accent-trail var(--p2m-duration) both;
+}
+
+@keyframes p2m-accent-trail {
+  0%,
+  48% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  58% {
+    opacity: 0;
+    transform: scale(0.9);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(1.04);
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  92% {
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.atom-hover #logo {
+  animation: p2m-atom-hover 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+
+@keyframes p2m-atom-hover {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(4px);
+  }
+}
+
+.atom-pulse #number-2 {
+  animation: p2m-atom-pulse 1400ms ease-in-out infinite;
+}
+
+@keyframes p2m-atom-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.atom-words #word-model,
+.atom-words #word-match {
+  animation: p2m-atom-words 1200ms ease-in-out infinite alternate;
+}
+
+@keyframes p2m-atom-words {
+  from {
+    opacity: 0.82;
+  }
+  to {
+    opacity: 1;
+  }
+}

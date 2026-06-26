@@ -105,6 +105,7 @@ export function isCustomerProtectedPath(pathname: string): boolean {
     (p) => p === "/rewards" || p.startsWith("/rewards/"),
     (p) => p === "/notifications" || p.startsWith("/notifications/"),
     (p) => p === "/support-chat" || p.startsWith("/support-chat/"),
+    (p) => p === "/my-claims" || p.startsWith("/my-claims/"),
   ];
   return rules.some((fn) => fn(pathname));
 }
@@ -124,6 +125,7 @@ export function isAdminProtectedPath(pathname: string): boolean {
     "/orders",
     "/analytics",
     "/payments",
+    "/claims",
     "/users",
     "/posts",
     "/internal-chat",

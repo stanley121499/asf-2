@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { FaBox } from "react-icons/fa";
 import { useSidebarContext } from "../context/SidebarContext";
 import { useAuthContext } from "../context/AuthContext";
+import { useFeatureFlags } from "../context/FeatureFlagsContext";
 import { usePathname, useRouter } from "next/navigation";
 import { BsFillFilePostFill } from "react-icons/bs";
 import { GoHomeFill } from "react-icons/go";
@@ -13,8 +14,8 @@ import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
 import { FiMessageCircle } from "react-icons/fi";
-import { HiX, HiMenu } from "react-icons/hi";
-import { MdPayment } from "react-icons/md";
+import { HiX, HiMenu, HiOutlineLocationMarker } from "react-icons/hi";
+import { MdPayment, MdAssignmentReturn } from "react-icons/md";
 
 /**
  * Floating Action Button component for mobile
@@ -31,122 +32,181 @@ const FloatingMenuButton: React.FC<{ onOpen: () => void }> = ({ onOpen }) => (
 );
 
 /**
- * Sidebar content component - shared between mobile and desktop
+ * Sidebar content component - shared between mobile and desktop.
+ * Feature-flagged items are omitted from the rendered output when their
+ * corresponding flag is off, so staff do not see links to disabled modules.
  */
-const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }> = ({ onItemClick, currentPage }) => (
-  <>
-    <Sidebar.Items>
-      <Sidebar.ItemGroup>
-        <Sidebar.Item
-          href="/dashboard"
-          icon={GoHomeFill}
-          onClick={onItemClick}
-          className={
-            "/dashboard" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Dashboard
-        </Sidebar.Item>
+const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }> = ({ onItemClick, currentPage }) => {
+  const { isEnabled } = useFeatureFlags();
 
+  return (
+    <>
+      <Sidebar.Items>
+        <Sidebar.ItemGroup>
+          {/* Dashboard — always visible */}
+          <Sidebar.Item
+            href="/dashboard"
+            icon={GoHomeFill}
+            onClick={onItemClick}
+            className={
+              "/dashboard" === currentPage
+                ? "bg-gray-100 dark:bg-gray-700"
+                : ""
+            }>
+            Dashboard
+          </Sidebar.Item>
 
-        <Sidebar.Item
-          icon={BsFillFilePostFill}
-          href="/posts/list"
-          onClick={onItemClick}
-          className={
-            "/posts/list" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          All Posts
-        </Sidebar.Item>
+          {/* Posts — gated by `highlights` flag */}
+          {isEnabled("highlights") && (
+            <Sidebar.Item
+              icon={BsFillFilePostFill}
+              href="/posts/list"
+              onClick={onItemClick}
+              className={
+                "/posts/list" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              All Posts
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={FaBox}
-          href="/products/list"
-          onClick={onItemClick}
-          className={
-            "/products/list" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Products
-        </Sidebar.Item>
+          {/* Products — always visible (core module) */}
+          <Sidebar.Item
+            icon={FaBox}
+            href="/products/list"
+            onClick={onItemClick}
+            className={
+              "/products/list" === currentPage
+                ? "bg-gray-100 dark:bg-gray-700"
+                : ""
+            }>
+            Products
+          </Sidebar.Item>
 
-        <Sidebar.Item
-          icon={FaBoxes}
-          href="/stocks/overview"
-          onClick={onItemClick}
-          className={
-            "/stocks/overview" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Stocks
-        </Sidebar.Item>
+          {/* Stocks — gated by `stocks` flag */}
+          {isEnabled("stocks") && (
+            <Sidebar.Item
+              icon={FaBoxes}
+              href="/stocks/overview"
+              onClick={onItemClick}
+              className={
+                "/stocks/overview" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Stocks
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={FaClipboardList}
-          href="/orders"
-          onClick={onItemClick}
-          className={
-            "/orders" === currentPage || currentPage.startsWith("/orders/")
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Orders
-        </Sidebar.Item>
+          {/* Orders — gated by `orders` flag */}
+          {isEnabled("orders") && (
+            <Sidebar.Item
+              icon={FaClipboardList}
+              href="/orders"
+              onClick={onItemClick}
+              className={
+                "/orders" === currentPage || currentPage.startsWith("/orders/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Orders
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={MdPayment}
-          href="/payments"
-          onClick={onItemClick}
-          className={
-            "/payments" === currentPage || currentPage.startsWith("/payments/")
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Payments
-        </Sidebar.Item>
+          {/* Payments — gated by `payments` flag */}
+          {isEnabled("payments") && (
+            <Sidebar.Item
+              icon={MdPayment}
+              href="/payments"
+              onClick={onItemClick}
+              className={
+                "/payments" === currentPage || currentPage.startsWith("/payments/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Payments
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={MdOutlineSupportAgent}
-          href="/support"
-          onClick={onItemClick}
-          className={
-            "/support" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-          }>
-          Support
-        </Sidebar.Item>
+          {/* Claims — gated by `claims` flag */}
+          {isEnabled("claims") && (
+            <Sidebar.Item
+              icon={MdAssignmentReturn}
+              href="/claims"
+              onClick={onItemClick}
+              className={
+                "/claims" === currentPage || currentPage.startsWith("/claims/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Claims
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={FiMessageCircle}
-          href="/internal-chat"
-          onClick={onItemClick}
-          className={
-            "/internal-chat" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
-          }>
-          Internal Chat
-        </Sidebar.Item>
+          {/* Support — gated by `support_chat` flag */}
+          {isEnabled("support_chat") && (
+            <Sidebar.Item
+              icon={MdOutlineSupportAgent}
+              href="/support"
+              onClick={onItemClick}
+              className={
+                "/support" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+              }>
+              Support
+            </Sidebar.Item>
+          )}
 
-        <Sidebar.Item
-          icon={GrAnalytics}
-          href="/analytics/users"
-          onClick={onItemClick}
-          className={
-            "/analytics/users" === currentPage
-              ? "bg-gray-100 dark:bg-gray-700"
-              : ""
-          }>
-          Analytics
-        </Sidebar.Item>
+          {/* Internal Chat — gated by `internal_chat` flag */}
+          {isEnabled("internal_chat") && (
+            <Sidebar.Item
+              icon={FiMessageCircle}
+              href="/internal-chat"
+              onClick={onItemClick}
+              className={
+                "/internal-chat" === currentPage ? "bg-gray-100 dark:bg-gray-700" : ""
+              }>
+              Internal Chat
+            </Sidebar.Item>
+          )}
 
-        <DarkThemeToggle />
-      </Sidebar.ItemGroup>
-    </Sidebar.Items>
-  </>
-);
+          {/* Analytics — gated by `analytics` flag */}
+          {isEnabled("analytics") && (
+            <Sidebar.Item
+              icon={GrAnalytics}
+              href="/analytics/users"
+              onClick={onItemClick}
+              className={
+                "/analytics/users" === currentPage
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Analytics
+            </Sidebar.Item>
+          )}
+
+          {/* Store Locations — gated by `store_locations` flag */}
+          {isEnabled("store_locations") && (
+            <Sidebar.Item
+              icon={HiOutlineLocationMarker}
+              href="/store-locations"
+              onClick={onItemClick}
+              className={
+                "/store-locations" === currentPage ||
+                currentPage.startsWith("/store-locations/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Store Locations
+            </Sidebar.Item>
+          )}
+
+          <DarkThemeToggle />
+        </Sidebar.ItemGroup>
+      </Sidebar.Items>
+    </>
+  );
+};
 
 /**
  * Mobile user section component for mobile sidebar
@@ -205,9 +265,9 @@ const MobileUserSection: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 /**
- * Mobile responsive sidebar component that adapts its behavior based on screen size
- * Desktop: Shows collapsed sidebar (preserves original behavior)
- * Mobile: Shows full overlay drawer that slides in from left
+ * Mobile responsive sidebar component that adapts its behavior based on screen size.
+ * Desktop: Shows collapsed sidebar (preserves original behavior).
+ * Mobile: Shows full overlay drawer that slides in from left.
  */
 const ExampleSidebar: React.FC = function () {
   const { isOpenOnSmallScreens: isSidebarOpenOnSmallScreens, setOpenOnSmallScreens } =

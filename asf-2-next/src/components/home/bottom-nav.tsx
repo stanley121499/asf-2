@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { HiOutlineHome, HiOutlineShoppingBag, HiOutlineHeart, HiOutlineUser, HiOutlineFilm } from "react-icons/hi";
+import { HiOutlineHome, HiOutlineShoppingBag, HiOutlineLocationMarker, HiOutlineUser, HiOutlineFilm } from "react-icons/hi";
 
 const BottomNavbar: React.FC = () => {
   const pathname = usePathname();
@@ -21,7 +21,7 @@ const BottomNavbar: React.FC = () => {
     { href: "/", icon: HiOutlineHome, label: "首页" },
     { href: "/product-section", icon: HiOutlineShoppingBag, label: "购物" },
     { href: "/highlights", icon: HiOutlineFilm, label: "精选" },
-    { href: "/wishlist", icon: HiOutlineHeart, label: "收藏" },
+    { href: "/stores", icon: HiOutlineLocationMarker, label: "门店" },
     { href: "/settings", icon: HiOutlineUser, label: "我的" },
   ];
 

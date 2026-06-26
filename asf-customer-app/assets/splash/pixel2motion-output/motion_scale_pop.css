@@ -1,0 +1,85 @@
+/* V3 — Scale-pop + blur dissolve (mobile app norm) */
+
+:root {
+  --p2m-duration: 1200ms;
+  --p2m-overshoot: 1.08;
+}
+
+#logo {
+  transform-box: view-box;
+  transform-origin: 50% 48%;
+  animation: p2m-scale-pop var(--p2m-duration) both;
+}
+
+@keyframes p2m-scale-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+    filter: blur(14px);
+  }
+  18% {
+    opacity: 0;
+    transform: scale(0.5);
+    filter: blur(16px);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(var(--p2m-overshoot));
+    filter: blur(0);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  82% {
+    transform: scale(0.985);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.atom-hover #logo {
+  animation: p2m-atom-hover 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+
+@keyframes p2m-atom-hover {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}
+
+.atom-pulse #number-2 {
+  animation: p2m-atom-pulse 1400ms ease-in-out infinite;
+}
+
+@keyframes p2m-atom-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.atom-words #word-model,
+.atom-words #word-match {
+  animation: p2m-atom-words 1200ms ease-in-out infinite alternate;
+}
+
+@keyframes p2m-atom-words {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 1;
+  }
+}

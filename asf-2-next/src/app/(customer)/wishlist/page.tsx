@@ -1,10 +1,11 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
 import { useProductMediaContext } from "@/context/product/ProductMediaContext";
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import ProductCard from "@/components/home/ProductCard";
 import Link from "next/link";
 import BottomNavbar from "@/components/home/bottom-nav";
@@ -16,6 +17,15 @@ const WishlistPage: React.FC = () => {
 
   const router = useRouter();
   const { user } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
+
+  useEffect(() => {
+    if (!isEnabled("wishlist")) {
+      router.replace("/");
+    }
+  }, [isEnabled, router]);
+
+  if (!isEnabled("wishlist")) return null;
   const [activeTab, setActiveTab] = useState<'products' | 'posts'>('products');
 
   const categoryNameById = useMemo<Record<string, string>>(() => {

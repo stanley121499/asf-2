@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# e2e test credentials (not for VCS)
+e2e-credentials.md
+
 # vercel
 .vercel
 

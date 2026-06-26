@@ -14,10 +14,30 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/concepts/asf-2-documentation-index-gaps]] — docs README links vs files present in `raw/sources/docs/`
 - [[wiki/concepts/production-readiness-asf-2]] — gap analysis and execution plan for taking ASF-2 to production (updated 2026-04-13)
 - [[wiki/concepts/mobile-app-architecture-asf-2]] — Expo+RN decision, RBAC, push notifications, staff+customer app design
+- [[wiki/concepts/store-locations-feature-asf-2]] — physical store locator: routes, RLS, API vs direct Supabase patterns, feature flag
+- [[wiki/concepts/pixel2motion-splash-asf-2]] — animated cold-start splash: Pixel2Motion → WebView bundle, both Expo apps, regeneration workflow
+- [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular post-purchase claims: config-driven policy, feature flag, customer order entry + staff queue
 
 ## Entities
 
 - [[wiki/entities/asf-2]] — ASF-2 e-commerce / social platform (stack, active codebases, production status, roadmap pointers)
+
+## Sources — 2026-06-26 post-purchase claims (1 new)
+
+- [[wiki/sources/2026-06-26-post-purchase-claims-module]] — Reusable claims module: feature flag, DB schema, policy config, customer/staff flows, shoe-store defaults, portability pattern
+
+## Sources — 2026-06-26 pixel2motion splash (1 new)
+
+- [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]] — MODEL MATCH animated splash: Pixel2Motion setup, 7 variations, letter cascade shipped on customer + staff Expo apps via WebView
+
+## Sources — 2026-06-26 store locations (1 new)
+
+- [[wiki/sources/2026-06-26-store-locations-feature]] — Store locator across web + both mobile apps; DB migration, route conflict fix (`/stores` vs `/store-locations`), testing, deploy gaps
+
+## Sources — 2026-04-25 mobile apps progress (1 new)
+
+- [[wiki/sources/2026-04-25-mobile-apps-progress]] — Both Expo mobile apps built + functional; schema corrections (products.status, product_stock.count); expo-router tab lessons; next priority: demo data
+- [[wiki/sources/2026-04-25-demo-data-plan]] — KK Mart/99 Speed Mart style Malaysia minimart demo data plan; 50 products, 7 categories, 10 brands, SQL schema facts
 
 ## Sources — 2026-04-13 planning session (5 new)
 
@@ -119,3 +139,7 @@ Each entry satisfies [[CLAUDE.md]] ingest step: `wiki/sources/<slug>.md` per raw
 | `raw/sources/2026-04-13-immediate-execution-plan.md` | 12-step execution plan |
 | `raw/sources/2026-04-13-mobile-app-strategy.md` | Expo mobile app strategy |
 | `raw/sources/2026-04-13-delyva-delivery-integration.md` | Delyva delivery API reference |
+| `raw/sources/2026-04-25-mobile-apps-progress.md` | Mobile apps progress Apr 13–25; schema corrections; expo-router lessons |
+| `raw/sources/2026-06-26-store-locations-feature.md` | Cross-platform store locator implementation |
+| `raw/sources/2026-06-26-pixel2motion-model-match-splash.md` | Pixel2Motion MODEL MATCH animated splash pipeline |
+| `raw/sources/2026-06-26-post-purchase-claims-module.md` | Post-purchase claims module (modular warranty/returns) |

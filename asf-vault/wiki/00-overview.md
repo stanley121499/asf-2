@@ -1,8 +1,8 @@
 ---
 title: "asf-vault overview"
 type: overview
-updated: 2026-04-13
-sources: 72
+updated: 2026-06-26
+sources: 76
 tags: [llm-wiki, vault, asf-2]
 ---
 
@@ -32,6 +32,10 @@ tags: [llm-wiki, vault, asf-2]
 - **LLM Wiki pattern** (meta): [[wiki/sources/llm-wiki-idea]], [[wiki/concepts/llm-wiki-pattern]].
 - **ASF-2 codebase documentation** (mirrored from repo `docs/` + root `README`): [[wiki/entities/asf-2]], **66** per-file entries `wiki/sources/doc-*.md` (see [[index.md]]), plus thematic [[wiki/sources/batch-2026-04-09-docs-and-root-readme]]. Prefer [docs/README.md](raw/sources/docs/README.md) over [root README](raw/sources/root/README.md) for stack truth.
 - **ASF-2 production planning** (2026-04-13 session): [[wiki/concepts/production-readiness-asf-2]], [[wiki/concepts/mobile-app-architecture-asf-2]], and **5** new planning sources covering the full roadmap, user flow audit, 12-step execution plan, Expo mobile strategy, and Delyva delivery integration. Start at [[wiki/sources/2026-04-13-immediate-execution-plan]] for what to build next.
+- **ASF-2 mobile apps progress** (2026-04-25): [[wiki/sources/2026-04-25-mobile-apps-progress]] — both Expo apps built and functional. Key schema corrections (products.status not active, product_stock.count not quantity). Next priority: demo data (Malaysia minimart seed).
+- **ASF-2 store locations** (2026-06-26): [[wiki/sources/2026-06-26-store-locations-feature]], [[wiki/concepts/store-locations-feature-asf-2]] — cross-platform store locator; customer `/stores` + mobile 门店 tab; admin/staff CRUD; route collision fix documented.
+- **ASF-2 animated splash** (2026-06-26): [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]], [[wiki/concepts/pixel2motion-splash-asf-2]] — Pixel2Motion MODEL MATCH letter cascade on both Expo apps; WebView bundle pipeline documented.
+- **ASF-2 post-purchase claims** (2026-06-26): [[wiki/sources/2026-06-26-post-purchase-claims-module]], [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular `claims` feature (warranty/returns for shoes by default); config-swappable per client; web customer + staff flows.
 
 ## See also
 

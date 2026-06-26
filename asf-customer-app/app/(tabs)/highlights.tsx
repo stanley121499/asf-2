@@ -1,0 +1,374 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { Video, ResizeMode } from "expo-av";
+import { Redirect, useRouter } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { usePostContext } from "@/context/post/PostContext";
+import { usePostMediaContext } from "@/context/post/PostMediaContext";
+import { colors } from "@/constants/theme";
+import type { Tables } from "@/database.types";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+/** 4:5 aspect ratio — matches web `pt-[125%]` */
+const MEDIA_HEIGHT = SCREEN_WIDTH * 1.25;
+
+// ─── Comment bottom sheet ────────────────────────────────────────────────────
+
+interface CommentSheetProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+function CommentSheet({ visible, onClose }: CommentSheetProps): React.ReactElement {
+  const insets = useSafeAreaInsets();
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const handleSend = () => {
+    if (text.trim().length === 0) return;
+    setSent(true);
+    setText("");
+    setTimeout(() => {
+      setSent(false);
+      onClose();
+    }, 1200);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={onClose} />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <View
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            padding: 24,
+            paddingBottom: Math.max(insets.bottom, 24),
+          }}
+        >
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>留言</Text>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <Ionicons name="close" size={24} color={colors.muted} />
+            </Pressable>
+          </View>
+          <TextInput
+            style={{
+              height: 120,
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: 12,
+              padding: 16,
+              backgroundColor: colors.panel,
+              color: colors.text,
+              fontSize: 15,
+              fontFamily: "Inter_400Regular",
+              textAlignVertical: "top",
+            }}
+            placeholder="写下您的留言"
+            placeholderTextColor={colors.muted}
+            value={text}
+            onChangeText={setText}
+            multiline
+            autoFocus
+          />
+          <Pressable
+            onPress={handleSend}
+            style={{
+              marginTop: 16,
+              height: 56,
+              backgroundColor: "#000000",
+              borderRadius: 12,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              {sent ? "已发送 ✓" : "发送"}
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Individual PostCard ─────────────────────────────────────────────────────
+
+interface PostCardProps {
+  post: Tables<"posts">;
+  medias: Tables<"post_medias">[];
+}
+
+function PostCard({ post, medias }: PostCardProps): React.ReactElement {
+  const router = useRouter();
+  const sortedMedias = useMemo(
+    () => [...medias].sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0)),
+    [medias]
+  );
+  const firstMedia = sortedMedias[0] ?? null;
+  const mediaUrl = firstMedia?.media_url ?? null;
+  const isVideo = (firstMedia?.media_type ?? "image") === "video";
+
+  const [isMuted, setIsMuted] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(12);
+  const [isSaved, setIsSaved] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const liked = JSON.parse((await AsyncStorage.getItem("liked_posts")) ?? "[]") as string[];
+        const saved = JSON.parse((await AsyncStorage.getItem("saved_posts")) ?? "[]") as string[];
+        setIsLiked(liked.includes(post.id));
+        setIsSaved(saved.includes(post.id));
+        setLikeCount(liked.includes(post.id) ? 13 : 12);
+      } catch { /* ignore */ }
+    })();
+  }, [post.id]);
+
+  const toggleLike = useCallback(async () => {
+    const next = !isLiked;
+    setIsLiked(next);
+    setLikeCount(next ? 13 : 12);
+    try {
+      const liked = JSON.parse((await AsyncStorage.getItem("liked_posts")) ?? "[]") as string[];
+      if (next) { if (!liked.includes(post.id)) liked.push(post.id); }
+      else { const idx = liked.indexOf(post.id); if (idx > -1) liked.splice(idx, 1); }
+      await AsyncStorage.setItem("liked_posts", JSON.stringify(liked));
+    } catch { /* ignore */ }
+  }, [isLiked, post.id]);
+
+  const toggleSave = useCallback(async () => {
+    const next = !isSaved;
+    setIsSaved(next);
+    try {
+      const saved = JSON.parse((await AsyncStorage.getItem("saved_posts")) ?? "[]") as string[];
+      if (next) { if (!saved.includes(post.id)) saved.push(post.id); }
+      else { const idx = saved.indexOf(post.id); if (idx > -1) saved.splice(idx, 1); }
+      await AsyncStorage.setItem("saved_posts", JSON.stringify(saved));
+    } catch { /* ignore */ }
+  }, [isSaved, post.id]);
+
+  return (
+    <View style={{ width: "100%", backgroundColor: "#FFFFFF", marginBottom: 32 }}>
+      {/* Media block — 4:5 ratio, black bg, edge-to-edge */}
+      <View style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, backgroundColor: "#000000" }}>
+        {mediaUrl === null ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="image-outline" size={40} color="#555" />
+            <Text style={{ color: "#555", fontSize: 13, marginTop: 8, fontFamily: "Inter_400Regular" }}>暂无内容</Text>
+          </View>
+        ) : isVideo ? (
+          <>
+            <Video
+              source={{ uri: mediaUrl }}
+              style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+              resizeMode={ResizeMode.CONTAIN}
+              shouldPlay
+              isMuted={isMuted}
+              isLooping
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: 12,
+                left: 12,
+                backgroundColor: "rgba(0,0,0,0.6)",
+                borderRadius: 99,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+              }}
+              pointerEvents="none"
+            >
+              <Ionicons name="play" size={10} color="#FFFFFF" />
+              <Text style={{ color: "#FFFFFF", fontSize: 11, fontFamily: "Inter_400Regular" }}>视频</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setIsMuted((m) => !m)}
+              style={{
+                position: "absolute",
+                bottom: 12,
+                right: 12,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: "rgba(0,0,0,0.6)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name={isMuted ? "volume-mute-outline" : "volume-high-outline"}
+                size={20}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Image
+            source={{ uri: mediaUrl }}
+            style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+            contentFit="cover"
+          />
+        )}
+      </View>
+
+      {/* Caption */}
+      {post.caption !== null && post.caption.length > 0 && (
+        <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+          <Text style={{ fontSize: 15, color: colors.text, fontFamily: "Inter_400Regular", lineHeight: 22 }}>
+            {post.caption}
+          </Text>
+        </View>
+      )}
+
+      {/* Action row: Like, Comment, Save */}
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, gap: 24, marginTop: 4 }}>
+        <TouchableOpacity
+          onPress={() => void toggleLike()}
+          style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
+        >
+          <Ionicons name={isLiked ? "heart" : "heart-outline"} size={24} color={isLiked ? "#EF4444" : colors.text} />
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>喜欢</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setCommentOpen(true)}
+          style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
+        >
+          <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>留言</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => void toggleSave()}
+          style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
+        >
+          <Ionicons name={isSaved ? "bookmark" : "bookmark-outline"} size={24} color={colors.text} />
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>收藏</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* CTA button */}
+      {post.cta_text !== null && post.cta_text.length > 0 && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          <Pressable
+            onPress={() => router.push("/(tabs)/browse")}
+            style={{
+              height: 52,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#000000",
+              backgroundColor: "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ color: "#000000", fontSize: 15, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
+              {post.cta_text}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      <CommentSheet visible={commentOpen} onClose={() => setCommentOpen(false)} />
+    </View>
+  );
+}
+
+// ─── Highlights tab screen ───────────────────────────────────────────────────
+
+/**
+ * 精选 tab — vertical feed of PostCards.
+ * No back button (this is a root tab). Header shows "精选推荐".
+ */
+export default function HighlightsScreen(): React.ReactElement {
+  const { isEnabled } = useFeatureFlags();
+  const { posts, loading: postsLoading } = usePostContext();
+  const { postMedias, loading: mediaLoading } = usePostMediaContext();
+
+  if (!isEnabled("highlights")) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  const featured = useMemo(
+    () =>
+      [...posts]
+        .filter((p) => p.id.length > 0)
+        .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()),
+    [posts]
+  );
+
+  const mediasForPost = useMemo(() => {
+    const map = new Map<string, Tables<"post_medias">[]>();
+    for (const m of postMedias) {
+      if (typeof m.post_id !== "string") continue;
+      const list = map.get(m.post_id) ?? [];
+      list.push(m);
+      map.set(m.post_id, list);
+    }
+    return map;
+  }, [postMedias]);
+
+  const loading = postsLoading || mediaLoading;
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Tab header — no back button since this is a root tab */}
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <View style={{ height: 56, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
+            精选推荐
+          </Text>
+        </View>
+      </SafeAreaView>
+
+      {featured.length === 0 ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: colors.muted, fontSize: 15, fontFamily: "Inter_400Regular" }}>暂无内容，敬请期待</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={featured}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <PostCard post={item} medias={mediasForPost.get(item.id) ?? []} />
+          )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
+  );
+}

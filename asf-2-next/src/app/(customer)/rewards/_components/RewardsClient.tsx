@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HiOutlineArrowLeft, HiOutlineQrcode, HiOutlineGift } from "react-icons/hi";
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import BottomNavbar from "@/components/home/bottom-nav";
 import { supabase } from "@/utils/supabaseClient";
@@ -78,7 +79,16 @@ async function loadOrCreateUserStamps(userId: string): Promise<boolean[]> {
 const RewardsClient: React.FC = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
+
+  useEffect(() => {
+    if (!isEnabled("rewards")) {
+      router.replace("/");
+    }
+  }, [isEnabled, router]);
+
+  if (!isEnabled("rewards")) return null;
 
   const [userPoints, setUserPoints] = useState<number>(0);
   const [stamps, setStamps] = useState<boolean[]>(createEmptyStamps);

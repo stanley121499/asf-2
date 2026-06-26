@@ -1,0 +1,8 @@
+{
+  "svg": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\logo_letters.svg",
+  "source": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\source.png",
+  "overlay": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_iterations\\03_highres_letters_overlay.png",
+  "iou": 0.9972,
+  "src_only_px": 1965,
+  "render_only_px": 799
+}

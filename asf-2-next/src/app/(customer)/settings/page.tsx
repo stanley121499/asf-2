@@ -16,6 +16,8 @@ import {
 import { FaUserCircle } from "react-icons/fa";
 import { useAuthContext } from "@/context/AuthContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { claimPolicyConfig } from "@/modules/claims/claimPolicyConfig";
 import { supabase } from "@/utils/supabaseClient";
 import Image from "next/image";
 
@@ -34,6 +36,8 @@ const ProfileSettingsPage: React.FC = () => {
   const [userPoints, setUserPoints] = useState<number>(0);
   const { user, user_detail, signOut, loading } = useAuthContext();
   const pointsAPI = usePointsMembership();
+  const { isEnabled } = useFeatureFlags();
+  const claimsEnabled = isEnabled("claims");
   
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -195,6 +199,14 @@ const ProfileSettingsPage: React.FC = () => {
             <span className="flex-1 text-sm font-medium text-[var(--color-text)]">我的奖励</span>
             <HiOutlineChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
           </Link>
+
+          {claimsEnabled ? (
+            <Link href="/my-claims" className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b border-[var(--color-border)]">
+              <HiOutlineQuestionMarkCircle className="w-5 h-5 text-[var(--color-text)] opacity-70" />
+              <span className="flex-1 text-sm font-medium text-[var(--color-text)]">{claimPolicyConfig.moduleLabel}</span>
+              <HiOutlineChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
+            </Link>
+          ) : null}
           
           <div>
             <button 

@@ -13,6 +13,12 @@ import { HiOutlineHeart, HiHeart, HiOutlineChevronDown, HiOutlineArrowLeft } fro
 import { useWishlistContext } from "@/context/WishlistContext";
 import ReviewModal from "@/components/ReviewModal";
 import ReviewsList from "@/components/ReviewsList";
+import {
+  getProductStockQuantity,
+  resolveProductStockRow,
+} from "@/utils/productStock";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { claimPolicyConfig } from "@/modules/claims/claimPolicyConfig";
 
 interface ProductDetailsClientProps {
   productId: string;
@@ -38,6 +44,8 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   const { showAlert } = useAlertContext();
   const { createAddToCart } = useAddToCartContext();
   const { createAddToCartLog } = useAddToCartLogContext();
+  const { isEnabled } = useFeatureFlags();
+  const claimsEnabled = isEnabled("claims");
 
   const product = initialProduct;
 
@@ -112,17 +120,18 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   }, [activeSizesForProduct, requiresSize, selectedSize]);
 
   const currentStockRow = useMemo(() => {
-    if (requiresColor && !selectedColor) return null;
-    if (requiresSize && !selectedSize) return null;
-
-    const wantedColorId = requiresColor ? selectedColor?.id ?? null : null;
-    const wantedSizeId = requiresSize ? selectedSize?.id ?? null : null;
-
-    return productStocks.find((s) => s.color_id === wantedColorId && s.size_id === wantedSizeId) ?? null;
-  }, [productStocks, requiresColor, requiresSize, selectedColor, selectedSize]);
+    return resolveProductStockRow({
+      productId,
+      productStocks,
+      requiresColor,
+      requiresSize,
+      selectedColorId: selectedColor?.id ?? null,
+      selectedSizeId: selectedSize?.id ?? null,
+    });
+  }, [productId, productStocks, requiresColor, requiresSize, selectedColor, selectedSize]);
 
   const hasAllRequiredSelections = (!requiresColor || selectedColor !== null) && (!requiresSize || selectedSize !== null);
-  const currentStockQuantity = currentStockRow && typeof currentStockRow.count === "number" ? currentStockRow.count : 0;
+  const currentStockQuantity = getProductStockQuantity(currentStockRow);
   const isInStock = hasAllRequiredSelections && currentStockRow !== null && currentStockQuantity > 0;
   const disableActions = hasAllRequiredSelections && !isInStock;
 
@@ -339,7 +348,9 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
           </button>
           {openAccordion === "material" && (
             <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-line border-b border-[var(--color-border)]">
-              请手洗或机洗冷水，不可漂白。自然晾干即可。
+              {claimsEnabled
+                ? claimPolicyConfig.careInstructions
+                : "请手洗或机洗冷水，不可漂白。自然晾干即可。"}
             </div>
           )}
 
@@ -347,13 +358,53 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
             onClick={() => setOpenAccordion(openAccordion === "shipping" ? "" : "shipping")}
             className="w-full py-5 flex justify-between items-center border-b border-[var(--color-border)]"
           >
-            <span className="text-base text-[var(--color-text)]">配送与退货</span>
+            <span className="text-base text-[var(--color-text)]">
+              {claimsEnabled ? claimPolicyConfig.shippingPolicyTitle : "配送与退货"}
+            </span>
             <HiOutlineChevronDown className={`transition-transform ${openAccordion === "shipping" ? "rotate-180" : ""}`} />
           </button>
           {openAccordion === "shipping" && (
             <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-line border-b border-[var(--color-border)]">
-              所有订单提供标准配送。30天内免费退换货服务。
+              {claimsEnabled ? claimPolicyConfig.shippingReturnCopy : "所有订单提供标准配送。30天内免费退换货服务。"}
             </div>
+          )}
+
+          {claimsEnabled && (
+            <>
+              <button 
+                onClick={() => setOpenAccordion(openAccordion === "warranty" ? "" : "warranty")}
+                className="w-full py-5 flex justify-between items-center border-b border-[var(--color-border)]"
+              >
+                <span className="text-base text-[var(--color-text)]">{claimPolicyConfig.productPolicyTitle}</span>
+                <HiOutlineChevronDown className={`transition-transform ${openAccordion === "warranty" ? "rotate-180" : ""}`} />
+              </button>
+              {openAccordion === "warranty" && (
+                <div className="py-4 text-[var(--color-muted)] text-sm leading-relaxed border-b border-[var(--color-border)] space-y-3">
+                  {(product.warranty_period ?? "").length > 0 ? (
+                    <p><span className="font-medium text-[var(--color-text)]">保固期限：</span>{product.warranty_period}</p>
+                  ) : null}
+                  {(product.warranty_description ?? "").length > 0 ? (
+                    <p className="whitespace-pre-line">{product.warranty_description}</p>
+                  ) : null}
+                  <div>
+                    <p className="font-medium text-[var(--color-text)] mb-1">涵盖范围</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {claimPolicyConfig.policyCoveredExamples.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--color-text)] mb-1">不涵盖</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {claimPolicyConfig.policyNotCoveredExamples.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

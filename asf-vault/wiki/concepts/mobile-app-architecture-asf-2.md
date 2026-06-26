@@ -1,8 +1,8 @@
 ---
 title: "Mobile App Architecture — ASF-2"
 type: concept
-updated: 2026-04-13
-sources: 2
+updated: 2026-06-26
+sources: 3
 tags: [asf-2, mobile, expo, react-native, rbac, push-notifications]
 ---
 
@@ -77,6 +77,14 @@ Expo Push Notification Service (EPS) routes to APNs (iOS) and FCM (Android) thro
 
 **Same backend:** Calls `https://yourapp.vercel.app/api/stripe/create-payment-intent` — identical endpoint to web checkout. No additional backend code for mobile.
 
+### Animated splash (2026-06-26)
+
+Both apps play the **MODEL MATCH** letter-cascade intro on cold start via `SplashIntro` (WebView + bundled HTML from Pixel2Motion). See [[wiki/concepts/pixel2motion-splash-asf-2]].
+
+- Native splash held with `expo-splash-screen` until WebView ready
+- Maintenance feature flag skips intro
+- Motion assets authored in customer app only; staff rebuilds bundle from same sources
+
 ---
 
 ## Shared Infrastructure
@@ -98,3 +106,5 @@ Both apps share:
 - [[wiki/sources/2026-04-13-mobile-app-strategy]]
 - [[wiki/sources/2026-04-13-production-roadmap]]
 - [[wiki/concepts/context-provider-architecture-asf-2]]
+- [[wiki/concepts/pixel2motion-splash-asf-2]]
+- [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]]

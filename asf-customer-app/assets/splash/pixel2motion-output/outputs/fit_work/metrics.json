@@ -1,0 +1,48 @@
+{
+  "input": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\source.png",
+  "foreground_detection": {
+    "mode": "alpha",
+    "alpha_threshold": 12
+  },
+  "groups": [
+    {
+      "fill": "#ffffff",
+      "area_pixels": 15800,
+      "loop_count": 32,
+      "point_count": 827
+    },
+    {
+      "fill": "#ee73c4",
+      "area_pixels": 8649,
+      "loop_count": 598,
+      "point_count": 2574
+    },
+    {
+      "fill": "#685968",
+      "area_pixels": 548,
+      "loop_count": 198,
+      "point_count": 792
+    },
+    {
+      "fill": "#433740",
+      "area_pixels": 219,
+      "loop_count": 79,
+      "point_count": 316
+    }
+  ],
+  "metrics": {
+    "source_foreground_pixels": 25216,
+    "vector_foreground_pixels": 27445,
+    "intersection_pixels": 25076,
+    "union_pixels": 27585,
+    "iou": 0.909045,
+    "recall_source_covered_by_vector": 0.994448,
+    "precision_vector_inside_source": 0.913682
+  },
+  "outputs": {
+    "svg": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\logo.svg",
+    "html": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\logo.html",
+    "vector_render": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\vector_render.png",
+    "overlay": "e:\\Dev\\GitHub\\asf-2\\asf-customer-app\\assets\\splash\\pixel2motion-output\\outputs\\fit_work\\overlay.png"
+  }
+}

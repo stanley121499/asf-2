@@ -9,6 +9,9 @@ import { useAuthContext } from "@/context/AuthContext";
 import { supabase } from "@/utils/supabaseClient";
 import type { Database } from "@/database.types";
 import { formatCurrency } from "@/utils/pointsConfig";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { evaluateClaimEligibility, isOrderDelivered } from "@/modules/claims/claimEligibility";
+import { claimPolicyConfig } from "@/modules/claims/claimPolicyConfig";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
@@ -174,6 +177,8 @@ const OrderDetailPage = (): React.ReactElement => {
   const orderId = useOrderIdParam();
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
+  const claimsEnabled = isEnabled("claims");
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [fetchLoading, setFetchLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -407,6 +412,38 @@ const OrderDetailPage = (): React.ReactElement => {
                     {item.size && <span>尺码: {item.size.size}</span>}
                   </div>
                   <p className="text-xs text-[var(--color-text)] mt-2">数量: {item.amount || 0}</p>
+                  {claimsEnabled && isOrderDelivered(order.status) ? (
+                    <div className="mt-3">
+                      {(() => {
+                        const defaultType = claimPolicyConfig.claimTypes[0]?.key ?? "manufacturing_defect";
+                        const eligibility = evaluateClaimEligibility(
+                          defaultType,
+                          order.status,
+                          order.created_at
+                        );
+                        return (
+                          <>
+                            <p className={`text-xs mb-2 ${eligibility.eligible ? "text-green-600" : "text-[var(--color-muted)]"}`}>
+                              {eligibility.eligible ? eligibility.reason : "该商品暂不可申请"}
+                            </p>
+                            {eligibility.eligible ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  router.push(
+                                    `/my-claims/new?orderId=${encodeURIComponent(order.id)}&orderItemId=${encodeURIComponent(item.id)}`
+                                  );
+                                }}
+                                className="text-xs font-medium border border-black rounded-full px-3 py-1"
+                              >
+                                报告问题
+                              </button>
+                            ) : null}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="text-right flex flex-col justify-end">
                   <p className="font-medium text-[var(--color-text)] text-sm">

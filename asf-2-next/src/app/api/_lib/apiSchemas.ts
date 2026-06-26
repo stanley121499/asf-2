@@ -187,6 +187,97 @@ export const promotionIdParamSchema = z.object({
   id: uuidStringSchema,
 });
 
+/** Optional URL: empty string becomes null; must be valid URL when non-empty. */
+const optionalUrlField = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((value): string | null | undefined => {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return null;
+    }
+    return trimmed;
+  })
+  .refine(
+    (value) => value === undefined || value === null || z.string().url().safeParse(value).success,
+    { message: "Must be a valid URL" }
+  );
+
+const optionalNumericField = z
+  .union([z.number(), z.null()])
+  .optional();
+
+/** Optional list of image URLs: trims, drops empties, validates each entry. */
+const imageUrlsField = z
+  .array(z.string())
+  .optional()
+  .transform((value): string[] | undefined => {
+    if (value === undefined) {
+      return undefined;
+    }
+    return value.map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+  })
+  .refine(
+    (value) =>
+      value === undefined ||
+      value.every((entry) => z.string().url().safeParse(entry).success),
+    { message: "Each image must be a valid URL" }
+  );
+
+export const storeLocationCreateBodySchema = z
+  .object({
+    name: z.string().trim().min(1, "name is required"),
+    mall_name: z.string().trim().min(1, "mall_name is required"),
+    address_line_1: z.string().trim().min(1, "address_line_1 is required"),
+    address_line_2: z.union([z.string(), z.null()]).optional(),
+    city: z.string().trim().min(1, "city is required"),
+    state: z.string().trim().min(1, "state is required"),
+    postcode: z.union([z.string(), z.null()]).optional(),
+    country: z.string().trim().min(1).optional().default("Malaysia"),
+    phone: z.union([z.string(), z.null()]).optional(),
+    opening_hours: z.union([z.string(), z.null()]).optional(),
+    latitude: optionalNumericField,
+    longitude: optionalNumericField,
+    google_maps_url: optionalUrlField,
+    waze_url: optionalUrlField,
+    image_urls: imageUrlsField,
+    sort_order: z.number().int().optional().default(0),
+    active: z.boolean().optional().default(true),
+  })
+  .strict();
+
+export const storeLocationPatchBodySchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    mall_name: z.string().trim().min(1).optional(),
+    address_line_1: z.string().trim().min(1).optional(),
+    address_line_2: z.union([z.string(), z.null()]).optional(),
+    city: z.string().trim().min(1).optional(),
+    state: z.string().trim().min(1).optional(),
+    postcode: z.union([z.string(), z.null()]).optional(),
+    country: z.string().trim().min(1).optional(),
+    phone: z.union([z.string(), z.null()]).optional(),
+    opening_hours: z.union([z.string(), z.null()]).optional(),
+    latitude: optionalNumericField,
+    longitude: optionalNumericField,
+    google_maps_url: optionalUrlField,
+    waze_url: optionalUrlField,
+    image_urls: imageUrlsField,
+    sort_order: z.number().int().optional(),
+    active: z.boolean().optional(),
+  })
+  .strict();
+
+export const storeLocationIdParamSchema = z.object({
+  id: uuidStringSchema,
+});
+
 export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
 export type CreatePendingOrderBody = z.infer<typeof createPendingOrderBodySchema>;
 export type DeliveryRatesBody = z.infer<typeof deliveryRatesBodySchema>;
@@ -194,3 +285,5 @@ export type DeliveryCreateShipmentBody = z.infer<typeof deliveryCreateShipmentBo
 export type PromotionValidateBody = z.infer<typeof promotionValidateBodySchema>;
 export type PromotionCreateBody = z.infer<typeof promotionCreateBodySchema>;
 export type PromotionPatchBody = z.infer<typeof promotionPatchBodySchema>;
+export type StoreLocationCreateBody = z.infer<typeof storeLocationCreateBodySchema>;
+export type StoreLocationPatchBody = z.infer<typeof storeLocationPatchBodySchema>;

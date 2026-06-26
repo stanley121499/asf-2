@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MODEL MATCH — Choose a splash animation</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #f5f5f5;
+      padding: 2rem 1.25rem 3.5rem;
+    }
+    header { max-width: 52rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.35rem; }
+    .subtitle { color: #ee73c4; font-size: 0.9rem; font-weight: 600; margin: 0 0 0.75rem; }
+    .lead { color: #a3a3a3; margin: 0; line-height: 1.55; font-size: 0.95rem; }
+    .howto {
+      margin: 1.25rem 0 0;
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      background: #141414;
+      border: 1px solid #262626;
+      font-size: 0.88rem;
+      color: #d4d4d4;
+      line-height: 1.5;
+    }
+    .howto strong { color: #fff; }
+    h2.section {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #737373;
+      margin: 2rem 0 0.75rem;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      gap: 0.85rem;
+      max-width: 76rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    a.card {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: 1.1rem 1.15rem;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      background: #141414;
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    a.card:hover {
+      border-color: #ee73c4;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(238, 115, 196, 0.08);
+    }
+    .card .num {
+      color: #ee73c4;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+    }
+    .card h3 { margin: 0 0 0.3rem; font-size: 1.02rem; font-weight: 600; }
+    .card .norm {
+      color: #525252;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.55rem;
+    }
+    .card p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: #a3a3a3;
+      line-height: 1.45;
+      flex: 1;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.75rem;
+    }
+    .pill {
+      padding: 0.18rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: #1f2937;
+      color: #93c5fd;
+    }
+    .pill.time { background: #292524; color: #d6d3d1; }
+    .pill.pick { background: #3b1f35; color: #f9a8d4; }
+    footer {
+      max-width: 52rem;
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #262626;
+      font-size: 0.82rem;
+      color: #737373;
+      line-height: 1.5;
+    }
+  </style>
+  <link rel="stylesheet" href="theme-bridge.css">
+</head>
+<body class="p2m-variations-page">
+  <header>
+    <p class="subtitle">MODEL MATCH · Simon shoe store pilot</p>
+    <h1>Choose a splash animation</h1>
+    <p class="lead">Seven industry-standard intro styles. Open any card, watch the logo animate, then use <strong>Replay</strong> and <strong>Slow-mo</strong> on the preview page. Pick the number you like and tell Stanley — we&apos;ll put it in the app.</p>
+    <p class="howto"><strong>How to preview:</strong> use the <strong>Dark / Light</strong> toggle (top-right) &rarr; click a variation &rarr; logo plays &rarr; tap <strong>Replay</strong> to see it again.</p>
+  </header>
+
+  <h2 class="section">Most common in shopping apps</h2>
+  <div class="grid">
+    <a class="card" href="logo_motion_scale_pop.html">
+      <span class="num">Option 1</span>
+      <h3>Scale-pop + blur</h3>
+      <span class="norm">#1 mobile app pattern</span>
+      <p>Logo pops in from the centre, blur clears, tiny bounce. Feels like a normal app launch.</p>
+      <div class="meta">
+        <span class="pill time">1.2s</span>
+        <span class="pill pick">Safest demo pick</span>
+      </div>
+    </a>
+    <a class="card" href="logo_motion_minimal_fade.html">
+      <span class="num">Option 2</span>
+      <h3>Minimal fade</h3>
+      <span class="norm">Apple / streaming apps</span>
+      <p>Clean opacity fade only — no movement. Understated and professional.</p>
+      <div class="meta"><span class="pill time">1.0s</span></div>
+    </a>
+    <a class="card" href="logo_motion.html">
+      <span class="num">Option 3</span>
+      <h3>Staggered assembly</h3>
+      <span class="norm">Retail brand default</span>
+      <p>Big M &rarr; pink 2 &rarr; MODEL &rarr; MATCH. Tells a short brand story.</p>
+      <div class="meta">
+        <span class="pill time">1.5s</span>
+        <span class="pill pick">Good retail default</span>
+      </div>
+    </a>
+  </div>
+
+  <h2 class="section">Fashion &amp; premium footwear</h2>
+  <div class="grid">
+    <a class="card" href="logo_motion_luxury_fade.html">
+      <span class="num">Option 4</span>
+      <h3>Luxury fade</h3>
+      <span class="norm">Premium fashion houses</span>
+      <p>Slow soft dissolve; pink accent blooms in last. Upmarket, unhurried.</p>
+      <div class="meta">
+        <span class="pill time">1.8s</span>
+        <span class="pill pick">Best if upmarket</span>
+      </div>
+    </a>
+    <a class="card" href="logo_motion_mask_wipe.html">
+      <span class="num">Option 5</span>
+      <h3>Mask wipe</h3>
+      <span class="norm">TV / campaign bumpers</span>
+      <p>Curtain wipes left-to-right across the lockup; accent follows.</p>
+      <div class="meta"><span class="pill time">1.4s</span></div>
+    </a>
+    <a class="card" href="logo_motion_ink_reveal.html">
+      <span class="num">Option 6</span>
+      <h3>Ink reveal</h3>
+      <span class="norm">Draw-on / craft studios</span>
+      <p>Each part inks in left-to-right like a pen — M, then 2, then words.</p>
+      <div class="meta"><span class="pill time">1.6s</span></div>
+    </a>
+  </div>
+
+  <h2 class="section">Typographic emphasis</h2>
+  <div class="grid">
+    <a class="card" href="logo_motion_letters.html">
+      <span class="num">Option 7</span>
+      <h3>Letter cascade</h3>
+      <span class="norm">Editorial / name-first brands</span>
+      <p>Spells MODEL MATCH letter by letter after the M and 2 land.</p>
+      <div class="meta"><span class="pill time">1.5s</span></div>
+    </a>
+  </div>
+
+  <footer>
+    All previews use your black background and exact logo artwork. Not included: glitch or particle effects — those are hype/streetwear, not typical for footwear retail. After you pick an option, we port it into the Expo customer app.
+  </footer>
+  <script src="theme-bridge.js"></script>
+</body>
+</html>
