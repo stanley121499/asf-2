@@ -8,10 +8,12 @@ import React, {
   useCallback,
   PropsWithChildren,
 } from "react";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useAlertContext } from "../AlertContext";
+import { useTranslation } from "../LocaleContext";
 
 /**
  * Cart types based on Supabase generated schema.
@@ -61,15 +63,31 @@ const AddToCartContext = createContext<AddToCartContextProps | undefined>(
  * AddToCartProvider provides typed CRUD utilities and real-time syncing
  * with the Supabase `add_to_carts` table.
  */
-export function AddToCartProvider({ children }: PropsWithChildren) {
+export function AddToCartProvider({ children }: PropsWithChildren): React.ReactElement {
   const [add_to_carts, setAddToCarts] = useState<AddToCart[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
+  const { t } = useTranslation();
 
   const showAlertRef = useRef<typeof showAlert | null>(null);
+  const tRef = useRef(t);
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
+  /**
+   * Maps known English alert literals (and auth/network messages) through i18n
+   * before showing a customer-visible toast.
+   */
+  const showTranslatedAlert = useCallback(
+    (raw: string, type: "info" | "success" | "warning" | "error"): void => {
+      showAlertRef.current?.(tRef.current(getErrorTranslationKey(raw)), type);
+    },
+    [],
+  );
 
   useEffect(() => {
     // Fetch initial state
@@ -81,7 +99,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
         .order("created_at", { ascending: true });
 
       if (error) {
-        showAlertRef.current?.(error.message, "error");
+        showTranslatedAlert(error.message, "error");
         setLoading(false);
         return;
       }
@@ -125,7 +143,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
     return () => {
       channel.unsubscribe();
     };
-  }, []);
+  }, [showTranslatedAlert]);
 
   /** Create a new cart item with basic validation. */
   const createAddToCart = useCallback(async (addToCart: AddToCartInsert): Promise<void> => {
@@ -134,11 +152,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       typeof addToCart.product_id !== "string" ||
       typeof addToCart.user_id !== "string"
     ) {
-      showAlertRef.current?.("Invalid product or user id.", "error");
+      showTranslatedAlert("Invalid product or user id.", "error");
       return;
     }
     if (typeof addToCart.amount === "number" && addToCart.amount < 1) {
-      showAlertRef.current?.("Amount must be at least 1.", "error");
+      showTranslatedAlert("Amount must be at least 1.", "error");
       return;
     }
 
@@ -148,19 +166,19 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return;
     }
     if (data) {
       // Optimistically append so UI reflects immediately
       setAddToCarts((prev) => [...prev, data as AddToCart]);
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   /** Update an existing cart item. */
   const updateAddToCart = useCallback(async (addToCart: AddToCartUpdate): Promise<void> => {
     if (typeof addToCart.id !== "string") {
-      showAlertRef.current?.("Missing cart id for update.", "error");
+      showTranslatedAlert("Missing cart id for update.", "error");
       return;
     }
     const { data, error } = await supabase
@@ -170,7 +188,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return;
     }
     if (data) {
@@ -178,12 +196,12 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
         prev.map((row) => (row.id === data.id ? (data as AddToCart) : row))
       );
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   /** Delete a cart item by id. */
   const deleteAddToCart = useCallback(async (addToCartId: string): Promise<void> => {
     if (typeof addToCartId !== "string" || addToCartId.length === 0) {
-      showAlertRef.current?.("Invalid cart id for delete.", "error");
+      showTranslatedAlert("Invalid cart id for delete.", "error");
       return;
     }
     const { error } = await supabase
@@ -191,16 +209,16 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", addToCartId);
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return;
     }
     setAddToCarts((prev) => prev.filter((row) => row.id !== addToCartId));
-  }, []);
+  }, [showTranslatedAlert]);
 
   /** Delete all cart rows for a given user id. */
   const clearCartByUser = useCallback(async (userId: string): Promise<void> => {
     if (typeof userId !== "string" || userId.length === 0) {
-      showAlertRef.current?.("Invalid user id for clear cart.", "error");
+      showTranslatedAlert("Invalid user id for clear cart.", "error");
       return;
     }
     const { error } = await supabase
@@ -208,11 +226,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("user_id", userId);
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return;
     }
     setAddToCarts((prev) => prev.filter((row) => row.user_id !== userId));
-  }, []);
+  }, [showTranslatedAlert]);
 
   /** Clear the in-memory cart list without touching the database. */
   const clearLocalCart = useCallback((): void => {
@@ -222,7 +240,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
   /** Fetch all cart rows for a given user id. */
   const fetchByUser = useCallback(async (userId: string): Promise<AddToCart[]> => {
     if (typeof userId !== "string" || userId.length === 0) {
-      showAlertRef.current?.("Invalid user id.", "error");
+      showTranslatedAlert("Invalid user id.", "error");
       return [];
     }
     const { data, error } = await supabase
@@ -231,11 +249,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return [];
     }
     return data ?? [];
-  }, []);
+  }, [showTranslatedAlert]);
 
   const value = useMemo<AddToCartContextProps>(
     () => ({

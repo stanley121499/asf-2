@@ -32,7 +32,7 @@ interface DepartmentContextProps {
 
 const DepartmentContext = createContext<DepartmentContextProps | undefined>(undefined);
 
-export function DepartmentProvider({ children }: PropsWithChildren): JSX.Element {
+export function DepartmentProvider({ children }: PropsWithChildren): React.ReactElement {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();

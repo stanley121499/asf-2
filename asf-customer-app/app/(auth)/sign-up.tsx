@@ -10,13 +10,17 @@ import {
   View,
 } from "react-native";
 
+import { useTranslation } from "@/context/LocaleContext";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
+import { colors } from "@/constants/theme";
 
 /**
  * Registers a new user with email/password; sends them to sign-in.
  */
-export default function SignUpScreen() {
+export default function SignUpScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +31,7 @@ export default function SignUpScreen() {
     setError(null);
     const trimmedEmail = email.trim();
     if (trimmedEmail.length === 0 || password.length < 8) {
-      setError("Enter a valid email and a password of at least 8 characters.");
+      setError(t("auth.signUp.emailPasswordRequired"));
       return;
     }
     setSubmitting(true);
@@ -42,7 +46,7 @@ export default function SignUpScreen() {
         },
       });
       if (signUpErr !== null) {
-        setError(signUpErr.message);
+        setError(t(getErrorTranslationKey(signUpErr.message)));
         return;
       }
       router.replace("/(auth)/sign-in");
@@ -53,30 +57,81 @@ export default function SignUpScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-bg"
+      style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View className="flex-1 justify-center px-6">
-        <Text className="text-2xl font-bold text-accent mb-2">Create account</Text>
-        <Text className="text-muted text-sm mb-6">Register with your email</Text>
+      <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
+        <Text
+          style={{
+            fontFamily: "PlayfairDisplay_400Regular",
+            fontSize: 24,
+            color: colors.text,
+            marginBottom: 8,
+          }}
+        >
+          {t("auth.signUp.title")}
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
+          {t("auth.signUp.subtitle")}
+        </Text>
 
         {error !== null ? (
-          <View className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-            <Text className="text-sm text-danger">{error}</Text>
+          <View
+            style={{
+              marginBottom: 16,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: "#FECACA",
+              backgroundColor: "#FEF2F2",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
           </View>
         ) : null}
 
-        <Text className="text-sm font-medium text-accent mb-1">Name (optional)</Text>
+        <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          {t("auth.signUp.name")}
+        </Text>
         <TextInput
-          className="mb-4 rounded-xl border border-border bg-panel px-4 py-3 text-accent"
+          style={{
+            marginBottom: 16,
+            height: 52,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.panel,
+            paddingHorizontal: 16,
+            fontSize: 16,
+            color: colors.text,
+            fontFamily: "Inter_400Regular",
+          }}
+          placeholder={t("auth.signUp.namePlaceholder")}
+          placeholderTextColor={colors.muted}
           value={name}
           onChangeText={setName}
           editable={!submitting}
         />
 
-        <Text className="text-sm font-medium text-accent mb-1">Email</Text>
+        <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          {t("auth.signUp.email")}
+        </Text>
         <TextInput
-          className="mb-4 rounded-xl border border-border bg-panel px-4 py-3 text-accent"
+          style={{
+            marginBottom: 16,
+            height: 52,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.panel,
+            paddingHorizontal: 16,
+            fontSize: 16,
+            color: colors.text,
+            fontFamily: "Inter_400Regular",
+          }}
+          placeholder={t("auth.signUp.emailPlaceholder")}
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -84,9 +139,24 @@ export default function SignUpScreen() {
           editable={!submitting}
         />
 
-        <Text className="text-sm font-medium text-accent mb-1">Password</Text>
+        <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          {t("auth.signUp.password")}
+        </Text>
         <TextInput
-          className="mb-6 rounded-xl border border-border bg-panel px-4 py-3 text-accent"
+          style={{
+            marginBottom: 24,
+            height: 52,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.panel,
+            paddingHorizontal: 16,
+            fontSize: 16,
+            color: colors.text,
+            fontFamily: "Inter_400Regular",
+          }}
+          placeholder={t("auth.signUp.passwordMinPlaceholder")}
+          placeholderTextColor={colors.muted}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -94,19 +164,31 @@ export default function SignUpScreen() {
         />
 
         <Pressable
-          className="rounded-xl bg-accent py-4 items-center mb-4"
           onPress={() => void onSubmit()}
           disabled={submitting}
+          style={{
+            height: 56,
+            borderRadius: 12,
+            backgroundColor: "#000000",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 16,
+            opacity: submitting ? 0.6 : 1,
+          }}
         >
           {submitting ? (
-            <ActivityIndicator color="#FAF9F6" />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text className="text-bg font-semibold">Sign up</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              {t("auth.signUp.submit")}
+            </Text>
           )}
         </Pressable>
 
-        <Pressable onPress={() => router.back()} disabled={submitting}>
-          <Text className="text-center text-sm text-accent">Back to sign in</Text>
+        <Pressable onPress={() => router.push("/(auth)/sign-in")} disabled={submitting}>
+          <Text style={{ textAlign: "center", fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+            {t("auth.signUp.backToSignIn")}
+          </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

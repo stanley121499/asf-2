@@ -1,17 +1,21 @@
 import { Redirect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { StampGrid } from "@/components/StampGrid";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
 
 const STAMP_SLOT_COUNT = 9;
+
+type TierKey = "bronze" | "silver" | "gold";
 
 function createEmptyStamps(): boolean[] {
   return Array.from({ length: STAMP_SLOT_COUNT }, () => false);
@@ -35,9 +39,19 @@ async function loadOrCreateUserStamps(userId: string): Promise<boolean[]> {
 }
 
 /**
+ * Resolves membership tier from point balance.
+ */
+function resolveTier(points: number): TierKey {
+  if (points >= 1000) return "gold";
+  if (points >= 500) return "silver";
+  return "bronze";
+}
+
+/**
  * Rewards screen — sticky header, points card with tier, 3×3 stamp grid.
  */
 export default function RewardsScreen(): React.ReactElement {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
@@ -58,37 +72,75 @@ export default function RewardsScreen(): React.ReactElement {
   }, [user, pointsAPI]);
 
   useEffect(() => {
-    if (authLoading || typeof user?.id !== "string") { setStamps(createEmptyStamps()); return; }
+    if (authLoading || typeof user?.id !== "string") {
+      setStamps(createEmptyStamps());
+      return;
+    }
     let cancelled = false;
     const run = async (): Promise<void> => {
-      setStampsLoading(true); setError(null);
+      setStampsLoading(true);
+      setError(null);
       try {
         const next = await loadOrCreateUserStamps(user.id);
         if (!cancelled) setStamps(next);
       } catch (err) {
-        if (!cancelled) { setError(err instanceof Error ? err.message : "Failed to load stamps"); setStamps(createEmptyStamps()); }
-      } finally { if (!cancelled) setStampsLoading(false); }
+        if (!cancelled) {
+          const raw = err instanceof Error ? err.message : "";
+          setError(raw.length > 0 ? t(getErrorTranslationKey(raw)) : t("rewards.stampsLoadFailed"));
+          setStamps(createEmptyStamps());
+        }
+      } finally {
+        if (!cancelled) setStampsLoading(false);
+      }
     };
     void run();
-    return () => { cancelled = true; };
-  }, [user?.id, authLoading]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, authLoading, t]);
 
   const handleStampClick = useCallback(async (index: number) => {
     if (typeof user?.id !== "string" || stampsLoading || stamps[index]) return;
     const previous = stamps;
-    const newStamps = [...stamps]; newStamps[index] = true;
+    const newStamps = [...stamps];
+    newStamps[index] = true;
     setStamps(newStamps);
-    const { error: upErr } = await supabase.from("user_stamps").update({ stamps: newStamps, updated_at: new Date().toISOString() }).eq("user_id", user.id);
-    if (upErr) { setStamps(previous); setError(upErr.message); }
-  }, [stamps, stampsLoading, user?.id]);
+    const { error: upErr } = await supabase
+      .from("user_stamps")
+      .update({ stamps: newStamps, updated_at: new Date().toISOString() })
+      .eq("user_id", user.id);
+    if (upErr) {
+      setStamps(previous);
+      setError(t(getErrorTranslationKey(upErr.message)));
+    }
+  }, [stamps, stampsLoading, user?.id, t]);
 
-  const tierName = userPoints >= 1000 ? "Gold" : userPoints >= 500 ? "Silver" : "Bronze";
-  const tierColor = userPoints >= 1000 ? "#D4AF37" : userPoints >= 500 ? "#94A3B8" : "#CD7F32";
+  const tierKey = resolveTier(userPoints);
+  const tierName =
+    tierKey === "gold"
+      ? t("rewards.tierGoldName")
+      : tierKey === "silver"
+        ? t("rewards.tierSilverName")
+        : t("rewards.tierBronzeName");
+  const tierColor = tierKey === "gold" ? "#D4AF37" : tierKey === "silver" ? "#94A3B8" : "#CD7F32";
+
+  const progressHint =
+    userPoints < 500
+      ? t("rewards.gapToSilver", { count: 500 - userPoints })
+      : userPoints < 1000
+        ? t("rewards.gapToGoldHint", { count: 1000 - userPoints })
+        : t("rewards.maxTierCelebrated");
+
+  const tierBars: ReadonlyArray<{ key: TierKey; active: boolean; color: string }> = [
+    { key: "bronze", active: userPoints >= 0, color: "#CD7F32" },
+    { key: "silver", active: userPoints >= 500, color: "#94A3B8" },
+    { key: "gold", active: userPoints >= 1000, color: "#D4AF37" },
+  ];
 
   if (authLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SubPageHeader title="我的奖励" />
+        <SubPageHeader title={t("rewards.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
@@ -99,9 +151,11 @@ export default function RewardsScreen(): React.ReactElement {
   if (user === null) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SubPageHeader title="我的奖励" />
+        <SubPageHeader title={t("rewards.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>登录后可查看奖励。</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("rewards.loginRequired")}
+          </Text>
         </View>
       </View>
     );
@@ -109,7 +163,7 @@ export default function RewardsScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <SubPageHeader title="我的奖励" />
+      <SubPageHeader title={t("rewards.title")} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
 
         {/* Points card */}
@@ -126,24 +180,26 @@ export default function RewardsScreen(): React.ReactElement {
             <Text style={{ fontSize: 14, color: tierColor, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{tierName}</Text>
           </View>
           <Text style={{ fontSize: 40, fontWeight: "700", color: "#FFFFFF", fontFamily: "Inter_400Regular" }}>{userPoints.toLocaleString()}</Text>
-          <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4, fontFamily: "Inter_400Regular" }}>积分</Text>
+          <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4, fontFamily: "Inter_400Regular" }}>
+            {t("rewards.pointsUnit")}
+          </Text>
 
           {/* Tier progress hints */}
           <View style={{ marginTop: 16, flexDirection: "row", gap: 8 }}>
-            {["Bronze", "Silver", "Gold"].map((t) => (
+            {tierBars.map((bar) => (
               <View
-                key={t}
+                key={bar.key}
                 style={{
                   flex: 1,
                   height: 4,
                   borderRadius: 2,
-                  backgroundColor: t === "Bronze" && userPoints >= 0 ? "#CD7F32" : t === "Silver" && userPoints >= 500 ? "#94A3B8" : t === "Gold" && userPoints >= 1000 ? "#D4AF37" : "rgba(255,255,255,0.15)",
+                  backgroundColor: bar.active ? bar.color : "rgba(255,255,255,0.15)",
                 }}
               />
             ))}
           </View>
           <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, fontFamily: "Inter_400Regular" }}>
-            {userPoints < 500 ? `再累积 ${500 - userPoints} 积分升至 Silver` : userPoints < 1000 ? `再累积 ${1000 - userPoints} 积分升至 Gold` : "已达最高等级 Gold 🎉"}
+            {progressHint}
           </Text>
         </View>
 
@@ -153,9 +209,11 @@ export default function RewardsScreen(): React.ReactElement {
 
         {/* Stamp card */}
         <View style={{ backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: colors.border, borderRadius: 20, padding: 20 }}>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 4 }}>集印章</Text>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 4 }}>
+            {t("rewards.stampsTitle")}
+          </Text>
           <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16, fontFamily: "Inter_400Regular" }}>
-            集满9个印章即可获得特别奖励
+            {t("rewards.stampsHint")}
           </Text>
           <StampGrid
             stamps={stamps}

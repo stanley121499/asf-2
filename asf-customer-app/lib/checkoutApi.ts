@@ -46,7 +46,8 @@ export interface CreatePendingOrderPayload {
 export function buildFlatFallbackRate(): DeliveryRateOption {
   return {
     serviceCode: FLAT_FALLBACK_SERVICE_CODE,
-    name: "标准配送",
+    /** Stable EN label; UI maps `FLAT_STANDARD` via `checkout.flatRateName`. */
+    name: "Standard shipping",
     price: FLAT_SHIPPING_MYR,
     currency: "MYR",
     etaDays: null,

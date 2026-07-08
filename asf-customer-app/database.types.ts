@@ -167,6 +167,41 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_translations: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          locale: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_translations_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           active: boolean
@@ -199,6 +234,41 @@ export type Database = {
           parent?: string | null
         }
         Relationships: []
+      }
+      category_translations: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          locale: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_translations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -362,6 +432,41 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      department_translations: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          locale: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_translations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {
@@ -975,6 +1080,47 @@ export type Database = {
             columns: ["post_folder_id"]
             isOneToOne: false
             referencedRelation: "post_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_translations: {
+        Row: {
+          caption: string | null
+          created_at: string
+          cta_text: string | null
+          id: string
+          locale: string
+          name: string
+          post_id: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          cta_text?: string | null
+          id?: string
+          locale: string
+          name: string
+          post_id: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          cta_text?: string | null
+          id?: string
+          locale?: string
+          name?: string
+          post_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_translations_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -1622,6 +1768,50 @@ export type Database = {
           },
         ]
       }
+      product_translations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          locale: string
+          name: string
+          product_id: string
+          updated_at: string
+          warranty_description: string | null
+          warranty_period: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          locale: string
+          name: string
+          product_id: string
+          updated_at?: string
+          warranty_description?: string | null
+          warranty_period?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          locale?: string
+          name?: string
+          product_id?: string
+          updated_at?: string
+          warranty_description?: string | null
+          warranty_period?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_translations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotion_folder_medias: {
         Row: {
           created_at: string
@@ -1779,6 +1969,41 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      range_translations: {
+        Row: {
+          created_at: string
+          id: string
+          locale: string
+          name: string
+          range_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale: string
+          name: string
+          range_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: string
+          name?: string
+          range_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "range_translations_range_id_fkey"
+            columns: ["range_id"]
+            isOneToOne: false
+            referencedRelation: "ranges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sales_logs: {
         Row: {

@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { OrderProgressTracker } from "@/components/OrderProgressTracker";
 import { useAuthContext } from "@/context/AuthContext";
+import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useOrderContext } from "@/context/product/OrderContext";
 import type { Database } from "@/database.types";
+import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
@@ -88,7 +90,8 @@ function Surface({ children }: Readonly<{ children: React.ReactNode }>): React.R
  */
 export default function OrderDetailScreen(): React.ReactElement {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  const router = useRouter();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
   const { user } = useAuthContext();
   const { orders, loading: ordersLoading } = useOrderContext();
 
@@ -150,7 +153,7 @@ export default function OrderDetailScreen(): React.ReactElement {
   if (user === null || (order === undefined && (ordersLoading || directOrderLoading))) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.panel }}>
-        <SubPageHeader title="订单详情" />
+        <SubPageHeader title={t("orders.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
@@ -161,9 +164,11 @@ export default function OrderDetailScreen(): React.ReactElement {
   if (order === undefined) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.panel }}>
-        <SubPageHeader title="订单详情" />
+        <SubPageHeader title={t("orders.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>未找到该订单。</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("orders.notFound")}
+          </Text>
         </View>
       </View>
     );
@@ -171,7 +176,10 @@ export default function OrderDetailScreen(): React.ReactElement {
 
   const tracking = typeof order.tracking_number === "string" && order.tracking_number.trim().length > 0 ? order.tracking_number.trim() : null;
   const shortId = order.id.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const createdDate = typeof order.created_at === "string" ? order.created_at.slice(0, 10) : "";
+  const createdDate =
+    typeof order.created_at === "string" && order.created_at.length > 0
+      ? formatDate(locale, order.created_at)
+      : "";
   const status = typeof order.status === "string" ? order.status : null;
   const isPending = (status ?? "").toLowerCase().includes("pending");
   const totalAmount = typeof order.total_amount === "number" ? order.total_amount : null;
@@ -184,7 +192,7 @@ export default function OrderDetailScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.panel }}>
-      <SubPageHeader title="订单详情" />
+      <SubPageHeader title={t("orders.detailTitle")} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 56 }} showsVerticalScrollIndicator={false}>
 
         {/* Hero: order ref + date + fulfilment tracker, all in one statement */}
@@ -203,7 +211,9 @@ export default function OrderDetailScreen(): React.ReactElement {
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 11, letterSpacing: 2, color: colors.muted, fontFamily: "Inter_400Regular" }}>订单</Text>
+              <Text style={{ fontSize: 11, letterSpacing: 2, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                {t("orders.orderLabel")}
+              </Text>
               <Text style={{ fontSize: 13, letterSpacing: 1, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
                 #{shortId}
               </Text>
@@ -219,10 +229,12 @@ export default function OrderDetailScreen(): React.ReactElement {
         {/* Tracking number */}
         {tracking !== null && (
           <View style={{ marginBottom: 20 }}>
-            <SectionLabel title="物流" />
+            <SectionLabel title={t("orders.tracking")} />
             <Surface>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>运单号</Text>
+                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                  {t("orders.trackingNumber")}
+                </Text>
                 <Text style={{ fontSize: 14, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{tracking}</Text>
               </View>
             </Surface>
@@ -231,7 +243,7 @@ export default function OrderDetailScreen(): React.ReactElement {
 
         {/* Shipping address */}
         <View style={{ marginBottom: 20 }}>
-          <SectionLabel title="收货地址" />
+          <SectionLabel title={t("orders.shippingAddressTitle")} />
           <Surface>
             <Text style={{ fontSize: 14, color: colors.text, lineHeight: 23, fontFamily: "Inter_400Regular" }}>
               {typeof order.shipping_address === "string" && order.shipping_address.length > 0 ? order.shipping_address : "—"}
@@ -241,7 +253,7 @@ export default function OrderDetailScreen(): React.ReactElement {
 
         {/* Line items */}
         <View style={{ marginBottom: 20 }}>
-          <SectionLabel title="商品" />
+          <SectionLabel title={t("orders.items")} />
           <Surface>
             {itemsLoading ? (
               <ActivityIndicator color={colors.accent} />
@@ -251,12 +263,12 @@ export default function OrderDetailScreen(): React.ReactElement {
               <View style={{ alignItems: "center", paddingVertical: 12 }}>
                 <Ionicons name="cube-outline" size={26} color={colors.border} style={{ marginBottom: 8 }} />
                 <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular", textAlign: "center" }}>
-                  {isPending ? "商品将在付款确认后显示" : "暂无商品"}
+                  {isPending ? t("orders.itemsPending") : t("orders.itemsEmpty")}
                 </Text>
               </View>
             ) : (
               items.map((line, idx) => {
-                const name = line.products?.name ?? "商品";
+                const name = line.products?.name ?? t("orders.productFallback");
                 const unit = typeof line.products?.price === "number" ? line.products.price : 0;
                 const qty = typeof line.amount === "number" ? line.amount : 0;
                 const imageUrl = getProductImageUrl(line.products);
@@ -299,11 +311,13 @@ export default function OrderDetailScreen(): React.ReactElement {
 
         {/* Receipt-style payment summary */}
         <View style={{ marginBottom: 4 }}>
-          <SectionLabel title="费用明细" />
+          <SectionLabel title={t("orders.amountDetails")} />
           <Surface>
             {discount !== null && (
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>优惠</Text>
+                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                  {t("orders.discount")}
+                </Text>
                 <Text style={{ fontSize: 13, color: colors.success, fontFamily: "Inter_400Regular" }}>- {formatRm(discount)}</Text>
               </View>
             )}
@@ -319,7 +333,9 @@ export default function OrderDetailScreen(): React.ReactElement {
             />
 
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-              <Text style={{ fontSize: 13, letterSpacing: 1, color: colors.muted, fontFamily: "Inter_400Regular" }}>合计</Text>
+              <Text style={{ fontSize: 13, letterSpacing: 1, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                {t("orders.total")}
+              </Text>
               <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 28, color: colors.text }}>
                 {formatRm(totalAmount)}
               </Text>
@@ -329,7 +345,7 @@ export default function OrderDetailScreen(): React.ReactElement {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 }}>
                 <Ionicons name="star" size={14} color={colors.accent} />
                 <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-                  本次获得 {pointsEarned} 积分
+                  {t("orders.pointsEarnedThis", { count: pointsEarned })}
                 </Text>
               </View>
             )}

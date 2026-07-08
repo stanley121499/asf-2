@@ -9,8 +9,10 @@ import React, {
 } from "react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { Database } from "@/database.types";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
 import { useAlertContext } from "./AlertContext";
+import { useTranslation } from "./LocaleContext";
 import type { Product } from "./product/ProductContext";
 import { useProductContext } from "./product/ProductContext";
 import { useAuthContext } from "./AuthContext";
@@ -63,8 +65,9 @@ function getPostgresErrorCode(value: unknown): string | null {
  * WishlistProvider keeps the current user's wishlist rows in sync with Supabase,
  * including realtime updates filtered to only the authenticated user.
  */
-export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
+export function WishlistProvider({ children }: PropsWithChildren): React.ReactElement {
   const { showAlert } = useAlertContext();
+  const { t } = useTranslation();
   const { user } = useAuthContext();
   const { products } = useProductContext();
 
@@ -139,7 +142,7 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
         if (process.env.NODE_ENV === "development") {
           console.error("Failed to fetch wishlist:", error);
         }
-        showAlert(error.message, "error");
+        showAlert(t(getErrorTranslationKey(error.message)), "error");
         return;
       }
 
@@ -147,7 +150,7 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [showAlert, user?.id]);
+  }, [showAlert, t, user?.id]);
 
   /**
    * Add a product to the current user's wishlist.
@@ -159,11 +162,11 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
       const userId = user?.id;
 
       if (typeof userId !== "string" || userId.length === 0) {
-        showAlert("Please sign in to use the wishlist.", "error");
+        showAlert(t("wishlist.signInRequired"), "error");
         return;
       }
       if (typeof productId !== "string" || productId.trim().length === 0) {
-        showAlert("Invalid product id.", "error");
+        showAlert(t("errors.invalidProductId"), "error");
         return;
       }
 
@@ -180,23 +183,23 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
           const code = getPostgresErrorCode(error);
           // 23505 = unique_violation (already in wishlist)
           if (code === "23505") {
-            showAlert("Already in your wishlist.", "success");
+            showAlert(t("wishlist.alreadyIn"), "success");
             return;
           }
           if (process.env.NODE_ENV === "development") {
             console.error("Failed to add to wishlist:", error);
           }
-          showAlert(error.message, "error");
+          showAlert(t(getErrorTranslationKey(error.message)), "error");
           return;
         }
 
-        showAlert("Added to wishlist.", "success");
+        showAlert(t("wishlist.added"), "success");
         await fetchWishlist();
       } finally {
         setLoading(false);
       }
     },
-    [fetchWishlist, showAlert, user?.id]
+    [fetchWishlist, showAlert, t, user?.id]
   );
 
   /**
@@ -209,11 +212,11 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
       const userId = user?.id;
 
       if (typeof userId !== "string" || userId.length === 0) {
-        showAlert("Please sign in to use the wishlist.", "error");
+        showAlert(t("wishlist.signInRequired"), "error");
         return;
       }
       if (typeof productId !== "string" || productId.trim().length === 0) {
-        showAlert("Invalid product id.", "error");
+        showAlert(t("errors.invalidProductId"), "error");
         return;
       }
 
@@ -229,17 +232,17 @@ export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
           if (process.env.NODE_ENV === "development") {
             console.error("Failed to remove from wishlist:", error);
           }
-          showAlert(error.message, "error");
+          showAlert(t(getErrorTranslationKey(error.message)), "error");
           return;
         }
 
-        showAlert("Removed from wishlist.", "success");
+        showAlert(t("wishlist.removed"), "success");
         await fetchWishlist();
       } finally {
         setLoading(false);
       }
     },
-    [fetchWishlist, showAlert, user?.id]
+    [fetchWishlist, showAlert, t, user?.id]
   );
 
   /**

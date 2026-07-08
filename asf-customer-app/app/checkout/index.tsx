@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useTranslation } from "@/context/LocaleContext";
+import { getCheckoutApiErrorTranslationKey } from "@/i18n/errorMap";
 import {
   buildFlatFallbackRate,
   postCreatePendingOrder,
@@ -101,14 +103,17 @@ function Field({
 /**
  * Formats ETA days for display on a courier option row.
  */
-function formatEtaDays(etaDays: number | null): string {
+function formatEtaDays(
+  etaDays: number | null,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
   if (etaDays === null || !Number.isFinite(etaDays)) {
     return "";
   }
   if (etaDays <= 1) {
-    return "预计 1 天内送达";
+    return t("checkout.etaWithinOneDay");
   }
-  return `预计 ${Math.round(etaDays)} 天送达`;
+  return t("checkout.etaDays", { count: Math.round(etaDays) });
 }
 
 /**
@@ -118,12 +123,16 @@ function CourierMethodRow({
   option,
   selected,
   onPress,
+  t,
 }: Readonly<{
   option: DeliveryRateOption;
   selected: boolean;
   onPress: () => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }>): React.ReactElement {
-  const etaLabel = formatEtaDays(option.etaDays);
+  const etaLabel = formatEtaDays(option.etaDays, t);
+  const displayName =
+    option.serviceCode === "FLAT_STANDARD" ? t("checkout.flatRateName") : option.name;
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -154,7 +163,7 @@ function CourierMethodRow({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-          {option.name}
+          {displayName}
         </Text>
         {etaLabel.length > 0 ? (
           <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
@@ -183,6 +192,7 @@ function CourierMethodRow({
  */
 export default function CheckoutShippingScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
 
@@ -279,11 +289,11 @@ export default function CheckoutShippingScreen(): React.ReactElement {
       structured.address2,
       `${structured.city}, ${structured.state} ${structured.postcode}`,
       structured.country,
-      `电话：${structured.recipientPhone}`,
+      t("checkout.phonePrefix", { phone: structured.recipientPhone }),
     ]
       .filter((line) => line.length > 0)
       .join("\n");
-  }, [structured]);
+  }, [structured, t]);
 
   /** Fetch live courier rates when the structured address becomes valid (debounced). */
   useEffect(() => {
@@ -328,7 +338,8 @@ export default function CheckoutShippingScreen(): React.ReactElement {
           const fallback = buildFlatFallbackRate();
           setDeliveryRates([fallback]);
           setSelectedServiceCode(fallback.serviceCode);
-          setRatesError(e instanceof Error ? e.message : "无法获取配送报价");
+          const raw = e instanceof Error ? e.message : "Could not fetch delivery rates";
+          setRatesError(t(getCheckoutApiErrorTranslationKey(raw)));
         } finally {
           if (!cancelled) {
             setRatesLoading(false);
@@ -341,20 +352,20 @@ export default function CheckoutShippingScreen(): React.ReactElement {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [structured, user]);
+  }, [structured, user, t]);
 
   const onContinue = async (): Promise<void> => {
     setError(null);
     if (user === null) {
-      setError("请先登录。");
+      setError(t("checkout.loginRequired"));
       return;
     }
     if (structured === null || shippingDisplay.length === 0) {
-      setError("请填写所有必填收货信息。");
+      setError(t("checkout.fillRequiredFields"));
       return;
     }
     if (selectedServiceCode === null || selectedServiceCode.length === 0) {
-      setError("请选择配送方式。");
+      setError(t("checkout.selectDeliveryMethod"));
       return;
     }
 
@@ -385,8 +396,8 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         params: { orderId },
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "创建订单失败";
-      setError(msg);
+      const raw = e instanceof Error ? e.message : "Could not create pending order";
+      setError(t(getCheckoutApiErrorTranslationKey(raw)));
     } finally {
       setSubmitting(false);
     }
@@ -403,10 +414,10 @@ export default function CheckoutShippingScreen(): React.ReactElement {
   if (user === null) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header onBack={() => router.back()} />
+        <Header onBack={() => router.back()} title={t("checkout.shippingInfo")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
           <Text style={{ color: colors.muted, fontFamily: "Inter_400Regular", fontSize: 14 }}>
-            请先登录后继续结账。
+            {t("checkout.loginRequired")}
           </Text>
         </View>
       </SafeAreaView>
@@ -415,7 +426,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header onBack={() => router.back()} />
+      <Header onBack={() => router.back()} title={t("checkout.shippingInfo")} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -458,34 +469,34 @@ export default function CheckoutShippingScreen(): React.ReactElement {
               marginBottom: 14,
             }}
           >
-            收货人
+            {t("checkout.recipientSection")}
           </Text>
 
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Field
-                label="名"
+                label={t("checkout.firstName")}
                 value={firstName}
                 onChangeText={setFirstName}
                 editable={!submitting}
                 autoCapitalize="words"
-                placeholder="名"
+                placeholder={t("checkout.firstName")}
               />
             </View>
             <View style={{ flex: 1 }}>
               <Field
-                label="姓"
+                label={t("checkout.lastName")}
                 value={lastName}
                 onChangeText={setLastName}
                 editable={!submitting}
                 autoCapitalize="words"
-                placeholder="姓"
+                placeholder={t("checkout.lastName")}
               />
             </View>
           </View>
 
           <Field
-            label="电话"
+            label={t("checkout.phoneLabelShort")}
             value={recipientPhone}
             onChangeText={setRecipientPhone}
             editable={!submitting}
@@ -503,57 +514,57 @@ export default function CheckoutShippingScreen(): React.ReactElement {
               marginBottom: 14,
             }}
           >
-            收货地址
+            {t("checkout.addressSection")}
           </Text>
 
           <Field
-            label="地址第一行"
+            label={t("checkout.address1")}
             value={address1}
             onChangeText={setAddress1}
             editable={!submitting}
-            placeholder="街道、门牌号"
+            placeholder={t("checkout.address1Placeholder")}
           />
 
           <Field
-            label="地址第二行（选填）"
+            label={t("checkout.address2")}
             value={address2}
             onChangeText={setAddress2}
             editable={!submitting}
-            placeholder="单元、楼层（选填）"
+            placeholder={t("checkout.address2Placeholder")}
           />
 
           <Field
-            label="城市"
+            label={t("checkout.city")}
             value={city}
             onChangeText={setCity}
             editable={!submitting}
-            placeholder="城市"
+            placeholder={t("checkout.city")}
           />
 
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1.4 }}>
               <Field
-                label="州 / 省"
+                label={t("checkout.state")}
                 value={stateRegion}
                 onChangeText={setStateRegion}
                 editable={!submitting}
-                placeholder="州 / 省"
+                placeholder={t("checkout.state")}
               />
             </View>
             <View style={{ flex: 1 }}>
               <Field
-                label="邮编"
+                label={t("checkout.postalCode")}
                 value={postcode}
                 onChangeText={setPostcode}
                 editable={!submitting}
                 keyboardType="phone-pad"
-                placeholder="邮编"
+                placeholder={t("checkout.postalCode")}
               />
             </View>
           </View>
 
           <Field
-            label="国家"
+            label={t("checkout.country")}
             value={country}
             onChangeText={setCountry}
             editable={false}
@@ -572,21 +583,21 @@ export default function CheckoutShippingScreen(): React.ReactElement {
                   marginBottom: 14,
                 }}
               >
-                配送方式
+                {t("checkout.deliveryMethod")}
               </Text>
 
               {ratesLoading ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 }}>
                   <ActivityIndicator size="small" color={colors.text} />
                   <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-                    正在获取配送报价…
+                    {t("checkout.ratesLoading")}
                   </Text>
                 </View>
               ) : null}
 
               {ratesError !== null ? (
                 <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginBottom: 10 }}>
-                  {ratesError}（已使用标准配送）
+                  {`${ratesError}${t("checkout.ratesFallbackSuffix")}`}
                 </Text>
               ) : null}
 
@@ -597,6 +608,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
                     option={option}
                     selected={selectedServiceCode === option.serviceCode}
                     onPress={() => setSelectedServiceCode(option.serviceCode)}
+                    t={t}
                   />
                 ))}
               </View>
@@ -632,7 +644,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-                继续前往付款
+                {t("checkout.continueToPayment")}
               </Text>
             )}
           </TouchableOpacity>
@@ -645,7 +657,10 @@ export default function CheckoutShippingScreen(): React.ReactElement {
 /**
  * Sticky checkout header with a back arrow and centered Playfair title.
  */
-function Header({ onBack }: Readonly<{ onBack: () => void }>): React.ReactElement {
+function Header({
+  onBack,
+  title,
+}: Readonly<{ onBack: () => void; title: string }>): React.ReactElement {
   return (
     <View
       style={{
@@ -667,7 +682,7 @@ function Header({ onBack }: Readonly<{ onBack: () => void }>): React.ReactElemen
         <Ionicons name="arrow-back" size={22} color={colors.text} />
       </TouchableOpacity>
       <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
-        收货信息
+        {title}
       </Text>
     </View>
   );

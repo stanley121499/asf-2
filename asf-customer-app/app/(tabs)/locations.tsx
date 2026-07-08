@@ -22,6 +22,7 @@ import {
   useStoreLocationContext,
   type StoreLocation,
 } from "@/context/StoreLocationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from "@/lib/haptics";
 import { formatDistanceKm, haversineDistanceKm } from "@/lib/storeLocationDistance";
@@ -97,6 +98,7 @@ interface StoreImageGalleryProps {
   images: readonly string[];
   mallName: string;
   width: number;
+  photosComingSoonLabel: string;
 }
 
 /**
@@ -106,6 +108,7 @@ function StoreImageGallery({
   images,
   mallName,
   width,
+  photosComingSoonLabel,
 }: Readonly<StoreImageGalleryProps>): React.ReactElement {
   const [index, setIndex] = useState(0);
   const prevIndexRef = useRef(0);
@@ -162,7 +165,7 @@ function StoreImageGallery({
           {mallName}
         </Text>
         <Text style={{ marginTop: 6, fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-          门店照片即将上线
+          {photosComingSoonLabel}
         </Text>
       </View>
     );
@@ -351,6 +354,7 @@ function StoreLocationCard({
   isNearest,
   enterDelayMs,
 }: Readonly<StoreLocationCardProps>): React.ReactElement {
+  const { t, locale } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
   const images = useMemo(() => getUsableStoreImages(item.image_urls), [item.image_urls]);
@@ -422,7 +426,12 @@ function StoreLocationCard({
           elevation: 2,
         }}
       >
-        <StoreImageGallery images={images} mallName={item.mall_name} width={CARD_WIDTH} />
+        <StoreImageGallery
+          images={images}
+          mallName={item.mall_name}
+          width={CARD_WIDTH}
+          photosComingSoonLabel={t("locations.photosComingSoon")}
+        />
 
         <View style={{ padding: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
@@ -457,7 +466,7 @@ function StoreLocationCard({
                     fontWeight: "500",
                   }}
                 >
-                  {formatDistanceKm(distanceKm)}
+                  {formatDistanceKm(distanceKm, locale)}
                 </Text>
               </View>
             )}
@@ -478,7 +487,7 @@ function StoreLocationCard({
                 }}
               >
                 <Text style={{ fontSize: 10, color: "#FFFFFF", fontFamily: "Inter_400Regular", fontWeight: "600" }}>
-                  最近
+                  {t("locations.nearest")}
                 </Text>
               </View>
             )}
@@ -494,7 +503,7 @@ function StoreLocationCard({
             <View style={{ flexDirection: "row", gap: mapButtonGap, marginTop: 16 }}>
               {hasGoogle && (
                 <MapButton
-                  label="Google 地图"
+                  label={t("locations.googleMaps")}
                   icon="navigate-outline"
                   onPress={onOpenGoogle}
                   variant="primary"
@@ -503,7 +512,7 @@ function StoreLocationCard({
               )}
               {hasWaze && (
                 <MapButton
-                  label="Waze"
+                  label={t("locations.waze")}
                   icon="car-outline"
                   onPress={onOpenWaze}
                   variant="secondary"
@@ -522,10 +531,12 @@ function StoreLocationCard({
  * Store locations tab — sorted by nearest when location is available.
  */
 export default function LocationsScreen(): React.ReactElement {
+  const { t } = useTranslation();
   const { isEnabled } = useFeatureFlags();
   const { storeLocations, loading } = useStoreLocationContext();
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [locating, setLocating] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -534,6 +545,9 @@ export default function LocationsScreen(): React.ReactElement {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== Location.PermissionStatus.GRANTED) {
+          if (!cancelled) {
+            setPermissionDenied(true);
+          }
           return;
         }
         const position = await Location.getCurrentPositionAsync({
@@ -613,7 +627,7 @@ export default function LocationsScreen(): React.ReactElement {
       >
         <View style={{ height: 56, alignItems: "center", justifyContent: "center" }}>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
-            门店
+            {t("locations.title")}
           </Text>
         </View>
       </SafeAreaView>
@@ -623,7 +637,7 @@ export default function LocationsScreen(): React.ReactElement {
           <ActivityIndicator size="large" color={colors.accent} />
           {!loading && locating && (
             <Text style={{ marginTop: 12, fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-              正在定位附近门店…
+              {t("locations.locating")}
             </Text>
           )}
         </View>
@@ -638,13 +652,41 @@ export default function LocationsScreen(): React.ReactElement {
               marginTop: 12,
             }}
           >
-            暂无门店信息
+            {t("locations.emptyTitle")}
           </Text>
+          {permissionDenied && (
+            <Text
+              style={{
+                marginTop: 8,
+                fontSize: 13,
+                color: colors.muted,
+                textAlign: "center",
+                fontFamily: "Inter_400Regular",
+              }}
+            >
+              {t("locations.permissionDenied")}
+            </Text>
+          )}
         </View>
       ) : (
         <FlatList
           data={rankedStores}
           keyExtractor={(entry) => entry.item.id}
+          ListHeaderComponent={
+            permissionDenied ? (
+              <Text
+                style={{
+                  marginBottom: 12,
+                  fontSize: 13,
+                  color: colors.muted,
+                  textAlign: "center",
+                  fontFamily: "Inter_400Regular",
+                }}
+              >
+                {t("locations.permissionDenied")}
+              </Text>
+            ) : null
+          }
           contentContainerStyle={{ paddingHorizontal: LIST_PADDING, paddingTop: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item: entry, index }) => (

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
 
 /** Render nothing — hides the tab bar button and collapses the slot. */
@@ -19,19 +20,17 @@ const hiddenButton = (): null => null;
 const hiddenItemStyle = { display: "none" as const };
 
 /**
- * Bottom tabs: 首页, 购物, 精选, 门店, 我的
- * Matches web bottom-nav.tsx:
- *   - bg-white/80 backdrop-blur, border-t, height 64px
- *   - Active: gold #C9A96E  |  Inactive: muted #6B7280
- *   - Labels in Chinese, icons at 20px
+ * Bottom tabs: Home, Shop, Highlights, Stores, Profile.
+ * Labels come from `t("nav.*")` so they flip with locale.
  *
  * Tabs gated by feature flags:
- *   - 精选 (highlights) — hidden when `highlights` flag is off
- *   - 门店 (locations)   — hidden when `store_locations` flag is off
+ *   - highlights — hidden when `highlights` flag is off
+ *   - locations  — hidden when `store_locations` flag is off
  */
 export default function TabsLayout(): React.ReactElement {
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   if (authLoading) {
@@ -45,6 +44,12 @@ export default function TabsLayout(): React.ReactElement {
   if (user === null) {
     return <Redirect href="/(auth)/sign-in" />;
   }
+
+  const homeTitle = t("nav.home");
+  const shopTitle = t("nav.shop");
+  const highlightsTitle = t("nav.highlights");
+  const locationsTitle = t("nav.locations");
+  const profileTitle = t("nav.profile");
 
   return (
     <Tabs
@@ -68,57 +73,57 @@ export default function TabsLayout(): React.ReactElement {
         },
       }}
     >
-      {/* 首页 — always visible */}
+      {/* Home — always visible */}
       <Tabs.Screen
         name="index"
         options={{
-          title: "首页",
+          title: homeTitle,
           tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={20} color={color} />,
         }}
       />
 
-      {/* 购物 — always visible */}
+      {/* Shop — always visible */}
       <Tabs.Screen
         name="browse"
         options={{
-          title: "购物",
+          title: shopTitle,
           tabBarIcon: ({ color }) => <Ionicons name="bag-outline" size={20} color={color} />,
         }}
       />
 
-      {/* 精选 — gated by `highlights` feature flag */}
+      {/* Highlights — gated by `highlights` feature flag */}
       <Tabs.Screen
         name="highlights"
         options={
           isEnabled("highlights")
             ? {
-                title: "精选",
+                title: highlightsTitle,
                 tabBarIcon: ({ color }) => <Ionicons name="film-outline" size={20} color={color} />,
               }
-            : { title: "精选", tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
+            : { title: highlightsTitle, tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
         }
       />
 
-      {/* 门店 — gated by `store_locations` feature flag */}
+      {/* Stores — gated by `store_locations` feature flag */}
       <Tabs.Screen
         name="locations"
         options={
           isEnabled("store_locations")
             ? {
-                title: "门店",
+                title: locationsTitle,
                 tabBarIcon: ({ color }) => (
                   <Ionicons name="location-outline" size={20} color={color} />
                 ),
               }
-            : { title: "门店", tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
+            : { title: locationsTitle, tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
         }
       />
 
-      {/* 我的 — always visible */}
+      {/* Profile — always visible */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: "我的",
+          title: profileTitle,
           tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={20} color={color} />,
         }}
       />

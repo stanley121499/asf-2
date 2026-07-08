@@ -33,7 +33,7 @@ interface CategoryContextProps {
 
 const CategoryContext = createContext<CategoryContextProps | undefined>(undefined);
 
-export function CategoryProvider({ children }: Readonly<PropsWithChildren>): JSX.Element {
+export function CategoryProvider({ children }: Readonly<PropsWithChildren>): React.ReactElement {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();

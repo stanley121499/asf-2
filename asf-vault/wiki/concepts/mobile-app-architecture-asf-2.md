@@ -1,9 +1,9 @@
 ---
 title: "Mobile App Architecture — ASF-2"
 type: concept
-updated: 2026-06-26
-sources: 3
-tags: [asf-2, mobile, expo, react-native, rbac, push-notifications]
+updated: 2026-07-08
+sources: 4
+tags: [asf-2, mobile, expo, react-native, rbac, push-notifications, i18n]
 ---
 
 # Mobile App Architecture — ASF-2
@@ -99,6 +99,12 @@ Both apps share:
 
 ---
 
+## Customer i18n (2026-07-08)
+
+Customer app uses AsyncStorage `asf_locale` + JSON catalogs + Supabase `*_translations` overlays. **Do not** switch Expo ProductContext to `fetch_products_with_computed_attributes` for locale (RPC historically crashed). See [[wiki/concepts/customer-i18n-asf-2]].
+
+---
+
 ## Related
 
 - [[wiki/entities/asf-2]]
@@ -108,3 +114,5 @@ Both apps share:
 - [[wiki/concepts/context-provider-architecture-asf-2]]
 - [[wiki/concepts/pixel2motion-splash-asf-2]]
 - [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]]
+- [[wiki/concepts/customer-i18n-asf-2]]
+- [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]

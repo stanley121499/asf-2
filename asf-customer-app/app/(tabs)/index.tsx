@@ -1,7 +1,6 @@
 "use client";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -15,8 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useAnnouncementContext } from "@/context/AnnouncementContext";
-import { useAuthContext } from "@/context/AuthContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { usePostContext } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
@@ -25,20 +24,6 @@ import { useProductContext } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
 import { formatRm } from "@/lib/formatCurrency";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Handbag: "手袋",
-  Streetwear: "街头服饰",
-  "Spring Collection": "春季新品",
-  Ladies: "女装",
-  Men: "男装",
-  Accessories: "配饰",
-  Shoes: "鞋履",
-  Beauty: "美妆",
-  Pants: "长裤",
-  Tops: "上衣",
-  Bottoms: "下装",
-};
 
 function productThumb(p: Product): string {
   const first = p.medias[0];
@@ -49,20 +34,20 @@ function productThumb(p: Product): string {
  * Home screen matching web HomePageClient exactly:
  * 1. Transparent top navbar (handled via StatusBar + scroll)
  * 2. Full-height hero (55% screen) — post image with dark gradient, two pill CTA buttons
- * 3. "新品上市" — font-display heading + divider line, 2-col grid, sharp-edge images (no border-radius),
- *    3:4 aspect ratio, product name truncated, price in accent gold, heart icon
- * 4. "商品分类" — horizontal scroll of pill buttons with border
+ * 3. New arrivals — font-display heading + divider line, 2-col grid
+ * 4. Categories — horizontal scroll of pill buttons with border
  * 5. Posts strip (if posts exist)
  */
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
-  const { user } = useAuthContext();
+  const { t } = useTranslation();
+  const { translateCategory, translateProduct, translatePost } =
+    useContentTranslation();
   const { products, loading: productsLoading } = useProductContext();
   const { categories, loading: categoriesLoading } = useCategoryContext();
   const { posts } = usePostContext();
   const { postMedias } = usePostMediaContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
-  const { announcement } = useAnnouncementContext();
 
   const [scrollY, setScrollY] = useState(0);
 
@@ -116,6 +101,10 @@ export default function HomeScreen(): React.ReactElement {
 
   const navbarBg = scrollY > 10 ? colors.bg : "transparent";
   const navbarTextColor = scrollY > 10 ? colors.text : "#FFFFFF";
+  const heroCaption =
+    firstPost !== null
+      ? translatePost(firstPost.id, "caption", firstPost.caption)
+      : "";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -149,12 +138,14 @@ export default function HomeScreen(): React.ReactElement {
             <TouchableOpacity
               style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
               onPress={() => router.push("/(tabs)/browse")}
+              accessibilityLabel={t("nav.openSearch")}
             >
               <Ionicons name="search-outline" size={22} color={navbarTextColor} />
             </TouchableOpacity>
             <TouchableOpacity
               style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
               onPress={() => router.push("/cart")}
+              accessibilityLabel={t("nav.openCart")}
             >
               <Ionicons name="bag-outline" size={22} color={navbarTextColor} />
             </TouchableOpacity>
@@ -173,18 +164,30 @@ export default function HomeScreen(): React.ReactElement {
         <Pressable
           onPress={() => router.push("/(tabs)/profile/highlights")}
           style={{ width: "100%", height: HERO_HEIGHT }}
+          accessibilityLabel={t("home.heroAlt")}
         >
           {heroImage !== null && heroImage.length > 0 ? (
             <Image
               source={{ uri: heroImage }}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
               contentFit="cover"
             />
           ) : (
-            <View style={{ position: "absolute", inset: 0, width: "100%", height: "100%", backgroundColor: "#111" }} />
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "#111",
+              }}
+            />
           )}
 
-          {/* Top gradient for navbar readability */}
+          {/* Spacer reserved for navbar readability (no CSS gradient props) */}
           <View
             style={{
               position: "absolute",
@@ -192,12 +195,11 @@ export default function HomeScreen(): React.ReactElement {
               left: 0,
               right: 0,
               height: 120,
-              background: "transparent",
             }}
             pointerEvents="none"
           />
 
-          {/* Bottom gradient */}
+          {/* Bottom gradient area */}
           <View
             style={{
               position: "absolute",
@@ -209,7 +211,7 @@ export default function HomeScreen(): React.ReactElement {
               padding: 24,
             }}
           >
-            {firstPost?.caption !== null && firstPost?.caption !== undefined && firstPost.caption.length > 0 && (
+            {heroCaption.length > 0 && (
               <Text
                 style={{
                   fontFamily: "PlayfairDisplay_400Regular",
@@ -220,12 +222,14 @@ export default function HomeScreen(): React.ReactElement {
                 }}
                 numberOfLines={2}
               >
-                {firstPost.caption}
+                {heroCaption}
               </Text>
             )}
             <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
               <Pressable
-                onPress={(e) => { router.push("/(tabs)/browse"); }}
+                onPress={() => {
+                  router.push("/(tabs)/browse");
+                }}
                 style={{
                   paddingHorizontal: 20,
                   height: 44,
@@ -236,7 +240,7 @@ export default function HomeScreen(): React.ReactElement {
                 }}
               >
                 <Text style={{ color: colors.text, fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-                  探索新品 →
+                  {t("home.heroCtaExplore")}
                 </Text>
               </Pressable>
               <Pressable
@@ -253,16 +257,15 @@ export default function HomeScreen(): React.ReactElement {
                 }}
               >
                 <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-                  精选内容 →
+                  {t("home.heroCtaHighlights")}
                 </Text>
               </Pressable>
             </View>
           </View>
         </Pressable>
 
-        {/* ── 2. 新品上市 grid ── */}
+        {/* ── 2. New arrivals grid ── */}
         <View style={{ marginTop: 32, paddingHorizontal: 16 }}>
-          {/* Section heading + divider */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <Text
               style={{
@@ -271,12 +274,11 @@ export default function HomeScreen(): React.ReactElement {
                 color: colors.text,
               }}
             >
-              新品上市
+              {t("home.newArrivals")}
             </Text>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
           </View>
 
-          {/* 2-column product grid */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
             {sortedProducts.slice(0, 6).map((product) => {
               const thumb = productThumb(product);
@@ -287,7 +289,6 @@ export default function HomeScreen(): React.ReactElement {
                   style={{ width: "48%" }}
                   onPress={() => router.push(`/(tabs)/browse/${product.id}`)}
                 >
-                  {/* 3:4 aspect ratio image — NO border radius (matches web) */}
                   <View
                     style={{
                       aspectRatio: 3 / 4,
@@ -302,6 +303,7 @@ export default function HomeScreen(): React.ReactElement {
                         source={{ uri: thumb }}
                         style={{ width: "100%", height: "100%" }}
                         contentFit="cover"
+                        accessibilityLabel={t("home.productAlt")}
                       />
                     ) : (
                       <View style={{ flex: 1, backgroundColor: colors.panel }} />
@@ -316,18 +318,19 @@ export default function HomeScreen(): React.ReactElement {
                     }}
                     numberOfLines={1}
                   >
-                    {product.name ?? ""}
+                    {translateProduct(product.id, "name", product.name ?? null)}
                   </Text>
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                     <Text style={{ fontSize: 14, color: colors.accent, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
                       {formatRm(product.price)}
                     </Text>
                     <Pressable
-                      onPress={(e) => {
+                      onPress={() => {
                         void (saved ? removeFromWishlist(product.id) : addToWishlist(product.id));
                       }}
                       hitSlop={8}
                       style={{ padding: 4 }}
+                      accessibilityLabel={saved ? t("home.cardUnsaveAria") : t("home.cardSaveAria")}
                     >
                       <Ionicons
                         name={saved ? "heart" : "heart-outline"}
@@ -343,12 +346,12 @@ export default function HomeScreen(): React.ReactElement {
 
           {sortedProducts.length === 0 && (
             <Text style={{ textAlign: "center", color: colors.muted, paddingVertical: 32, fontFamily: "Inter_400Regular" }}>
-              暂无相关商品
+              {t("home.emptyProducts")}
             </Text>
           )}
         </View>
 
-        {/* ── 3. 商品分类 pills ── */}
+        {/* ── 3. Category pills ── */}
         {sortedCategories.length > 0 && (
           <View style={{ marginTop: 40 }}>
             <Text
@@ -360,7 +363,7 @@ export default function HomeScreen(): React.ReactElement {
                 marginBottom: 16,
               }}
             >
-              商品分类
+              {t("home.categories")}
             </Text>
             <ScrollView
               horizontal
@@ -380,8 +383,8 @@ export default function HomeScreen(): React.ReactElement {
                     backgroundColor: "#FFFFFF",
                   }}
                 >
-                  <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular", whiteSpace: "nowrap" }}>
-                    {CATEGORY_LABELS[cat.name ?? ""] ?? cat.name ?? ""}
+                  <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+                    {translateCategory(cat.id, cat.name ?? null)}
                   </Text>
                 </Pressable>
               ))}
@@ -401,7 +404,7 @@ export default function HomeScreen(): React.ReactElement {
                 marginBottom: 16,
               }}
             >
-              精选推荐
+              {t("home.featured")}
             </Text>
             <ScrollView
               horizontal
@@ -410,16 +413,18 @@ export default function HomeScreen(): React.ReactElement {
             >
               {sortedPosts.slice(0, 10).map((post) => {
                 const uri = postMediaMap.get(post.id) ?? "";
+                const caption = translatePost(post.id, "caption", post.caption);
                 return (
                   <Pressable
                     key={post.id}
                     onPress={() => router.push("/(tabs)/profile/highlights")}
                     style={{ width: 140, aspectRatio: 3 / 4, backgroundColor: colors.panel, overflow: "hidden" }}
+                    accessibilityLabel={t("home.postAlt")}
                   >
                     {uri.length > 0 && (
                       <Image source={{ uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
                     )}
-                    {post.caption !== null && post.caption.length > 0 && (
+                    {caption.length > 0 && (
                       <View
                         style={{
                           position: "absolute",
@@ -431,7 +436,7 @@ export default function HomeScreen(): React.ReactElement {
                         }}
                       >
                         <Text style={{ color: "#FFFFFF", fontSize: 11, fontFamily: "Inter_400Regular" }} numberOfLines={2}>
-                          {post.caption}
+                          {caption}
                         </Text>
                       </View>
                     )}

@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/types";
+
 /**
  * Haversine distance between two WGS-84 coordinates, in kilometres.
  */
@@ -20,13 +22,16 @@ export function haversineDistanceKm(
 
 /**
  * Formats a distance for display (m when under 1 km, otherwise km with one decimal).
+ * Uses bilingual labels aligned with `locations.within100m|meters|kilometers`.
  */
-export function formatDistanceKm(km: number): string {
+export function formatDistanceKm(km: number, locale: Locale = DEFAULT_LOCALE): string {
   if (km < 0.1) {
-    return "100 m 内";
+    return locale === "en" ? "Within 100 m" : "100 m 内";
   }
   if (km < 1) {
-    return `${Math.round(km * 1000)} m`;
+    const meters = Math.round(km * 1000);
+    return locale === "en" ? `${meters} m` : `${meters} m`;
   }
-  return `${km.toFixed(1)} km`;
+  const kmLabel = km.toFixed(1);
+  return locale === "en" ? `${kmLabel} km` : `${kmLabel} km`;
 }

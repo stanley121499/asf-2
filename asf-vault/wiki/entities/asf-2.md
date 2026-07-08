@@ -1,14 +1,14 @@
 ---
 title: "ASF-2 (project)"
 type: entity
-updated: 2026-06-26
-sources: 76
-tags: [project, ecommerce, supabase, react, nextjs, mobile, stripe, delyva]
+updated: 2026-07-08
+sources: 81
+tags: [project, ecommerce, supabase, react, nextjs, mobile, stripe, delyva, i18n]
 ---
 
 # ASF-2 (project)
 
-**ASF-2** is a full-stack **e-commerce and social media management** platform with separate **admin** and **customer** experiences. As of 2026-06-26, the Next.js web app includes a **store locations** module; both Expo mobile apps are built and working, with a **Pixel2Motion animated splash** (MODEL MATCH letter cascade) on cold start.
+**ASF-2** is a full-stack **e-commerce and social media management** platform with separate **admin** and **customer** experiences. As of 2026-07-08, the **Expo customer app** supports bilingual UI (zh-CN default + English) with Supabase content translation tables; both Expo mobile apps remain built with Pixel2Motion splash; Next.js includes store locations and claims modules.
 
 ## Current Stack
 
@@ -26,7 +26,7 @@ tags: [project, ecommerce, supabase, react, nextjs, mobile, stripe, delyva]
 |---|---|---|
 | `asf-2-next/` | Next.js web app — admin panel + customer storefront + API backend | **Active — functionally complete** |
 | `asf-staff-app/` | Staff/boss mobile app (Expo + RN) | **Built — MODEL MATCH splash intro** |
-| `asf-customer-app/` | Customer mobile app (Expo + RN) | **Built — APK deployed; MODEL MATCH splash intro** |
+| `asf-customer-app/` | Customer mobile app (Expo + RN) | **Built — APK deployed; MODEL MATCH splash; bilingual i18n (zh-CN/en) shipped 2026-07-08** |
 | `asf-2/src/` | Original CRA/Vite app | Frozen reference |
 
 ## Documentation corpus
@@ -49,6 +49,8 @@ Both mobile apps are functional. Web app 12-step execution plan completed.
 **Animated splash (2026-06-26):** Pixel2Motion pipeline for Simon MODEL MATCH logo; Variation 7 letter cascade embedded via WebView on both mobile apps. Motion SOT: `asf-customer-app/assets/splash/pixel2motion-output/`. See [[wiki/concepts/pixel2motion-splash-asf-2]].
 
 **Post-purchase claims (2026-06-26):** Reusable `claims` module (feature flag + config-driven policy); shoe-store default; customer order-item entry + staff queue. SQL: `asf-2-next/docs/sql/step_11_claims.sql`. See [[wiki/concepts/post-purchase-claims-module-asf-2]].
+
+**Customer i18n (2026-07-08):** Expo `asf-customer-app` — AsyncStorage `asf_locale`, JSON `t()`, Profile language picker, `ContentTranslationContext` overlays for six `*_translations` tables (seeded for live minimart catalog on `gswszoljvafugtdikimn`). Expo ProductContext must **not** use locale RPC. Next.js UI i18n was prototyped then **git-stashed**. SQL: `docs/sql/CUSTOMER_I18N_*.sql`. See [[wiki/concepts/customer-i18n-asf-2]], [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]].
 
 See [[wiki/sources/2026-04-25-mobile-apps-progress]] for full mobile app details and schema corrections.
 
@@ -76,3 +78,5 @@ See [[wiki/sources/2026-04-25-mobile-apps-progress]] for full mobile app details
 - [[wiki/concepts/pixel2motion-splash-asf-2]]
 - [[wiki/sources/2026-06-26-post-purchase-claims-module]]
 - [[wiki/concepts/post-purchase-claims-module-asf-2]]
+- [[wiki/concepts/customer-i18n-asf-2]]
+- [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]

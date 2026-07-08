@@ -1,13 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePaymentSheet } from "@stripe/stripe-react-native";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
+import { getCheckoutApiErrorTranslationKey } from "@/i18n/errorMap";
 import { postCreatePaymentIntent } from "@/lib/checkoutApi";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
@@ -24,15 +26,15 @@ import { colors } from "@/constants/theme";
 type PaymentMethodId = "card" | "ewallet" | "ipay88";
 
 /**
- * Describes a single selectable payment method row.
+ * Describes a single selectable payment method row (titles via i18n).
  */
 interface PaymentMethodOption {
   /** Stable identifier branched on in the pay handler. */
   id: PaymentMethodId;
-  /** Primary label. */
-  title: string;
-  /** Supporting line (provider / availability hint). */
-  subtitle: string;
+  /** i18n key for primary label. */
+  titleKey: string;
+  /** i18n key for supporting line. */
+  subtitleKey: string;
   /** Leading icon. */
   icon: keyof typeof Ionicons.glyphMap;
   /** When false the row is shown but disabled ("coming soon"). */
@@ -47,22 +49,22 @@ interface PaymentMethodOption {
 const PAYMENT_METHODS: readonly PaymentMethodOption[] = [
   {
     id: "card",
-    title: "信用卡 / 借记卡",
-    subtitle: "由 Stripe 安全处理",
+    titleKey: "checkout.methodCard",
+    subtitleKey: "checkout.methodCardSubtitle",
     icon: "card-outline",
     available: true,
   },
   {
     id: "ewallet",
-    title: "电子钱包",
-    subtitle: "Touch 'n Go、GrabPay、Boost（即将推出）",
+    titleKey: "checkout.methodEwallet",
+    subtitleKey: "checkout.methodEwalletSubtitle",
     icon: "wallet-outline",
     available: false,
   },
   {
     id: "ipay88",
-    title: "网上银行 FPX",
-    subtitle: "iPay88 网上银行（即将推出）",
+    titleKey: "checkout.methodFpx",
+    subtitleKey: "checkout.methodFpxSubtitle",
     icon: "business-outline",
     available: false,
   },
@@ -71,7 +73,10 @@ const PAYMENT_METHODS: readonly PaymentMethodOption[] = [
 /**
  * Sticky checkout header with a back arrow and centered Playfair title.
  */
-function Header({ onBack }: Readonly<{ onBack: () => void }>): React.ReactElement {
+function Header({
+  onBack,
+  title,
+}: Readonly<{ onBack: () => void; title: string }>): React.ReactElement {
   return (
     <View
       style={{
@@ -93,7 +98,7 @@ function Header({ onBack }: Readonly<{ onBack: () => void }>): React.ReactElemen
         <Ionicons name="arrow-back" size={22} color={colors.text} />
       </TouchableOpacity>
       <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
-        选择支付方式
+        {title}
       </Text>
     </View>
   );
@@ -106,10 +111,16 @@ function MethodRow({
   option,
   selected,
   onPress,
+  title,
+  subtitle,
+  comingSoonLabel,
 }: Readonly<{
   option: PaymentMethodOption;
   selected: boolean;
   onPress: () => void;
+  title: string;
+  subtitle: string;
+  comingSoonLabel: string;
 }>): React.ReactElement {
   const disabled = !option.available;
   return (
@@ -144,10 +155,10 @@ function MethodRow({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-          {option.title}
+          {title}
         </Text>
         <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
-          {option.subtitle}
+          {subtitle}
         </Text>
       </View>
       {disabled ? (
@@ -159,7 +170,7 @@ function MethodRow({
             backgroundColor: colors.panel,
           }}
         >
-          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>即将推出</Text>
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>{comingSoonLabel}</Text>
         </View>
       ) : (
         <View
@@ -183,6 +194,7 @@ function MethodRow({
  */
 export default function CheckoutPaymentScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
   const { clearLocalCart } = useAddToCartContext();
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
@@ -249,13 +261,13 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
       }
       setSheetReady(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "无法启动支付";
-      setError(msg);
+      const raw = e instanceof Error ? e.message : "Could not create payment intent";
+      setError(t(getCheckoutApiErrorTranslationKey(raw)));
       setSheetReady(false);
     } finally {
       setPreparing(false);
     }
-  }, [initPaymentSheet, orderId, user]);
+  }, [initPaymentSheet, orderId, t, user]);
 
   useEffect(() => {
     void bootstrapSheet();
@@ -265,7 +277,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
     setError(null);
     // Only the Stripe card method is live today; other gateways are gated in UI.
     if (selectedMethod !== "card") {
-      setError("该支付方式即将推出，请选择信用卡 / 借记卡。");
+      setError(t("checkout.methodUnavailable"));
       return;
     }
     if (!sheetReady) {
@@ -289,12 +301,21 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
     } finally {
       setPaying(false);
     }
-  }, [clearLocalCart, orderId, presentPaymentSheet, router, selectedMethod, sheetReady]);
+  }, [clearLocalCart, orderId, presentPaymentSheet, router, selectedMethod, sheetReady, t]);
+
+  const headerTitle = t("checkout.selectPaymentMethod");
+
+  const payLabel = useMemo(() => {
+    if (orderTotal !== null) {
+      return t("checkout.confirmPayWithAmount", { amount: formatRm(orderTotal) });
+    }
+    return t("checkout.confirmPay");
+  }, [orderTotal, t]);
 
   if (authLoading) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header onBack={() => router.back()} />
+        <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
           <ActivityIndicator size="large" color={colors.text} />
         </View>
@@ -305,16 +326,16 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
   if (user === null) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header onBack={() => router.back()} />
+        <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
           <Text style={{ color: colors.muted, fontSize: 14, fontFamily: "Inter_400Regular", marginBottom: 16 }}>
-            请先登录。
+            {t("checkout.loginRequiredShort")}
           </Text>
           <TouchableOpacity
             onPress={() => router.replace("/(auth)/sign-in")}
             style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>去登录</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("checkout.goSignIn")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -324,16 +345,16 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
   if (orderId.length === 0) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header onBack={() => router.back()} />
+        <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
           <Text style={{ color: colors.danger, fontSize: 14, textAlign: "center", fontFamily: "Inter_400Regular", marginBottom: 16 }}>
-            缺少订单编号，请返回结账第一步。
+            {t("checkout.missingOrderId")}
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
             style={{ height: 52, paddingHorizontal: 32, borderWidth: 1, borderColor: colors.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>返回</Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("checkout.back")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -341,12 +362,11 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
   }
 
   const orderRef = orderId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const payLabel = orderTotal !== null ? `确认支付 · ${formatRm(orderTotal)}` : "确认支付";
   const payDisabled = paying || preparing || selectedMethod !== "card" || !sheetReady;
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header onBack={() => router.back()} />
+      <Header onBack={() => router.back()} title={headerTitle} />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -364,7 +384,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>订单号</Text>
+            <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.orderNumber")}</Text>
             <Text style={{ fontSize: 14, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
               #{orderRef}
             </Text>
@@ -377,9 +397,9 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
             }}
           />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>应付金额</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.amountDue")}</Text>
             <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: colors.text }}>
-              {orderTotal !== null ? formatRm(orderTotal) : "—"}
+              {orderTotal !== null ? formatRm(orderTotal) : t("orderSuccess.notAvailable")}
             </Text>
           </View>
         </View>
@@ -394,7 +414,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
             marginBottom: 12,
           }}
         >
-          支付方式
+          {t("checkout.paymentMethods")}
         </Text>
         <View style={{ gap: 10 }}>
           {PAYMENT_METHODS.map((option) => (
@@ -403,6 +423,9 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
               option={option}
               selected={option.available && selectedMethod === option.id}
               onPress={() => setSelectedMethod(option.id)}
+              title={t(option.titleKey)}
+              subtitle={t(option.subtitleKey)}
+              comingSoonLabel={t("checkout.comingSoon")}
             />
           ))}
         </View>
@@ -411,7 +434,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16, paddingHorizontal: 4 }}>
           <Ionicons name="lock-closed-outline" size={14} color={colors.muted} />
           <Text style={{ flex: 1, fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", lineHeight: 18 }}>
-            支付采用安全加密，您的卡信息不会存储在本应用中。
+            {t("checkout.securityNote")}
           </Text>
         </View>
 
@@ -435,7 +458,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
               <Text style={{ fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
               <TouchableOpacity onPress={() => void bootstrapSheet()} style={{ marginTop: 6 }}>
                 <Text style={{ fontSize: 13, color: colors.text, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
-                  重试
+                  {t("checkout.retry")}
                 </Text>
               </TouchableOpacity>
             </View>

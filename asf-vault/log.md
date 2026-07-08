@@ -116,3 +116,19 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
   - [[wiki/00-overview]] (updated: current focus, sources 75→76)
   - [[index.md]] (added concept + source entries)
 - Notes: Source-of-truth for `claims` module implementation — config portability via `claimPolicyConfig.ts`, SQL `step_11_claims.sql`, customer order-item entry, staff queue mirroring Support; migration must be run before production use.
+
+## [2026-07-08] ingest | Customer i18n session — Expo ship + DB translations
+
+- Source: `raw/sources/2026-07-08-customer-i18n-session-accomplishment.md` (plus plans/prompts: `2026-07-08-customer-i18n-*.md`, `2026-07-08-expo-customer-i18n-*.md`)
+- Wiki touched:
+  - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]] (new)
+  - [[wiki/sources/2026-07-08-expo-customer-i18n-plan]] (new)
+  - [[wiki/sources/2026-07-08-expo-customer-i18n-agent-prompts]] (new)
+  - [[wiki/sources/2026-07-08-customer-i18n-plan]] (new)
+  - [[wiki/sources/2026-07-08-customer-i18n-agent-prompts]] (new)
+  - [[wiki/concepts/customer-i18n-asf-2]] (new)
+  - [[wiki/entities/asf-2]] (updated: Expo i18n shipped; sources 76→81)
+  - [[wiki/concepts/mobile-app-architecture-asf-2]] (updated: i18n section; sources 3→4)
+  - [[wiki/00-overview]] (updated: current focus; sources 76→81)
+  - [[index.md]] (concept + 5 source entries)
+- Notes: Phone SOT is Expo not Next WebView; translation tables applied on gswszoljvafugtdikimn; Next UI i18n remains git-stashed.

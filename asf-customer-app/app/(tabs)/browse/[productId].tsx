@@ -14,6 +14,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
@@ -73,13 +75,15 @@ function Accordion({ title, children, open, onToggle }: AccordionProps): React.R
  *   - Floating back + wishlist heart
  *   - Name, price, stock status
  *   - Color pills (rounded-full) + size squares (no radius)
- *   - Accordion: 商品详情, 材质与保养, 配送与退货
- *   - Fixed bottom "加入购物袋" CTA
+ *   - Accordion: details, materials, shipping
+ *   - Fixed bottom add-to-bag CTA
  */
 export default function ProductDetailScreen(): React.ReactElement {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { translateProduct } = useContentTranslation();
   const { products, loading } = useProductContext();
   const { user } = useAuthContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
@@ -112,7 +116,8 @@ export default function ProductDetailScreen(): React.ReactElement {
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
   const [openAccordion, setOpenAccordion] = useState<string>("description");
   const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
+  const [addErrorKey, setAddErrorKey] = useState<string | null>(null);
+  const [addErrorRaw, setAddErrorRaw] = useState<string | null>(null);
 
   /** Auto-select when only one option */
   useEffect(() => {
@@ -145,6 +150,21 @@ export default function ProductDetailScreen(): React.ReactElement {
   const stockCount = getProductStockQuantity(currentStockRow);
   const isInStock = hasAllSelections && currentStockRow !== null && stockCount > 0;
 
+  const selectionPrompt = useMemo((): string => {
+    const needColor = requiresColor && selectedColorId === null;
+    const needSize = requiresSize && selectedSizeId === null;
+    if (needColor && needSize) {
+      return t("product.selectColorAndSize");
+    }
+    if (needColor) {
+      return t("product.selectColor");
+    }
+    if (needSize) {
+      return t("product.selectSize");
+    }
+    return "";
+  }, [requiresColor, requiresSize, selectedColorId, selectedSizeId, t]);
+
   const navigateImage = (dir: "prev" | "next") => {
     if (sortedMedias.length <= 1) return;
     setSelectedImageIdx((prev) => {
@@ -167,26 +187,27 @@ export default function ProductDetailScreen(): React.ReactElement {
   }, [addToWishlist, isSaved, product, removeFromWishlist, router, user]);
 
   const onAddToCart = useCallback(async (): Promise<void> => {
-    setAddError(null);
+    setAddErrorKey(null);
+    setAddErrorRaw(null);
     if (product === undefined) return;
     if (user === null) {
       router.push("/(auth)/sign-in");
       return;
     }
     if (requiresColor && selectedColorId === null) {
-      setAddError("请选择颜色。");
+      setAddErrorKey("product.selectColorError");
       return;
     }
     if (requiresSize && selectedSizeId === null) {
-      setAddError("请选择尺码。");
+      setAddErrorKey("product.selectSizeError");
       return;
     }
     if (currentStockRow === null) {
-      setAddError("所选规格暂无库存。");
+      setAddErrorKey("product.noStockForVariant");
       return;
     }
     if (stockCount < 1) {
-      setAddError("此商品库存不足。");
+      setAddErrorKey("product.insufficientStock");
       return;
     }
     setAdding(true);
@@ -211,7 +232,11 @@ export default function ProductDetailScreen(): React.ReactElement {
       }
       router.push("/cart");
     } catch (e) {
-      setAddError(e instanceof Error ? e.message : "无法加入购物袋");
+      if (e instanceof Error) {
+        setAddErrorRaw(e.message);
+      } else {
+        setAddErrorKey("product.addToBagFailed");
+      }
     } finally {
       setAdding(false);
     }
@@ -228,18 +253,31 @@ export default function ProductDetailScreen(): React.ReactElement {
   if (product === undefined) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: theme.text, marginBottom: 16 }}>未找到商品</Text>
+        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: theme.text, marginBottom: 16 }}>
+          {t("product.notFound")}
+        </Text>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.push("/(tabs)/browse")}
           style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>继续购物</Text>
+          <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>
+            {t("product.continueShopping")}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   const currentMedia = sortedMedias[selectedImageIdx] ?? null;
+  const translatedName = translateProduct(product.id, "name", product.name ?? null);
+  const displayName = translatedName.length > 0 ? translatedName : t("common.product");
+  const translatedDescription = translateProduct(
+    product.id,
+    "description",
+    product.description,
+  );
+  const addErrorMessage =
+    addErrorKey !== null ? t(addErrorKey) : addErrorRaw;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -255,6 +293,7 @@ export default function ProductDetailScreen(): React.ReactElement {
               source={{ uri: currentMedia.media_url }}
               style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH }}
               contentFit="cover"
+              accessibilityLabel={displayName}
             />
           ) : (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -322,12 +361,15 @@ export default function ProductDetailScreen(): React.ReactElement {
                 lineHeight: 30,
               }}
             >
-              {product.name ?? "Product"}
+              {displayName}
             </Text>
             <TouchableOpacity
               onPress={() => void handleToggleWishlist()}
               hitSlop={8}
               style={{ paddingTop: 4 }}
+              accessibilityLabel={
+                isSaved ? t("product.removeFromWishlistAria") : t("product.addToWishlistAria")
+              }
             >
               <Ionicons
                 name={isSaved ? "heart" : "heart-outline"}
@@ -346,7 +388,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           <View style={{ marginTop: 12 }}>
             {!hasAllSelections && (requiresColor || requiresSize) ? (
               <Text style={{ fontSize: 13, color: theme.muted, fontFamily: "Inter_400Regular" }}>
-                {`请选择${[requiresColor && selectedColorId === null ? "颜色" : "", requiresSize && selectedSizeId === null ? "尺码" : ""].filter(Boolean).join("和")}`}
+                {selectionPrompt}
               </Text>
             ) : (
               <Text
@@ -357,7 +399,9 @@ export default function ProductDetailScreen(): React.ReactElement {
                   fontFamily: "Inter_400Regular",
                 }}
               >
-                {isInStock ? `有货（剩余 ${stockCount} 件）` : "缺货"}
+                {isInStock
+                  ? t("product.inStock", { count: String(stockCount) })
+                  : t("product.outOfStock")}
               </Text>
             )}
           </View>
@@ -366,7 +410,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           {requiresColor && (
             <View style={{ marginTop: 28 }}>
               <Text style={{ fontSize: 13, color: theme.text, fontWeight: "500", fontFamily: "Inter_400Regular", marginBottom: 12 }}>
-                颜色
+                {t("product.color")}
               </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                 {activeColors.map((c) => {
@@ -406,7 +450,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           {requiresSize && (
             <View style={{ marginTop: 28 }}>
               <Text style={{ fontSize: 13, color: theme.text, fontWeight: "500", fontFamily: "Inter_400Regular", marginBottom: 12 }}>
-                尺码
+                {t("product.size")}
               </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {activeSizes.map((s) => {
@@ -445,32 +489,34 @@ export default function ProductDetailScreen(): React.ReactElement {
           {/* ── Accordions ── */}
           <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: theme.border }}>
             <Accordion
-              title="商品详情"
+              title={t("product.details")}
               open={openAccordion === "description"}
               onToggle={() => setOpenAccordion(openAccordion === "description" ? "" : "description")}
             >
               <Text style={{ fontSize: 13, color: theme.muted, lineHeight: 22, fontFamily: "Inter_400Regular" }}>
-                {product.description !== null && product.description !== "" ? product.description : "暂无详情介绍。"}
+                {translatedDescription.length > 0
+                  ? translatedDescription
+                  : t("product.noDescription")}
               </Text>
             </Accordion>
 
             <Accordion
-              title="材质与保养"
+              title={t("product.materialCare")}
               open={openAccordion === "material"}
               onToggle={() => setOpenAccordion(openAccordion === "material" ? "" : "material")}
             >
               <Text style={{ fontSize: 13, color: theme.muted, lineHeight: 22, fontFamily: "Inter_400Regular" }}>
-                请手洗或机洗冷水，不可漂白。自然晾干即可。
+                {t("product.materialCareBody")}
               </Text>
             </Accordion>
 
             <Accordion
-              title="配送与退货"
+              title={t("product.shippingReturns")}
               open={openAccordion === "shipping"}
               onToggle={() => setOpenAccordion(openAccordion === "shipping" ? "" : "shipping")}
             >
               <Text style={{ fontSize: 13, color: theme.muted, lineHeight: 22, fontFamily: "Inter_400Regular" }}>
-                所有订单提供标准配送。30天内免费退换货服务。
+                {t("product.shippingReturnsBody")}
               </Text>
             </Accordion>
           </View>
@@ -479,7 +525,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           <View style={{ marginTop: 40 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Text style={{ fontSize: 16, fontWeight: "500", color: theme.text, fontFamily: "Inter_400Regular" }}>
-                用户评价 (4.8/5)
+                {[t("product.reviewsTitle"), t("product.reviewsRating")].join(" ")}
               </Text>
               <TouchableOpacity
                 style={{
@@ -491,12 +537,12 @@ export default function ProductDetailScreen(): React.ReactElement {
                 }}
               >
                 <Text style={{ fontSize: 13, fontWeight: "500", color: "#000000", fontFamily: "Inter_400Regular" }}>
-                  撰写评价
+                  {t("product.writeReview")}
                 </Text>
               </TouchableOpacity>
             </View>
             <Text style={{ fontSize: 13, color: theme.muted, fontFamily: "Inter_400Regular" }}>
-              暂无评价，成为第一个撰写评价的用户。
+              {t("product.reviewsEmpty")}
             </Text>
           </View>
         </View>
@@ -517,9 +563,9 @@ export default function ProductDetailScreen(): React.ReactElement {
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        {addError !== null && (
+        {addErrorMessage !== null && (
           <Text style={{ fontSize: 13, color: theme.danger, marginBottom: 8, textAlign: "center", fontFamily: "Inter_400Regular" }}>
-            {addError}
+            {addErrorMessage}
           </Text>
         )}
         <TouchableOpacity
@@ -538,7 +584,7 @@ export default function ProductDetailScreen(): React.ReactElement {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-              加入购物袋
+              {t("product.addToBag")}
             </Text>
           )}
         </TouchableOpacity>

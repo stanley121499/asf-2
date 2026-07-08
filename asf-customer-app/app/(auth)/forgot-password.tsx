@@ -10,13 +10,17 @@ import {
   View,
 } from "react-native";
 
+import { useTranslation } from "@/context/LocaleContext";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
+import { colors } from "@/constants/theme";
 
 /**
  * Sends a Supabase password reset email.
  */
-export default function ForgotPasswordScreen() {
+export default function ForgotPasswordScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export default function ForgotPasswordScreen() {
     setError(null);
     const trimmed = email.trim();
     if (trimmed.length === 0) {
-      setError("Enter your email address.");
+      setError(t("auth.forgotPassword.emailRequired"));
       return;
     }
     setSubmitting(true);
@@ -42,7 +46,7 @@ export default function ForgotPasswordScreen() {
         redirectTo !== undefined ? { redirectTo } : undefined
       );
       if (resetErr !== null) {
-        setError(resetErr.message);
+        setError(t(getErrorTranslationKey(resetErr.message)));
         return;
       }
       setDone(true);
@@ -53,26 +57,64 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-bg"
+      style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View className="flex-1 justify-center px-6">
-        <Text className="text-2xl font-bold text-accent mb-2">Reset password</Text>
-        <Text className="text-muted text-sm mb-6">We will email you a reset link</Text>
+      <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
+        <Text
+          style={{
+            fontFamily: "PlayfairDisplay_400Regular",
+            fontSize: 24,
+            color: colors.text,
+            marginBottom: 8,
+          }}
+        >
+          {t("auth.forgotPassword.title")}
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
+          {t("auth.forgotPassword.subtitle")}
+        </Text>
 
         {error !== null ? (
-          <View className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-            <Text className="text-sm text-danger">{error}</Text>
+          <View
+            style={{
+              marginBottom: 16,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: "#FECACA",
+              backgroundColor: "#FEF2F2",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
           </View>
         ) : null}
 
         {done ? (
-          <Text className="text-accent mb-6">请检查您的邮箱，重置密码链接已发送。</Text>
+          <Text style={{ color: colors.text, marginBottom: 24, fontFamily: "Inter_400Regular", fontSize: 15 }}>
+            {t("auth.forgotPassword.success")}
+          </Text>
         ) : (
           <>
-            <Text className="text-sm font-medium text-accent mb-1">Email</Text>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+              {t("auth.forgotPassword.email")}
+            </Text>
             <TextInput
-              className="mb-6 rounded-xl border border-border bg-panel px-4 py-3 text-accent"
+              style={{
+                marginBottom: 24,
+                height: 52,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.panel,
+                paddingHorizontal: 16,
+                fontSize: 16,
+                color: colors.text,
+                fontFamily: "Inter_400Regular",
+              }}
+              placeholder={t("auth.forgotPassword.emailPlaceholder")}
+              placeholderTextColor={colors.muted}
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -81,21 +123,33 @@ export default function ForgotPasswordScreen() {
             />
 
             <Pressable
-              className="rounded-xl bg-accent py-4 items-center mb-4"
               onPress={() => void onSubmit()}
               disabled={submitting}
+              style={{
+                height: 56,
+                borderRadius: 12,
+                backgroundColor: "#000000",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+                opacity: submitting ? 0.6 : 1,
+              }}
             >
               {submitting ? (
-                <ActivityIndicator color="#FAF9F6" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="text-bg font-semibold">Send reset link</Text>
+                <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                  {t("auth.forgotPassword.submit")}
+                </Text>
               )}
             </Pressable>
           </>
         )}
 
-        <Pressable onPress={() => router.back()} disabled={submitting}>
-          <Text className="text-center text-sm text-accent">Back to sign in</Text>
+        <Pressable onPress={() => router.push("/(auth)/sign-in")} disabled={submitting}>
+          <Text style={{ textAlign: "center", fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+            {t("auth.forgotPassword.backToSignIn")}
+          </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

@@ -32,7 +32,7 @@ interface RangeContextProps {
 
 const RangeContext = createContext<RangeContextProps | undefined>(undefined);
 
-export function RangeProvider({ children }: PropsWithChildren): JSX.Element {
+export function RangeProvider({ children }: PropsWithChildren): React.ReactElement {
   const [ranges, setRanges] = useState<Range[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();

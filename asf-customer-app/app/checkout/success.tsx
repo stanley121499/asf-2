@@ -5,6 +5,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import type { Database } from "@/database.types";
 import { formatRm } from "@/lib/formatCurrency";
@@ -81,6 +82,7 @@ function StatusLayout({ children }: Readonly<{ children: React.ReactNode }>): Re
  */
 export default function CheckoutSuccessScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { orderId: orderIdParam } = useLocalSearchParams<{ orderId?: string }>();
   const { user, loading: authLoading } = useAuthContext();
   const { clearLocalCart } = useAddToCartContext();
@@ -138,7 +140,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
         return;
       }
       if (data === null) {
-        setLoadError("找不到该订单。");
+        setLoadError(t("orderSuccess.orderNotFound"));
         return;
       }
       if (data.status === "processing") {
@@ -179,7 +181,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
       clearTimeout(timer);
       void supabase.removeChannel(channel);
     };
-  }, [authLoading, orderId, orderIdValid, user]);
+  }, [authLoading, orderId, orderIdValid, t, user]);
 
   if (authLoading) {
     return (
@@ -195,9 +197,9 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
     return (
       <StatusLayout>
         <Text style={{ color: colors.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
-          请先登录。
+          {t("orderSuccess.loginRequired")}
         </Text>
-        <PrimaryButton label="去登录" onPress={() => router.replace("/(auth)/sign-in")} />
+        <PrimaryButton label={t("orderSuccess.goSignIn")} onPress={() => router.replace("/(auth)/sign-in")} />
       </StatusLayout>
     );
   }
@@ -206,9 +208,9 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
     return (
       <StatusLayout>
         <Text style={{ color: colors.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
-          缺少有效的订单参数。
+          {t("orderSuccess.missingOrderParam")}
         </Text>
-        <SecondaryButton label="返回首页" onPress={() => router.replace("/(tabs)")} />
+        <SecondaryButton label={t("orderSuccess.backHome")} onPress={() => router.replace("/(tabs)")} />
       </StatusLayout>
     );
   }
@@ -231,13 +233,13 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
             <Ionicons name="alert-circle-outline" size={32} color={colors.danger} />
           </View>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 6 }}>
-            出了点问题
+            {t("orderSuccess.somethingWrong")}
           </Text>
           <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 }}>
             {loadError}
           </Text>
         </View>
-        <SecondaryButton label="返回首页" onPress={() => router.replace("/(tabs)")} />
+        <SecondaryButton label={t("orderSuccess.backHome")} onPress={() => router.replace("/(tabs)")} />
       </StatusLayout>
     );
   }
@@ -265,10 +267,10 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
             <Ionicons name="checkmark-circle" size={44} color={colors.success} />
           </View>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: colors.text, marginBottom: 8 }}>
-            订单已确认
+            {t("orderSuccess.title")}
           </Text>
           <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
-            订单 <Text style={{ color: colors.text, fontWeight: "600" }}>#{ref}</Text> 已确认。我们将在工作日尽快处理并发货。
+            {t("orderSuccess.confirmedWithHash", { ref })}
           </Text>
         </View>
 
@@ -286,15 +288,15 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
             marginBottom: 28,
           }}
         >
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>支付金额</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("orderSuccess.amountPaid")}</Text>
           <Text style={{ fontSize: 18, color: colors.text, fontWeight: "700", fontFamily: "Inter_400Regular" }}>
             {formatRm(total)}
           </Text>
         </View>
 
         <View style={{ gap: 12 }}>
-          <PrimaryButton label="查看订单" onPress={() => router.replace(`/(tabs)/profile/orders/${order.id}`)} />
-          <SecondaryButton label="继续购物" onPress={() => router.replace("/(tabs)")} />
+          <PrimaryButton label={t("orderSuccess.viewOrder")} onPress={() => router.replace(`/(tabs)/profile/orders/${order.id}`)} />
+          <SecondaryButton label={t("orderSuccess.continueShopping")} onPress={() => router.replace("/(tabs)")} />
         </View>
       </StatusLayout>
     );
@@ -318,15 +320,15 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
             <Ionicons name="time-outline" size={40} color={colors.accent} />
           </View>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: colors.text, marginBottom: 8 }}>
-            付款已收到
+            {t("orderSuccess.paymentReceived")}
           </Text>
           <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
-            付款已成功，我们正在确认您的订单。您可以在订单详情中查看最新状态。
+            {t("orderSuccess.confirmingSlow")}
           </Text>
         </View>
         <View style={{ gap: 12 }}>
-          <PrimaryButton label="查看订单" onPress={() => router.replace(`/(tabs)/profile/orders/${orderId}`)} />
-          <SecondaryButton label="返回首页" onPress={() => router.replace("/(tabs)")} />
+          <PrimaryButton label={t("orderSuccess.viewOrder")} onPress={() => router.replace(`/(tabs)/profile/orders/${orderId}`)} />
+          <SecondaryButton label={t("orderSuccess.backHome")} onPress={() => router.replace("/(tabs)")} />
         </View>
       </StatusLayout>
     );
@@ -337,7 +339,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
       <View style={{ alignItems: "center" }}>
         <ActivityIndicator size="large" color={colors.text} />
         <Text style={{ color: colors.muted, marginTop: 16, fontSize: 14, fontFamily: "Inter_400Regular" }}>
-          正在确认订单…
+          {t("orderSuccess.confirmingOrder")}
         </Text>
       </View>
     </StatusLayout>

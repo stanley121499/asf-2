@@ -1,0 +1,22 @@
+/**
+ * Supported customer app locales and storage constants.
+ * Preference is persisted in AsyncStorage under {@link LOCALE_STORAGE_KEY}.
+ */
+
+export type Locale = "zh-CN" | "en";
+
+/** Default UI locale when nothing is stored or the stored value is invalid. */
+export const DEFAULT_LOCALE: Locale = "zh-CN";
+
+/** AsyncStorage key for the user's language preference. */
+export const LOCALE_STORAGE_KEY = "asf_locale";
+
+/** Locales the app ships message catalogs for. */
+export const SUPPORTED_LOCALES: readonly Locale[] = ["zh-CN", "en"];
+
+/**
+ * Type guard: returns true when `value` is a supported {@link Locale}.
+ */
+export function isSupportedLocale(value: string): value is Locale {
+  return value === "zh-CN" || value === "en";
+}

@@ -36,7 +36,7 @@ interface BrandContextProps {
 
 const BrandContext = createContext<BrandContextProps | undefined>(undefined);
 
-export function BrandProvider({ children }: PropsWithChildren): JSX.Element {
+export function BrandProvider({ children }: PropsWithChildren): React.ReactElement {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();

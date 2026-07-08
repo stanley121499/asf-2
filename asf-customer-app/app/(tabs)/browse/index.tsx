@@ -13,30 +13,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CategoryPill } from "@/components/CategoryPill";
 import { ProductCard } from "@/components/ProductCard";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
 import { useProductContext } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
 import { formatRm } from "@/lib/formatCurrency";
-
-const LABELS: Record<string, string> = {
-  Handbag: "手袋",
-  Streetwear: "街头服饰",
-  "Spring Collection": "春季新品",
-  Ladies: "女装",
-  Men: "男装",
-  Accessories: "配饰",
-  Shoes: "鞋履",
-  Beauty: "美妆",
-  Pants: "长裤",
-  Tops: "上衣",
-  Bottoms: "下装",
-};
-
-function labelForCategory(name: string | null): string {
-  if (name === null || name.length === 0) return "分类";
-  return LABELS[name] ?? name;
-}
 
 type SortMode = "newest" | "price_asc" | "price_desc";
 
@@ -46,6 +29,8 @@ type SortMode = "newest" | "price_asc" | "price_desc";
  */
 export default function BrowseIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
+  const { translateCategory, translateProduct } = useContentTranslation();
   const { categories, loading: catLoading } = useCategoryContext();
   const { products, loading: prodLoading } = useProductContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
@@ -71,7 +56,8 @@ export default function BrowseIndexScreen(): React.ReactElement {
         p.product_categories.some((pc) => pc.category_id === selectedCategoryId);
       if (!inCat) return false;
       if (q.length === 0) return true;
-      return (p.name ?? "").toLowerCase().includes(q);
+      const displayName = translateProduct(p.id, "name", p.name ?? null);
+      return displayName.toLowerCase().includes(q);
     });
     list = [...list];
     if (sortMode === "newest") {
@@ -82,7 +68,7 @@ export default function BrowseIndexScreen(): React.ReactElement {
       list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
     }
     return list;
-  }, [products, query, selectedCategoryId, sortMode]);
+  }, [products, query, selectedCategoryId, sortMode, translateProduct]);
 
   const loading = catLoading || prodLoading;
 
@@ -121,7 +107,7 @@ export default function BrowseIndexScreen(): React.ReactElement {
             <Ionicons name="search-outline" size={18} color={colors.muted} />
             <TextInput
               style={{ flex: 1, fontSize: 15, color: colors.text, fontFamily: "Inter_400Regular" }}
-              placeholder="搜索商品..."
+              placeholder={t("search.placeholder")}
               placeholderTextColor={colors.muted}
               value={query}
               onChangeText={setQuery}
@@ -137,9 +123,21 @@ export default function BrowseIndexScreen(): React.ReactElement {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}
         >
-          <CategoryPill label="最新" selected={sortMode === "newest"} onPress={() => setSortMode("newest")} />
-          <CategoryPill label="价格 ↑" selected={sortMode === "price_asc"} onPress={() => setSortMode("price_asc")} />
-          <CategoryPill label="价格 ↓" selected={sortMode === "price_desc"} onPress={() => setSortMode("price_desc")} />
+          <CategoryPill
+            label={t("filter.sortNewest")}
+            selected={sortMode === "newest"}
+            onPress={() => setSortMode("newest")}
+          />
+          <CategoryPill
+            label={t("filter.sortPriceAsc")}
+            selected={sortMode === "price_asc"}
+            onPress={() => setSortMode("price_asc")}
+          />
+          <CategoryPill
+            label={t("filter.sortPriceDesc")}
+            selected={sortMode === "price_desc"}
+            onPress={() => setSortMode("price_desc")}
+          />
         </ScrollView>
 
         {/* Category filter pills — no height constraint, free to show full text */}
@@ -148,15 +146,22 @@ export default function BrowseIndexScreen(): React.ReactElement {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}
         >
-          <CategoryPill label="全部" selected={selectedCategoryId === null} onPress={() => setSelectedCategoryId(null)} />
-          {sortedCategories.map((c) => (
-            <CategoryPill
-              key={c.id}
-              label={labelForCategory(c.name)}
-              selected={selectedCategoryId === c.id}
-              onPress={() => setSelectedCategoryId(c.id)}
-            />
-          ))}
+          <CategoryPill
+            label={t("catalog.all")}
+            selected={selectedCategoryId === null}
+            onPress={() => setSelectedCategoryId(null)}
+          />
+          {sortedCategories.map((c) => {
+            const label = translateCategory(c.id, c.name ?? null);
+            return (
+              <CategoryPill
+                key={c.id}
+                label={label.length > 0 ? label : t("catalog.categoryFallback")}
+                selected={selectedCategoryId === c.id}
+                onPress={() => setSelectedCategoryId(c.id)}
+              />
+            );
+          })}
         </ScrollView>
 
         {/* Divider */}
@@ -171,7 +176,7 @@ export default function BrowseIndexScreen(): React.ReactElement {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", color: colors.muted, paddingVertical: 64, fontFamily: "Inter_400Regular" }}>
-            暂无相关商品
+            {t("catalog.emptyTitle")}
           </Text>
         }
         renderItem={({ item: [left, right] }) => (

@@ -9,14 +9,17 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 
+import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
 
 /**
- * A single stage in the order lifecycle.
+ * A single stage in the order lifecycle (label resolved via i18n at render time).
  */
 interface OrderStage {
-  /** Short Chinese label shown under the node. */
-  label: string;
+  /** Translation key under `orders.timeline.*`. */
+  labelKey: "ordered" | "processing" | "inTransit" | "delivered";
+  /** Stable id for list keys (independent of translated label). */
+  id: string;
   /** Ionicons glyph representing the stage. */
   icon: keyof typeof Ionicons.glyphMap;
 }
@@ -26,14 +29,16 @@ interface OrderStage {
  * values: pending → processing → shipped → delivered.
  */
 const STAGES: readonly OrderStage[] = [
-  { label: "已下单", icon: "receipt-outline" },
-  { label: "处理中", icon: "cube-outline" },
-  { label: "运输中", icon: "car-outline" },
-  { label: "已送达", icon: "checkmark-done-outline" },
+  { id: "ordered", labelKey: "ordered", icon: "receipt-outline" },
+  { id: "processing", labelKey: "processing", icon: "cube-outline" },
+  { id: "inTransit", labelKey: "inTransit", icon: "car-outline" },
+  { id: "delivered", labelKey: "delivered", icon: "checkmark-done-outline" },
 ] as const;
 
 const NODE_SIZE = 44;
 const LINE_HEIGHT = 3;
+
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
 /**
  * Maps a raw order status string to its stage index (0-3).
@@ -60,19 +65,19 @@ function statusToStageIndex(status: string | null | undefined): number {
 /**
  * Short human description of the current stage, shown under the headline.
  */
-function describeStage(stageIndex: number, cancelled: boolean): string {
+function describeStage(stageIndex: number, cancelled: boolean, t: TranslateFn): string {
   if (cancelled) {
-    return "订单已取消";
+    return t("orders.timeline.cancelled");
   }
   switch (stageIndex) {
     case 0:
-      return "订单已提交，等待确认";
+      return t("orders.progress.submitted");
     case 1:
-      return "正在为您备货";
+      return t("orders.progress.preparing");
     case 2:
-      return "包裹正在配送途中";
+      return t("orders.progress.inTransit");
     case 3:
-      return "包裹已送达，感谢惠顾";
+      return t("orders.progress.deliveredThanks");
     default:
       return "";
   }
@@ -151,15 +156,32 @@ export interface OrderProgressTrackerProps {
 /**
  * Inner content: status headline + horizontal stepper.
  */
-function TrackerBody({ stageIndex }: Readonly<{ stageIndex: number }>): React.ReactElement {
+function TrackerBody({
+  stageIndex,
+  t,
+}: Readonly<{ stageIndex: number; t: TranslateFn }>): React.ReactElement {
+  const activeStage = STAGES[stageIndex];
+  const headline =
+    activeStage !== undefined
+      ? t(`orders.timeline.${activeStage.labelKey}`)
+      : t("orders.timeline.ordered");
+
   return (
     <View>
       {/* Headline */}
       <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: colors.text }}>
-        {STAGES[stageIndex].label}
+        {headline}
       </Text>
-      <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
-        {describeStage(stageIndex, false)}
+      <Text
+        style={{
+          fontSize: 13,
+          color: colors.muted,
+          marginTop: 4,
+          marginBottom: 24,
+          fontFamily: "Inter_400Regular",
+        }}
+      >
+        {describeStage(stageIndex, false, t)}
       </Text>
 
       {/* Stepper */}
@@ -169,15 +191,23 @@ function TrackerBody({ stageIndex }: Readonly<{ stageIndex: number }>): React.Re
           const current = idx === stageIndex;
           const leftFilled = idx <= stageIndex && idx > 0;
           const rightFilled = idx < stageIndex;
+          const label = t(`orders.timeline.${stage.labelKey}`);
 
           const nodeBg = completed ? colors.text : current ? colors.accent : colors.panel;
           const iconColor = completed || current ? "#FFFFFF" : colors.muted;
           const labelColor = current || completed ? colors.text : colors.muted;
 
           return (
-            <View key={stage.label} style={{ flex: 1, alignItems: "center" }}>
+            <View key={stage.id} style={{ flex: 1, alignItems: "center" }}>
               {/* Node row with connectors */}
-              <View style={{ width: "100%", height: NODE_SIZE, alignItems: "center", justifyContent: "center" }}>
+              <View
+                style={{
+                  width: "100%",
+                  height: NODE_SIZE,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 {idx > 0 ? <Connector filled={leftFilled} side="left" /> : null}
                 {idx < STAGES.length - 1 ? <Connector filled={rightFilled} side="right" /> : null}
 
@@ -214,7 +244,7 @@ function TrackerBody({ stageIndex }: Readonly<{ stageIndex: number }>): React.Re
                   textAlign: "center",
                 }}
               >
-                {stage.label}
+                {label}
               </Text>
             </View>
           );
@@ -227,7 +257,7 @@ function TrackerBody({ stageIndex }: Readonly<{ stageIndex: number }>): React.Re
 /**
  * Inner content for a cancelled order.
  */
-function CancelledBody(): React.ReactElement {
+function CancelledBody({ t }: Readonly<{ t: TranslateFn }>): React.ReactElement {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
       <View
@@ -244,10 +274,12 @@ function CancelledBody(): React.ReactElement {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
-          订单已取消
+          {t("orders.timeline.cancelled")}
         </Text>
-        <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}>
-          如有疑问，请联系客服
+        <Text
+          style={{ fontSize: 13, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}
+        >
+          {t("orders.progress.cancelledHelp")}
         </Text>
       </View>
     </View>
@@ -264,9 +296,14 @@ export function OrderProgressTracker({
   status,
   embedded = false,
 }: Readonly<OrderProgressTrackerProps>): React.ReactElement {
+  const { t } = useTranslation();
   const stageIndex = statusToStageIndex(status);
   const cancelled = stageIndex === -1;
-  const body = cancelled ? <CancelledBody /> : <TrackerBody stageIndex={stageIndex} />;
+  const body = cancelled ? (
+    <CancelledBody t={t} />
+  ) : (
+    <TrackerBody stageIndex={stageIndex} t={t} />
+  );
 
   if (embedded) {
     return body;
@@ -293,6 +330,7 @@ export function OrderProgressTracker({
 export function OrderProgressDots({
   status,
 }: Readonly<OrderProgressTrackerProps>): React.ReactElement {
+  const { t } = useTranslation();
   const stageIndex = statusToStageIndex(status);
   const cancelled = stageIndex === -1;
 
@@ -300,7 +338,9 @@ export function OrderProgressDots({
     return (
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Ionicons name="close-circle" size={14} color={colors.danger} />
-        <Text style={{ fontSize: 12, color: colors.danger, fontFamily: "Inter_400Regular" }}>已取消</Text>
+        <Text style={{ fontSize: 12, color: colors.danger, fontFamily: "Inter_400Regular" }}>
+          {t("orders.status.cancelled")}
+        </Text>
       </View>
     );
   }
@@ -311,7 +351,7 @@ export function OrderProgressDots({
         const reached = idx <= stageIndex;
         return (
           <View
-            key={stage.label}
+            key={stage.id}
             style={{
               width: idx === stageIndex ? 18 : 6,
               height: 6,

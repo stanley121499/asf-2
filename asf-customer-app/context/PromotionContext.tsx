@@ -69,7 +69,7 @@ const PromotionContext = createContext<PromotionContextValue | undefined>(
  */
 export function PromotionProvider({
   children,
-}: Readonly<PropsWithChildren>): JSX.Element {
+}: Readonly<PropsWithChildren>): React.ReactElement {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
 

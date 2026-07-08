@@ -10,7 +10,9 @@ import React, {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import { Tables, TablesInsert, TablesUpdate } from "@/database.types";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { useAlertContext } from "./AlertContext";
+import { useTranslation } from "./LocaleContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 /**
@@ -69,15 +71,30 @@ interface ConversationContextProps {
 
 const ConversationContext = createContext<ConversationContextProps | null>(null);
 
-export function ConversationProvider({ children }: PropsWithChildren) {
+export function ConversationProvider({ children }: PropsWithChildren): React.ReactElement {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showAlert } = useAlertContext();
+  const { t } = useTranslation();
 
   const showAlertRef = useRef<typeof showAlert | null>(null);
+  const tRef = useRef(t);
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
+  /**
+   * Translates known English alert strings before showing a customer toast.
+   */
+  const showTranslatedAlert = useCallback(
+    (raw: string, type: "info" | "success" | "warning" | "error"): void => {
+      showAlertRef.current?.(tRef.current(getErrorTranslationKey(raw)), type);
+    },
+    [],
+  );
 
   const conversationsRef = useRef<Conversation[]>([]);
   useEffect(() => {
@@ -96,7 +113,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
         .select("*, conversation_participants(*)");
 
       if (error) {
-        showAlertRef.current?.(error.message, "error");
+        showTranslatedAlert(error.message, "error");
         return;
       }
 
@@ -120,7 +137,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Realtime: conversations
@@ -324,12 +341,12 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Update a conversation by id.
@@ -338,7 +355,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ConversationUpdate
   ): Promise<Conversation | undefined> => {
     if (!isNonEmptyString(payload.id)) {
-      showAlertRef.current?.("Missing conversation id for update.", "error");
+      showTranslatedAlert("Missing conversation id for update.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -348,19 +365,19 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     const row = data as ConversationRow;
     return { ...row, messages: [], participants: [] };
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Delete a conversation by id.
    */
   const deleteConversation = useCallback(async (conversationId: string): Promise<void> => {
     if (!isNonEmptyString(conversationId)) {
-      showAlertRef.current?.("Invalid conversation id.", "error");
+      showTranslatedAlert("Invalid conversation id.", "error");
       return;
     }
     const { error } = await supabase
@@ -368,9 +385,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", conversationId);
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   // Message CRUD
   /**
@@ -385,7 +402,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     const created = data as ChatMessageRow;
@@ -401,7 +418,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       );
     }
     return created;
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Update chat message by id.
@@ -411,7 +428,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ChatMessageUpdate
   ): Promise<ChatMessageRow | undefined> => {
     if (!isNonEmptyString(id)) {
-      showAlertRef.current?.("Invalid message id.", "error");
+      showTranslatedAlert("Invalid message id.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -421,18 +438,18 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     return data as ChatMessageRow;
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Delete chat message by id.
    */
   const deleteMessage = useCallback(async (messageId: string): Promise<void> => {
     if (!isNonEmptyString(messageId)) {
-      showAlertRef.current?.("Invalid message id.", "error");
+      showTranslatedAlert("Invalid message id.", "error");
       return;
     }
     const { error } = await supabase
@@ -440,9 +457,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", messageId);
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * List messages for a given conversation, using cached state when available.
@@ -464,7 +481,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .order("created_at", { ascending: true });
 
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return [];
     }
 
@@ -480,7 +497,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     );
 
     return fetchedMessages;
-  }, []);
+  }, [showTranslatedAlert]);
 
   // Participant CRUD
   /**
@@ -495,11 +512,11 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     return data as ConversationParticipantRow;
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Update participant by id.
@@ -509,7 +526,7 @@ export function ConversationProvider({ children }: PropsWithChildren) {
     payload: ConversationParticipantUpdate
   ): Promise<ConversationParticipantRow | undefined> => {
     if (!isNonEmptyString(id)) {
-      showAlertRef.current?.("Invalid participant id.", "error");
+      showTranslatedAlert("Invalid participant id.", "error");
       return undefined;
     }
     const { data, error } = await supabase
@@ -519,18 +536,18 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .select("*")
       .single();
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
       return undefined;
     }
     return data as ConversationParticipantRow;
-  }, []);
+  }, [showTranslatedAlert]);
 
   /**
    * Remove participant by id.
    */
   const removeParticipant = useCallback(async (participantId: string): Promise<void> => {
     if (!isNonEmptyString(participantId)) {
-      showAlertRef.current?.("Invalid participant id.", "error");
+      showTranslatedAlert("Invalid participant id.", "error");
       return;
     }
     const { error } = await supabase
@@ -538,9 +555,9 @@ export function ConversationProvider({ children }: PropsWithChildren) {
       .delete()
       .eq("id", participantId);
     if (error) {
-      showAlertRef.current?.(error.message, "error");
+      showTranslatedAlert(error.message, "error");
     }
-  }, []);
+  }, [showTranslatedAlert]);
 
   // Memoize context value so consumers only re-render when relevant data actually changes.
   const value = useMemo<ConversationContextProps>(

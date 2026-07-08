@@ -8,8 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { OrderProgressDots } from "@/components/OrderProgressTracker";
 import { useAuthContext } from "@/context/AuthContext";
+import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useOrderContext } from "@/context/product/OrderContext";
 import type { Database } from "@/database.types";
+import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
@@ -24,31 +26,34 @@ interface OrderPreview {
   count: number;
 }
 
-/** Visual treatment for an order status chip. */
+/** Visual treatment for an order status chip (label comes from i18n). */
 interface StatusMeta {
-  label: string;
+  labelKey: string;
   bg: string;
   fg: string;
 }
 
 /**
- * Maps a raw order status to a Chinese label and on-brand chip colours.
+ * Maps a raw order status to an `orders.status.*` key and on-brand chip colours.
  */
 function statusMeta(status: string | null | undefined): StatusMeta {
   const s = (status ?? "").trim().toLowerCase();
   if (s.includes("cancel")) {
-    return { label: "已取消", bg: "#FCEDEC", fg: colors.danger };
+    return { labelKey: "orders.status.cancelled", bg: "#FCEDEC", fg: colors.danger };
   }
   if (s.includes("deliver") || s.includes("complete")) {
-    return { label: "已送达", bg: "rgba(34,197,94,0.12)", fg: colors.success };
+    return { labelKey: "orders.status.delivered", bg: "rgba(34,197,94,0.12)", fg: colors.success };
   }
   if (s.includes("ship") || s.includes("transit")) {
-    return { label: "运输中", bg: "rgba(201,169,110,0.16)", fg: "#9A7B3F" };
+    return { labelKey: "orders.status.shipped", bg: "rgba(201,169,110,0.16)", fg: "#9A7B3F" };
+  }
+  if (s.includes("pickup")) {
+    return { labelKey: "orders.status.awaitingPickup", bg: "rgba(201,169,110,0.16)", fg: "#9A7B3F" };
   }
   if (s.includes("process") || s.includes("paid")) {
-    return { label: "处理中", bg: "rgba(201,169,110,0.16)", fg: "#9A7B3F" };
+    return { labelKey: "orders.status.processing", bg: "rgba(201,169,110,0.16)", fg: "#9A7B3F" };
   }
-  return { label: "待确认", bg: colors.panel, fg: colors.muted };
+  return { labelKey: "orders.status.pending", bg: colors.panel, fg: colors.muted };
 }
 
 type OrderMediaRow = {
@@ -65,6 +70,7 @@ type OrderMediaRow = {
  */
 export default function OrdersListScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthContext();
   const { orders, loading, refreshOrders } = useOrderContext();
 
@@ -139,9 +145,11 @@ export default function OrdersListScreen(): React.ReactElement {
   if (user === null) {
     return (
       <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.panel }}>
-        <SubPageHeader title="我的订单" />
+        <SubPageHeader title={t("orders.myOrders")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>登录后可查看订单。</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("orders.signInToView")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -150,7 +158,7 @@ export default function OrdersListScreen(): React.ReactElement {
   if (loading) {
     return (
       <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.panel }}>
-        <SubPageHeader title="我的订单" />
+        <SubPageHeader title={t("orders.myOrders")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
@@ -160,18 +168,24 @@ export default function OrdersListScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.panel }}>
-      <SubPageHeader title="我的订单" />
+      <SubPageHeader title={t("orders.myOrders")} />
 
       {mine.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
           <Ionicons name="bag-outline" size={48} color={colors.border} style={{ marginBottom: 16 }} />
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>暂无订单</Text>
-          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, textAlign: "center" }}>下单后可在此查看订单详情</Text>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
+            {t("orders.emptyTitle")}
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, textAlign: "center" }}>
+            {t("orders.emptyBody")}
+          </Text>
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/browse")}
             style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>去购物</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>
+              {t("orders.shopCta")}
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -208,8 +222,13 @@ function OrderCard({
   preview: OrderPreview | undefined;
   onPress: () => void;
 }>): React.ReactElement {
+  const { t } = useTranslation();
+  const { locale } = useLocale();
   const shortId = order.id.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const date = typeof order.created_at === "string" ? order.created_at.slice(0, 10) : "—";
+  const date =
+    typeof order.created_at === "string" && order.created_at.length > 0
+      ? formatDate(locale, order.created_at)
+      : "—";
   const total = typeof order.total_amount === "number" ? order.total_amount : null;
   const status = typeof order.status === "string" ? order.status : null;
   const meta = statusMeta(status);
@@ -218,14 +237,14 @@ function OrderCard({
   const names = preview?.names ?? [];
   const count = preview?.count ?? 0;
 
-  const summary =
-    names.length === 0
-      ? count > 0
-        ? `${count} 件商品`
-        : "待付款确认"
-      : names.length === 1
-        ? names[0]
-        : `${names[0]} 等 ${count} 件商品`;
+  let summary: string;
+  if (names.length === 0) {
+    summary = count > 0 ? t("orders.itemCount", { count }) : t("orders.awaitingConfirm");
+  } else if (names.length === 1) {
+    summary = names[0] ?? t("orders.productFallback");
+  } else {
+    summary = t("orders.summaryAndMore", { name: names[0] ?? "", count });
+  }
 
   return (
     <TouchableOpacity
@@ -252,11 +271,15 @@ function OrderCard({
           </Text>
         </View>
         <View style={{ backgroundColor: meta.bg, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5 }}>
-          <Text style={{ fontSize: 12, color: meta.fg, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{meta.label}</Text>
+          <Text style={{ fontSize: 12, color: meta.fg, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+            {t(meta.labelKey)}
+          </Text>
         </View>
       </View>
 
-      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4, marginLeft: 22, fontFamily: "Inter_400Regular" }}>{date}</Text>
+      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4, marginLeft: 22, fontFamily: "Inter_400Regular" }}>
+        {date}
+      </Text>
 
       {/* Product preview: thumbnails + summary */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 }}>
@@ -315,7 +338,9 @@ function OrderCard({
       <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
         <OrderProgressDots status={status} />
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 11, letterSpacing: 1, color: colors.muted, fontFamily: "Inter_400Regular" }}>合计</Text>
+          <Text style={{ fontSize: 11, letterSpacing: 1, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("orders.total")}
+          </Text>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginTop: 2 }}>
             {formatRm(total)}
           </Text>

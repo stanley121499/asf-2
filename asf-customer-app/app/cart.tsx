@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -14,9 +13,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { usePromotionContext } from "@/context/PromotionContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
+import { getPromoErrorTranslationKey } from "@/i18n/errorMap";
 import { formatRm } from "@/lib/formatCurrency";
 import { colors } from "@/constants/theme";
 
@@ -33,6 +35,8 @@ const SHIPPING_ESTIMATE_MYR = 10;
  */
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
+  const { translateProduct } = useContentTranslation();
   const { user } = useAuthContext();
   const { products } = useProductContext();
   const { add_to_carts, loading, updateAddToCart, deleteAddToCart } = useAddToCartContext();
@@ -80,12 +84,12 @@ export default function CartScreen(): React.ReactElement {
     setPromoError(null);
     const code = promoInput.trim();
     if (code.length === 0) {
-      setPromoError("请输入优惠码。");
+      setPromoError(t("cart.promoErrors.required"));
       return;
     }
     const cartLines = rows.map((r) => ({ product_id: r.product_id, amount: r.amount }));
     if (cartLines.length === 0) {
-      setPromoError("购物车为空。");
+      setPromoError(t("cart.promoErrors.cartEmpty"));
       return;
     }
     setPromoLoading(true);
@@ -93,7 +97,7 @@ export default function CartScreen(): React.ReactElement {
       const result = await validatePromoCode(code, cartLines);
       if (result.valid === false) {
         setAppliedPromo(null);
-        setPromoError(result.reason);
+        setPromoError(t(getPromoErrorTranslationKey(result.reason)));
         return;
       }
       setAppliedPromo({
@@ -133,26 +137,26 @@ export default function CartScreen(): React.ReactElement {
           <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.headerBack}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>购物车</Text>
+          <Text style={styles.headerTitle}>{t("cart.title")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
-            登录以查看购物车
+            {t("cart.signInTitle")}
           </Text>
           <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 24 }}>
-            您需要登录后才能查看或添加商品到购物车
+            {t("cart.signInBody")}
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/(auth)/sign-in")}
             style={{ width: "100%", height: 56, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center", marginBottom: 12 }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>登录 / 注册</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("cart.signInCta")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/")}
             style={{ width: "100%", height: 52, borderWidth: 1, borderColor: colors.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>回到首页</Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("cart.backToHome")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -166,7 +170,7 @@ export default function CartScreen(): React.ReactElement {
         <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.headerBack}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>购物车</Text>
+        <Text style={styles.headerTitle}>{t("cart.title")}</Text>
       </View>
 
       <ScrollView
@@ -178,14 +182,14 @@ export default function CartScreen(): React.ReactElement {
           /* Empty cart */
           <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 80 }}>
             <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
-              您的购物车为空
+              {t("cart.emptyTitle")}
             </Text>
-            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>快去挑选您喜欢的商品吧</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>{t("cart.emptyBody")}</Text>
             <TouchableOpacity
               onPress={() => router.push("/(tabs)/browse")}
               style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>去购物</Text>
+              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>{t("cart.goShopping")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -196,6 +200,15 @@ export default function CartScreen(): React.ReactElement {
                 const thumb = product.medias[0]?.media_url ?? "";
                 const price = typeof product.price === "number" ? product.price : 0;
                 const isLast = index === linesWithProduct.length - 1;
+                const translatedName = translateProduct(
+                  product.id,
+                  "name",
+                  product.name ?? null,
+                );
+                const lineName =
+                  translatedName.length > 0
+                    ? translatedName
+                    : t("cart.productFallback");
                 return (
                   <View
                     key={row.id}
@@ -203,10 +216,9 @@ export default function CartScreen(): React.ReactElement {
                       flexDirection: "row",
                       gap: 16,
                       paddingBottom: 24,
-                      marginBottom: isLast ? 0 : 0,
+                      marginBottom: isLast ? 0 : 24,
                       borderBottomWidth: isLast ? 0 : 1,
                       borderBottomColor: colors.border,
-                      marginBottom2: 24,
                     }}
                   >
                     {/* Thumbnail — 100×100, rounded-lg */}
@@ -227,7 +239,7 @@ export default function CartScreen(): React.ReactElement {
                           style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}
                           numberOfLines={1}
                         >
-                          {product.name ?? "Product"}
+                          {lineName}
                         </Text>
                         <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4, fontFamily: "Inter_400Regular" }}>
                           {/* Variant placeholder */}
@@ -283,7 +295,7 @@ export default function CartScreen(): React.ReactElement {
 
             {/* Promo code */}
             <View style={{ marginTop: 24 }}>
-              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>优惠码</Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>{t("cart.promoLabel")}</Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <TextInput
                   style={{
@@ -301,7 +313,7 @@ export default function CartScreen(): React.ReactElement {
                   value={promoInput}
                   onChangeText={(v) => { setPromoInput(v); setPromoError(null); }}
                   autoCapitalize="characters"
-                  placeholder="输入代码"
+                  placeholder={t("cart.promoPlaceholder")}
                   placeholderTextColor={colors.muted}
                 />
                 <TouchableOpacity
@@ -320,7 +332,7 @@ export default function CartScreen(): React.ReactElement {
                   {promoLoading ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
-                    <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>应用</Text>
+                    <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>{t("cart.apply")}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -330,10 +342,10 @@ export default function CartScreen(): React.ReactElement {
               {appliedPromo !== null && (
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
                   <Text style={{ fontSize: 13, color: "#15803D", fontFamily: "Inter_400Regular" }}>
-                    已应用: {appliedPromo.code}
+                    {t("cart.appliedPrefix", { code: appliedPromo.code })}
                   </Text>
                   <TouchableOpacity onPress={() => setAppliedPromo(null)}>
-                    <Text style={{ fontSize: 12, color: colors.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>移除</Text>
+                    <Text style={{ fontSize: 12, color: colors.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>{t("cart.remove")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -342,28 +354,28 @@ export default function CartScreen(): React.ReactElement {
             {/* Order summary */}
             <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 24 }}>
               <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 16 }}>
-                订单摘要
+                {t("cart.orderSummary")}
               </Text>
               <View style={{ gap: 12 }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>小计</Text>
+                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.subtotal")}</Text>
                   <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(subtotal)}</Text>
                 </View>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>运费（预估）</Text>
+                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.shippingEstimate")}</Text>
                   <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(SHIPPING_ESTIMATE_MYR)}</Text>
                 </View>
                 <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: -4 }}>
-                  最终运费将在结账填写地址后按配送方式计算
+                  {t("cart.shippingEstimateNote")}
                 </Text>
                 {discount > 0 && (
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>优惠</Text>
+                    <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.discount")}</Text>
                     <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(discount)}</Text>
                   </View>
                 )}
                 <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, fontFamily: "Inter_400Regular" }}>总计</Text>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, fontFamily: "Inter_400Regular" }}>{t("cart.total")}</Text>
                   <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(total)}</Text>
                 </View>
               </View>
@@ -382,11 +394,11 @@ export default function CartScreen(): React.ReactElement {
                 }}
               >
                 <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-                  前往结账
+                  {t("cart.goToCheckout")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push("/(tabs)/browse")} style={{ alignItems: "center", paddingVertical: 8 }}>
-                <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>继续购物</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.continueShoppingLink")}</Text>
               </TouchableOpacity>
             </View>
           </>

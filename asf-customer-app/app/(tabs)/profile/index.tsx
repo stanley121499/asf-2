@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -11,8 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { colors } from "@/constants/theme";
+import type { Locale } from "@/i18n/types";
 
 function isNonEmpty(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
@@ -56,20 +60,69 @@ function MenuRow({ icon, label, onPress, borderBottom = true, badge }: MenuRowPr
 }
 
 /**
- * Profile hub (我的) — matches web settings/page.tsx:
- *   - Sticky 56px "个人中心" header
- *   - Profile card: avatar circle + name + email + points pill
- *   - Menu list: 订单, 收藏, 奖励, 账户设置 (accordion), 联系客服
- *   - "退出登录" muted text at bottom
+ * Language option row inside the selector modal.
+ * Both Simplified Chinese and English are selectable (no "coming soon").
+ */
+interface LanguageOptionProps {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  borderBottom?: boolean;
+}
+function LanguageOption({
+  label,
+  selected,
+  onPress,
+  borderBottom = true,
+}: LanguageOptionProps): React.ReactElement {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: borderBottom ? 1 : 0,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <Text
+        style={{
+          flex: 1,
+          fontSize: 15,
+          fontWeight: selected ? "600" : "400",
+          color: colors.text,
+          fontFamily: "Inter_400Regular",
+        }}
+      >
+        {label}
+      </Text>
+      {selected ? (
+        <Ionicons name="checkmark-circle" size={22} color={colors.accent} />
+      ) : (
+        <Ionicons name="ellipse-outline" size={22} color={colors.border} />
+      )}
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * Profile hub — sticky header, guest CTA / signed-in menu, and language picker.
+ * Language row is available for guest and logged-in users; locale persists via setLocale.
  */
 export default function ProfileIndexScreen(): React.ReactElement {
   const router = useRouter();
   const { user, user_detail, signOut, loading } = useAuthContext();
   const pointsAPI = usePointsMembership();
+  const { t, locale, setLocale } = useTranslation();
 
   const [userPoints, setUserPoints] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   useEffect(() => {
     if (isNonEmpty(user_detail?.first_name)) setFirstName(String(user_detail?.first_name));
@@ -84,12 +137,119 @@ export default function ProfileIndexScreen(): React.ReactElement {
 
   const displayName = useMemo(() => {
     const joined = `${firstName} ${lastName}`.trim();
-    return joined.length > 0 ? joined : (user?.email ?? "用户");
-  }, [firstName, lastName, user?.email]);
+    return joined.length > 0 ? joined : (user?.email ?? t("settings.userFallback"));
+  }, [firstName, lastName, user?.email, t]);
+
+  const currentLanguageLabel =
+    locale === "en" ? t("settings.languageEn") : t("settings.languageZh");
+
+  /**
+   * Persists the chosen locale and closes the language modal.
+   */
+  const handleSelectLocale = (nextLocale: Locale): void => {
+    setLocale(nextLocale);
+    setLanguageModalVisible(false);
+  };
 
   const handleLogout = async (): Promise<void> => {
     await signOut();
   };
+
+  /**
+   * Shared language-selector modal used by guest and signed-in profile views.
+   */
+  const languageModal = (
+    <Modal
+      visible={languageModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setLanguageModalVisible(false)}
+    >
+      <Pressable
+        onPress={() => setLanguageModalVisible(false)}
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.4)",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <Pressable
+          onPress={(event) => event.stopPropagation()}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: 20,
+            overflow: "hidden",
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <View
+            style={{
+              paddingHorizontal: 20,
+              paddingTop: 20,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "PlayfairDisplay_400Regular",
+                fontSize: 18,
+                color: colors.text,
+                marginBottom: 4,
+              }}
+            >
+              {t("settings.selectLanguage")}
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              {t("settings.preferences")}
+            </Text>
+          </View>
+
+          <LanguageOption
+            label={t("settings.languageZh")}
+            selected={locale === "zh-CN"}
+            onPress={() => handleSelectLocale("zh-CN")}
+          />
+          <LanguageOption
+            label={t("settings.languageEn")}
+            selected={locale === "en"}
+            onPress={() => handleSelectLocale("en")}
+            borderBottom={false}
+          />
+
+          <TouchableOpacity
+            onPress={() => setLanguageModalVisible(false)}
+            style={{
+              alignItems: "center",
+              paddingVertical: 16,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              {t("common.close")}
+            </Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
+  /**
+   * Language menu row shown for both guest and logged-in users.
+   */
+  const languageMenuRow = (
+    <MenuRow
+      icon="language-outline"
+      label={t("settings.language")}
+      badge={currentLanguageLabel}
+      onPress={() => setLanguageModalVisible(true)}
+      borderBottom={false}
+    />
+  );
 
   if (loading) {
     return (
@@ -99,31 +259,60 @@ export default function ProfileIndexScreen(): React.ReactElement {
     );
   }
 
-  /** Not signed in */
+  /** Not signed in — guest CTA + language picker */
   if (user === null) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-        {/* Header */}
         <View style={{ height: 56, alignItems: "center", justifyContent: "center", borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: "#FFFFFF" }}>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>个人中心</Text>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
+            {t("settings.title")}
+          </Text>
         </View>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Ionicons name="person-circle-outline" size={96} color={colors.border} style={{ marginBottom: 24 }} />
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>登录以查看个人资料</Text>
-          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 32 }}>管理账户、查看订单并享受会员特权</Text>
-          <TouchableOpacity
-            onPress={() => router.push("/(auth)/sign-in")}
-            style={{ width: "100%", maxWidth: 320, height: 52, backgroundColor: "#000000", borderRadius: 12, alignItems: "center", justifyContent: "center", marginBottom: 12 }}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 48, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 24 }}>
+            <Ionicons name="person-circle-outline" size={96} color={colors.border} style={{ marginBottom: 24 }} />
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8, textAlign: "center" }}>
+              {t("settings.guestSignInTitle")}
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 32 }}>
+              {t("settings.guestSignInBody")}
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/sign-in")}
+              style={{ width: "100%", maxWidth: 320, height: 52, backgroundColor: "#000000", borderRadius: 12, alignItems: "center", justifyContent: "center", marginBottom: 12 }}
+            >
+              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>
+                {t("settings.guestSignInCta")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/")}
+              style={{ width: "100%", maxWidth: 320, height: 52, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center" }}
+            >
+              <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                {t("settings.guestBrowse")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: 20,
+              overflow: "hidden",
+              marginTop: 8,
+            }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>登录 / 注册</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/(tabs)/")}
-            style={{ width: "100%", maxWidth: 320, height: 52, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center" }}
-          >
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>先逛逛，暂不登录</Text>
-          </TouchableOpacity>
-        </View>
+            {languageMenuRow}
+          </View>
+        </ScrollView>
+        {languageModal}
       </SafeAreaView>
     );
   }
@@ -143,11 +332,13 @@ export default function ProfileIndexScreen(): React.ReactElement {
           backgroundColor: "#FFFFFF",
         }}
       >
-        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>个人中心</Text>
+        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
+          {t("settings.title")}
+        </Text>
         <TouchableOpacity
           onPress={() => router.push("/(tabs)/profile/account")}
           hitSlop={8}
-          accessibilityLabel="编辑账户信息"
+          accessibilityLabel={t("settings.editAccountAria")}
           style={{
             position: "absolute",
             right: 8,
@@ -215,12 +406,34 @@ export default function ProfileIndexScreen(): React.ReactElement {
           >
             <Ionicons name="star-outline" size={14} color={colors.accent} />
             <Text style={{ fontSize: 13, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>
-              积分: {userPoints.toLocaleString()}
+              {t("settings.pointsLabel", { count: userPoints.toLocaleString() })}
             </Text>
           </View>
         </View>
 
         {/* ── Menu list ── */}
+        <View
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 20,
+            overflow: "hidden",
+            marginBottom: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 2,
+          }}
+        >
+          <MenuRow icon="bag-outline" label={t("settings.menuOrders")} onPress={() => router.push("/(tabs)/profile/orders")} />
+          <MenuRow icon="heart-outline" label={t("settings.menuWishlist")} onPress={() => router.push("/wishlist")} />
+          <MenuRow icon="star-outline" label={t("settings.menuRewards")} onPress={() => router.push("/(tabs)/profile/rewards")} />
+          <MenuRow icon="chatbubble-ellipses-outline" label={t("settings.menuSupport")} onPress={() => router.push("/(tabs)/profile/support")} borderBottom={false} />
+        </View>
+
+        {/* ── Preferences / language ── */}
         <View
           style={{
             backgroundColor: "#FFFFFF",
@@ -236,18 +449,17 @@ export default function ProfileIndexScreen(): React.ReactElement {
             elevation: 2,
           }}
         >
-          <MenuRow icon="bag-outline" label="我的订单" onPress={() => router.push("/(tabs)/profile/orders")} />
-          <MenuRow icon="heart-outline" label="我的收藏" onPress={() => router.push("/wishlist")} />
-          <MenuRow icon="star-outline" label="我的奖励" onPress={() => router.push("/(tabs)/profile/rewards")} />
-          <MenuRow icon="person-outline" label="账户设置" onPress={() => router.push("/(tabs)/profile/account")} />
-          <MenuRow icon="chatbubble-ellipses-outline" label="联系客服" onPress={() => router.push("/(tabs)/profile/support")} borderBottom={false} />
+          {languageMenuRow}
         </View>
 
         {/* Sign out */}
         <TouchableOpacity onPress={() => void handleLogout()} style={{ alignItems: "center", paddingVertical: 8 }}>
-          <Text style={{ fontSize: 14, fontWeight: "500", color: colors.muted, letterSpacing: 0.5, fontFamily: "Inter_400Regular" }}>退出登录</Text>
+          <Text style={{ fontSize: 14, fontWeight: "500", color: colors.muted, letterSpacing: 0.5, fontFamily: "Inter_400Regular" }}>
+            {t("settings.logout")}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
+      {languageModal}
     </SafeAreaView>
   );
 }

@@ -49,7 +49,7 @@ function isNotificationRow(value: unknown): value is NotificationRow {
  * Provides the current user's notification list, unread count, realtime INSERT
  * updates, and optimistic mark-as-read operations with rollback on failure.
  */
-export function NotificationProvider({ children }: PropsWithChildren): JSX.Element {
+export function NotificationProvider({ children }: PropsWithChildren): React.ReactElement {
   const { user } = useAuthContext();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(false);

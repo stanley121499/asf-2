@@ -13,6 +13,8 @@ import {
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/context/LocaleContext";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
 
@@ -85,11 +87,12 @@ function Field({
 }
 
 /**
- * 账户设置 — dedicated page to edit the customer's name and phone number.
+ * Account settings — edit the customer's name and phone number.
  * Reached from the edit icon in the top-right of the profile header.
  */
 export default function AccountSettingsScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, user_detail } = useAuthContext();
 
   const [firstName, setFirstName] = useState("");
@@ -119,11 +122,11 @@ export default function AccountSettingsScreen(): React.ReactElement {
   const handleSave = async (): Promise<void> => {
     setError(null);
     if (user === null) {
-      setError("请先登录。");
+      setError(t("settings.loginRequired"));
       return;
     }
     if (!isNonEmpty(firstName) || !isNonEmpty(lastName)) {
-      setError("请填写名和姓。");
+      setError(t("settings.nameRequired"));
       return;
     }
 
@@ -138,7 +141,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
         .update({ first_name: trimmedFirst, last_name: trimmedLast })
         .eq("id", user.id);
       if (detailError !== null) {
-        setError(detailError.message);
+        setError(t(getErrorTranslationKey(detailError.message)));
         return;
       }
 
@@ -151,7 +154,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
         },
       });
       if (authError !== null) {
-        setError(authError.message);
+        setError(t(getErrorTranslationKey(authError.message)));
         return;
       }
 
@@ -164,10 +167,10 @@ export default function AccountSettingsScreen(): React.ReactElement {
   if (user === null) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <SubPageHeader title="账户设置" />
+        <SubPageHeader title={t("settings.menuAccount")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
           <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-            登录后可编辑账户信息。
+            {t("settings.loginToEdit")}
           </Text>
         </View>
       </View>
@@ -176,7 +179,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <SubPageHeader title="账户设置" />
+      <SubPageHeader title={t("settings.menuAccount")} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -197,33 +200,33 @@ export default function AccountSettingsScreen(): React.ReactElement {
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Field
-                label="名"
+                label={t("settings.firstName")}
                 value={firstName}
                 onChangeText={setFirstName}
                 editable={!saving}
                 autoCapitalize="words"
-                placeholder="名"
+                placeholder={t("settings.firstName")}
               />
             </View>
             <View style={{ flex: 1 }}>
               <Field
-                label="姓"
+                label={t("settings.lastName")}
                 value={lastName}
                 onChangeText={setLastName}
                 editable={!saving}
                 autoCapitalize="words"
-                placeholder="姓"
+                placeholder={t("settings.lastName")}
               />
             </View>
           </View>
 
           <Field
-            label="联系电话"
+            label={t("settings.phone")}
             value={phone}
             onChangeText={setPhone}
             editable={!saving}
             keyboardType="phone-pad"
-            placeholder="010-0000000"
+            placeholder={t("settings.phonePlaceholder")}
           />
         </ScrollView>
 
@@ -255,7 +258,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-                保存更改
+                {t("settings.saveChanges")}
               </Text>
             )}
           </TouchableOpacity>

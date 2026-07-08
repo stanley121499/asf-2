@@ -18,6 +18,7 @@ import { NavigationSync } from "@/components/NavigationSync";
 import { AppProviders } from "@/components/Providers";
 import { SplashIntro } from "@/components/SplashIntro";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
 import { preventNativeSplashAutoHide } from "@/lib/splashScreen";
 import * as SplashScreen from "expo-splash-screen";
@@ -30,6 +31,7 @@ preventNativeSplashAutoHide();
  */
 function AppShell(): ReactElement {
   const { isEnabled } = useFeatureFlags();
+  const { t } = useTranslation();
   const [introComplete, setIntroComplete] = useState(false);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ function AppShell(): ReactElement {
               textAlign: "center",
             }}
           >
-            系统维护中
+            {t("common.maintenanceTitle")}
           </Text>
           <Text
             style={{
@@ -71,7 +73,7 @@ function AppShell(): ReactElement {
               textAlign: "center",
             }}
           >
-            我们正在进行维护，请稍后再试。
+            {t("common.maintenanceBody")}
           </Text>
         </View>
       </SafeAreaProvider>

@@ -13,7 +13,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useTranslation } from "@/context/LocaleContext";
 import type { Product } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
@@ -42,7 +44,11 @@ function WishlistCard({
   onOpen: () => void;
   onRemove: () => void;
 }>): React.ReactElement {
+  const { t } = useTranslation();
+  const { translateProduct } = useContentTranslation();
   const thumb = productThumb(product);
+  const translatedName = translateProduct(product.id, "name", product.name ?? null);
+  const displayName = translatedName.length > 0 ? translatedName : t("common.product");
 
   return (
     <Pressable style={{ width: "48%" }} onPress={onOpen}>
@@ -75,7 +81,7 @@ function WishlistCard({
         }}
         numberOfLines={1}
       >
-        {product.name ?? ""}
+        {displayName}
       </Text>
       <View
         style={{
@@ -103,13 +109,14 @@ function WishlistCard({
 }
 
 /**
- * Wishlist screen — push route accessible from the profile page ("我的收藏").
+ * Wishlist screen — push route accessible from the profile page.
  *
  * Not a bottom tab: the fourth tab slot is now the store locations screen.
  * Mirrors the web `/wishlist` page (saved products grid, sign-in gate, empty state).
  */
 export default function WishlistScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const { wishlistItems, loading, removeFromWishlist } = useWishlistContext();
@@ -157,7 +164,7 @@ export default function WishlistScreen(): React.ReactElement {
           color: colors.text,
         }}
       >
-        已收藏
+        {t("wishlist.title")}
       </Text>
     </View>
   );
@@ -182,7 +189,7 @@ export default function WishlistScreen(): React.ReactElement {
               textAlign: "center",
             }}
           >
-            登录以查看收藏
+            {t("wishlist.signInTitle")}
           </Text>
           <Text
             style={{
@@ -193,7 +200,7 @@ export default function WishlistScreen(): React.ReactElement {
               textAlign: "center",
             }}
           >
-            您需要登录后才能查看已保存的商品
+            {t("wishlist.signInBody")}
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/(auth)/sign-in")}
@@ -207,7 +214,7 @@ export default function WishlistScreen(): React.ReactElement {
             }}
           >
             <Text style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_400Regular" }}>
-              登录 / 注册
+              {t("wishlist.signInCta")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -234,7 +241,7 @@ export default function WishlistScreen(): React.ReactElement {
               marginTop: 12,
             }}
           >
-            收藏夹为空
+            {t("wishlist.emptyProductsTitle")}
           </Text>
           <Text
             style={{
@@ -245,7 +252,7 @@ export default function WishlistScreen(): React.ReactElement {
               textAlign: "center",
             }}
           >
-            浏览商品，发现心仪款式
+            {t("wishlist.emptyProductsBody")}
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/browse")}
@@ -259,7 +266,7 @@ export default function WishlistScreen(): React.ReactElement {
             }}
           >
             <Text style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_400Regular" }}>
-              去购物
+              {t("wishlist.goShopping")}
             </Text>
           </TouchableOpacity>
         </View>

@@ -4,6 +4,8 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { Product } from "@/context/product/ProductContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
 
 export interface ProductCardProps {
@@ -32,7 +34,10 @@ export function ProductCard({
   wishlisted = false,
   onWishlistPress,
 }: ProductCardProps): React.ReactElement {
-  const name = typeof product.name === "string" ? product.name : "商品";
+  const { t } = useTranslation();
+  const { translateProduct } = useContentTranslation();
+  const translatedName = translateProduct(product.id, "name", product.name ?? null);
+  const name = translatedName.length > 0 ? translatedName : t("common.product");
 
   return (
     <Pressable
@@ -85,13 +90,15 @@ export function ProductCard({
         </Text>
         {onWishlistPress !== undefined ? (
           <Pressable
-            onPress={(e) => {
+            onPress={() => {
               onWishlistPress();
             }}
             hitSlop={8}
             style={{ padding: 4 }}
             accessibilityRole="button"
-            accessibilityLabel={wishlisted ? "从收藏中移除" : "加入收藏"}
+            accessibilityLabel={
+              wishlisted ? t("product.removeFromWishlistAria") : t("product.addToWishlistAria")
+            }
           >
             <Ionicons
               name={wishlisted ? "heart" : "heart-outline"}

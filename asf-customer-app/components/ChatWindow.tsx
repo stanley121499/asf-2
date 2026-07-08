@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import type { ChatMessageRow } from "@/context/ConversationContext";
+import { useTranslation } from "@/context/LocaleContext";
 
 export interface ChatWindowProps {
   messages: ChatMessageRow[];
@@ -32,6 +33,8 @@ export function ChatWindow({
   sending,
   disabled,
 }: ChatWindowProps): React.ReactElement {
+  const { t } = useTranslation();
+
   return (
     <KeyboardAvoidingView
       className="flex-1 border border-border rounded-xl overflow-hidden bg-panel"
@@ -48,7 +51,7 @@ export function ChatWindow({
           </View>
         )}
         ListEmptyComponent={
-          <Text className="text-muted text-sm px-2 py-4">暂无消息</Text>
+          <Text className="text-muted text-sm px-2 py-4">{t("support.noMessages")}</Text>
         }
       />
       <View className="flex-row items-end border-t border-border p-2 bg-bg gap-2">
@@ -56,7 +59,7 @@ export function ChatWindow({
           className="flex-1 rounded-xl border border-border bg-panel px-3 py-2 text-accent min-h-[44px] max-h-[120px]"
           value={draft}
           onChangeText={onChangeDraft}
-          placeholder="输入消息…"
+          placeholder={t("support.messagePlaceholder")}
           placeholderTextColor="#6B7280"
           multiline
           editable={disabled !== true}
@@ -70,7 +73,7 @@ export function ChatWindow({
           {sending === true ? (
             <ActivityIndicator color="#FAF9F6" />
           ) : (
-            <Text className="text-bg font-semibold">发送</Text>
+            <Text className="text-bg font-semibold">{t("support.send")}</Text>
           )}
         </Pressable>
       </View>

@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
+import { useTranslation } from "@/context/LocaleContext";
 import type { Tables } from "@/database.types";
-import { formatRelativeTimeZh } from "@/lib/relativeTime";
+import { formatRelativeTime } from "@/lib/relativeTime";
 
 type NotificationRowType = Tables<"notifications">;
 
@@ -13,11 +14,11 @@ export interface NotificationRowProps {
 }
 
 function iconForType(type: string): keyof typeof Ionicons.glyphMap {
-  const t = type.toLowerCase();
-  if (t.includes("order")) {
+  const lowered = type.toLowerCase();
+  if (lowered.includes("order")) {
     return "bag-handle-outline";
   }
-  if (t.includes("ticket")) {
+  if (lowered.includes("ticket")) {
     return "chatbubble-ellipses-outline";
   }
   return "notifications-outline";
@@ -25,21 +26,25 @@ function iconForType(type: string): keyof typeof Ionicons.glyphMap {
 
 /**
  * Single notification row with unread accent bar and relative timestamp.
+ * Title/body stay as DB content; chrome fallback + relative time use i18n.
  */
 export function NotificationRow({ notification, onPress }: NotificationRowProps): React.ReactElement {
+  const { t, locale } = useTranslation();
   const unread = notification.read_at === null;
   const title =
     typeof notification.title === "string" && notification.title.length > 0
       ? notification.title
-      : "通知";
+      : t("notifications.title");
   const body =
     typeof notification.body === "string" && notification.body.length > 0 ? notification.body : "";
   const created =
-    typeof notification.created_at === "string" ? formatRelativeTimeZh(notification.created_at) : "";
+    typeof notification.created_at === "string"
+      ? formatRelativeTime(notification.created_at, locale)
+      : "";
 
   return (
     <Pressable
-      className={`mb-3 rounded-xl border border-border bg-panel overflow-hidden flex-row`}
+      className="mb-3 rounded-xl border border-border bg-panel overflow-hidden flex-row"
       onPress={() => onPress(notification.id)}
     >
       {unread ? <View className="w-1 bg-accent self-stretch" /> : null}

@@ -3,6 +3,7 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { AnnouncementRow } from "@/context/AnnouncementContext";
+import { useTranslation } from "@/context/LocaleContext";
 
 export interface AnnouncementBannerProps {
   announcement: AnnouncementRow;
@@ -11,11 +12,14 @@ export interface AnnouncementBannerProps {
 
 /**
  * Full-width strip for an active announcement (title + message + dismiss).
+ * Title/message remain DB content; only chrome (close a11y) is translated here.
  */
 export function AnnouncementBanner({
   announcement,
   onDismiss,
 }: AnnouncementBannerProps): React.ReactElement {
+  const { t } = useTranslation();
+
   return (
     <View className="bg-accent px-4 py-3 flex-row items-center justify-between">
       <View className="flex-1 pr-3">
@@ -28,7 +32,7 @@ export function AnnouncementBanner({
         onPress={() => onDismiss(announcement.id)}
         hitSlop={12}
         accessibilityRole="button"
-        accessibilityLabel="Dismiss announcement"
+        accessibilityLabel={t("announcement.closeAria")}
       >
         <Ionicons name="close" size={22} color="#FAF9F6" />
       </Pressable>

@@ -20,6 +20,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useTranslation } from "@/context/LocaleContext";
 import { usePostContext } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { colors } from "@/constants/theme";
@@ -37,6 +39,7 @@ interface CommentSheetProps {
 }
 
 function CommentSheet({ visible, onClose }: CommentSheetProps): React.ReactElement {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
@@ -65,8 +68,10 @@ function CommentSheet({ visible, onClose }: CommentSheetProps): React.ReactEleme
           }}
         >
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>留言</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
+              {t("post.comment")}
+            </Text>
+            <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={t("common.close")}>
               <Ionicons name="close" size={24} color={colors.muted} />
             </Pressable>
           </View>
@@ -83,7 +88,7 @@ function CommentSheet({ visible, onClose }: CommentSheetProps): React.ReactEleme
               fontFamily: "Inter_400Regular",
               textAlignVertical: "top",
             }}
-            placeholder="写下您的留言"
+            placeholder={t("post.commentPlaceholder")}
             placeholderTextColor={colors.muted}
             value={text}
             onChangeText={setText}
@@ -102,7 +107,7 @@ function CommentSheet({ visible, onClose }: CommentSheetProps): React.ReactEleme
             }}
           >
             <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-              {sent ? "已发送 ✓" : "发送"}
+              {sent ? t("post.commentSubmitted") : t("post.send")}
             </Text>
           </Pressable>
         </View>
@@ -119,6 +124,8 @@ interface PostCardProps {
 }
 
 function PostCard({ post, medias }: PostCardProps): React.ReactElement {
+  const { t } = useTranslation();
+  const { translatePost } = useContentTranslation();
   const router = useRouter();
   const sortedMedias = useMemo(
     () => [...medias].sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0)),
@@ -127,10 +134,11 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
   const firstMedia = sortedMedias[0] ?? null;
   const mediaUrl = firstMedia?.media_url ?? null;
   const isVideo = (firstMedia?.media_type ?? "image") === "video";
+  const caption = translatePost(post.id, "caption", post.caption);
+  const ctaText = translatePost(post.id, "cta_text", post.cta_text);
 
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(12);
   const [isSaved, setIsSaved] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
@@ -141,7 +149,6 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
         const saved = JSON.parse((await AsyncStorage.getItem("saved_posts")) ?? "[]") as string[];
         setIsLiked(liked.includes(post.id));
         setIsSaved(saved.includes(post.id));
-        setLikeCount(liked.includes(post.id) ? 13 : 12);
       } catch { /* ignore */ }
     })();
   }, [post.id]);
@@ -149,7 +156,6 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
   const toggleLike = useCallback(async () => {
     const next = !isLiked;
     setIsLiked(next);
-    setLikeCount(next ? 13 : 12);
     try {
       const liked = JSON.parse((await AsyncStorage.getItem("liked_posts")) ?? "[]") as string[];
       if (next) { if (!liked.includes(post.id)) liked.push(post.id); }
@@ -176,7 +182,9 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
         {mediaUrl === null ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="image-outline" size={40} color="#555" />
-            <Text style={{ color: "#555", fontSize: 13, marginTop: 8, fontFamily: "Inter_400Regular" }}>暂无内容</Text>
+            <Text style={{ color: "#555", fontSize: 13, marginTop: 8, fontFamily: "Inter_400Regular" }}>
+              {t("post.noContent")}
+            </Text>
           </View>
         ) : isVideo ? (
           <>
@@ -204,7 +212,9 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
               pointerEvents="none"
             >
               <Ionicons name="play" size={10} color="#FFFFFF" />
-              <Text style={{ color: "#FFFFFF", fontSize: 11, fontFamily: "Inter_400Regular" }}>视频</Text>
+              <Text style={{ color: "#FFFFFF", fontSize: 11, fontFamily: "Inter_400Regular" }}>
+                {t("post.video")}
+              </Text>
             </View>
             <TouchableOpacity
               onPress={() => setIsMuted((m) => !m)}
@@ -219,6 +229,7 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
                 alignItems: "center",
                 justifyContent: "center",
               }}
+              accessibilityLabel={isMuted ? t("post.unmuteAria") : t("post.muteAria")}
             >
               <Ionicons
                 name={isMuted ? "volume-mute-outline" : "volume-high-outline"}
@@ -237,10 +248,10 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
       </View>
 
       {/* Caption */}
-      {post.caption !== null && post.caption.length > 0 && (
+      {caption.length > 0 && (
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 15, color: colors.text, fontFamily: "Inter_400Regular", lineHeight: 22 }}>
-            {post.caption}
+            {caption}
           </Text>
         </View>
       )}
@@ -252,7 +263,9 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
           style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
         >
           <Ionicons name={isLiked ? "heart" : "heart-outline"} size={24} color={isLiked ? "#EF4444" : colors.text} />
-          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>喜欢</Text>
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("post.like")}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -260,7 +273,9 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
           style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
         >
           <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
-          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>留言</Text>
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("post.comment")}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -268,12 +283,14 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
           style={{ flexDirection: "column", alignItems: "center", gap: 2 }}
         >
           <Ionicons name={isSaved ? "bookmark" : "bookmark-outline"} size={24} color={colors.text} />
-          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>收藏</Text>
+          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            {t("post.save")}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* CTA button */}
-      {post.cta_text !== null && post.cta_text.length > 0 && (
+      {ctaText.length > 0 && (
         <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
           <Pressable
             onPress={() => router.push("/(tabs)/browse")}
@@ -288,7 +305,7 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
             }}
           >
             <Text style={{ color: "#000000", fontSize: 15, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-              {post.cta_text}
+              {ctaText}
             </Text>
           </Pressable>
         </View>
@@ -302,17 +319,14 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
 // ─── Highlights tab screen ───────────────────────────────────────────────────
 
 /**
- * 精选 tab — vertical feed of PostCards.
- * No back button (this is a root tab). Header shows "精选推荐".
+ * Highlights tab — vertical feed of PostCards.
+ * No back button (this is a root tab). Header shows localized featured title.
  */
 export default function HighlightsScreen(): React.ReactElement {
+  const { t } = useTranslation();
   const { isEnabled } = useFeatureFlags();
   const { posts, loading: postsLoading } = usePostContext();
   const { postMedias, loading: mediaLoading } = usePostMediaContext();
-
-  if (!isEnabled("highlights")) {
-    return <Redirect href="/(tabs)" />;
-  }
 
   const featured = useMemo(
     () =>
@@ -333,6 +347,10 @@ export default function HighlightsScreen(): React.ReactElement {
     return map;
   }, [postMedias]);
 
+  if (!isEnabled("highlights")) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   const loading = postsLoading || mediaLoading;
 
   if (loading) {
@@ -345,18 +363,19 @@ export default function HighlightsScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Tab header — no back button since this is a root tab */}
       <SafeAreaView edges={["top"]} style={{ backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <View style={{ height: 56, alignItems: "center", justifyContent: "center" }}>
           <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
-            精选推荐
+            {t("highlights.title")}
           </Text>
         </View>
       </SafeAreaView>
 
       {featured.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: colors.muted, fontSize: 15, fontFamily: "Inter_400Regular" }}>暂无内容，敬请期待</Text>
+          <Text style={{ color: colors.muted, fontSize: 15, fontFamily: "Inter_400Regular" }}>
+            {t("highlights.empty")}
+          </Text>
         </View>
       ) : (
         <FlatList

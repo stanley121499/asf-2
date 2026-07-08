@@ -8,9 +8,11 @@ import React, {
   useState,
   PropsWithChildren,
 } from "react";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
+import { useTranslation } from "../LocaleContext";
 
 import { ProductMedia } from "./ProductMediaContext";
 import { Category } from "./CategoryContext";
@@ -67,10 +69,11 @@ interface ProductContextProps {
 
 const ProductContext = createContext<ProductContextProps | undefined>(undefined);
 
-export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.Element {
+export function ProductProvider({ children }: Readonly<PropsWithChildren>): React.ReactElement {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
+  const { t } = useTranslation();
   const { createProductColor, updateProductColor } = useProductColorContext();
   const { createProductSize, updateProductSize } = useProductSizeContext();
   const { createProductCategory, deleteProductCategory } =
@@ -81,10 +84,15 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
    * This keeps access to the latest showAlert without re-subscribing on every render.
    */
   const showAlertRef = useRef<typeof showAlert | null>(null);
+  const tRef = useRef(t);
 
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
+
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   /**
    * Converts an unknown caught error to a safe human-readable message.
@@ -173,7 +181,10 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.
       if (process.env.NODE_ENV === "development") {
         console.error("[ProductContext] Failed to fetch products:", error);
       }
-      showAlertRef.current?.("Failed to fetch products", "error");
+      showAlertRef.current?.(
+        tRef.current(getErrorTranslationKey("Failed to fetch products")),
+        "error",
+      );
     } finally {
       setLoading(false);
     }

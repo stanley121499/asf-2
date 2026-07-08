@@ -14,17 +14,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useTranslation } from "@/context/LocaleContext";
+import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { colors } from "@/constants/theme";
 
 /**
  * Sign-in screen matching the web app exactly:
- * - Top ~25% white area with "← 返回首页" and large "ASF" in display font
+ * - Top ~25% white area with back home link and large "ASF" in display font
  * - Bottom white sheet (rounded-t-3xl, overlap) with form
  * - Inputs: 56px height, rounded-xl, panel bg (#F5F5F3)
  * - Submit button: bg-black, full-width, 56px, rounded-xl, white text
  */
 export default function SignInScreen(): React.ReactElement {
   const router = useRouter();
+  const { t } = useTranslation();
   const { signIn, loading: authLoading } = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,17 +41,15 @@ export default function SignInScreen(): React.ReactElement {
     setError(null);
     const trimmed = email.trim();
     if (trimmed.length === 0 || password.length === 0) {
-      setError("请输入邮箱和密码");
+      setError(t("auth.signIn.credentialsRequired"));
       return;
     }
     setSubmitting(true);
     try {
       const { error: signErr } = await signIn(trimmed, password);
       if (signErr !== null) {
-        const msg = signErr.message.toLowerCase().includes("invalid login credentials")
-          ? "邮箱或密码不正确，请重试"
-          : "登录失败，请重试";
-        setError(msg);
+        const key = getErrorTranslationKey(signErr.message);
+        setError(key === "errors.networkError" ? t("auth.signIn.failed") : t(key));
         return;
       }
       router.replace("/(tabs)");
@@ -69,7 +70,9 @@ export default function SignInScreen(): React.ReactElement {
             onPress={() => router.push("/(tabs)")}
             style={{ position: "absolute", top: 16, left: 16, flexDirection: "row", alignItems: "center" }}
           >
-            <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>← 返回首页</Text>
+            <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+              {t("auth.signIn.backHome")}
+            </Text>
           </Pressable>
           <Text
             style={{
@@ -104,7 +107,7 @@ export default function SignInScreen(): React.ReactElement {
               marginBottom: 24,
             }}
           >
-            欢迎回来
+            {t("auth.signIn.welcomeBack")}
           </Text>
 
           {error !== null && (
@@ -115,7 +118,7 @@ export default function SignInScreen(): React.ReactElement {
 
           {/* Email */}
           <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
-            邮箱地址
+            {t("auth.signIn.email")}
           </Text>
           <TextInput
             style={{
@@ -130,7 +133,7 @@ export default function SignInScreen(): React.ReactElement {
               marginBottom: 16,
               fontFamily: "Inter_400Regular",
             }}
-            placeholder="请输入邮箱"
+            placeholder={t("auth.signIn.emailPlaceholder")}
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             autoComplete="email"
@@ -142,7 +145,7 @@ export default function SignInScreen(): React.ReactElement {
 
           {/* Password */}
           <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
-            密码
+            {t("auth.signIn.password")}
           </Text>
           <View style={{ position: "relative", marginBottom: 8 }}>
             <TextInput
@@ -182,7 +185,9 @@ export default function SignInScreen(): React.ReactElement {
           {/* Forgot password */}
           <View style={{ alignItems: "flex-end", marginBottom: 24 }}>
             <Link href="/(auth)/forgot-password">
-              <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>忘记密码？</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                {t("auth.signIn.forgotPassword")}
+              </Text>
             </Link>
           </View>
 
@@ -203,7 +208,7 @@ export default function SignInScreen(): React.ReactElement {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-                登录
+                {t("auth.signIn.submit")}
               </Text>
             )}
           </Pressable>
@@ -222,15 +227,17 @@ export default function SignInScreen(): React.ReactElement {
               marginBottom: 32,
             }}
           >
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>先逛逛，暂不登录</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              {t("auth.signIn.guestBrowse")}
+            </Text>
           </Pressable>
 
           {/* Register link */}
           <View style={{ alignItems: "center" }}>
             <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
-              还没有账号？{" "}
+              {t("auth.signIn.noAccount")}{" "}
               <Link href="/(auth)/sign-up">
-                <Text style={{ color: colors.accent, fontWeight: "500" }}>立即注册 →</Text>
+                <Text style={{ color: colors.accent, fontWeight: "500" }}>{t("auth.signIn.signUpLink")}</Text>
               </Link>
             </Text>
           </View>
