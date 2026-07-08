@@ -38,6 +38,17 @@ interface AddToCartContextProps {
   fetchByUser: (userId: string) => Promise<AddToCart[]>;
   /** Delete all cart rows for a specific user id. */
   clearCartByUser: (userId: string) => Promise<void>;
+  /**
+   * Clear the in-memory cart list only (no database write).
+   *
+   * Used after a successful checkout: the Stripe webhook already deletes
+   * `add_to_carts` server-side once payment succeeds, but Supabase Realtime
+   * DELETE events are unreliable for RLS-protected tables (only the primary
+   * key is shipped, so the row-level policy cannot be evaluated). Calling this
+   * makes the UI reflect the known-empty cart immediately without racing the
+   * webhook's read of the cart rows.
+   */
+  clearLocalCart: () => void;
   /** Loading state for initial data load. */
   loading: boolean;
 }
@@ -203,6 +214,11 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
     setAddToCarts((prev) => prev.filter((row) => row.user_id !== userId));
   }, []);
 
+  /** Clear the in-memory cart list without touching the database. */
+  const clearLocalCart = useCallback((): void => {
+    setAddToCarts([]);
+  }, []);
+
   /** Fetch all cart rows for a given user id. */
   const fetchByUser = useCallback(async (userId: string): Promise<AddToCart[]> => {
     if (typeof userId !== "string" || userId.length === 0) {
@@ -229,6 +245,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       deleteAddToCart,
       fetchByUser,
       clearCartByUser,
+      clearLocalCart,
       loading,
     }),
     [
@@ -239,6 +256,7 @@ export function AddToCartProvider({ children }: PropsWithChildren) {
       deleteAddToCart,
       fetchByUser,
       clearCartByUser,
+      clearLocalCart,
     ]
   );
 

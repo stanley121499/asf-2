@@ -12,6 +12,23 @@ export type DelyvaAddress = {
 };
 
 /**
+ * Normalizes a country label to the ISO code Delyva expects (e.g. "Malaysia" -> "MY").
+ *
+ * Must be applied consistently to every instantQuote call: a checkout rate quote
+ * and its later re-quote (server-side validation) have to send the same country
+ * string, otherwise Delyva returns different `serviceCode`s and the customer's
+ * chosen courier cannot be matched.
+ */
+export function normalizeCountryForDelyva(country: string): string {
+  const trimmed = country.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === "malaysia" || lower === "my") {
+    return "MY";
+  }
+  return trimmed;
+}
+
+/**
  * Reads Delyva API key from the environment (X-Delyvax-Access-Token).
  */
 export function getDelyvaAccessToken(): string {

@@ -20,7 +20,12 @@ import { useProductContext } from "@/context/product/ProductContext";
 import { formatRm } from "@/lib/formatCurrency";
 import { colors } from "@/constants/theme";
 
-const SHIPPING_FLAT_MYR = 10;
+/**
+ * Estimated shipping shown in the cart summary only. The actual rate is
+ * quoted live (distance + weight) once the customer enters their address at
+ * checkout, so this is a placeholder estimate — not the charged amount.
+ */
+const SHIPPING_ESTIMATE_MYR = 10;
 
 /**
  * Cart screen — push route accessible from the top navbar bag icon.
@@ -69,7 +74,7 @@ export default function CartScreen(): React.ReactElement {
   }, [linesWithProduct]);
 
   const discount = appliedPromo?.discountAmountMyr ?? 0;
-  const total = Math.max(0, subtotal + SHIPPING_FLAT_MYR - discount);
+  const total = Math.max(0, subtotal + SHIPPING_ESTIMATE_MYR - discount);
 
   const applyPromo = async (): Promise<void> => {
     setPromoError(null);
@@ -345,9 +350,12 @@ export default function CartScreen(): React.ReactElement {
                   <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(subtotal)}</Text>
                 </View>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>运费</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(SHIPPING_FLAT_MYR)}</Text>
+                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>运费（预估）</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(SHIPPING_ESTIMATE_MYR)}</Text>
                 </View>
+                <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: -4 }}>
+                  最终运费将在结账填写地址后按配送方式计算
+                </Text>
                 {discount > 0 && (
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>优惠</Text>

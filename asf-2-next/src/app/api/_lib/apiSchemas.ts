@@ -93,15 +93,30 @@ export const createPendingOrderBodySchema = z
     shipping_address_structured: shippingStructuredSchema,
     promoCode: z.string().optional(),
     promotionId: uuidStringSchema.optional(),
+    /** Delyva service code chosen at checkout (validated server-side via re-quote). */
+    serviceCode: z.string().min(1).optional(),
   })
   .strict();
 
 export const deliveryRatesBodySchema = z
   .object({
     destination: destinationSchema,
-    weight: weightKgSchema,
+    /** Explicit weight for admin/manual callers; omitted when userId is sent (computed from cart). */
+    weight: weightKgSchema.optional(),
+    /** When set, parcel weight is computed from this user's cart server-side. */
+    userId: uuidStringSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    const hasUserId = data.userId !== undefined;
+    const hasWeight = data.weight !== undefined;
+    if (!hasUserId && !hasWeight) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Either userId or weight is required",
+      });
+    }
+  });
 
 export const deliveryCreateShipmentBodySchema = z
   .object({

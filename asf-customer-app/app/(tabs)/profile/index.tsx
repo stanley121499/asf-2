@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -13,7 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
-import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
 
 function isNonEmpty(v: unknown): v is string {
@@ -72,15 +70,10 @@ export default function ProfileIndexScreen(): React.ReactElement {
   const [userPoints, setUserPoints] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     if (isNonEmpty(user_detail?.first_name)) setFirstName(String(user_detail?.first_name));
     if (isNonEmpty(user_detail?.last_name)) setLastName(String(user_detail?.last_name));
-    const meta = (user?.user_metadata as Record<string, unknown> | undefined) ?? {};
-    if (isNonEmpty(meta["phone"])) setPhone(String(meta["phone"]));
   }, [user, user_detail]);
 
   useEffect(() => {
@@ -93,17 +86,6 @@ export default function ProfileIndexScreen(): React.ReactElement {
     const joined = `${firstName} ${lastName}`.trim();
     return joined.length > 0 ? joined : (user?.email ?? "用户");
   }, [firstName, lastName, user?.email]);
-
-  const handleSaveProfile = async (): Promise<void> => {
-    if (user === null || !isNonEmpty(firstName) || !isNonEmpty(lastName)) return;
-    setSaving(true);
-    try {
-      await supabase.from("user_details").update({ first_name: firstName, last_name: lastName }).eq("id", user.id);
-      await supabase.auth.updateUser({ data: { display_name: `${firstName} ${lastName}`.trim(), first_name: firstName, last_name: lastName, phone } });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleLogout = async (): Promise<void> => {
     await signOut();
@@ -148,9 +130,35 @@ export default function ProfileIndexScreen(): React.ReactElement {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Sticky header */}
-      <View style={{ height: 56, alignItems: "center", justifyContent: "center", borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: "#FFFFFF" }}>
+      {/* Sticky header with edit-profile action in the top-right corner */}
+      <View
+        style={{
+          height: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: "#FFFFFF",
+        }}
+      >
         <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>个人中心</Text>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/profile/account")}
+          hitSlop={8}
+          accessibilityLabel="编辑账户信息"
+          style={{
+            position: "absolute",
+            right: 8,
+            width: 44,
+            height: 44,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Ionicons name="create-outline" size={22} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
@@ -231,72 +239,7 @@ export default function ProfileIndexScreen(): React.ReactElement {
           <MenuRow icon="bag-outline" label="我的订单" onPress={() => router.push("/(tabs)/profile/orders")} />
           <MenuRow icon="heart-outline" label="我的收藏" onPress={() => router.push("/wishlist")} />
           <MenuRow icon="star-outline" label="我的奖励" onPress={() => router.push("/(tabs)/profile/rewards")} />
-
-          {/* 账户设置 — accordion */}
-          <TouchableOpacity
-            onPress={() => setAccountOpen((o) => !o)}
-            activeOpacity={0.7}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 16,
-              paddingHorizontal: 20,
-              paddingVertical: 16,
-              borderBottomWidth: accountOpen ? 1 : 1,
-              borderBottomColor: colors.border,
-            }}
-          >
-            <Ionicons name="person-outline" size={20} color={colors.text} style={{ opacity: 0.7 }} />
-            <Text style={{ flex: 1, fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>账户设置</Text>
-            <Ionicons name={accountOpen ? "chevron-down" : "chevron-forward"} size={16} color={colors.muted} />
-          </TouchableOpacity>
-
-          {accountOpen && (
-            <View style={{ backgroundColor: colors.panel, padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 }}>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4, fontFamily: "Inter_400Regular" }}>名</Text>
-                  <TextInput
-                    style={{ height: 40, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    editable={!saving}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4, fontFamily: "Inter_400Regular" }}>姓</Text>
-                  <TextInput
-                    style={{ height: 40, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}
-                    value={lastName}
-                    onChangeText={setLastName}
-                    editable={!saving}
-                  />
-                </View>
-              </View>
-              <View>
-                <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4, fontFamily: "Inter_400Regular" }}>联系电话</Text>
-                <TextInput
-                  style={{ height: 40, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  editable={!saving}
-                />
-              </View>
-              <TouchableOpacity
-                onPress={() => void handleSaveProfile()}
-                disabled={saving}
-                style={{ height: 40, backgroundColor: "#000000", borderRadius: 8, alignItems: "center", justifyContent: "center", opacity: saving ? 0.5 : 1 }}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>保存更改</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-
+          <MenuRow icon="person-outline" label="账户设置" onPress={() => router.push("/(tabs)/profile/account")} />
           <MenuRow icon="chatbubble-ellipses-outline" label="联系客服" onPress={() => router.push("/(tabs)/profile/support")} borderBottom={false} />
         </View>
 

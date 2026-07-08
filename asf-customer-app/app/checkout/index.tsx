@@ -15,7 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
-import { postCreatePendingOrder, type ShippingAddressStructured } from "@/lib/checkoutApi";
+import {
+  buildFlatFallbackRate,
+  postCreatePendingOrder,
+  postDeliveryRates,
+  type DeliveryRateOption,
+  type ShippingAddressStructured,
+} from "@/lib/checkoutApi";
+import { formatRm } from "@/lib/formatCurrency";
 import { loadSavedShippingAddress, saveShippingAddress } from "@/lib/shippingAddressStorage";
 import { colors } from "@/constants/theme";
 
@@ -92,7 +99,87 @@ function Field({
 }
 
 /**
- * Step 1: shipping address → pending order → navigate to Stripe payment screen.
+ * Formats ETA days for display on a courier option row.
+ */
+function formatEtaDays(etaDays: number | null): string {
+  if (etaDays === null || !Number.isFinite(etaDays)) {
+    return "";
+  }
+  if (etaDays <= 1) {
+    return "预计 1 天内送达";
+  }
+  return `预计 ${Math.round(etaDays)} 天送达`;
+}
+
+/**
+ * Selectable courier / delivery method row.
+ */
+function CourierMethodRow({
+  option,
+  selected,
+  onPress,
+}: Readonly<{
+  option: DeliveryRateOption;
+  selected: boolean;
+  onPress: () => void;
+}>): React.ReactElement {
+  const etaLabel = formatEtaDays(option.etaDays);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: selected ? colors.text : colors.border,
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: colors.panel,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Ionicons name="cube-outline" size={20} color={colors.accent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+          {option.name}
+        </Text>
+        {etaLabel.length > 0 ? (
+          <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
+            {etaLabel}
+          </Text>
+        ) : null}
+      </View>
+      <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+        {formatRm(option.price)}
+      </Text>
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: selected ? 7 : 2,
+          borderColor: selected ? colors.text : colors.border,
+        }}
+      />
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * Step 1: shipping address → courier choice → pending order → payment screen.
  */
 export default function CheckoutShippingScreen(): React.ReactElement {
   const router = useRouter();
@@ -120,6 +207,11 @@ export default function CheckoutShippingScreen(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addressLoaded, setAddressLoaded] = useState(false);
+
+  const [deliveryRates, setDeliveryRates] = useState<DeliveryRateOption[]>([]);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [ratesError, setRatesError] = useState<string | null>(null);
+  const [selectedServiceCode, setSelectedServiceCode] = useState<string | null>(null);
 
   /** Pre-fill from saved profile (user_details + auth metadata) once per session. */
   useEffect(() => {
@@ -193,6 +285,64 @@ export default function CheckoutShippingScreen(): React.ReactElement {
       .join("\n");
   }, [structured]);
 
+  /** Fetch live courier rates when the structured address becomes valid (debounced). */
+  useEffect(() => {
+    if (user === null || structured === null) {
+      setDeliveryRates([]);
+      setSelectedServiceCode(null);
+      setRatesError(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async (): Promise<void> => {
+        setRatesLoading(true);
+        setRatesError(null);
+        try {
+          const rates = await postDeliveryRates({
+            userId: user.id,
+            destination: {
+              address1: structured.address1,
+              city: structured.city,
+              state: structured.state,
+              postcode: structured.postcode,
+              country: structured.country,
+            },
+          });
+          if (cancelled) {
+            return;
+          }
+          const options = rates.length > 0 ? rates : [buildFlatFallbackRate()];
+          setDeliveryRates(options);
+          setSelectedServiceCode((prev) => {
+            if (prev !== null && options.some((o) => o.serviceCode === prev)) {
+              return prev;
+            }
+            return options[0]?.serviceCode ?? null;
+          });
+        } catch (e) {
+          if (cancelled) {
+            return;
+          }
+          const fallback = buildFlatFallbackRate();
+          setDeliveryRates([fallback]);
+          setSelectedServiceCode(fallback.serviceCode);
+          setRatesError(e instanceof Error ? e.message : "无法获取配送报价");
+        } finally {
+          if (!cancelled) {
+            setRatesLoading(false);
+          }
+        }
+      })();
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [structured, user]);
+
   const onContinue = async (): Promise<void> => {
     setError(null);
     if (user === null) {
@@ -201,6 +351,10 @@ export default function CheckoutShippingScreen(): React.ReactElement {
     }
     if (structured === null || shippingDisplay.length === 0) {
       setError("请填写所有必填收货信息。");
+      return;
+    }
+    if (selectedServiceCode === null || selectedServiceCode.length === 0) {
+      setError("请选择配送方式。");
       return;
     }
 
@@ -223,6 +377,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         shipping_address_structured: structured,
         promoCode,
         promotionId,
+        serviceCode: selectedServiceCode,
       });
 
       router.push({
@@ -404,6 +559,49 @@ export default function CheckoutShippingScreen(): React.ReactElement {
             editable={false}
             muted
           />
+
+          {/* Delivery method section — shown once address is complete */}
+          {structured !== null ? (
+            <>
+              <Text
+                style={{
+                  fontFamily: "PlayfairDisplay_400Regular",
+                  fontSize: 18,
+                  color: colors.text,
+                  marginTop: 12,
+                  marginBottom: 14,
+                }}
+              >
+                配送方式
+              </Text>
+
+              {ratesLoading ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 }}>
+                  <ActivityIndicator size="small" color={colors.text} />
+                  <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                    正在获取配送报价…
+                  </Text>
+                </View>
+              ) : null}
+
+              {ratesError !== null ? (
+                <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginBottom: 10 }}>
+                  {ratesError}（已使用标准配送）
+                </Text>
+              ) : null}
+
+              <View style={{ gap: 10 }}>
+                {deliveryRates.map((option) => (
+                  <CourierMethodRow
+                    key={option.serviceCode}
+                    option={option}
+                    selected={selectedServiceCode === option.serviceCode}
+                    onPress={() => setSelectedServiceCode(option.serviceCode)}
+                  />
+                ))}
+              </View>
+            </>
+          ) : null}
         </ScrollView>
 
         {/* Sticky footer CTA */}
@@ -419,7 +617,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         >
           <TouchableOpacity
             onPress={() => void onContinue()}
-            disabled={submitting}
+            disabled={submitting || ratesLoading || selectedServiceCode === null}
             activeOpacity={0.85}
             style={{
               height: 56,
@@ -427,7 +625,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
               borderRadius: 99,
               alignItems: "center",
               justifyContent: "center",
-              opacity: submitting ? 0.6 : 1,
+              opacity: submitting || ratesLoading || selectedServiceCode === null ? 0.6 : 1,
             }}
           >
             {submitting ? (

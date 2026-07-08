@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useAddToCartContext } from "@/context/product/CartContext";
 import type { Database } from "@/database.types";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
@@ -82,13 +83,27 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
   const router = useRouter();
   const { orderId: orderIdParam } = useLocalSearchParams<{ orderId?: string }>();
   const { user, loading: authLoading } = useAuthContext();
+  const { clearLocalCart } = useAddToCartContext();
 
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const cartClearedRef = useRef(false);
 
   const orderId = typeof orderIdParam === "string" ? orderIdParam.trim() : "";
   const orderIdValid = useMemo(() => orderId.length > 0 && isUuid(orderId), [orderId]);
+
+  /**
+   * Once the webhook confirms the order (status `processing`), the server has
+   * already emptied `add_to_carts`. Mirror that in the local cart state so the
+   * cart badge/list update immediately. Guarded so it only runs once.
+   */
+  useEffect(() => {
+    if (order !== null && !cartClearedRef.current) {
+      cartClearedRef.current = true;
+      clearLocalCart();
+    }
+  }, [order, clearLocalCart]);
 
   useEffect(() => {
     if (authLoading || user === null) {

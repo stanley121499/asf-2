@@ -18,6 +18,13 @@ const SPLASH_DURATION_MS = 3000;
 /** Extra hold after the last keyframe before handing off to the app. */
 const SPLASH_HOLD_MS = 120;
 
+/**
+ * Additional dwell time the finished logo is held on screen before hand-off.
+ * Applied to both completion paths (the WebView "complete" message and the
+ * timeout fallback) so the splash always lingers this much longer.
+ */
+const SPLASH_EXTRA_HOLD_MS = 2000;
+
 /** Cross-fade length when dismissing the splash overlay into the app. */
 const SPLASH_FADE_MS = 450;
 
@@ -43,6 +50,8 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
   const [sourceUri, setSourceUri] = useState<string | null>(null);
   const [webReady, setWebReady] = useState(false);
   const completedRef = useRef(false);
+  const holdScheduledRef = useRef(false);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const opacity = useRef(new Animated.Value(1)).current;
 
   const backgroundColor = resolvedTheme === "dark" ? "#000000" : "#ffffff";
@@ -64,6 +73,30 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
       }
     });
   }, [onComplete, opacity]);
+
+  /**
+   * Holds the finished logo for {@link SPLASH_EXTRA_HOLD_MS} before fading out.
+   * Guarded so repeated triggers (e.g. duplicate WebView messages) schedule the
+   * hand-off only once.
+   */
+  const scheduleFinishWithHold = useCallback(() => {
+    if (holdScheduledRef.current) {
+      return;
+    }
+    holdScheduledRef.current = true;
+    holdTimerRef.current = setTimeout(() => {
+      finishIntro();
+    }, SPLASH_EXTRA_HOLD_MS);
+  }, [finishIntro]);
+
+  // Clear any pending hold timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current !== null) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
 
   /** Seed theme before HTML runs (Android file:// URLs may drop query params). */
   const themeBootstrapScript = useMemo(
@@ -102,7 +135,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     }
     const timeoutId = setTimeout(() => {
       finishIntro();
-    }, SPLASH_DURATION_MS + SPLASH_HOLD_MS + 400);
+    }, SPLASH_DURATION_MS + SPLASH_HOLD_MS + 400 + SPLASH_EXTRA_HOLD_MS);
     return () => {
       clearTimeout(timeoutId);
     };
@@ -113,13 +146,13 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
       try {
         const data = JSON.parse(event.nativeEvent.data) as { type?: string };
         if (data.type === "p2m:complete") {
-          finishIntro();
+          scheduleFinishWithHold();
         }
       } catch {
         /* non-JSON messages ignored */
       }
     },
-    [finishIntro],
+    [scheduleFinishWithHold],
   );
 
   const webViewSource = useMemo(() => {

@@ -34,12 +34,16 @@ import {
   readCheckoutPromo,
   type CheckoutPromoPayload,
 } from "@/utils/checkoutPromoStorage";
+import {
+  buildFlatFallbackRate,
+  fetchDeliveryRates,
+  FLAT_SHIPPING_MYR,
+  formatDeliveryEta,
+  type DeliveryRateOption,
+} from "@/utils/checkoutDelivery";
 
 import { CheckoutStripePaymentInner } from "./_components/CheckoutStripePayment";
 import { stripePromise } from "./_components/stripeClient";
-
-/** Fixed shipping in MYR until Delivery UI (Step 9). */
-const FLAT_SHIPPING_MYR = 10;
 
 enum CheckoutStep {
   Shipping = "shipping",
@@ -169,6 +173,11 @@ const CheckoutPage: React.FC = () => {
 
   /** Promo carried from cart via sessionStorage; totals are re-validated on the server. */
   const [checkoutPromo, setCheckoutPromo] = useState<CheckoutPromoPayload | null>(null);
+
+  const [deliveryRates, setDeliveryRates] = useState<DeliveryRateOption[]>([]);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [ratesError, setRatesError] = useState<string | null>(null);
+  const [selectedServiceCode, setSelectedServiceCode] = useState<string | null>(null);
 
   useEffect(() => {
     setCheckoutPromo(readCheckoutPromo());
@@ -324,10 +333,87 @@ const CheckoutPage: React.FC = () => {
       ? checkoutPromo.discountAmountMyr
       : 0;
 
+  const addressCompleteForRates = useMemo((): boolean => {
+    return (
+      isNonEmptyString(address.firstName) &&
+      isNonEmptyString(address.lastName) &&
+      isNonEmptyString(address.address1) &&
+      isNonEmptyString(address.city) &&
+      isNonEmptyString(address.state) &&
+      isNonEmptyString(address.postalCode) &&
+      isNonEmptyString(address.country) &&
+      isNonEmptyString(address.phone)
+    );
+  }, [address]);
+
+  const selectedRate = useMemo((): DeliveryRateOption | null => {
+    if (selectedServiceCode === null) {
+      return null;
+    }
+    return deliveryRates.find((r) => r.serviceCode === selectedServiceCode) ?? null;
+  }, [deliveryRates, selectedServiceCode]);
+
+  const shippingMyr = selectedRate?.price ?? FLAT_SHIPPING_MYR;
+
   const grandTotal = Math.max(
     0,
-    subtotal + FLAT_SHIPPING_MYR - promoDiscountMyr
+    subtotal + shippingMyr - promoDiscountMyr
   );
+
+  /** Fetch live courier rates when shipping address is complete (debounced). */
+  useEffect(() => {
+    if (user === null || !addressCompleteForRates || currentStep !== CheckoutStep.Shipping) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async (): Promise<void> => {
+        setRatesLoading(true);
+        setRatesError(null);
+        try {
+          const rates = await fetchDeliveryRates({
+            userId: user.id,
+            destination: {
+              address1: address.address1.trim(),
+              city: address.city.trim(),
+              state: address.state.trim(),
+              postcode: address.postalCode.trim(),
+              country: address.country.trim(),
+            },
+          });
+          if (cancelled) {
+            return;
+          }
+          const options = rates.length > 0 ? rates : [buildFlatFallbackRate()];
+          setDeliveryRates(options);
+          setSelectedServiceCode((prev) => {
+            if (prev !== null && options.some((o) => o.serviceCode === prev)) {
+              return prev;
+            }
+            return options[0]?.serviceCode ?? null;
+          });
+        } catch (e) {
+          if (cancelled) {
+            return;
+          }
+          const fallback = buildFlatFallbackRate();
+          setDeliveryRates([fallback]);
+          setSelectedServiceCode(fallback.serviceCode);
+          setRatesError(e instanceof Error ? e.message : "无法获取配送报价");
+        } finally {
+          if (!cancelled) {
+            setRatesLoading(false);
+          }
+        }
+      })();
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [address, addressCompleteForRates, currentStep, user]);
 
   const handleAddressField = (field: keyof AddressFormState, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -355,6 +441,10 @@ const CheckoutPage: React.FC = () => {
       setPrepareError("购物车包含已下架商品，请返回购物车移除后再结账。");
       return;
     }
+    if (selectedServiceCode === null || selectedServiceCode.length === 0) {
+      setPrepareError("请选择配送方式。");
+      return;
+    }
 
     setPreparingCheckout(true);
     try {
@@ -369,6 +459,7 @@ const CheckoutPage: React.FC = () => {
         pendingBody["promoCode"] = checkoutPromo.promoCode;
         pendingBody["promotionId"] = checkoutPromo.promotionId;
       }
+      pendingBody["serviceCode"] = selectedServiceCode;
 
       const pendingRes = await fetch("/api/checkout/create-pending-order", {
         method: "POST",
@@ -434,8 +525,10 @@ const CheckoutPage: React.FC = () => {
             <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">运费（固定）</span>
-            <span className="text-gray-900 dark:text-white">{formatCurrency(FLAT_SHIPPING_MYR)}</span>
+            <span className="text-gray-600 dark:text-gray-400">
+              运费{selectedRate !== null ? `（${selectedRate.name}）` : ""}
+            </span>
+            <span className="text-gray-900 dark:text-white">{formatCurrency(shippingMyr)}</span>
           </div>
           {promoDiscountMyr > 0 ? (
             <div className="flex justify-between text-green-600 dark:text-green-400">
@@ -546,13 +639,77 @@ const CheckoutPage: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {addressCompleteForRates ? (
+          <Card className="mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">配送方式</h2>
+            {ratesLoading ? (
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
+                <Spinner size="sm" />
+                <span>正在获取配送报价…</span>
+              </div>
+            ) : null}
+            {ratesError !== null ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {ratesError}（已使用标准配送）
+              </p>
+            ) : null}
+            <div className="space-y-3">
+              {deliveryRates.map((option) => {
+                const selected = selectedServiceCode === option.serviceCode;
+                const eta = formatDeliveryEta(option.etaDays);
+                return (
+                  <button
+                    key={option.serviceCode}
+                    type="button"
+                    onClick={() => setSelectedServiceCode(option.serviceCode)}
+                    className={`w-full flex items-center justify-between gap-4 rounded-lg border p-4 text-left transition-colors ${
+                      selected
+                        ? "border-blue-600 bg-blue-50 dark:border-blue-500 dark:bg-gray-800"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white">{option.name}</p>
+                      {eta.length > 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{eta}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {formatCurrency(option.price)}
+                      </span>
+                      <span
+                        className={`inline-block h-5 w-5 rounded-full border-2 ${
+                          selected ? "border-blue-600 bg-blue-600" : "border-gray-300 dark:border-gray-600"
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        ) : null}
+
         {prepareError !== null ? (
           <Alert color="failure" className="mb-4">
             {prepareError}
           </Alert>
         ) : null}
         <div className="flex justify-end">
-          <Button type="submit" color="blue" disabled={preparingCheckout || cartLines.length === 0 || hasBlockingDeleted}>
+          <Button
+            type="submit"
+            color="blue"
+            disabled={
+              preparingCheckout ||
+              cartLines.length === 0 ||
+              hasBlockingDeleted ||
+              ratesLoading ||
+              selectedServiceCode === null
+            }
+          >
             {preparingCheckout ? (
               <>
                 <Spinner size="sm" className="mr-2" />

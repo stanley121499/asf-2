@@ -6,6 +6,10 @@ import {
   normalizePromoCode,
   validatePromotionForCart,
 } from "@/app/api/_lib/promotions";
+import {
+  FLAT_SHIPPING_MYR,
+  resolveShippingForServiceCode,
+} from "@/app/api/_lib/resolveShippingRate";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 import { isUuid } from "@/app/api/_lib/validation";
 
@@ -14,9 +18,6 @@ import type { Database, Json } from "@/database.types";
 type CartRow = Database["public"]["Tables"]["add_to_carts"]["Row"] & {
   products: { price: number } | null;
 };
-
-/** Flat shipping in MYR (Step 3 — same until Delivery UI). */
-const FLAT_SHIPPING_MYR = 10;
 
 /**
  * Structured shipping address stored on `orders.shipping_address_structured` and used by Delyva.
@@ -51,7 +52,8 @@ function structuredToJson(s: ShippingAddressStructured): Json {
 /**
  * POST /api/checkout/create-pending-order
  *
- * Creates a `pending` order with shipping addresses and server-computed totals (cart + flat shipping).
+ * Creates a `pending` order with shipping addresses and server-computed totals
+ * (cart + selected courier rate or flat fallback).
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const parsedBody = await parseJsonBody(request);
@@ -64,8 +66,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     return validationErrorResponse(validated.error);
   }
 
-  const { userId, shipping_address: shippingAddress, shipping_address_structured: structured } =
-    validated.data;
+  const {
+    userId,
+    shipping_address: shippingAddress,
+    shipping_address_structured: structured,
+    serviceCode: serviceCodeRaw,
+  } = validated.data;
   const promoCodeRaw = validated.data.promoCode;
   const promotionIdRaw = validated.data.promotionId;
 
@@ -109,27 +115,27 @@ export async function POST(request: Request): Promise<NextResponse> {
   let promotionIdForIncrement: string | null = null;
 
   if (typeof promoCodeRaw === "string" && promoCodeRaw.trim().length > 0) {
-    const validated = await validatePromotionForCart(
+    const promoValidated = await validatePromotionForCart(
       supabase,
       promoCodeRaw,
       cartLines
     );
-    if (validated.valid === false) {
-      return NextResponse.json({ error: validated.reason }, { status: 400 });
+    if (promoValidated.valid === false) {
+      return NextResponse.json({ error: promoValidated.reason }, { status: 400 });
     }
     if (
       typeof promotionIdRaw === "string" &&
       isUuid(promotionIdRaw) &&
-      promotionIdRaw !== validated.promotionId
+      promotionIdRaw !== promoValidated.promotionId
     ) {
       return NextResponse.json(
         { error: "Promotion does not match the applied code" },
         { status: 400 }
       );
     }
-    discountAmountMyr = validated.discountAmountMyr;
+    discountAmountMyr = promoValidated.discountAmountMyr;
     promoCodeStored = normalizePromoCode(promoCodeRaw);
-    promotionIdForIncrement = validated.promotionId;
+    promotionIdForIncrement = promoValidated.promotionId;
   } else if (promotionIdRaw !== undefined && promotionIdRaw !== null) {
     return NextResponse.json(
       { error: "promoCode is required when promotionId is sent" },
@@ -137,9 +143,31 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  let shippingRateMyr = FLAT_SHIPPING_MYR;
+  let courierCode: string | null = null;
+
+  if (typeof serviceCodeRaw === "string" && serviceCodeRaw.trim().length > 0) {
+    const resolved = await resolveShippingForServiceCode(
+      serviceCodeRaw,
+      rows,
+      {
+        address1: structured.address1,
+        city: structured.city,
+        state: structured.state,
+        postcode: structured.postcode,
+        country: structured.country,
+      },
+    );
+    if (resolved.ok === false) {
+      return NextResponse.json({ error: resolved.message }, { status: 400 });
+    }
+    shippingRateMyr = resolved.shippingRateMyr;
+    courierCode = resolved.courierCode;
+  }
+
   const totalMyr = Math.max(
     0,
-    subtotalMyr + FLAT_SHIPPING_MYR - discountAmountMyr
+    subtotalMyr + shippingRateMyr - discountAmountMyr
   );
 
   if (totalMyr <= 0) {
@@ -159,7 +187,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       total_amount: totalMyr,
       shipping_address: shippingAddress.trim(),
       shipping_address_structured: structuredJson,
-      shipping_rate: FLAT_SHIPPING_MYR,
+      shipping_rate: shippingRateMyr,
+      courier_code: courierCode,
       promo_code: promoCodeStored,
       discount_amount: discountAmountMyr,
     })
