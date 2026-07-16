@@ -13,10 +13,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { colors } from "@/constants/theme";
 import type { Locale } from "@/i18n/types";
+import { supabase } from "@/lib/supabase";
 
 function isNonEmpty(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
@@ -61,7 +63,7 @@ function MenuRow({ icon, label, onPress, borderBottom = true, badge }: MenuRowPr
 
 /**
  * Language option row inside the selector modal.
- * Both Simplified Chinese and English are selectable (no "coming soon").
+ * All supported locales are selectable (no "coming soon").
  */
 interface LanguageOptionProps {
   label: string;
@@ -116,8 +118,11 @@ function LanguageOption({
 export default function ProfileIndexScreen(): React.ReactElement {
   const router = useRouter();
   const { user, user_detail, signOut, loading } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
   const { t, locale, setLocale } = useTranslation();
+
+  const [activeCreditCount, setActiveCreditCount] = useState(0);
 
   const [userPoints, setUserPoints] = useState(0);
   const [firstName, setFirstName] = useState("");
@@ -135,13 +140,43 @@ export default function ProfileIndexScreen(): React.ReactElement {
     }
   }, [user, pointsAPI]);
 
+  useEffect(() => {
+    if (!isEnabled("claims") || user?.id === undefined) {
+      setActiveCreditCount(0);
+      return;
+    }
+    let cancelled = false;
+    void (async (): Promise<void> => {
+      const { data, error } = await supabase
+        .from("warranty_credits")
+        .select("id, status, expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active");
+      if (cancelled || error !== null) {
+        return;
+      }
+      const now = Date.now();
+      const count = (data ?? []).filter((row) => {
+        const expires = new Date(row.expires_at).getTime();
+        return Number.isFinite(expires) && expires >= now;
+      }).length;
+      setActiveCreditCount(count);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEnabled, user?.id]);
+
   const displayName = useMemo(() => {
     const joined = `${firstName} ${lastName}`.trim();
     return joined.length > 0 ? joined : (user?.email ?? t("settings.userFallback"));
   }, [firstName, lastName, user?.email, t]);
 
-  const currentLanguageLabel =
-    locale === "en" ? t("settings.languageEn") : t("settings.languageZh");
+  const currentLanguageLabel = {
+    "zh-CN": t("settings.languageZh"),
+    en: t("settings.languageEn"),
+    ms: t("settings.languageMs"),
+  }[locale];
 
   /**
    * Persists the chosen locale and closes the language modal.
@@ -217,6 +252,11 @@ export default function ProfileIndexScreen(): React.ReactElement {
             label={t("settings.languageEn")}
             selected={locale === "en"}
             onPress={() => handleSelectLocale("en")}
+          />
+          <LanguageOption
+            label={t("settings.languageMs")}
+            selected={locale === "ms"}
+            onPress={() => handleSelectLocale("ms")}
             borderBottom={false}
           />
 
@@ -428,6 +468,21 @@ export default function ProfileIndexScreen(): React.ReactElement {
           }}
         >
           <MenuRow icon="bag-outline" label={t("settings.menuOrders")} onPress={() => router.push("/(tabs)/profile/orders")} />
+          {isEnabled("claims") ? (
+            <>
+              <MenuRow
+                icon="shield-checkmark-outline"
+                label={t("settings.menuWarrantyCredits")}
+                badge={activeCreditCount > 0 ? t("warrantyCredits.badgeCount", { count: activeCreditCount }) : undefined}
+                onPress={() => router.push("/(tabs)/profile/warranty-credits")}
+              />
+              <MenuRow
+                icon="document-text-outline"
+                label={t("settings.menuClaims")}
+                onPress={() => router.push("/(tabs)/profile/claims")}
+              />
+            </>
+          ) : null}
           <MenuRow icon="heart-outline" label={t("settings.menuWishlist")} onPress={() => router.push("/wishlist")} />
           <MenuRow icon="star-outline" label={t("settings.menuRewards")} onPress={() => router.push("/(tabs)/profile/rewards")} />
           <MenuRow icon="chatbubble-ellipses-outline" label={t("settings.menuSupport")} onPress={() => router.push("/(tabs)/profile/support")} borderBottom={false} />

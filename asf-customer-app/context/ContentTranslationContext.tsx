@@ -181,9 +181,9 @@ function buildPostMap(
 }
 
 /**
- * Batch-fetches English translation rows when locale is `en` and exposes
- * resolve helpers via {@link resolveField}. Does not change ProductContext
- * fetches or call `fetch_products_with_computed_attributes`.
+ * Batch-fetches translation rows when locale is `en` or `ms` and exposes
+ * resolve helpers via {@link resolveField}. Skips fetch for `zh-CN` (base tables).
+ * Does not change ProductContext fetches or call `fetch_products_with_computed_attributes`.
  */
 export function ContentTranslationProvider({
   children,
@@ -192,7 +192,7 @@ export function ContentTranslationProvider({
   const [maps, setMaps] = useState<TranslationMaps>(EMPTY_MAPS);
 
   useEffect(() => {
-    if (locale !== "en") {
+    if (locale === "zh-CN") {
       setMaps(EMPTY_MAPS);
       return;
     }
@@ -213,27 +213,27 @@ export function ContentTranslationProvider({
           .select(
             "product_id, name, description, warranty_description, warranty_period",
           )
-          .eq("locale", "en"),
+          .eq("locale", locale),
         supabase
           .from("category_translations")
           .select("category_id, name")
-          .eq("locale", "en"),
+          .eq("locale", locale),
         supabase
           .from("brand_translations")
           .select("brand_id, name")
-          .eq("locale", "en"),
+          .eq("locale", locale),
         supabase
           .from("department_translations")
           .select("department_id, name")
-          .eq("locale", "en"),
+          .eq("locale", locale),
         supabase
           .from("range_translations")
           .select("range_id, name")
-          .eq("locale", "en"),
+          .eq("locale", locale),
         supabase
           .from("post_translations")
           .select("post_id, name, caption, cta_text")
-          .eq("locale", "en"),
+          .eq("locale", locale),
       ]);
 
       if (!isActive) {

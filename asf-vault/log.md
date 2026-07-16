@@ -132,3 +132,14 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
   - [[wiki/00-overview]] (updated: current focus; sources 76→81)
   - [[index.md]] (concept + 5 source entries)
 - Notes: Phone SOT is Expo not Next WebView; translation tables applied on gswszoljvafugtdikimn; Next UI i18n remains git-stashed.
+
+## [2026-07-16] ingest | Expo customer Malay (`ms`) locale — Agents 1–9 complete
+
+- Sources: `raw/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment.md`, `2026-07-16-expo-customer-ms-locale-plan.md`, `2026-07-16-expo-customer-ms-locale-agent-prompts.md`
+- Wiki touched:
+  - [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]] (new)
+  - [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]] (new)
+  - [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]] (new)
+  - [[wiki/concepts/customer-i18n-asf-2]] (updated: trilingual zh-CN/en/ms)
+  - [[index.md]] (3 new source entries + concept blurb)
+- Notes: `ms` / `ms-MY` locked; DB CHECK widened + Malay seed applied on gswszoljvafugtdikimn; 717 UI keys × 3 locales; ContentTranslation fetches for en and ms; default remains zh-CN.

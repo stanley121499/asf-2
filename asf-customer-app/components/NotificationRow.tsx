@@ -29,7 +29,7 @@ function iconForType(type: string): keyof typeof Ionicons.glyphMap {
  * Title/body stay as DB content; chrome fallback + relative time use i18n.
  */
 export function NotificationRow({ notification, onPress }: NotificationRowProps): React.ReactElement {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const unread = notification.read_at === null;
   const title =
     typeof notification.title === "string" && notification.title.length > 0
@@ -39,7 +39,7 @@ export function NotificationRow({ notification, onPress }: NotificationRowProps)
     typeof notification.body === "string" && notification.body.length > 0 ? notification.body : "";
   const created =
     typeof notification.created_at === "string"
-      ? formatRelativeTime(notification.created_at, locale)
+      ? formatRelativeTime(notification.created_at, t)
       : "";
 
   return (

@@ -14,7 +14,7 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/concepts/asf-2-documentation-index-gaps]] — docs README links vs files present in `raw/sources/docs/`
 - [[wiki/concepts/production-readiness-asf-2]] — gap analysis and execution plan for taking ASF-2 to production (updated 2026-04-13)
 - [[wiki/concepts/mobile-app-architecture-asf-2]] — Expo+RN decision, RBAC, push notifications, staff+customer app design
-- [[wiki/concepts/customer-i18n-asf-2]] — bilingual zh-CN/en customer i18n: Expo shipped; translation tables; Next stashed
+- [[wiki/concepts/customer-i18n-asf-2]] — trilingual zh-CN/en/ms customer i18n: Expo shipped; translation tables; Next stashed
 - [[wiki/concepts/store-locations-feature-asf-2]] — physical store locator: routes, RLS, API vs direct Supabase patterns, feature flag
 - [[wiki/concepts/pixel2motion-splash-asf-2]] — animated cold-start splash: Pixel2Motion → WebView bundle, both Expo apps, regeneration workflow
 - [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular post-purchase claims: config-driven policy, feature flag, customer order entry + staff queue
@@ -22,6 +22,12 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 ## Entities
 
 - [[wiki/entities/asf-2]] — ASF-2 e-commerce / social platform (stack, active codebases, production status, roadmap pointers)
+
+## Sources — 2026-07-16 Expo Malay locale (3 new)
+
+- [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]] — Session outcome SOT: `ms` shipped on Expo; DB CHECK + Malay seed; Agents 1–9
+- [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]] — Plan: `ms` / `ms-MY`, overlay generalization, seed strategy
+- [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]] — Agents 1–9 prompts (executed)
 
 ## Sources — 2026-07-08 customer i18n (5 new)
 

@@ -1,10 +1,10 @@
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/types";
+import type { TranslateFn } from "@/i18n/types";
 
 /**
  * Compact relative time string for notification rows.
- * Accepts the active UI {@link Locale} so EN / zh-CN format correctly.
+ * Pass the active {@link TranslateFn} so all locales use JSON catalog strings.
  */
-export function formatRelativeTime(iso: string, locale: Locale = DEFAULT_LOCALE): string {
+export function formatRelativeTime(iso: string, translate: TranslateFn): string {
   const timestamp = new Date(iso).getTime();
   if (Number.isNaN(timestamp)) {
     return "";
@@ -14,27 +14,19 @@ export function formatRelativeTime(iso: string, locale: Locale = DEFAULT_LOCALE)
   const sec = Math.floor(diffMs / 1000);
 
   if (sec < 60) {
-    return locale === "en" ? "Just now" : "刚刚";
+    return translate("notifications.relative.justNow");
   }
 
   const min = Math.floor(sec / 60);
   if (min < 60) {
-    return locale === "en" ? `${min} min ago` : `${min}分钟前`;
+    return translate("notifications.relative.minutesAgo", { count: min });
   }
 
   const hours = Math.floor(min / 60);
   if (hours < 24) {
-    return locale === "en" ? `${hours} hr ago` : `${hours}小时前`;
+    return translate("notifications.relative.hoursAgo", { count: hours });
   }
 
   const days = Math.floor(hours / 24);
-  return locale === "en" ? `${days} days ago` : `${days}天前`;
-}
-
-/**
- * @deprecated Prefer {@link formatRelativeTime} with an explicit locale.
- * Kept so older call sites compile until callers migrate.
- */
-export function formatRelativeTimeZh(iso: string): string {
-  return formatRelativeTime(iso, "zh-CN");
+  return translate("notifications.relative.daysAgo", { count: days });
 }

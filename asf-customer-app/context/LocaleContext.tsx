@@ -10,6 +10,7 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import enMessages from "@/i18n/locales/en.json";
+import msMessages from "@/i18n/locales/ms.json";
 import zhCnMessages from "@/i18n/locales/zh-CN.json";
 import {
   DEFAULT_LOCALE,
@@ -27,6 +28,7 @@ type Messages = typeof zhCnMessages;
 const MESSAGES: Record<Locale, Messages> = {
   "zh-CN": zhCnMessages,
   en: enMessages,
+  ms: msMessages,
 };
 
 type LocaleContextValue = {

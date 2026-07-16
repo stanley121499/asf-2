@@ -26,6 +26,7 @@
     "language": "语言",
     "languageZh": "简体中文",
     "languageEn": "English",
+    "languageMs": "Bahasa Melayu",
     "selectLanguage": "选择语言",
     "guestSignInTitle": "登录以查看个人资料",
     "guestSignInBody": "管理账户、查看订单并享受会员特权",
@@ -38,6 +39,8 @@
     "menuOrders": "我的订单",
     "menuWishlist": "我的收藏",
     "menuRewards": "我的奖励",
+    "menuWarrantyCredits": "我的保修金",
+    "menuClaims": "售后记录",
     "menuAccount": "账户设置",
     "menuSupport": "联系客服",
     "firstName": "名",
@@ -237,6 +240,17 @@
     "shippingEstimate": "运费（预估）",
     "shippingEstimateNote": "最终运费将在结账填写地址后按配送方式计算",
     "discount": "优惠",
+    "warrantyCreditsLabel": "保修金",
+    "warrantyCreditApply": "应用",
+    "warrantyCreditApplied": "保修金 −{amount}",
+    "warrantyCreditExpires": "有效期至 {date}",
+    "warrantyCreditErrors": {
+      "notFound": "找不到保修金",
+      "inactive": "该保修金已不可用",
+      "expired": "该保修金已过期",
+      "cartEmpty": "购物车为空",
+      "cannotApply": "无法应用到此购物车"
+    },
     "pointsDiscount": "积分抵扣 (-{count})",
     "total": "总计",
     "pointsEarned": "完成订单可获 {count} 积分",
@@ -481,6 +495,90 @@
       "notFound": "找不到该订单。",
       "unauthorized": "无权查看该订单。",
       "invalidParam": "缺少有效的订单参数。"
+    },
+    "reportIssue": "报告问题",
+    "selectItemsToClaim": "选择要售后的商品",
+    "claimSelected": "报告问题（{count}）"
+  },
+  "warrantyCredits": {
+    "title": "我的保修金",
+    "tabActive": "可用",
+    "tabUsed": "已使用",
+    "tabExpired": "已过期",
+    "empty": "暂无记录",
+    "fromClaim": "来自售后 {label}",
+    "expiresOn": "有效期至 {date}",
+    "usedOn": "已于 {date} 使用",
+    "statusActive": "可用",
+    "statusUsed": "已使用",
+    "statusExpired": "已过期",
+    "statusRevoked": "已撤销",
+    "badgeCount": "{count} 张可用"
+  },
+  "claims": {
+    "title": "售后记录",
+    "newTitle": "报修退换",
+    "detailTitle": "售后详情",
+    "empty": "暂无售后记录",
+    "emptyBody": "从已送达订单中选择商品报修或退换。",
+    "status": "状态",
+    "type": "问题类型",
+    "items": "涉及商品",
+    "description": "问题描述",
+    "reason": "原因",
+    "evidence": "照片凭证",
+    "evidenceHint": "请添加清晰的问题或损坏部位照片。",
+    "evidenceRequired": "请至少添加一张照片。",
+    "addPhotos": "添加照片",
+    "takePhoto": "拍照",
+    "chooseFromGallery": "从相册选择",
+    "photoCount": "已选 {count}/{max} 张",
+    "uploadingPhotos": "正在上传照片（{current}/{total}）…",
+    "uploadFailed": "照片上传失败，请重试。",
+    "photoPermissionTitle": "需要权限",
+    "photoPermissionCamera": "请在系统设置中允许访问相机，以便拍摄售后照片。",
+    "photoPermissionLibrary": "请在系统设置中允许访问相册，以便添加售后照片。",
+    "requestedResolution": "期望处理方式",
+    "submit": "提交",
+    "submitting": "提交中…",
+    "estimatedCredit": "预估保修金（若审核通过）",
+    "estimatedCreditDetail": "RM {amount}（商品价格的 {percent}%）",
+    "staffWillDetermine": "客服将根据情况确定保修金额",
+    "submittedMessage": "售后申请已提交，我们会尽快处理。",
+    "issuedCredit": "已发放保修金",
+    "issuedCreditAmount": "RM {amount} 已加入账户",
+    "notFound": "找不到该售后记录。",
+    "backToList": "返回列表",
+    "selectClaimType": "问题类型",
+    "productFallback": "商品",
+    "types": {
+      "manufacturing_defect": "制造缺陷",
+      "size_exchange": "尺码退换",
+      "wrong_item": "发错商品",
+      "delivery_damage": "运输损坏"
+    },
+    "resolutions": {
+      "refund": "退款",
+      "replacement": "换货",
+      "repair": "维修",
+      "store_credit": "店铺积分",
+      "reject": "其他"
+    },
+    "statuses": {
+      "submitted": "已提交",
+      "in_review": "审核中",
+      "needs_info": "需补充资料",
+      "approved": "已批准",
+      "rejected": "已拒绝",
+      "resolved": "已解决",
+      "default": "处理中"
+    },
+    "eligibility": {
+      "unknownType": "未知的问题类型。",
+      "orderNotDelivered": "订单送达后方可报修退换。",
+      "invalidOrderDate": "无法确定订单日期。",
+      "expired": "已超过 {days} 天售后期限。",
+      "eligibleUntil": "可售后至 {date}"
     }
   },
   "locations": {
@@ -494,7 +592,12 @@
     "emptyTitle": "暂无门店信息",
     "googleMaps": "Google 地图",
     "waze": "Waze",
-    "permissionDenied": "未获得定位权限，无法显示距离。"
+    "permissionDenied": "未获得定位权限，无法显示距离。",
+    "distance": {
+      "within100m": "100 m 内",
+      "meters": "{count} m",
+      "kilometers": "{count} km"
+    }
   },
   "orderSuccess": {
     "title": "订单已确认",
@@ -536,7 +639,13 @@
     "justNow": "刚刚",
     "minutesAgo": "{count}分钟前",
     "hoursAgo": "{count}小时前",
-    "daysAgo": "{count}天前"
+    "daysAgo": "{count}天前",
+    "relative": {
+      "justNow": "刚刚",
+      "minutesAgo": "{count}分钟前",
+      "hoursAgo": "{count}小时前",
+      "daysAgo": "{count}天前"
+    }
   },
   "rewards": {
     "title": "我的奖励",

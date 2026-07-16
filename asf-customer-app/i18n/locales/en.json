@@ -26,6 +26,7 @@
     "language": "Language",
     "languageZh": "简体中文",
     "languageEn": "English",
+    "languageMs": "Bahasa Melayu",
     "selectLanguage": "Select language",
     "guestSignInTitle": "Sign in to view your profile",
     "guestSignInBody": "Manage your account, view orders, and enjoy member benefits",
@@ -38,6 +39,8 @@
     "menuOrders": "My orders",
     "menuWishlist": "My wishlist",
     "menuRewards": "My rewards",
+    "menuWarrantyCredits": "Warranty credits",
+    "menuClaims": "My claims",
     "menuAccount": "Account settings",
     "menuSupport": "Contact support",
     "firstName": "First name",
@@ -237,6 +240,17 @@
     "shippingEstimate": "Shipping (est.)",
     "shippingEstimateNote": "Final shipping is calculated at checkout after you enter your address",
     "discount": "Discount",
+    "warrantyCreditsLabel": "Warranty credits",
+    "warrantyCreditApply": "Apply",
+    "warrantyCreditApplied": "Warranty credit −{amount}",
+    "warrantyCreditExpires": "Valid until {date}",
+    "warrantyCreditErrors": {
+      "notFound": "Credit not found",
+      "inactive": "This credit is no longer active",
+      "expired": "This credit has expired",
+      "cartEmpty": "Your bag is empty",
+      "cannotApply": "Credit cannot be applied to this cart"
+    },
     "pointsDiscount": "Points (-{count})",
     "total": "Total",
     "pointsEarned": "Earn {count} points with this order",
@@ -481,6 +495,90 @@
       "notFound": "Order not found.",
       "unauthorized": "You do not have permission to view this order.",
       "invalidParam": "Missing a valid order parameter."
+    },
+    "reportIssue": "Report issue",
+    "selectItemsToClaim": "Select items to report",
+    "claimSelected": "Report issue ({count})"
+  },
+  "warrantyCredits": {
+    "title": "Warranty credits",
+    "tabActive": "Active",
+    "tabUsed": "Used",
+    "tabExpired": "Expired",
+    "empty": "No credits in this category",
+    "fromClaim": "From claim {label}",
+    "expiresOn": "Valid until {date}",
+    "usedOn": "Used on {date}",
+    "statusActive": "Active",
+    "statusUsed": "Used",
+    "statusExpired": "Expired",
+    "statusRevoked": "Revoked",
+    "badgeCount": "{count} available"
+  },
+  "claims": {
+    "title": "My claims",
+    "newTitle": "Submit claim",
+    "detailTitle": "Claim details",
+    "empty": "No claims yet",
+    "emptyBody": "Report an issue from a delivered order to start a claim.",
+    "status": "Status",
+    "type": "Claim type",
+    "items": "Items",
+    "description": "Description",
+    "reason": "Reason",
+    "evidence": "Photo evidence",
+    "evidenceHint": "Add clear photos of the issue or damaged item.",
+    "evidenceRequired": "Please add at least one photo.",
+    "addPhotos": "Add photos",
+    "takePhoto": "Take photo",
+    "chooseFromGallery": "Choose from gallery",
+    "photoCount": "{count} of {max} photos",
+    "uploadingPhotos": "Uploading photos ({current}/{total})…",
+    "uploadFailed": "Photo upload failed. Please try again.",
+    "photoPermissionTitle": "Permission required",
+    "photoPermissionCamera": "Allow camera access in Settings to take claim photos.",
+    "photoPermissionLibrary": "Allow photo library access in Settings to attach claim photos.",
+    "requestedResolution": "Requested resolution",
+    "submit": "Submit claim",
+    "submitting": "Submitting…",
+    "estimatedCredit": "Estimated credit if approved",
+    "estimatedCreditDetail": "RM {amount} ({percent}% of item price)",
+    "staffWillDetermine": "Staff will determine credit amount",
+    "submittedMessage": "Your claim has been submitted for review.",
+    "issuedCredit": "Warranty credit issued",
+    "issuedCreditAmount": "RM {amount} added to your account",
+    "notFound": "Claim not found.",
+    "backToList": "Back to claims",
+    "selectClaimType": "Claim type",
+    "productFallback": "Product",
+    "types": {
+      "manufacturing_defect": "Manufacturing defect",
+      "size_exchange": "Size exchange",
+      "wrong_item": "Wrong item",
+      "delivery_damage": "Delivery damage"
+    },
+    "resolutions": {
+      "refund": "Refund",
+      "replacement": "Replacement",
+      "repair": "Repair",
+      "store_credit": "Store credit",
+      "reject": "Other"
+    },
+    "statuses": {
+      "submitted": "Submitted",
+      "in_review": "In review",
+      "needs_info": "More info needed",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "resolved": "Resolved",
+      "default": "In progress"
+    },
+    "eligibility": {
+      "unknownType": "Unknown claim type.",
+      "orderNotDelivered": "Claims can be filed after the order is delivered.",
+      "invalidOrderDate": "Unable to determine order date.",
+      "expired": "The {days}-day filing window has passed.",
+      "eligibleUntil": "Eligible until {date}"
     }
   },
   "locations": {
@@ -494,7 +592,12 @@
     "emptyTitle": "No stores available",
     "googleMaps": "Google Maps",
     "waze": "Waze",
-    "permissionDenied": "Location permission denied. Distances are unavailable."
+    "permissionDenied": "Location permission denied. Distances are unavailable.",
+    "distance": {
+      "within100m": "Within 100 m",
+      "meters": "{count} m",
+      "kilometers": "{count} km"
+    }
   },
   "orderSuccess": {
     "title": "Order confirmed",
@@ -536,7 +639,13 @@
     "justNow": "Just now",
     "minutesAgo": "{count} min ago",
     "hoursAgo": "{count} hr ago",
-    "daysAgo": "{count} days ago"
+    "daysAgo": "{count} days ago",
+    "relative": {
+      "justNow": "Just now",
+      "minutesAgo": "{count} min ago",
+      "hoursAgo": "{count} hr ago",
+      "daysAgo": "{count} days ago"
+    }
   },
   "rewards": {
     "title": "My rewards",

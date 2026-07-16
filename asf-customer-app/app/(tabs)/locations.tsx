@@ -354,7 +354,7 @@ function StoreLocationCard({
   isNearest,
   enterDelayMs,
 }: Readonly<StoreLocationCardProps>): React.ReactElement {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
   const images = useMemo(() => getUsableStoreImages(item.image_urls), [item.image_urls]);
@@ -466,7 +466,7 @@ function StoreLocationCard({
                     fontWeight: "500",
                   }}
                 >
-                  {formatDistanceKm(distanceKm, locale)}
+                  {formatDistanceKm(distanceKm, t)}
                 </Text>
               </View>
             )}
