@@ -326,6 +326,55 @@ export const warrantyClaimApproveBodySchema = z
   })
   .strict();
 
+/** ISO calendar date YYYY-MM-DD (purchase date for physical registration). */
+const isoDateStringSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD");
+
+/**
+ * POST /api/warranty/registrations/activate — customer activates a physical card code.
+ */
+export const warrantyRegistrationActivateBodySchema = z
+  .object({
+    code: z.string().trim().min(1, "Activation code is required"),
+    purchaseDate: isoDateStringSchema,
+    purchaseStoreId: uuidStringSchema,
+    customerName: z.string().trim().min(1, "customerName is required"),
+    customerEmail: z.string().trim().email("customerEmail must be a valid email"),
+    customerPhone: z.string().trim().min(1, "customerPhone is required"),
+    staffName: z.union([z.string().trim().min(1), z.null()]).optional(),
+    receiptUrl: z.union([z.string().trim().url(), z.null()]).optional(),
+  })
+  .strict();
+
+/**
+ * POST /api/warranty/redeem/preview — staff validates a voucher before burning.
+ * At least one of redemptionCode or creditId is required.
+ */
+export const warrantyRedeemPreviewBodySchema = z
+  .object({
+    redemptionCode: z.string().trim().min(1).optional(),
+    creditId: uuidStringSchema.optional(),
+  })
+  .strict()
+  .refine(
+    (body) =>
+      (typeof body.redemptionCode === "string" && body.redemptionCode.length > 0) ||
+      typeof body.creditId === "string",
+    { message: "redemptionCode or creditId is required" }
+  );
+
+/**
+ * POST /api/warranty/redeem/confirm — staff burns voucher in-store.
+ */
+export const warrantyRedeemConfirmBodySchema = z
+  .object({
+    redemptionCode: z.string().trim().min(1, "redemptionCode is required"),
+    redeemedStoreId: uuidStringSchema,
+  })
+  .strict();
+
 const warrantyTierInputSchema = z
   .object({
     id: uuidStringSchema.optional(),
@@ -359,3 +408,8 @@ export type PromotionCreateBody = z.infer<typeof promotionCreateBodySchema>;
 export type PromotionPatchBody = z.infer<typeof promotionPatchBodySchema>;
 export type StoreLocationCreateBody = z.infer<typeof storeLocationCreateBodySchema>;
 export type StoreLocationPatchBody = z.infer<typeof storeLocationPatchBodySchema>;
+export type WarrantyRegistrationActivateBody = z.infer<
+  typeof warrantyRegistrationActivateBodySchema
+>;
+export type WarrantyRedeemPreviewBody = z.infer<typeof warrantyRedeemPreviewBodySchema>;
+export type WarrantyRedeemConfirmBody = z.infer<typeof warrantyRedeemConfirmBodySchema>;

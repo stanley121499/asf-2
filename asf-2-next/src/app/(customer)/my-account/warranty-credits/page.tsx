@@ -105,7 +105,9 @@ export default function WarrantyCreditsPage(): React.ReactElement {
                     <p className="font-semibold text-lg">RM {credit.amountMyr.toFixed(2)}</p>
                     <p className="text-[var(--color-muted)] mt-1">{credit.productName}</p>
                     <p className="text-xs text-[var(--color-muted)] mt-2">
-                      来源申请 {formatClaimLabel(credit.claimId)}
+                      {credit.claimId !== null
+                        ? `来源申请 ${formatClaimLabel(credit.claimId)}`
+                        : "来源保修登记"}
                     </p>
                   </div>
                   <span className="text-xs uppercase text-[var(--color-muted)]">{credit.status}</span>

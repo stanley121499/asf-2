@@ -19,6 +19,7 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/concepts/pixel2motion-splash-asf-2]] — animated cold-start splash: Pixel2Motion → WebView bundle, both Expo apps, regeneration workflow
 - [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular post-purchase claims: config-driven policy, feature flag, customer order entry + staff queue
 - [[wiki/concepts/warranty-discount-credits-asf-2]] — human-verified warranty credits on top of `claims`: estimate-only time tiers, staff approval, fixed-RM one-click cart redemption
+- [[wiki/concepts/physical-warranty-registration-asf-2]] — card-in-box physical warranty: My Collection, claim-once auto RM voucher, online or partner-store redeem
 
 ## Entities
 
@@ -40,6 +41,11 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]] — Session outcome SOT: `ms` shipped on Expo; DB CHECK + Malay seed; Agents 1–9
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]] — Plan: `ms` / `ms-MY`, overlay generalization, seed strategy
+
+## Sources — 2026-07-17 physical warranty registration (2)
+
+- [[wiki/sources/2026-07-17-physical-warranty-registration-session-accomplishment]] — Session SOT: decisions + what shipped (DB, APIs, Expo, staff redeem, UI follow-ups)
+- `raw/sources/2026-07-17-physical-warranty-registration-design.md` — Design lock: card-in-box, claim-once, fixed RM, any partner store
 
 ## Sources — 2026-07-09 warranty discount credits (1 new)
 

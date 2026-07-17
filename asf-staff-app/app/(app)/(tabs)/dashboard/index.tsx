@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useStaffRole } from "@/context/StaffRoleContext";
 import { getDateRange } from "@/utils/analyticsDateRange";
 import { supabase } from "@/lib/supabase";
@@ -176,7 +177,8 @@ function useDashboardKpis(): {
 type ManageActionKey =
   | "orders" | "products" | "analytics" | "chat"
   | "posts" | "stocks"
-  | "promotions" | "payments" | "users" | "locations";
+  | "promotions" | "payments" | "users" | "locations"
+  | "warranty_redeem";
 
 /** Canonical definition for every possible manage action. */
 const ACTION_DEFS: Readonly<Record<ManageActionKey, QuickActionDef>> = {
@@ -190,26 +192,47 @@ const ACTION_DEFS: Readonly<Record<ManageActionKey, QuickActionDef>> = {
   payments:   { icon: "card-outline",         label: "付款",   href: "/(app)/payments" },
   users:      { icon: "person-outline",       label: "用户",     href: "/(app)/users" },
   locations:  { icon: "location-outline",     label: "门店",     href: "/(app)/locations" },
+  /** In-store warranty voucher burn — gated by `warranty_registration`. */
+  warranty_redeem: {
+    icon: "ticket-outline",
+    label: "核销保修",
+    href: "/(app)/warranty/redeem",
+  },
 };
 
 /**
  * Explicit manage action list per role — easy to adjust without conditionals.
  * Owner sees everything. Other roles see only what is relevant to their work.
+ * Store-facing roles (owner / manager / staff) get warranty redeem.
  */
 const MANAGE_ACTIONS_BY_ROLE: Readonly<Record<string, ReadonlyArray<ManageActionKey>>> = {
-  owner:     ["orders", "payments", "promotions", "products", "stocks", "analytics", "chat", "posts", "users", "locations"],
-  manager:   ["orders", "payments", "promotions", "products", "analytics", "chat", "posts", "locations"],
-  staff:     ["orders", "stocks", "chat"],
+  owner:     ["orders", "payments", "promotions", "products", "stocks", "analytics", "chat", "posts", "users", "locations", "warranty_redeem"],
+  manager:   ["orders", "payments", "promotions", "products", "analytics", "chat", "posts", "locations", "warranty_redeem"],
+  staff:     ["orders", "stocks", "chat", "warranty_redeem"],
   warehouse: ["products", "stocks", "chat"],
   support:   ["orders", "chat"],
 };
 
+/**
+ * Builds the manage grid for the current role, optionally filtering flag-gated tiles.
+ *
+ * @param role - Current staff role slug
+ * @param options.warrantyRegistrationEnabled - When false, hide warranty redeem
+ */
 function buildManageActions(
   role: ReturnType<typeof useStaffRole>["role"],
+  options: { warrantyRegistrationEnabled: boolean },
 ): QuickActionDef[] {
   if (role === null) return [];
   const keys = MANAGE_ACTIONS_BY_ROLE[role] ?? [];
-  return keys.map((key) => ACTION_DEFS[key]);
+  return keys
+    .filter((key) => {
+      if (key === "warranty_redeem") {
+        return options.warrantyRegistrationEnabled;
+      }
+      return true;
+    })
+    .map((key) => ACTION_DEFS[key]);
 }
 
 /** Maps the raw DB role slug to its UI display label. */
@@ -520,8 +543,11 @@ export default function DashboardScreen(): React.ReactElement {
   const router = useRouter();
   const { kpis, loading, error } = useDashboardKpis();
   const { role } = useStaffRole();
+  const { isEnabled } = useFeatureFlags();
 
-  const manageActions = buildManageActions(role);
+  const manageActions = buildManageActions(role, {
+    warrantyRegistrationEnabled: isEnabled("warranty_registration"),
+  });
   const { urgentRows, weekRows } = buildMetricRows(kpis, (href) => router.push(href));
 
   return (

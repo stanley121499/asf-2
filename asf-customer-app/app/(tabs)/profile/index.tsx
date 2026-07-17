@@ -468,6 +468,17 @@ export default function ProfileIndexScreen(): React.ReactElement {
           }}
         >
           <MenuRow icon="bag-outline" label={t("settings.menuOrders")} onPress={() => router.push("/(tabs)/profile/orders")} />
+          {/*
+            Feature flag `warranty_registration` (preferred over reusing `claims`)
+            gates physical card activation + My Collection hub.
+          */}
+          {isEnabled("warranty_registration") ? (
+            <MenuRow
+              icon="cube-outline"
+              label={t("settings.menuCollection")}
+              onPress={() => router.push("/(tabs)/profile/collection")}
+            />
+          ) : null}
           {isEnabled("claims") ? (
             <>
               <MenuRow

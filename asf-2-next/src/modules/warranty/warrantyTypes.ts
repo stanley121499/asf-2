@@ -30,3 +30,12 @@ export const DEFAULT_CREDIT_EXPIRY_DAYS = 365;
 
 /** Claim type key that uses automatic time-based tiers. */
 export const AUTO_TIER_CLAIM_TYPE = "manufacturing_defect";
+
+/** Activation code lifecycle statuses. */
+export type WarrantyActivationCodeStatus = "unused" | "used" | "void";
+
+/** Registration lifecycle statuses (My Collection hub). */
+export type WarrantyRegistrationStatus = "active" | "claimed" | "expired" | "void";
+
+/** Where a warranty credit voucher was redeemed. */
+export type WarrantyRedemptionChannel = "online" | "in_store";

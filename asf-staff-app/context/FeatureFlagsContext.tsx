@@ -34,6 +34,12 @@ export const FEATURE_KEYS = [
   "highlights",
   "wishlist",
   "cart",
+  /**
+   * Physical warranty card activation + in-store voucher redeem.
+   * Same key as customer app (`warranty_registration`); prefer over reusing
+   * `claims` so photo-based claims and card registration ship independently.
+   */
+  "warranty_registration",
   "promotions",
   "rewards",
   "notifications",
@@ -155,10 +161,21 @@ export function FeatureFlagsProvider({
 
   const isEnabled = useCallback(
     (key: FeatureKey): boolean => {
-      // While loading, default to enabled to avoid flashing disabled UI.
-      if (loading) return true;
-      // If the key is missing from the DB (not seeded), default to enabled.
-      return flags[key] !== false;
+      // Keys whose *safe* default is OFF (match customer app). Returning `true`
+      // for these while the flag fetch is in-flight would flash gated UI.
+      // `warranty_registration` stays off until a `feature_flags` row enables it.
+      const defaultsOff =
+        key === "maintenance" || key === "warranty_registration";
+
+      if (loading) {
+        return defaultsOff ? false : true;
+      }
+      // After load: respect the DB value. Missing rows fall back to the
+      // per-key safe default (off for `defaultsOff` keys, on otherwise).
+      if (flags[key] === undefined) {
+        return defaultsOff ? false : true;
+      }
+      return flags[key];
     },
     [flags, loading]
   );

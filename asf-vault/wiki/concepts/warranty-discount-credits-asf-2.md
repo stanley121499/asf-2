@@ -75,7 +75,7 @@ Human approval required; must link a delivered order line item; one active claim
 
 ## Status & open tension
 
-Shipped web-only in `asf-2-next` (all 7 implementation agents ran). The design scoped `asf-customer-app` (Expo) as out-of-scope for v1, but a mobile warranty port also appears in progress — reconcile scope in a future ingest. See [[wiki/sources/2026-07-09-warranty-discount-credits-design]] open questions.
+Shipped web-only in `asf-2-next` (all 7 implementation agents ran). Expo later gained claims/credits surfaces, but **2026-07-17** Simon’s retail path moved to **physical warranty registration** (card-in-box, auto-issue, My Collection) — see [[wiki/concepts/physical-warranty-registration-asf-2]] and [[wiki/sources/2026-07-17-physical-warranty-registration-session-accomplishment]]. This credits module remains the online **photo + staff-approve** path; do not assume it is still the customer-facing SOT for consignment retail.
 
 ## Related
 

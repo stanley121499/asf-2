@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { StaffRole } from "@/constants/roles";
 import { useAuthContext } from "@/context/AuthContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useStaffRole } from "@/context/StaffRoleContext";
 import { supabase } from "@/lib/supabase";
 
@@ -85,6 +86,7 @@ export default function SettingsScreen(): React.ReactElement {
   const router = useRouter();
   const { user, user_detail, signOut } = useAuthContext();
   const { role } = useStaffRole();
+  const { isEnabled } = useFeatureFlags();
 
   const [firstName, setFirstName] = useState(
     typeof user_detail?.first_name === "string" ? user_detail.first_name : ""
@@ -102,6 +104,7 @@ export default function SettingsScreen(): React.ReactElement {
       ? `${firstName.trim()} ${lastName.trim()}`.trim()
       : email;
   const badgeColors = roleBadgeColors(role);
+  const showWarrantyRedeem = isEnabled("warranty_registration");
 
   const saveName = async (): Promise<void> => {
     if (typeof user?.id !== "string") return;
@@ -296,6 +299,54 @@ export default function SettingsScreen(): React.ReactElement {
             )}
           </View>
         </Pressable>
+
+        {/* ── Tools ─────────────────────────────────────────────────────────── */}
+        {showWarrantyRedeem ? (
+          <>
+            <Text style={{ fontSize: 12, fontWeight: "500", color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, paddingHorizontal: 16, marginTop: 24, marginBottom: 8 }}>
+              工具
+            </Text>
+            <View
+              style={{
+                backgroundColor: C.panel,
+                borderRadius: 12,
+                marginHorizontal: 16,
+                borderWidth: 1,
+                borderColor: C.border,
+                overflow: "hidden",
+              }}
+            >
+              <Pressable
+                onPress={() => router.push("/(app)/warranty/redeem")}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", padding: 16, gap: 12 }}>
+                  <View
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 8,
+                      backgroundColor: "#FDFBF7",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="ticket-outline" size={18} color="#C9A96E" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: "500", color: C.text }}>
+                      核销保修凭证
+                    </Text>
+                    <Text style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+                      门店扫码 / 输入兑换码核销
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={C.muted} />
+                </View>
+              </Pressable>
+            </View>
+          </>
+        ) : null}
 
         {/* ── Account / danger zone ─────────────────────────────────────────── */}
         <Text style={{ fontSize: 12, fontWeight: "500", color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, paddingHorizontal: 16, marginTop: 24, marginBottom: 8 }}>

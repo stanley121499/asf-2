@@ -22,8 +22,8 @@ export type WarrantyCreditView = {
   status: string;
   expiresAt: string;
   usedAt: string | null;
-  claimId: string;
-  claimItemId: string;
+  claimId: string | null;
+  claimItemId: string | null;
   productName: string;
 };
 

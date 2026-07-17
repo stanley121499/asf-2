@@ -35,6 +35,12 @@ export const FEATURE_KEYS = [
   "wishlist",
   "cart",
   "claims",
+  /**
+   * Physical warranty card activation + My Collection hub.
+   * Prefer this dedicated key over reusing `claims` so photo-based claims and
+   * card registration can ship independently (design 2026-07-17).
+   */
+  "warranty_registration",
   "promotions",
   "rewards",
   "notifications",
@@ -160,7 +166,9 @@ export function FeatureFlagsProvider({
       // flag fetch is in-flight would gate the whole app (e.g. `maintenance`
       // flashes the maintenance screen on every cold start). Default them off
       // until the real value arrives from Supabase.
-      const defaultsOff = key === "maintenance";
+      // `warranty_registration` stays off until a `feature_flags` row enables it.
+      const defaultsOff =
+        key === "maintenance" || key === "warranty_registration";
 
       if (loading) {
         return defaultsOff ? false : true;

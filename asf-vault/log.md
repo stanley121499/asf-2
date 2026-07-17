@@ -189,3 +189,23 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
 - Inbound links fixed to avoid orphans: [[index.md]] (5 entries removed + section counts adjusted), [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]], [[wiki/concepts/customer-i18n-asf-2]], and the ms-locale / customer-i18n / home-revamp / catalog-revamp plan + session pages.
 - Repo tmp removed: `.tmp-mm-verify/` (53 untracked MODEL MATCH verification images) and tracked `temp/` folder (`translation_migration.md` + 6 Supabase CSV exports).
 - Note: prose "Companion prompts" references inside remaining raw plan/design files now point at deleted files; raw left unedited per immutability. Kept all `wiki/sources/doc-*_AGENT_PROMPTS*` doc-mirror pages (not in scope).
+
+## [2026-07-17] raw | Physical warranty registration design + agent prompts
+
+- Sources added (human-requested write to raw):
+  - `raw/sources/2026-07-17-physical-warranty-registration-design.md`
+  - `raw/sources/2026-07-17-physical-warranty-registration-agent-prompts.md`
+- Wiki ingest: not run yet (raw-only for now); [[index.md]] points at raw paths
+- Notes: Locks card-in-box activation, My Collection UX, claim-once tier math (fixed RM of original pair), auto-issue vouchers, staff redeem-only (manual till), any partner store. Five serial agents sized for ~200k context.
+
+## [2026-07-17] ingest | Physical warranty registration session accomplishment
+
+- Source: `raw/sources/2026-07-17-physical-warranty-registration-session-accomplishment.md`
+- Wiki touched: [[wiki/sources/2026-07-17-physical-warranty-registration-session-accomplishment]], [[wiki/concepts/physical-warranty-registration-asf-2]] (new), [[wiki/concepts/warranty-discount-credits-asf-2]] (open tension updated), [[index.md]]
+- Notes: Captures Simon decisions + shipped physical registration (card-in-box, My Collection, claim-once auto voucher, staff redeem). Marks prior staff-approve credits path as parallel, not retail SOT.
+
+## [2026-07-17] cleanup | Remove physical warranty agent prompts
+
+- Raw deleted: `2026-07-17-physical-warranty-registration-agent-prompts.md` (executed; human requested removal before commit)
+- Updated: [[index.md]], session accomplishment raw (prompt path notes)
+- Kept: design + session accomplishment sources and wiki concept/source pages

@@ -153,7 +153,9 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
                       {credit.productName}
                     </Text>
                     <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
-                      {t("warrantyCredits.fromClaim", { label: formatClaimLabel(credit.claimId) })}
+                      {credit.claimId !== null
+                        ? t("warrantyCredits.fromClaim", { label: formatClaimLabel(credit.claimId) })
+                        : t("warrantyCredits.fromRegistration")}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 11, color: colors.muted, textTransform: "uppercase", fontFamily: "Inter_400Regular" }}>

@@ -315,6 +315,8 @@ export async function consumeWarrantyCredit(
       status: "used",
       used_at: nowIso,
       used_order_id: params.orderId,
+      // Registration-issued and claim-issued credits both redeem online here.
+      redemption_channel: "online",
     })
     .eq("id", params.creditId)
     .eq("user_id", params.userId)

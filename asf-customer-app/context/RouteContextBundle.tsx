@@ -23,6 +23,7 @@ import { StoreLocationProvider } from "@/context/StoreLocationContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { ClaimProvider } from "@/context/ClaimContext";
 import { WarrantyCreditProvider } from "@/context/WarrantyCreditContext";
+import { WarrantyRegistrationProvider } from "@/context/WarrantyRegistrationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 
 /**
@@ -37,12 +38,16 @@ import { useFeatureFlags } from "@/context/FeatureFlagsContext";
  *   - PostMediaProvider + PostProvider  → `highlights`
  *   - PointsMembershipProvider          → `rewards`
  *   - WishlistProvider                  → `wishlist`
- *   - StoreLocationProvider             → `store_locations`
+ *   - StoreLocationProvider             → `store_locations` OR `warranty_registration`
+ *     (activate form needs partner stores even when the Stores tab is off)
  *   - PromotionProvider                 → `promotions`
  *   - ClaimProvider + WarrantyCreditProvider → `claims`
+ *   - WarrantyRegistrationProvider      → `warranty_registration`
  */
 export function RouteContextBundle({ children }: PropsWithChildren): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
+  const storeLocationsNeeded =
+    isEnabled("store_locations") || isEnabled("warranty_registration");
 
   /**
    * Conditionally wraps children in a provider. When the feature is off the
@@ -62,6 +67,20 @@ export function RouteContextBundle({ children }: PropsWithChildren): React.React
     const content = kids ?? gateChildren;
     if (!isEnabled(flag)) return <>{content}</>;
     return <Provider>{content}</Provider>;
+  }
+
+  /**
+   * Store locations for the Stores tab and for warranty activate store picker.
+   */
+  function OptionalStoreLocations({
+    kids,
+  }: {
+    kids: React.ReactNode;
+  }): React.ReactElement {
+    if (!storeLocationsNeeded) {
+      return <>{kids}</>;
+    }
+    return <StoreLocationProvider>{kids}</StoreLocationProvider>;
   }
 
   return (
@@ -85,14 +104,19 @@ export function RouteContextBundle({ children }: PropsWithChildren): React.React
                                   <OrderProvider>
                                     {/* Wishlist: only subscribe when wishlist is on */}
                                     <Gate flag="wishlist" Provider={WishlistProvider}>
-                                      <Gate
-                                        flag="store_locations"
-                                        Provider={StoreLocationProvider}
+                                      <OptionalStoreLocations
                                         kids={
                                           <Gate flag="promotions" Provider={PromotionProvider}>
                                             <Gate flag="claims" Provider={ClaimProvider}>
                                               <Gate flag="claims" Provider={WarrantyCreditProvider}>
-                                                <NotificationProvider>{children}</NotificationProvider>
+                                                <Gate
+                                                  flag="warranty_registration"
+                                                  Provider={WarrantyRegistrationProvider}
+                                                >
+                                                  <NotificationProvider>
+                                                    {children}
+                                                  </NotificationProvider>
+                                                </Gate>
                                               </Gate>
                                             </Gate>
                                           </Gate>
