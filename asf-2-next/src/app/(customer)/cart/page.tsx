@@ -18,6 +18,13 @@ import {
   readCheckoutPromo,
 } from "@/utils/checkoutPromoStorage";
 import { usePromotionContext } from "@/context/PromotionContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
+import {
+  writeCheckoutWarrantyCredit,
+  clearCheckoutWarrantyCredit,
+  readCheckoutWarrantyCredit,
+} from "@/utils/checkoutWarrantyCreditStorage";
 import Image from "next/image";
 import { LandingLayout } from "@/layouts";
 
@@ -43,6 +50,17 @@ const CartPage: React.FC = () => {
   const { createAddToCartLog } = useAddToCartLogContext();
   const pointsAPI = usePointsMembership();
   const { validatePromoCode } = usePromotionContext();
+  const { isEnabled } = useFeatureFlags();
+  const claimsEnabled = isEnabled("claims");
+  const { credits: warrantyCredits, applyCreditToCart } = useWarrantyCreditContext();
+
+  const [appliedWarrantyCredit, setAppliedWarrantyCredit] = useState<{
+    creditId: string;
+    discountAmountMyr: number;
+    label: string;
+  } | null>(null);
+  const [warrantyCreditError, setWarrantyCreditError] = useState<string | null>(null);
+  const [warrantyApplying, setWarrantyApplying] = useState(false);
 
   const [cartItems, setCartItems] = useState<CartItemViewModel[]>([]);
   const hasDeletedProducts: boolean = useMemo(() => cartItems.some((item) => item.isDeleted), [cartItems]);
@@ -164,11 +182,21 @@ const CartPage: React.FC = () => {
     if (stored !== null) {
       setAppliedPromo(stored);
     }
+    const storedCredit = readCheckoutWarrantyCredit();
+    if (storedCredit !== null) {
+      setAppliedWarrantyCredit({
+        creditId: storedCredit.creditId,
+        discountAmountMyr: storedCredit.discountAmountMyr,
+        label: "Warranty credit",
+      });
+    }
   }, []);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const promoDiscountMyr = appliedPromo !== null ? appliedPromo.discountAmountMyr : 0;
-  const merchandiseAfterPromo = Math.max(0, subtotal - promoDiscountMyr);
+  const warrantyDiscountMyr =
+    appliedWarrantyCredit !== null ? appliedWarrantyCredit.discountAmountMyr : 0;
+  const merchandiseAfterPromo = Math.max(0, subtotal - promoDiscountMyr - warrantyDiscountMyr);
   const availablePoints = userPoints;
   const pointsDiscount = pointsToRM(pointsToUse);
   const total = Math.max(0, merchandiseAfterPromo - pointsDiscount);
@@ -231,7 +259,38 @@ const CartPage: React.FC = () => {
     } else {
       clearCheckoutPromo();
     }
+    if (appliedWarrantyCredit !== null) {
+      writeCheckoutWarrantyCredit({
+        creditId: appliedWarrantyCredit.creditId,
+        discountAmountMyr: appliedWarrantyCredit.discountAmountMyr,
+      });
+    } else {
+      clearCheckoutWarrantyCredit();
+    }
     router.push("/checkout");
+  };
+
+  const activeWarrantyCredits = warrantyCredits.filter((c) => c.status === "active");
+
+  const handleApplyWarrantyCredit = async (creditId: string): Promise<void> => {
+    setWarrantyCreditError(null);
+    setWarrantyApplying(true);
+    try {
+      const result = await applyCreditToCart(creditId, subtotal);
+      if (result.valid === false) {
+        setAppliedWarrantyCredit(null);
+        setWarrantyCreditError(result.reason);
+        return;
+      }
+      const credit = warrantyCredits.find((c) => c.id === creditId);
+      setAppliedWarrantyCredit({
+        creditId,
+        discountAmountMyr: result.discountAmountMyr,
+        label: credit?.productName ?? "Warranty credit",
+      });
+    } finally {
+      setWarrantyApplying(false);
+    }
   };
 
   const handleQuantityChange = async (id: string, newQuantity: number): Promise<void> => {
@@ -429,6 +488,54 @@ const CartPage: React.FC = () => {
               ) : null}
             </div>
 
+            {claimsEnabled && activeWarrantyCredits.length > 0 ? (
+              <div className="mt-6 space-y-2">
+                <p className="text-xs text-[var(--color-muted)]">保固抵扣</p>
+                <div className="space-y-2">
+                  {activeWarrantyCredits.map((credit) => (
+                    <div
+                      key={credit.id}
+                      className="flex items-center justify-between gap-2 text-sm border border-[var(--color-border)] rounded-lg px-3 py-2"
+                    >
+                      <div>
+                        <p className="font-medium">RM {credit.amountMyr.toFixed(2)}</p>
+                        <p className="text-xs text-[var(--color-muted)]">
+                          {credit.productName} · 至{" "}
+                          {new Date(credit.expiresAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={warrantyApplying}
+                        onClick={() => void handleApplyWarrantyCredit(credit.id)}
+                        className="text-xs font-medium border border-black rounded-full px-3 py-1 disabled:opacity-40"
+                      >
+                        应用
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {warrantyCreditError !== null ? (
+                  <p className="text-xs text-red-600">{warrantyCreditError}</p>
+                ) : null}
+                {appliedWarrantyCredit !== null ? (
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>保固抵扣 −RM {appliedWarrantyCredit.discountAmountMyr.toFixed(2)}</span>
+                    <button
+                      type="button"
+                      className="text-xs underline"
+                      onClick={() => {
+                        setAppliedWarrantyCredit(null);
+                        clearCheckoutWarrantyCredit();
+                      }}
+                    >
+                      移除
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="mt-8 border-t border-[var(--color-border)] pt-6">
               <h3 className="font-display text-lg mb-4 text-[var(--color-text)]">订单摘要</h3>
               
@@ -441,6 +548,12 @@ const CartPage: React.FC = () => {
                   <div className="flex justify-between text-green-700">
                     <span>优惠</span>
                     <span>-RM {promoDiscountMyr.toFixed(2)}</span>
+                  </div>
+                )}
+                {appliedWarrantyCredit !== null && warrantyDiscountMyr > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>保固抵扣</span>
+                    <span>-RM {warrantyDiscountMyr.toFixed(2)}</span>
                   </div>
                 )}
                 {pointsToUse > 0 && (

@@ -15,8 +15,12 @@ import {
   claimPolicyConfig,
   type ClaimResolution,
 } from "@/modules/claims/claimPolicyConfig";
-import { evaluateClaimEligibility } from "@/modules/claims/claimEligibility";
+import {
+  evaluateClaimEligibility,
+  type WarrantyCreditEstimate,
+} from "@/modules/claims/claimEligibility";
 import { notifyClaimSubmitted } from "@/modules/claims/claimNotifications";
+import { resolveDeliveryDate } from "@/modules/warranty/resolveDeliveryDate";
 import { supabase } from "@/utils/supabaseClient";
 import type { Database } from "@/database.types";
 
@@ -30,22 +34,31 @@ interface OrderItemWithProduct extends OrderItemRow {
 }
 
 /**
- * Customer claim submission form (`/my-claims/new?orderId=&orderItemId=`).
+ * Customer multi-item claim submission (`/my-claims/new?orderId=&orderItemIds=id1,id2`).
  */
 export default function NewClaimPage(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") ?? "";
-  const orderItemId = searchParams.get("orderItemId") ?? "";
+  const orderItemIdsParam =
+    searchParams.get("orderItemIds") ?? searchParams.get("orderItemId") ?? "";
+
+  const orderItemIds = useMemo(() => {
+    return orderItemIdsParam
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+  }, [orderItemIdsParam]);
 
   const { user, loading: authLoading } = useAuthContext();
   const { showAlert } = useAlertContext();
   const { isEnabled } = useFeatureFlags();
-  const { createClaim } = useClaimContext();
+  const { createClaimWithItems } = useClaimContext();
   const { createLog } = useClaimStatusLogContext();
 
   const [order, setOrder] = useState<OrderRow | null>(null);
-  const [orderItem, setOrderItem] = useState<OrderItemWithProduct | null>(null);
+  const [orderItems, setOrderItems] = useState<OrderItemWithProduct[]>([]);
+  const [estimates, setEstimates] = useState<WarrantyCreditEstimate[]>([]);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,12 +79,14 @@ export default function NewClaimPage(): React.ReactElement {
       return;
     }
     if (user === null) {
-      router.replace(`/authentication/sign-in?next=${encodeURIComponent(`/my-claims/new?orderId=${orderId}&orderItemId=${orderItemId}`)}`);
+      router.replace(
+        `/authentication/sign-in?next=${encodeURIComponent(`/my-claims/new?orderId=${orderId}&orderItemIds=${orderItemIds.join(",")}`)}`
+      );
     }
-  }, [authLoading, user, router, orderId, orderItemId]);
+  }, [authLoading, user, router, orderId, orderItemIds]);
 
   useEffect(() => {
-    if (authLoading || user === null || orderId.length === 0 || orderItemId.length === 0) {
+    if (authLoading || user === null || orderId.length === 0 || orderItemIds.length === 0) {
       setFetchLoading(false);
       return;
     }
@@ -98,29 +113,28 @@ export default function NewClaimPage(): React.ReactElement {
         return;
       }
 
-      const { data: itemData, error: itemError } = await supabase
+      const { data: itemsData, error: itemsError } = await supabase
         .from("order_items")
         .select(
           "*, product:products(id, name), color:product_colors(id, color), size:product_sizes(id, size)"
         )
-        .eq("id", orderItemId)
         .eq("order_id", orderId)
-        .is("deleted_at", null)
-        .maybeSingle();
+        .in("id", orderItemIds)
+        .is("deleted_at", null);
 
       if (cancelled) {
         return;
       }
 
-      if (itemError !== null || itemData === null) {
+      if (itemsError !== null || itemsData === null || itemsData.length === 0) {
         setOrder(null);
-        setOrderItem(null);
+        setOrderItems([]);
         setFetchLoading(false);
         return;
       }
 
       setOrder(orderData);
-      setOrderItem(itemData as OrderItemWithProduct);
+      setOrderItems(itemsData as OrderItemWithProduct[]);
       setFetchLoading(false);
     }
 
@@ -129,7 +143,37 @@ export default function NewClaimPage(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, user, orderId, orderItemId]);
+  }, [authLoading, user, orderId, orderItemIds]);
+
+  useEffect(() => {
+    if (order === null || orderItemIds.length === 0 || claimType.length === 0) {
+      setEstimates([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadEstimates(): Promise<void> {
+      const res = await fetch("/api/warranty/eligibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, orderItemIds, claimTypeKey: claimType }),
+      });
+      if (!res.ok || cancelled) {
+        return;
+      }
+      const data = (await res.json()) as { items: WarrantyCreditEstimate[] };
+      if (!cancelled) {
+        setEstimates(data.items ?? []);
+      }
+    }
+
+    void loadEstimates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, orderItemIds, claimType, order]);
 
   const selectedTypeConfig = useMemo(
     () => claimPolicyConfig.claimTypes.find((t) => t.key === claimType),
@@ -143,9 +187,17 @@ export default function NewClaimPage(): React.ReactElement {
     return evaluateClaimEligibility(claimType, order.status, order.created_at);
   }, [order, claimType]);
 
+  const estimateByItemId = useMemo(() => {
+    const map = new Map<string, WarrantyCreditEstimate>();
+    for (const est of estimates) {
+      map.set(est.orderItemId, est);
+    }
+    return map;
+  }, [estimates]);
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (user === null || order === null || orderItem === null || selectedTypeConfig === undefined) {
+    if (user === null || order === null || selectedTypeConfig === undefined) {
       return;
     }
     if (eligibility !== null && !eligibility.eligible) {
@@ -171,18 +223,34 @@ export default function NewClaimPage(): React.ReactElement {
 
     setSubmitting(true);
     try {
-      const created = await createClaim({
-        user_id: user.id,
-        order_id: order.id,
-        order_item_id: orderItem.id,
-        product_id: orderItem.product_id,
-        claim_type: claimType,
-        status: "submitted",
-        reason: reason.trim().length > 0 ? reason.trim() : null,
-        description: descTrimmed,
-        evidence_urls: urls,
-        requested_resolution: requestedResolution,
-      });
+      const { deliveryDate } = await resolveDeliveryDate(supabase, order.id);
+
+      const created = await createClaimWithItems(
+        {
+          user_id: user.id,
+          order_id: order.id,
+          order_item_id: orderItems[0]?.id ?? null,
+          product_id: orderItems[0]?.product_id ?? null,
+          claim_type: claimType,
+          status: "submitted",
+          reason: reason.trim().length > 0 ? reason.trim() : null,
+          description: descTrimmed,
+          evidence_urls: urls,
+          requested_resolution: requestedResolution,
+          eligibility_start_at: deliveryDate,
+        },
+        orderItems.map((item) => {
+          const est = estimateByItemId.get(item.id);
+          const linePrice = Number(item.amount ?? 0);
+          return {
+            orderItemId: item.id,
+            productId: item.product_id,
+            lineItemPriceMyr: est?.lineItemPriceMyr ?? linePrice,
+            daysSinceDelivery: est?.daysSinceDelivery ?? null,
+            recommendedPercent: est?.recommendedPercent ?? null,
+          };
+        })
+      );
 
       if (created === undefined) {
         return;
@@ -193,7 +261,7 @@ export default function NewClaimPage(): React.ReactElement {
         old_status: null,
         new_status: "submitted",
         changed_by: user.id,
-        notes: "Customer submitted claim",
+        notes: "Customer submitted multi-item claim",
       });
 
       await notifyClaimSubmitted(supabase, { userId: user.id, claimId: created.id });
@@ -217,7 +285,7 @@ export default function NewClaimPage(): React.ReactElement {
     );
   }
 
-  if (order === null || orderItem === null) {
+  if (order === null || orderItems.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--color-bg)] pb-24">
         <NavbarHome />
@@ -248,18 +316,38 @@ export default function NewClaimPage(): React.ReactElement {
         <h1 className="flex-1 text-center font-display text-lg pr-16">提交申请</h1>
       </div>
 
-      <div className="p-4 max-w-lg mx-auto">
-        <div className="card-panel p-4 mb-4 text-sm">
-          <p className="font-medium">{orderItem.product?.name ?? "商品"}</p>
-          <p className="text-[var(--color-muted)] mt-1">
-            {[orderItem.color?.color, orderItem.size?.size].filter(Boolean).join(" · ")}
+      <div className="p-4 max-w-lg mx-auto space-y-4">
+        {orderItems.map((item) => {
+          const est = estimateByItemId.get(item.id);
+          return (
+            <div key={item.id} className="card-panel p-4 text-sm">
+              <p className="font-medium">{item.product?.name ?? "商品"}</p>
+              <p className="text-[var(--color-muted)] mt-1">
+                {[item.color?.color, item.size?.size].filter(Boolean).join(" · ")}
+              </p>
+              {est !== undefined ? (
+                <p className="mt-2 text-xs text-[var(--color-muted)]">
+                  {est.usesAutoTier && est.estimatedCreditMyr > 0 ? (
+                    <>
+                      预估抵扣（若审核通过）：RM {est.estimatedCreditMyr.toFixed(2)}
+                      {est.recommendedPercent !== null
+                        ? `（${String(est.recommendedPercent)}%）`
+                        : ""}
+                    </>
+                  ) : (
+                    "客服将根据情况确定抵扣金额"
+                  )}
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+
+        {eligibility !== null ? (
+          <p className={`text-xs px-1 ${eligibility.eligible ? "text-green-600" : "text-red-500"}`}>
+            {eligibility.reason}
           </p>
-          {eligibility !== null ? (
-            <p className={`mt-2 text-xs ${eligibility.eligible ? "text-green-600" : "text-red-500"}`}>
-              {eligibility.reason}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
 
         <form onSubmit={(ev) => void handleSubmit(ev)} className="card-panel p-5 space-y-4">
           <div>

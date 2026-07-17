@@ -18,24 +18,38 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/concepts/store-locations-feature-asf-2]] — physical store locator: routes, RLS, API vs direct Supabase patterns, feature flag
 - [[wiki/concepts/pixel2motion-splash-asf-2]] — animated cold-start splash: Pixel2Motion → WebView bundle, both Expo apps, regeneration workflow
 - [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular post-purchase claims: config-driven policy, feature flag, customer order entry + staff queue
+- [[wiki/concepts/warranty-discount-credits-asf-2]] — human-verified warranty credits on top of `claims`: estimate-only time tiers, staff approval, fixed-RM one-click cart redemption
 
 ## Entities
 
 - [[wiki/entities/asf-2]] — ASF-2 e-commerce / social platform (stack, active codebases, production status, roadmap pointers)
 
-## Sources — 2026-07-16 Expo Malay locale (3 new)
+## Syntheses — delivered programs
+
+- [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]] — Source of truth for the MODEL MATCH Expo Home revamp, footwear catalog, promotions, i18n, and product-navigation fixes
+
+## Sources — 2026-07-17 MODEL MATCH catalog revamp (1 new)
+
+- [[wiki/sources/2026-07-17-model-match-catalog-revamp-plan]] — Plan: minimart → footwear catalog, verified images, rethemed promos, en/ms copy
+
+## Sources — 2026-07-16 Expo customer home revamp (1 new)
+
+- [[wiki/sources/2026-07-16-expo-customer-home-revamp-plan]] — Plan: MODEL MATCH tenant brand, horizontal arrivals, active offers, session 仪式感
+
+## Sources — 2026-07-16 Expo Malay locale (2 new)
 
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]] — Session outcome SOT: `ms` shipped on Expo; DB CHECK + Malay seed; Agents 1–9
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]] — Plan: `ms` / `ms-MY`, overlay generalization, seed strategy
-- [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]] — Agents 1–9 prompts (executed)
 
-## Sources — 2026-07-08 customer i18n (5 new)
+## Sources — 2026-07-09 warranty discount credits (1 new)
+
+- [[wiki/sources/2026-07-09-warranty-discount-credits-design]] — Design spec + implementation status for the human-verified warranty credit system built on the `claims` module
+
+## Sources — 2026-07-08 customer i18n (3 new)
 
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]] — Session outcome SOT: Expo bilingual shipped; DB tables seeded; Next i18n stashed; phone vs WebView discovery
 - [[wiki/sources/2026-07-08-expo-customer-i18n-plan]] — Expo plan: AsyncStorage, ContentTranslation, no ProductContext RPC
-- [[wiki/sources/2026-07-08-expo-customer-i18n-agent-prompts]] — Expo Agents 1–10 prompts (executed)
 - [[wiki/sources/2026-07-08-customer-i18n-plan]] — Original Next.js i18n plan (web parity / SQL+RPC reference)
-- [[wiki/sources/2026-07-08-customer-i18n-agent-prompts]] — Next.js Agents 1–11 prompts (stashed implementation)
 
 ## Sources — 2026-06-26 post-purchase claims (1 new)
 

@@ -57,10 +57,10 @@ SQL: `docs/sql/CUSTOMER_I18N_*.sql`, `supabase/migrations/20260716120000_custome
 ## Sources
 
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]] — Malay session outcome SOT
-- [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]] / [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]]
+- [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]]
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]] — bilingual session outcome SOT
-- [[wiki/sources/2026-07-08-expo-customer-i18n-plan]] / [[wiki/sources/2026-07-08-expo-customer-i18n-agent-prompts]]
-- [[wiki/sources/2026-07-08-customer-i18n-plan]] / [[wiki/sources/2026-07-08-customer-i18n-agent-prompts]]
+- [[wiki/sources/2026-07-08-expo-customer-i18n-plan]]
+- [[wiki/sources/2026-07-08-customer-i18n-plan]]
 - [[wiki/sources/2026-04-25-mobile-apps-progress]] — Expo vs RPC constraint
 - [[wiki/entities/asf-2]]
 - [[wiki/concepts/mobile-app-architecture-asf-2]]

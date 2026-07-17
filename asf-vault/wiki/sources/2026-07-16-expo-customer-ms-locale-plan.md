@@ -18,5 +18,4 @@ Implementation plan for adding `ms` to `asf-customer-app`: plumbing, `ms.json` c
 ## Related
 
 - [[wiki/concepts/customer-i18n-asf-2]]
-- [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]]
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-session-accomplishment]]

@@ -199,9 +199,10 @@ export default function CheckoutShippingScreen(): React.ReactElement {
   if (!isEnabled("cart")) {
     return <Redirect href="/(tabs)" />;
   }
-  const { promoCode: promoCodeParam, promotionId: promotionIdParam } = useLocalSearchParams<{
+  const { promoCode: promoCodeParam, promotionId: promotionIdParam, warrantyCreditId: warrantyCreditIdParam } = useLocalSearchParams<{
     promoCode?: string;
     promotionId?: string;
+    warrantyCreditId?: string;
   }>();
 
   const [firstName, setFirstName] = useState("");
@@ -381,6 +382,10 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         typeof promotionIdParam === "string" && promotionIdParam.trim().length > 0
           ? promotionIdParam.trim()
           : undefined;
+      const warrantyCreditId =
+        typeof warrantyCreditIdParam === "string" && warrantyCreditIdParam.trim().length > 0
+          ? warrantyCreditIdParam.trim()
+          : undefined;
 
       const orderId = await postCreatePendingOrder({
         userId: user.id,
@@ -388,6 +393,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         shipping_address_structured: structured,
         promoCode,
         promotionId,
+        warrantyCreditId,
         serviceCode: selectedServiceCode,
       });
 

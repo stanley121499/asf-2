@@ -207,6 +207,14 @@ const ProfileSettingsPage: React.FC = () => {
               <HiOutlineChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
             </Link>
           ) : null}
+
+          {claimsEnabled ? (
+            <Link href="/my-account/warranty-credits" className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b border-[var(--color-border)]">
+              <HiOutlineStar className="w-5 h-5 text-[var(--color-text)] opacity-70" />
+              <span className="flex-1 text-sm font-medium text-[var(--color-text)]">保固抵扣</span>
+              <HiOutlineChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
+            </Link>
+          ) : null}
           
           <div>
             <button 

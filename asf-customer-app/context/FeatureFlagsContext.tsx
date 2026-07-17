@@ -34,6 +34,7 @@ export const FEATURE_KEYS = [
   "highlights",
   "wishlist",
   "cart",
+  "claims",
   "promotions",
   "rewards",
   "notifications",

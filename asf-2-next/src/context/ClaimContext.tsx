@@ -17,14 +17,30 @@ import { useAlertContext } from "./AlertContext";
 type ClaimRow = Tables<"claims">;
 type ClaimInsert = TablesInsert<"claims">;
 type ClaimUpdate = TablesUpdate<"claims">;
+type ClaimItemRow = Tables<"claim_items">;
+type ClaimItemInsert = TablesInsert<"claim_items">;
 
 export type Claim = ClaimRow;
+export type ClaimItem = ClaimItemRow;
+
+export type CreateClaimItemInput = {
+  orderItemId: string;
+  productId: string | null;
+  lineItemPriceMyr: number;
+  daysSinceDelivery: number | null;
+  recommendedPercent: number | null;
+};
 
 /** Public API for claim CRUD and realtime sync. */
 export interface ClaimAPI {
   claims: Claim[];
   loading: boolean;
   createClaim: (payload: ClaimInsert) => Promise<Claim | undefined>;
+  createClaimWithItems: (
+    payload: ClaimInsert,
+    items: CreateClaimItemInput[]
+  ) => Promise<Claim | undefined>;
+  fetchClaimItems: (claimId: string) => Promise<ClaimItem[]>;
   updateClaim: (id: string, payload: ClaimUpdate) => Promise<Claim | undefined>;
   deleteClaim: (id: string) => Promise<void>;
   listByUserId: (userId: string) => Promise<Claim[]>;
@@ -112,6 +128,50 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
     [showAlert]
   );
 
+  /** Creates a claim with multiple claim_items rows. */
+  const createClaimWithItems = useCallback(
+    async (payload: ClaimInsert, items: CreateClaimItemInput[]): Promise<Claim | undefined> => {
+      const created = await createClaim(payload);
+      if (created === undefined || items.length === 0) {
+        return created;
+      }
+
+      const rows: ClaimItemInsert[] = items.map((item) => ({
+        claim_id: created.id,
+        order_item_id: item.orderItemId,
+        product_id: item.productId,
+        line_item_price_myr: item.lineItemPriceMyr,
+        days_since_delivery: item.daysSinceDelivery,
+        recommended_percent: item.recommendedPercent,
+      }));
+
+      const { error } = await supabase.from("claim_items").insert(rows);
+      if (error !== null) {
+        showAlert(error.message, "error");
+        return undefined;
+      }
+      return created;
+    },
+    [createClaim, showAlert]
+  );
+
+  /** Fetches claim_items for a claim. */
+  const fetchClaimItems = useCallback(
+    async (claimId: string): Promise<ClaimItem[]> => {
+      const { data, error } = await supabase
+        .from("claim_items")
+        .select("*")
+        .eq("claim_id", claimId)
+        .order("created_at", { ascending: true });
+      if (error !== null) {
+        showAlert(error.message, "error");
+        return [];
+      }
+      return data ?? [];
+    },
+    [showAlert]
+  );
+
   /** Updates a claim and optimistically syncs local state. */
   const updateClaim = useCallback(
     async (id: string, payload: ClaimUpdate): Promise<Claim | undefined> => {
@@ -164,11 +224,13 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
       claims,
       loading,
       createClaim,
+      createClaimWithItems,
+      fetchClaimItems,
       updateClaim,
       deleteClaim,
       listByUserId,
     }),
-    [claims, loading, createClaim, updateClaim, deleteClaim, listByUserId]
+    [claims, loading, createClaim, createClaimWithItems, fetchClaimItems, updateClaim, deleteClaim, listByUserId]
   );
 
   return <ClaimContext.Provider value={api}>{children}</ClaimContext.Provider>;

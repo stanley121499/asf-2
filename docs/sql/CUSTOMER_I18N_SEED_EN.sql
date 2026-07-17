@@ -1,17 +1,18 @@
 -- Customer App i18n — English seed data (locale = 'en')
 --
 -- Prerequisites: Run CUSTOMER_I18N_TRANSLATION_TABLES.sql first.
--- Entity UUIDs match the live ASF-2 catalog (gswszoljvafugtdikimn) as of 2026-07-08.
+-- Entity UUIDs match the live ASF-2 catalog (gswszoljvafugtdikimn).
+-- MODEL MATCH footwear/lifestyle overlay updated 2026-07-17.
 -- Safe to re-run: uses ON CONFLICT ... DO UPDATE.
 
 -- ---------------------------------------------------------------------------
 -- Categories
 -- ---------------------------------------------------------------------------
 INSERT INTO category_translations (category_id, locale, name) VALUES
-  ('aaaaaaaa-1111-1111-1111-000000000001', 'en', 'Beverages'),
-  ('aaaaaaaa-1111-1111-1111-000000000002', 'en', 'Snacks & Food'),
-  ('aaaaaaaa-1111-1111-1111-000000000003', 'en', 'Personal Care'),
-  ('aaaaaaaa-1111-1111-1111-000000000004', 'en', 'Household')
+  ('aaaaaaaa-1111-1111-1111-000000000001', 'en', 'Sneakers'),
+  ('aaaaaaaa-1111-1111-1111-000000000002', 'en', 'Formal & Boots'),
+  ('aaaaaaaa-1111-1111-1111-000000000003', 'en', 'Accessories'),
+  ('aaaaaaaa-1111-1111-1111-000000000004', 'en', 'Shoe Care')
 ON CONFLICT (category_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   updated_at = NOW();
@@ -68,12 +69,12 @@ ON CONFLICT (range_id, locale) DO UPDATE SET
 -- Posts
 -- ---------------------------------------------------------------------------
 INSERT INTO post_translations (post_id, locale, name, caption, cta_text) VALUES
-  ('cccccccc-1111-1111-1111-000000000001', 'en', 'Binge-Watch Essentials', 'The ultimate binge-watch pack! Favorite chocolate bars for every episode — extra sweetness guaranteed.', 'Shop now'),
-  ('cccccccc-1111-1111-1111-000000000002', 'en', 'Summer Chill', 'Ice-cold lime mint soda piled with ice — one sip melts the heat.', 'Cool down'),
-  ('cccccccc-1111-1111-1111-000000000003', 'en', 'Highland Tea Picks', 'Organic highland black tea with a rich aroma and lasting finish. The best afternoon treat for yourself.', 'Taste the tea'),
-  ('cccccccc-1111-1111-1111-000000000004', 'en', 'Ramen Night Champion', 'Who can resist a steaming bowl of Korean spicy ramen? Bold broth, springy noodles — midnight snack MVP.', 'Stock up'),
-  ('cccccccc-1111-1111-1111-000000000005', 'en', 'Deep Roast Coffee Beans', 'Start the morning by grinding a cup of deep-roast specialty beans. Fill the house with rich coffee aroma.', 'Shop coffee'),
-  ('cccccccc-1111-1111-1111-000000000006', 'en', 'Cold Brew, Smooth Sip', 'House cold brew coffee — sugar-free, zero calorie, low acid and silky. Made for coffee lovers.', 'Take it home')
+  ('cccccccc-1111-1111-1111-000000000001', 'en', 'New Season Court Classics', 'The new court collection is here. Clean whites and sharp lines — turn every day into home court.', 'Shop now'),
+  ('cccccccc-1111-1111-1111-000000000002', 'en', 'Night City High-Tops', 'When the city lights up, high-tops stand taller. Walk the glow with MODEL MATCH.', 'Explore'),
+  ('cccccccc-1111-1111-1111-000000000003', 'en', 'Chelsea Boot Editorial', 'Elastic sides, clean silhouette — one Chelsea boot takes you from meetings to weekends.', 'View boots'),
+  ('cccccccc-1111-1111-1111-000000000004', 'en', 'Trail Weekend', 'Grip mid-cuts and breathable layers — turn weekend trails into a light hiking ritual.', 'Get ready'),
+  ('cccccccc-1111-1111-1111-000000000005', 'en', 'Accessories Finish the Look', 'Belts, crossbodies, and caps — small pieces that complete the attitude.', 'Shop accessories'),
+  ('cccccccc-1111-1111-1111-000000000006', 'en', 'Care Ritual', 'Brush, cream, and shoe trees — keep your favorite kicks ready for the next season.', 'Learn care')
 ON CONFLICT (post_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   caption = EXCLUDED.caption,
@@ -84,26 +85,26 @@ ON CONFLICT (post_id, locale) DO UPDATE SET
 -- Products (20 live demo products)
 -- ---------------------------------------------------------------------------
 INSERT INTO product_translations (product_id, locale, name, description) VALUES
-  ('bbbbbbbb-1111-1111-1111-000000000001', 'en', 'Coca-Cola Classic', 'Crisp, bold, timeless classic taste'),
-  ('bbbbbbbb-1111-1111-1111-000000000002', 'en', 'Premium Roast Beans', 'Deep roast with a rich, lasting aroma'),
-  ('bbbbbbbb-1111-1111-1111-000000000003', 'en', 'Highland Organic Black Tea', 'Organically grown with a sweet aftertaste'),
-  ('bbbbbbbb-1111-1111-1111-000000000004', 'en', 'Cold Brew Coffee', 'Smooth and low-acid — summer refreshment'),
-  ('bbbbbbbb-1111-1111-1111-000000000005', 'en', 'Lime Mint Soda', 'Fresh, crisp, and heat-beating'),
-  ('bbbbbbbb-1111-1111-1111-000000000006', 'en', 'Artisan Latte', 'Silky foam blended with bold espresso'),
-  ('bbbbbbbb-1111-1111-1111-000000000007', 'en', 'Korean Spicy Ramen', 'Chewy noodles in a rich, spicy broth'),
-  ('bbbbbbbb-1111-1111-1111-000000000008', 'en', 'Assorted Chocolates', 'Includes Mars, KitKat, and other bestsellers'),
-  ('bbbbbbbb-1111-1111-1111-000000000009', 'en', 'Butter Cookies', 'Rich butter aroma that melts in your mouth'),
-  ('bbbbbbbb-1111-1111-1111-000000000010', 'en', 'Crispy Potato Chips', 'Crunchy chips — perfect binge-watch snack'),
-  ('bbbbbbbb-1111-1111-1111-000000000011', 'en', 'Mixed Nuts', 'Healthy, delicious, fully nutritious'),
-  ('bbbbbbbb-1111-1111-1111-000000000012', 'en', 'Baked Granola Bars', 'High fiber, low fat — a healthy meal swap'),
-  ('bbbbbbbb-1111-1111-1111-000000000013', 'en', 'Popcorn Family Pack', 'Sweet caramel — cinema vibes at home'),
-  ('bbbbbbbb-1111-1111-1111-000000000014', 'en', 'Nourishing Body Wash', 'Milk essence for soft, hydrated skin'),
-  ('bbbbbbbb-1111-1111-1111-000000000015', 'en', 'Herbal Toothpaste', 'Gum care with fresh herbal mint'),
-  ('bbbbbbbb-1111-1111-1111-000000000016', 'en', 'Essential Oil Shampoo', 'Improves hair quality and smooths frizz'),
-  ('bbbbbbbb-1111-1111-1111-000000000017', 'en', 'Deep Clean Detergent', 'Powerful clean with 99.9% antibacterial action'),
-  ('bbbbbbbb-1111-1111-1111-000000000018', 'en', 'Lemon Dishwash', 'One drop works — gentle on hands'),
-  ('bbbbbbbb-1111-1111-1111-000000000019', 'en', 'Premium Tissue', '3-ply thick — stays strong when wet'),
-  ('bbbbbbbb-1111-1111-1111-000000000020', 'en', 'Multi-Surface Cleaner', 'Works for kitchen and bathroom')
+  ('bbbbbbbb-1111-1111-1111-000000000001', 'en', 'Classic Court Sneaker', 'Clean lines and a breathable upper — the everyday court classic.'),
+  ('bbbbbbbb-1111-1111-1111-000000000002', 'en', 'Urban Runner', 'Light cushioning for city commutes and easy pace days.'),
+  ('bbbbbbbb-1111-1111-1111-000000000003', 'en', 'Night Street High-Top', 'Dark high-top profile with presence after sundown.'),
+  ('bbbbbbbb-1111-1111-1111-000000000004', 'en', 'Minimal Leather Derby', 'Sharp derby cut for office hours and evening plans.'),
+  ('bbbbbbbb-1111-1111-1111-000000000005', 'en', 'Black Chelsea Boot', 'Elastic-side Chelsea boots — slip on a clean silhouette.'),
+  ('bbbbbbbb-1111-1111-1111-000000000006', 'en', 'Trail Hiker Mid', 'Grippy mid-cut for weekend trails and light hikes.'),
+  ('bbbbbbbb-1111-1111-1111-000000000007', 'en', 'Soft Knit Slip-On', 'Sock-like fit for effortless everyday steps.'),
+  ('bbbbbbbb-1111-1111-1111-000000000008', 'en', 'Retro Court Low', 'Retro colorways on a low court silhouette.'),
+  ('bbbbbbbb-1111-1111-1111-000000000009', 'en', 'Platform Sandal', 'Light platform sandal for summer proportions.'),
+  ('bbbbbbbb-1111-1111-1111-000000000010', 'en', 'Penny Loafer', 'Classic penny loafer — smart casual, anytime.'),
+  ('bbbbbbbb-1111-1111-1111-000000000011', 'en', 'Chunky Dad Sneaker', 'Bold sole and retro shape for stacked street looks.'),
+  ('bbbbbbbb-1111-1111-1111-000000000012', 'en', 'Performance Trainer', 'Multi-directional support for gym and daily wear.'),
+  ('bbbbbbbb-1111-1111-1111-000000000013', 'en', 'Suede Ankle Boot', 'Soft suede texture for layered autumn outfits.'),
+  ('bbbbbbbb-1111-1111-1111-000000000014', 'en', 'Canvas Low Classic', 'Light canvas low-tops that never go out of style.'),
+  ('bbbbbbbb-1111-1111-1111-000000000015', 'en', 'Sock Runner', 'Integrated sock collar for a closer, lighter run.'),
+  ('bbbbbbbb-1111-1111-1111-000000000016', 'en', 'Leather Belt', 'Simple leather belt to finish the whole look.'),
+  ('bbbbbbbb-1111-1111-1111-000000000017', 'en', 'Crew Socks 3-Pack', 'Comfortable crew socks in a ready-to-rotate pack.'),
+  ('bbbbbbbb-1111-1111-1111-000000000018', 'en', 'Shoe Care Kit', 'Clean, condition, and polish — extend your footwear life.'),
+  ('bbbbbbbb-1111-1111-1111-000000000019', 'en', 'Mini Crossbody', 'Light crossbody that frees your hands and finishes the outfit.'),
+  ('bbbbbbbb-1111-1111-1111-000000000020', 'en', 'Logo Cap', 'Classic baseball silhouette with MODEL MATCH attitude.')
 ON CONFLICT (product_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

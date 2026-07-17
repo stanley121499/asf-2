@@ -19,6 +19,7 @@ import { useTranslation } from "@/context/LocaleContext";
 import type { Product } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
+import { openBrowseProduct } from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
 
 /**
@@ -282,7 +283,7 @@ export default function WishlistScreen(): React.ReactElement {
           renderItem={({ item }) => (
             <WishlistCard
               product={item}
-              onOpen={() => router.push(`/(tabs)/browse/${item.id}`)}
+              onOpen={() => openBrowseProduct(router, item.id, { returnTo: "wishlist" })}
               onRemove={() => void removeFromWishlist(item.id)}
             />
           )}

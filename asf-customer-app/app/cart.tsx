@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -14,13 +14,32 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
-import { useTranslation } from "@/context/LocaleContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
+import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { usePromotionContext } from "@/context/PromotionContext";
+import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
 import { getPromoErrorTranslationKey } from "@/i18n/errorMap";
+import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
 import { colors } from "@/constants/theme";
+
+/**
+ * Reads a single string search param (expo-router may return string | string[]).
+ */
+function firstSearchParam(value: string | string[] | undefined): string | null {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (typeof first === "string" && first.trim().length > 0) {
+      return first.trim();
+    }
+  }
+  return null;
+}
 
 /**
  * Estimated shipping shown in the cart summary only. The actual rate is
@@ -35,14 +54,17 @@ const SHIPPING_ESTIMATE_MYR = 10;
  */
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();
+  const params = useLocalSearchParams<{ promoCode?: string | string[] }>();
   const { t } = useTranslation();
   const { translateProduct } = useContentTranslation();
   const { user } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
   const { products } = useProductContext();
   const { add_to_carts, loading, updateAddToCart, deleteAddToCart } = useAddToCartContext();
   const { validatePromoCode } = usePromotionContext();
 
-  const [promoInput, setPromoInput] = useState("");
+  const prefillPromoCode = firstSearchParam(params.promoCode);
+  const [promoInput, setPromoInput] = useState(prefillPromoCode ?? "");
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<{
@@ -50,11 +72,56 @@ export default function CartScreen(): React.ReactElement {
     promotionId: string;
     discountAmountMyr: number;
   } | null>(null);
+  const [appliedWarrantyCredit, setAppliedWarrantyCredit] = useState<{
+    creditId: string;
+    discountAmountMyr: number;
+    label: string;
+  } | null>(null);
+  /** Guards one-shot auto-validate from deep-link / offer tap. */
+  const autoValidateAttemptedRef = useRef(false);
 
   const rows = useMemo(() => {
     if (user === null) return [];
     return add_to_carts.filter((r) => r.user_id === user.id);
   }, [add_to_carts, user]);
+
+  /**
+   * Prefill promo input from navigation params (e.g. home offer tap).
+   * Auto-validates once when the cart already has lines.
+   */
+  useEffect(() => {
+    if (prefillPromoCode === null) {
+      return;
+    }
+    setPromoInput(prefillPromoCode);
+    if (autoValidateAttemptedRef.current) {
+      return;
+    }
+    if (loading || user === null || rows.length === 0) {
+      return;
+    }
+    autoValidateAttemptedRef.current = true;
+    const cartLines = rows.map((r) => ({ product_id: r.product_id, amount: r.amount }));
+    setPromoLoading(true);
+    setPromoError(null);
+    void (async () => {
+      try {
+        const result = await validatePromoCode(prefillPromoCode, cartLines);
+        if (result.valid === false) {
+          setAppliedPromo(null);
+          setPromoError(t(getPromoErrorTranslationKey(result.reason)));
+          return;
+        }
+        setAppliedPromo({
+          code: prefillPromoCode,
+          promotionId: result.promotionId,
+          discountAmountMyr: result.discountAmountMyr,
+        });
+      } finally {
+        setPromoLoading(false);
+      }
+    })();
+  }, [prefillPromoCode, loading, user, rows, validatePromoCode, t]);
 
   const linesWithProduct = useMemo(() => {
     return rows
@@ -77,7 +144,9 @@ export default function CartScreen(): React.ReactElement {
     return sum;
   }, [linesWithProduct]);
 
-  const discount = appliedPromo?.discountAmountMyr ?? 0;
+  const promoDiscount = appliedPromo?.discountAmountMyr ?? 0;
+  const warrantyDiscount = appliedWarrantyCredit?.discountAmountMyr ?? 0;
+  const discount = promoDiscount + warrantyDiscount;
   const total = Math.max(0, subtotal + SHIPPING_ESTIMATE_MYR - discount);
 
   const applyPromo = async (): Promise<void> => {
@@ -117,6 +186,9 @@ export default function CartScreen(): React.ReactElement {
     if (appliedPromo !== null) {
       params.promoCode = appliedPromo.code;
       params.promotionId = appliedPromo.promotionId;
+    }
+    if (appliedWarrantyCredit !== null) {
+      params.warrantyCreditId = appliedWarrantyCredit.creditId;
     }
     router.push({ pathname: "/checkout", params });
   };
@@ -351,6 +423,14 @@ export default function CartScreen(): React.ReactElement {
               )}
             </View>
 
+            {isEnabled("claims") ? (
+              <WarrantyCreditCartSection
+                subtotal={subtotal}
+                applied={appliedWarrantyCredit}
+                onApplied={setAppliedWarrantyCredit}
+              />
+            ) : null}
+
             {/* Order summary */}
             <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 24 }}>
               <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 16 }}>
@@ -368,10 +448,16 @@ export default function CartScreen(): React.ReactElement {
                 <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: -4 }}>
                   {t("cart.shippingEstimateNote")}
                 </Text>
-                {discount > 0 && (
+                {promoDiscount > 0 && (
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.discount")}</Text>
-                    <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(discount)}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(promoDiscount)}</Text>
+                  </View>
+                )}
+                {warrantyDiscount > 0 && (
+                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.warrantyCreditsLabel")}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(warrantyDiscount)}</Text>
                   </View>
                 )}
                 <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
@@ -405,6 +491,153 @@ export default function CartScreen(): React.ReactElement {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+interface WarrantyCreditCartSectionProps {
+  subtotal: number;
+  applied: {
+    creditId: string;
+    discountAmountMyr: number;
+    label: string;
+  } | null;
+  onApplied: (value: {
+    creditId: string;
+    discountAmountMyr: number;
+    label: string;
+  } | null) => void;
+}
+
+/**
+ * Warranty credit apply UI — only mounted when `claims` feature flag is on
+ * (and WarrantyCreditProvider is in the tree).
+ */
+function WarrantyCreditCartSection({
+  subtotal,
+  applied,
+  onApplied,
+}: Readonly<WarrantyCreditCartSectionProps>): React.ReactElement | null {
+  const { t } = useTranslation();
+  const { locale } = useLocale();
+  const { credits, applyCreditToCart } = useWarrantyCreditContext();
+  const [error, setError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
+
+  const now = Date.now();
+  const activeCredits = credits.filter((c) => {
+    if (c.status !== "active") {
+      return false;
+    }
+    const expires = new Date(c.expiresAt).getTime();
+    return Number.isFinite(expires) && expires >= now;
+  });
+
+  if (activeCredits.length === 0) {
+    return null;
+  }
+
+  const mapError = (reason: string): string => {
+    if (reason.includes("expired")) {
+      return t("cart.warrantyCreditErrors.expired");
+    }
+    if (reason.includes("active")) {
+      return t("cart.warrantyCreditErrors.inactive");
+    }
+    if (reason.includes("empty")) {
+      return t("cart.warrantyCreditErrors.cartEmpty");
+    }
+    if (reason.includes("not found")) {
+      return t("cart.warrantyCreditErrors.notFound");
+    }
+    return t("cart.warrantyCreditErrors.cannotApply");
+  };
+
+  const handleApply = async (creditId: string): Promise<void> => {
+    setError(null);
+    setApplying(true);
+    try {
+      const result = await applyCreditToCart(creditId, subtotal);
+      if (result.valid === false) {
+        onApplied(null);
+        setError(mapError(result.reason));
+        return;
+      }
+      const credit = credits.find((c) => c.id === creditId);
+      onApplied({
+        creditId,
+        discountAmountMyr: result.discountAmountMyr,
+        label: credit?.productName ?? t("cart.warrantyCreditsLabel"),
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  return (
+    <View style={{ marginTop: 24 }}>
+      <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+        {t("cart.warrantyCreditsLabel")}
+      </Text>
+      {activeCredits.map((credit) => (
+        <View
+          key={credit.id}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 8,
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+              {formatRm(credit.amountMyr)}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }} numberOfLines={1}>
+              {credit.productName}
+            </Text>
+            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}>
+              {t("cart.warrantyCreditExpires", { date: formatDate(locale, credit.expiresAt) })}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => void handleApply(credit.id)}
+            disabled={applying}
+            style={{
+              borderWidth: 1,
+              borderColor: "#000000",
+              borderRadius: 99,
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              opacity: applying ? 0.5 : 1,
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+              {t("cart.warrantyCreditApply")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+      {error !== null ? (
+        <Text style={{ fontSize: 12, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+      ) : null}
+      {applied !== null ? (
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+          <Text style={{ fontSize: 13, color: "#15803D", fontFamily: "Inter_400Regular" }}>
+            {t("cart.warrantyCreditApplied", { amount: formatRm(applied.discountAmountMyr) })}
+          </Text>
+          <TouchableOpacity onPress={() => onApplied(null)}>
+            <Text style={{ fontSize: 12, color: colors.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
+              {t("cart.remove")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </View>
   );
 }
 

@@ -1,0 +1,172 @@
+/**
+ * Configurable claim policy for the Post-Purchase Claims module.
+ */
+
+/** Resolution outcomes staff may grant. */
+export type ClaimResolution =
+  | "refund"
+  | "replacement"
+  | "repair"
+  | "store_credit"
+  | "reject";
+
+/** Claim lifecycle status stored in `claims.status`. */
+export type ClaimStatus =
+  | "submitted"
+  | "in_review"
+  | "needs_info"
+  | "approved"
+  | "rejected"
+  | "resolved";
+
+/** A single claim type customers can select. */
+export interface ClaimTypeConfig {
+  key: string;
+  label: string;
+  eligibleDaysAfterDelivery: number;
+  requiresOrderItem: boolean;
+  requiresPhotos: boolean;
+  examplesCovered: readonly string[];
+  examplesNotCovered: readonly string[];
+  allowedResolutions: readonly ClaimResolution[];
+}
+
+/** Full module policy configuration. */
+export interface ClaimPolicyConfig {
+  moduleLabel: string;
+  productPolicyTitle: string;
+  productCareTitle: string;
+  shippingPolicyTitle: string;
+  claimTypes: readonly ClaimTypeConfig[];
+  policyCoveredExamples: readonly string[];
+  policyNotCoveredExamples: readonly string[];
+  careInstructions: string;
+  shippingReturnCopy: string;
+}
+
+/** Default shoe-store configuration. */
+export const DEFAULT_CLAIM_POLICY_CONFIG: ClaimPolicyConfig = {
+  moduleLabel: "Warranty & Returns",
+  productPolicyTitle: "保固与退换",
+  productCareTitle: "材质与保养",
+  shippingPolicyTitle: "配送与退货",
+  claimTypes: [
+    {
+      key: "manufacturing_defect",
+      label: "制造缺陷",
+      eligibleDaysAfterDelivery: 90,
+      requiresOrderItem: true,
+      requiresPhotos: true,
+      examplesCovered: ["鞋底开胶", "缝线脱落", "鞋眼/五金损坏", "材质缺陷"],
+      examplesNotCovered: ["正常磨损", "折痕", "刮痕", "水渍损坏", "户外穿着后尺码不合"],
+      allowedResolutions: ["replacement", "repair", "store_credit", "reject"],
+    },
+    {
+      key: "size_exchange",
+      label: "尺码退换",
+      eligibleDaysAfterDelivery: 30,
+      requiresOrderItem: true,
+      requiresPhotos: false,
+      examplesCovered: ["未穿着的尺码不合", "吊牌完好"],
+      examplesNotCovered: ["已户外穿着", "鞋底有污渍"],
+      allowedResolutions: ["replacement", "store_credit", "reject"],
+    },
+    {
+      key: "wrong_item",
+      label: "发错商品",
+      eligibleDaysAfterDelivery: 30,
+      requiresOrderItem: true,
+      requiresPhotos: true,
+      examplesCovered: ["收到错误颜色或尺码", "收到错误款式"],
+      examplesNotCovered: ["下单时选错规格"],
+      allowedResolutions: ["replacement", "refund", "reject"],
+    },
+    {
+      key: "delivery_damage",
+      label: "运输损坏",
+      eligibleDaysAfterDelivery: 14,
+      requiresOrderItem: true,
+      requiresPhotos: true,
+      examplesCovered: ["包裹破损", "鞋盒压坏导致商品受损"],
+      examplesNotCovered: ["外包装轻微磨损但商品完好"],
+      allowedResolutions: ["replacement", "refund", "store_credit", "reject"],
+    },
+  ],
+  policyCoveredExamples: [
+    "制造缺陷（开胶、断线、五金损坏）",
+    "90天内质量问题保固",
+    "30天内未穿着尺码退换",
+  ],
+  policyNotCoveredExamples: [
+    "正常磨损、折痕、刮痕",
+    "水渍、异味、人为损坏",
+    "户外穿着后的退换",
+  ],
+  careInstructions:
+    "请用软布轻拭鞋面，避免长时间浸泡。存放于阴凉干燥处，使用鞋撑保持鞋型。不可机洗。",
+  shippingReturnCopy:
+    "标准配送。30天内未穿着商品可免费退换。制造缺陷享90天保固。",
+};
+
+export const claimPolicyConfig: ClaimPolicyConfig = DEFAULT_CLAIM_POLICY_CONFIG;
+
+/**
+ * Finds a claim type config by key.
+ */
+export function getClaimTypeConfig(key: string): ClaimTypeConfig | undefined {
+  return claimPolicyConfig.claimTypes.find((t) => t.key === key);
+}
+
+/** Translator callback used by claim label helpers. */
+export type ClaimTranslateFn = (
+  key: string,
+  params?: Record<string, string | number>
+) => string;
+
+const CLAIM_STATUS_I18N_KEYS: Record<string, string> = {
+  submitted: "claims.statuses.submitted",
+  in_review: "claims.statuses.in_review",
+  needs_info: "claims.statuses.needs_info",
+  approved: "claims.statuses.approved",
+  rejected: "claims.statuses.rejected",
+  resolved: "claims.statuses.resolved",
+};
+
+const CLAIM_RESOLUTION_I18N_KEYS: Record<string, string> = {
+  refund: "claims.resolutions.refund",
+  replacement: "claims.resolutions.replacement",
+  repair: "claims.resolutions.repair",
+  store_credit: "claims.resolutions.store_credit",
+  reject: "claims.resolutions.reject",
+};
+
+/**
+ * Localized claim type label for UI.
+ */
+export function getClaimTypeLabel(claimTypeKey: string, t: ClaimTranslateFn): string {
+  return t(`claims.types.${claimTypeKey}`);
+}
+
+/**
+ * Localized claim status label for UI.
+ */
+export function getClaimStatusLabel(status: string | null, t: ClaimTranslateFn): string {
+  const key = (status ?? "").trim().toLowerCase();
+  const i18nKey = CLAIM_STATUS_I18N_KEYS[key];
+  if (i18nKey !== undefined) {
+    return t(i18nKey);
+  }
+  return t("claims.statuses.default");
+}
+
+/**
+ * Localized resolution label for UI.
+ */
+export function getClaimResolutionLabel(resolution: string | null, t: ClaimTranslateFn): string {
+  const key = (resolution ?? "").trim().toLowerCase();
+  const i18nKey = CLAIM_RESOLUTION_I18N_KEYS[key];
+  if (i18nKey !== undefined) {
+    return t(i18nKey);
+  }
+  return resolution ?? "—";
+}

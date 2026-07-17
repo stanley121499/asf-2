@@ -1,9 +1,9 @@
 ---
 title: "ASF-2 (project)"
 type: entity
-updated: 2026-07-08
-sources: 81
-tags: [project, ecommerce, supabase, react, nextjs, mobile, stripe, delyva, i18n]
+updated: 2026-07-17
+sources: 82
+tags: [project, ecommerce, supabase, react, nextjs, mobile, stripe, delyva, i18n, warranty]
 ---
 
 # ASF-2 (project)
@@ -50,6 +50,8 @@ Both mobile apps are functional. Web app 12-step execution plan completed.
 
 **Post-purchase claims (2026-06-26):** Reusable `claims` module (feature flag + config-driven policy); shoe-store default; customer order-item entry + staff queue. SQL: `asf-2-next/docs/sql/step_11_claims.sql`. See [[wiki/concepts/post-purchase-claims-module-asf-2]].
 
+**Warranty discount credits (2026-07-09):** Human-verified warranty credit system extending the `claims` module in `asf-2-next` — merchant-configurable time tiers (estimate only), staff approval issues fixed-RM per-line-item `warranty_credits`, one-click cart redemption, single-use, 1-year expiry. New tables `warranty_policies` / `warranty_discount_tiers` / `claim_items` / `warranty_credits`; delivery date from `order_status_logs`. SQL: `asf-2-next/docs/sql/step_12_warranty_discount_credits.sql`. See [[wiki/concepts/warranty-discount-credits-asf-2]], [[wiki/sources/2026-07-09-warranty-discount-credits-design]].
+
 **Customer i18n (2026-07-08):** Expo `asf-customer-app` — AsyncStorage `asf_locale`, JSON `t()`, Profile language picker, `ContentTranslationContext` overlays for six `*_translations` tables (seeded for live minimart catalog on `gswszoljvafugtdikimn`). Expo ProductContext must **not** use locale RPC. Next.js UI i18n was prototyped then **git-stashed**. SQL: `docs/sql/CUSTOMER_I18N_*.sql`. See [[wiki/concepts/customer-i18n-asf-2]], [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]].
 
 See [[wiki/sources/2026-04-25-mobile-apps-progress]] for full mobile app details and schema corrections.
@@ -78,5 +80,7 @@ See [[wiki/sources/2026-04-25-mobile-apps-progress]] for full mobile app details
 - [[wiki/concepts/pixel2motion-splash-asf-2]]
 - [[wiki/sources/2026-06-26-post-purchase-claims-module]]
 - [[wiki/concepts/post-purchase-claims-module-asf-2]]
+- [[wiki/concepts/warranty-discount-credits-asf-2]]
+- [[wiki/sources/2026-07-09-warranty-discount-credits-design]]
 - [[wiki/concepts/customer-i18n-asf-2]]
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]

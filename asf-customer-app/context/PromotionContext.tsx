@@ -10,6 +10,7 @@ import React, {
 
 import type { Database } from "@/database.types";
 import { getApiBaseUrl } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 export type Promotion = Database["public"]["Tables"]["promotions"]["Row"];
 
@@ -64,6 +65,111 @@ const PromotionContext = createContext<PromotionContextValue | undefined>(
   undefined
 );
 
+function parseFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function optionalString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+/**
+ * Normalizes API rows because Postgres numeric columns can arrive as strings.
+ */
+function normalizePromotionRow(row: unknown): Promotion | null {
+  if (typeof row !== "object" || row === null) {
+    return null;
+  }
+
+  const record = row as Record<string, unknown>;
+  const id = record["id"];
+  const name = record["name"];
+  const createdAt = record["created_at"];
+  const discountType = record["discount_type"];
+  const discountValue = parseFiniteNumber(record["discount_value"]);
+  const maxUsesRaw = record["max_uses"];
+  const usesCount = parseFiniteNumber(record["uses_count"]);
+
+  if (
+    typeof id !== "string" ||
+    typeof name !== "string" ||
+    typeof createdAt !== "string" ||
+    typeof discountType !== "string" ||
+    discountValue === null ||
+    usesCount === null
+  ) {
+    return null;
+  }
+
+  const maxUses =
+    maxUsesRaw === null || maxUsesRaw === undefined
+      ? null
+      : parseFiniteNumber(maxUsesRaw);
+  if (maxUsesRaw !== null && maxUsesRaw !== undefined && maxUses === null) {
+    return null;
+  }
+
+  return {
+    active: record["active"] === true,
+    code: optionalString(record["code"]),
+    created_at: createdAt,
+    deleted_at: optionalString(record["deleted_at"]),
+    description: optionalString(record["description"]),
+    discount_type: discountType,
+    discount_value: discountValue,
+    end_date: optionalString(record["end_date"]),
+    id,
+    max_uses: maxUses,
+    name,
+    start_date: optionalString(record["start_date"]),
+    uses_count: usesCount,
+  };
+}
+
+async function fetchPromotionsFromApi(): Promise<Promotion[] | null> {
+  try {
+    const base = getApiBaseUrl();
+    const res = await fetch(`${base}/api/promotions`, { method: "GET" });
+    const json: unknown = await res.json();
+    if (!res.ok || typeof json !== "object" || json === null) {
+      return null;
+    }
+    const rec = json as Record<string, unknown>;
+    const list = rec["promotions"];
+    if (!Array.isArray(list)) {
+      return null;
+    }
+    return list.map(normalizePromotionRow).filter((p) => p !== null);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPromotionsFromSupabase(): Promise<Promotion[]> {
+  const { data, error } = await supabase
+    .from("promotions")
+    .select("*")
+    .eq("active", true)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error !== null) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("PromotionProvider: fallback fetch failed", error.message);
+    }
+    return [];
+  }
+
+  return (data ?? []).map(normalizePromotionRow).filter((p) => p !== null);
+}
+
 /**
  * Loads and mutates promotions via Next.js API routes (service role on the server).
  */
@@ -76,20 +182,10 @@ export function PromotionProvider({
   const refreshPromotions = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const base = getApiBaseUrl();
-      const res = await fetch(`${base}/api/promotions`, { method: "GET" });
-      const json: unknown = await res.json();
-      if (!res.ok || typeof json !== "object" || json === null) {
-        setPromotions([]);
-        return;
-      }
-      const rec = json as Record<string, unknown>;
-      const list = rec["promotions"];
-      if (!Array.isArray(list)) {
-        setPromotions([]);
-        return;
-      }
-      setPromotions(list as Promotion[]);
+      const apiPromotions = await fetchPromotionsFromApi();
+      const nextPromotions =
+        apiPromotions !== null ? apiPromotions : await fetchPromotionsFromSupabase();
+      setPromotions(nextPromotions);
     } catch {
       setPromotions([]);
     } finally {
@@ -118,8 +214,9 @@ export function PromotionProvider({
       if (typeof p !== "object" || p === null) {
         return undefined;
       }
+      const normalized = normalizePromotionRow(p);
       await refreshPromotions();
-      return p as Promotion;
+      return normalized ?? undefined;
     },
     [refreshPromotions]
   );
@@ -144,8 +241,9 @@ export function PromotionProvider({
       if (typeof p !== "object" || p === null) {
         return undefined;
       }
+      const normalized = normalizePromotionRow(p);
       await refreshPromotions();
-      return p as Promotion;
+      return normalized ?? undefined;
     },
     [refreshPromotions]
   );
@@ -192,13 +290,13 @@ export function PromotionProvider({
       }
       const promotionId = o["promotionId"];
       const discountType = o["discountType"];
-      const discountValue = o["discountValue"];
-      const discountAmountMyr = o["discountAmountMyr"];
+      const discountValue = parseFiniteNumber(o["discountValue"]);
+      const discountAmountMyr = parseFiniteNumber(o["discountAmountMyr"]);
       if (
         typeof promotionId !== "string" ||
         (discountType !== "percentage" && discountType !== "fixed") ||
-        typeof discountValue !== "number" ||
-        typeof discountAmountMyr !== "number"
+        discountValue === null ||
+        discountAmountMyr === null
       ) {
         return { valid: false, reason: "Invalid response" };
       }

@@ -238,6 +238,77 @@ export type Database = {
           },
         ]
       }
+      claim_items: {
+        Row: {
+          approved_percent: number | null
+          claim_id: string
+          created_at: string
+          credit_amount_myr: number | null
+          days_since_delivery: number | null
+          id: string
+          line_item_price_myr: number
+          order_item_id: string
+          product_id: string | null
+          recommended_percent: number | null
+          warranty_credit_id: string | null
+        }
+        Insert: {
+          approved_percent?: number | null
+          claim_id: string
+          created_at?: string
+          credit_amount_myr?: number | null
+          days_since_delivery?: number | null
+          id?: string
+          line_item_price_myr: number
+          order_item_id: string
+          product_id?: string | null
+          recommended_percent?: number | null
+          warranty_credit_id?: string | null
+        }
+        Update: {
+          approved_percent?: number | null
+          claim_id?: string
+          created_at?: string
+          credit_amount_myr?: number | null
+          days_since_delivery?: number | null
+          id?: string
+          line_item_price_myr?: number
+          order_item_id?: string
+          product_id?: string | null
+          recommended_percent?: number | null
+          warranty_credit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_items_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_items_warranty_credit_id_fkey"
+            columns: ["warranty_credit_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_credits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claims: {
         Row: {
           approved_resolution: string | null
@@ -246,10 +317,12 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           description: string | null
+          eligibility_start_at: string | null
           evidence_urls: string[]
           id: string
           order_id: string | null
           order_item_id: string | null
+          policy_id: string | null
           product_id: string | null
           reason: string | null
           rejection_reason: string | null
@@ -268,10 +341,12 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           description?: string | null
+          eligibility_start_at?: string | null
           evidence_urls?: string[]
           id?: string
           order_id?: string | null
           order_item_id?: string | null
+          policy_id?: string | null
           product_id?: string | null
           reason?: string | null
           rejection_reason?: string | null
@@ -290,10 +365,12 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           description?: string | null
+          eligibility_start_at?: string | null
           evidence_urls?: string[]
           id?: string
           order_id?: string | null
           order_item_id?: string | null
+          policy_id?: string | null
           product_id?: string | null
           reason?: string | null
           rejection_reason?: string | null
@@ -318,6 +395,13 @@ export type Database = {
             columns: ["order_item_id"]
             isOneToOne: false
             referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_policies"
             referencedColumns: ["id"]
           },
           {
@@ -776,6 +860,7 @@ export type Database = {
           total_amount: number | null
           tracking_number: string | null
           user_id: string | null
+          warranty_credit_id: string | null
         }
         Insert: {
           courier_code?: string | null
@@ -797,6 +882,7 @@ export type Database = {
           total_amount?: number | null
           tracking_number?: string | null
           user_id?: string | null
+          warranty_credit_id?: string | null
         }
         Update: {
           courier_code?: string | null
@@ -818,6 +904,7 @@ export type Database = {
           total_amount?: number | null
           tracking_number?: string | null
           user_id?: string | null
+          warranty_credit_id?: string | null
         }
         Relationships: []
       }
@@ -2122,6 +2209,144 @@ export type Database = {
           subject?: string | null
           type?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      warranty_credits: {
+        Row: {
+          amount_myr: number
+          approved_percent: number
+          claim_id: string
+          claim_item_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          issued_by: string | null
+          status: string
+          used_at: string | null
+          used_order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_myr: number
+          approved_percent: number
+          claim_id: string
+          claim_item_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          issued_by?: string | null
+          status?: string
+          used_at?: string | null
+          used_order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_myr?: number
+          approved_percent?: number
+          claim_id?: string
+          claim_item_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          issued_by?: string | null
+          status?: string
+          used_at?: string | null
+          used_order_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_credits_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranty_credits_claim_item_id_fkey"
+            columns: ["claim_item_id"]
+            isOneToOne: false
+            referencedRelation: "claim_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranty_credits_used_order_id_fkey"
+            columns: ["used_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warranty_discount_tiers: {
+        Row: {
+          created_at: string
+          days_from: number
+          days_to: number
+          discount_percent: number
+          id: string
+          policy_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          days_from: number
+          days_to: number
+          discount_percent: number
+          id?: string
+          policy_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          days_from?: number
+          days_to?: number
+          discount_percent?: number
+          id?: string
+          policy_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_discount_tiers_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warranty_policies: {
+        Row: {
+          active: boolean
+          created_at: string
+          credit_expiry_days: number
+          id: string
+          max_warranty_days: number
+          module_label: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          credit_expiry_days?: number
+          id?: string
+          max_warranty_days?: number
+          module_label?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          credit_expiry_days?: number
+          id?: string
+          max_warranty_days?: number
+          module_label?: string | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

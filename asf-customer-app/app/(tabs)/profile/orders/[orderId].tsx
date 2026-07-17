@@ -1,16 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { OrderProgressTracker } from "@/components/OrderProgressTracker";
 import { useAuthContext } from "@/context/AuthContext";
+import { useContentTranslation } from "@/context/ContentTranslationContext";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useOrderContext } from "@/context/product/OrderContext";
 import type { Database } from "@/database.types";
 import { formatDate } from "@/i18n/format";
+import { isOrderDelivered } from "@/lib/claims/claimEligibility";
+import type { ShippingAddressStructured } from "@/lib/checkoutApi";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
 import { colors } from "@/constants/theme";
@@ -22,6 +26,47 @@ type ProductMini = Pick<Database["public"]["Tables"]["products"]["Row"], "name" 
   product_medias: ProductMediaMini[] | null;
 };
 type ItemWithProduct = OrderItemRow & { products: ProductMini | null };
+
+const SHIPPING_STRUCTURED_FIELDS = [
+  "address1",
+  "address2",
+  "city",
+  "state",
+  "postcode",
+  "country",
+  "recipientName",
+  "recipientPhone",
+] as const;
+
+/**
+ * Narrows persisted JSON to a structured shipping address.
+ */
+function isShippingAddressStructured(value: unknown): value is ShippingAddressStructured {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return SHIPPING_STRUCTURED_FIELDS.every((field) => typeof record[field] === "string");
+}
+
+/**
+ * Builds a multi-line shipping display using the current locale for the phone label.
+ */
+function formatShippingAddressDisplay(
+  structured: ShippingAddressStructured,
+  phoneLine: string,
+): string {
+  return [
+    structured.recipientName,
+    structured.address1,
+    structured.address2,
+    `${structured.city}, ${structured.state} ${structured.postcode}`,
+    structured.country,
+    phoneLine,
+  ]
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
 
 /**
  * Returns the primary product image URL (lowest `arrangement` first).
@@ -90,14 +135,18 @@ function Surface({ children }: Readonly<{ children: React.ReactNode }>): React.R
  */
 export default function OrderDetailScreen(): React.ReactElement {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const router = useRouter();
   const { t } = useTranslation();
+  const { translateProduct } = useContentTranslation();
   const { locale } = useLocale();
   const { user } = useAuthContext();
+  const { isEnabled } = useFeatureFlags();
   const { orders, loading: ordersLoading } = useOrderContext();
 
   const [items, setItems] = useState<ItemWithProduct[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [itemsError, setItemsError] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   // Orders just created during checkout are not yet in the (startup-cached)
   // OrderContext list, so fetch the row directly by id as a fallback.
@@ -182,6 +231,7 @@ export default function OrderDetailScreen(): React.ReactElement {
       : "";
   const status = typeof order.status === "string" ? order.status : null;
   const isPending = (status ?? "").toLowerCase().includes("pending");
+  const canReportIssue = isEnabled("claims") && isOrderDelivered(status);
   const totalAmount = typeof order.total_amount === "number" ? order.total_amount : null;
   const discount =
     typeof order.discounted_amount === "number" && order.discounted_amount > 0
@@ -189,6 +239,38 @@ export default function OrderDetailScreen(): React.ReactElement {
       : null;
   const pointsEarned =
     typeof order.points_earned === "number" && order.points_earned > 0 ? order.points_earned : null;
+
+  const structuredRaw = order.shipping_address_structured;
+  const shippingDisplay =
+    structuredRaw !== null && isShippingAddressStructured(structuredRaw)
+      ? formatShippingAddressDisplay(
+          structuredRaw,
+          structuredRaw.recipientPhone.length > 0
+            ? t("checkout.phonePrefix", { phone: structuredRaw.recipientPhone })
+            : "",
+        )
+      : typeof order.shipping_address === "string" && order.shipping_address.length > 0
+        ? order.shipping_address
+        : "—";
+
+  const toggleItemSelection = (itemId: string): void => {
+    setSelectedItemIds((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const onReportIssue = (): void => {
+    if (selectedItemIds.length === 0 || typeof orderId !== "string") {
+      return;
+    }
+    router.push({
+      pathname: "/(tabs)/profile/claims/new",
+      params: {
+        orderId,
+        orderItemIds: selectedItemIds.join(","),
+      },
+    });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.panel }}>
@@ -246,7 +328,7 @@ export default function OrderDetailScreen(): React.ReactElement {
           <SectionLabel title={t("orders.shippingAddressTitle")} />
           <Surface>
             <Text style={{ fontSize: 14, color: colors.text, lineHeight: 23, fontFamily: "Inter_400Regular" }}>
-              {typeof order.shipping_address === "string" && order.shipping_address.length > 0 ? order.shipping_address : "—"}
+              {shippingDisplay}
             </Text>
           </Surface>
         </View>
@@ -254,6 +336,11 @@ export default function OrderDetailScreen(): React.ReactElement {
         {/* Line items */}
         <View style={{ marginBottom: 20 }}>
           <SectionLabel title={t("orders.items")} />
+          {canReportIssue ? (
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, marginLeft: 4, fontFamily: "Inter_400Regular" }}>
+              {t("orders.selectItemsToClaim")}
+            </Text>
+          ) : null}
           <Surface>
             {itemsLoading ? (
               <ActivityIndicator color={colors.accent} />
@@ -268,13 +355,31 @@ export default function OrderDetailScreen(): React.ReactElement {
               </View>
             ) : (
               items.map((line, idx) => {
-                const name = line.products?.name ?? t("orders.productFallback");
+                const productId =
+                  typeof line.product_id === "string" && line.product_id.length > 0
+                    ? line.product_id
+                    : null;
+                const translatedName =
+                  productId !== null
+                    ? translateProduct(productId, "name", line.products?.name ?? null)
+                    : "";
+                const name =
+                  translatedName.length > 0
+                    ? translatedName
+                    : line.products?.name ?? t("orders.productFallback");
                 const unit = typeof line.products?.price === "number" ? line.products.price : 0;
                 const qty = typeof line.amount === "number" ? line.amount : 0;
                 const imageUrl = getProductImageUrl(line.products);
+                const isSelected = selectedItemIds.includes(line.id);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={line.id}
+                    onPress={() => {
+                      if (canReportIssue) {
+                        toggleItemSelection(line.id);
+                      }
+                    }}
+                    activeOpacity={canReportIssue ? 0.7 : 1}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -282,8 +387,17 @@ export default function OrderDetailScreen(): React.ReactElement {
                       paddingVertical: 12,
                       borderBottomWidth: idx < items.length - 1 ? 1 : 0,
                       borderBottomColor: colors.border,
+                      backgroundColor: isSelected ? "rgba(201,169,110,0.08)" : "transparent",
+                      borderRadius: isSelected ? 8 : 0,
                     }}
                   >
+                    {canReportIssue ? (
+                      <Ionicons
+                        name={isSelected ? "checkbox" : "square-outline"}
+                        size={22}
+                        color={isSelected ? colors.accent : colors.muted}
+                      />
+                    ) : null}
                     <View style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", backgroundColor: colors.panel }}>
                       {imageUrl.length > 0 ? (
                         <Image source={{ uri: imageUrl }} style={{ width: 56, height: 56 }} contentFit="cover" />
@@ -302,11 +416,28 @@ export default function OrderDetailScreen(): React.ReactElement {
                     <Text style={{ fontSize: 14, color: colors.text, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
                       {formatRm(unit * qty)}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })
             )}
           </Surface>
+          {canReportIssue && selectedItemIds.length > 0 ? (
+            <TouchableOpacity
+              onPress={onReportIssue}
+              style={{
+                marginTop: 12,
+                height: 48,
+                backgroundColor: "#000000",
+                borderRadius: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                {t("orders.claimSelected", { count: selectedItemIds.length })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* Receipt-style payment summary */}

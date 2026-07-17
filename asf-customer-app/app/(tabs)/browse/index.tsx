@@ -19,6 +19,7 @@ import { useCategoryContext } from "@/context/product/CategoryContext";
 import { useProductContext } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
+import { openBrowseProduct } from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
 
 type SortMode = "newest" | "price_asc" | "price_desc";
@@ -186,7 +187,7 @@ export default function BrowseIndexScreen(): React.ReactElement {
               imageUri={left.medias[0]?.media_url ?? ""}
               priceLabel={formatRm(left.price)}
               wishlisted={isInWishlist(left.id)}
-              onPress={() => router.push(`/(tabs)/browse/${left.id}`)}
+              onPress={() => openBrowseProduct(router, left.id)}
               onWishlistPress={() => void (isInWishlist(left.id) ? removeFromWishlist(left.id) : addToWishlist(left.id))}
             />
             {right !== null ? (
@@ -195,7 +196,7 @@ export default function BrowseIndexScreen(): React.ReactElement {
                 imageUri={right.medias[0]?.media_url ?? ""}
                 priceLabel={formatRm(right.price)}
                 wishlisted={isInWishlist(right.id)}
-                onPress={() => router.push(`/(tabs)/browse/${right.id}`)}
+                onPress={() => openBrowseProduct(router, right.id)}
                 onWishlistPress={() => void (isInWishlist(right.id) ? removeFromWishlist(right.id) : addToWishlist(right.id))}
               />
             ) : (

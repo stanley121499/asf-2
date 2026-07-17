@@ -192,6 +192,7 @@ export function ContentTranslationProvider({
   const [maps, setMaps] = useState<TranslationMaps>(EMPTY_MAPS);
 
   useEffect(() => {
+    // Base catalog tables are Chinese (`zh-CN`). Overlay rows exist for `en` and `ms`.
     if (locale === "zh-CN") {
       setMaps(EMPTY_MAPS);
       return;
@@ -200,6 +201,7 @@ export function ContentTranslationProvider({
     let isActive = true;
 
     const loadTranslations = async (): Promise<void> => {
+      const overlayLocale: Locale = locale;
       const [
         productResult,
         categoryResult,
@@ -213,27 +215,27 @@ export function ContentTranslationProvider({
           .select(
             "product_id, name, description, warranty_description, warranty_period",
           )
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
         supabase
           .from("category_translations")
           .select("category_id, name")
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
         supabase
           .from("brand_translations")
           .select("brand_id, name")
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
         supabase
           .from("department_translations")
           .select("department_id, name")
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
         supabase
           .from("range_translations")
           .select("range_id, name")
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
         supabase
           .from("post_translations")
           .select("post_id, name, caption, cta_text")
-          .eq("locale", locale),
+          .eq("locale", overlayLocale),
       ]);
 
       if (!isActive) {
@@ -256,6 +258,11 @@ export function ContentTranslationProvider({
           "[ContentTranslationContext] Translation fetch failed (tables may not exist yet):",
           errors.map((error) => error.message).join("; "),
         );
+      }
+
+      // If every request failed, keep the previous maps rather than blanking to Chinese base.
+      if (errors.length === 6) {
+        return;
       }
 
       setMaps({

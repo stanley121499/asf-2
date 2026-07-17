@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Tabs, useRouter } from "expo-router";
 import React from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
+import { openBrowseCatalog } from "@/lib/browseNavigation";
 
 /** Render nothing — hides the tab bar button and collapses the slot. */
 const hiddenButton = (): null => null;
@@ -30,8 +31,9 @@ const hiddenItemStyle = { display: "none" as const };
 export default function TabsLayout(): React.ReactElement {
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   if (authLoading) {
     return (
@@ -53,6 +55,7 @@ export default function TabsLayout(): React.ReactElement {
 
   return (
     <Tabs
+      key={locale}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
@@ -82,12 +85,18 @@ export default function TabsLayout(): React.ReactElement {
         }}
       />
 
-      {/* Shop — always visible */}
+      {/* Shop — always visible; tab press always lands on catalog, not a leftover PDP */}
       <Tabs.Screen
         name="browse"
         options={{
           title: shopTitle,
           tabBarIcon: ({ color }) => <Ionicons name="bag-outline" size={20} color={color} />,
+        }}
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            openBrowseCatalog(router);
+          },
         }}
       />
 

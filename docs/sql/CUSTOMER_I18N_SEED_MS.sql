@@ -1,17 +1,18 @@
 -- Customer App i18n — Malay seed data (locale = 'ms')
 --
 -- Prerequisites: Run CUSTOMER_I18N_TRANSLATION_TABLES.sql and CUSTOMER_I18N_MS_MIGRATION.sql first.
--- Entity UUIDs match the live ASF-2 catalog (gswszoljvafugtdikimn) as of 2026-07-08.
+-- Entity UUIDs match the live ASF-2 catalog (gswszoljvafugtdikimn).
+-- MODEL MATCH footwear/lifestyle overlay updated 2026-07-17.
 -- Safe to re-run: uses ON CONFLICT ... DO UPDATE.
 
 -- ---------------------------------------------------------------------------
 -- Categories
 -- ---------------------------------------------------------------------------
 INSERT INTO category_translations (category_id, locale, name) VALUES
-  ('aaaaaaaa-1111-1111-1111-000000000001', 'ms', 'Minuman'),
-  ('aaaaaaaa-1111-1111-1111-000000000002', 'ms', 'Snek & Makanan'),
-  ('aaaaaaaa-1111-1111-1111-000000000003', 'ms', 'Penjagaan Diri'),
-  ('aaaaaaaa-1111-1111-1111-000000000004', 'ms', 'Barangan Rumah')
+  ('aaaaaaaa-1111-1111-1111-000000000001', 'ms', 'Kasut sukan'),
+  ('aaaaaaaa-1111-1111-1111-000000000002', 'ms', 'Kasut rasmi & but'),
+  ('aaaaaaaa-1111-1111-1111-000000000003', 'ms', 'Aksesori'),
+  ('aaaaaaaa-1111-1111-1111-000000000004', 'ms', 'Penjagaan kasut')
 ON CONFLICT (category_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   updated_at = NOW();
@@ -68,12 +69,12 @@ ON CONFLICT (range_id, locale) DO UPDATE SET
 -- Posts
 -- ---------------------------------------------------------------------------
 INSERT INTO post_translations (post_id, locale, name, caption, cta_text) VALUES
-  ('cccccccc-1111-1111-1111-000000000001', 'ms', 'Keperluan Menonton Berjamaah', 'Pek menonton berjamaah terbaik! Pelbagai coklat kegemaran untuk setiap episod — lebih manis dijamin.', 'Beli sekarang'),
-  ('cccccccc-1111-1111-1111-000000000002', 'ms', 'Relaks Musim Panas', 'Soda limau pudina sejuk bersalji dengan ais — satu teguk hilangkan kepanasan.', 'Sejukkan diri'),
-  ('cccccccc-1111-1111-1111-000000000003', 'ms', 'Pilihan Teh Tanah Tinggi', 'Teh hitam tanah tinggi organik dengan aroma kaya dan selepas rasa yang tahan lama. Ganjaran petang terbaik untuk diri sendiri.', 'Rasa teh'),
-  ('cccccccc-1111-1111-1111-000000000004', 'ms', 'Juara Malam Ramen', 'Siapa boleh menahan semangkuk ramen pedas Korea yang menggebu? Kuah pekat, mi kenyal — MVP snek tengah malam.', 'Stokkan'),
-  ('cccccccc-1111-1111-1111-000000000005', 'ms', 'Biji Kopi Panggang Dalam', 'Mulakan pagi dengan mengisar secawan biji kopi khas panggang dalam. Penuhi rumah dengan aroma kopi yang kaya.', 'Beli kopi'),
-  ('cccccccc-1111-1111-1111-000000000006', 'ms', 'Cold Brew, Tegukan Lembut', 'Kopi cold brew kedai — tanpa gula, sifar kalori, rendah asid dan lembut. Dicipta untuk pencinta kopi.', 'Bawa pulang')
+  ('cccccccc-1111-1111-1111-000000000001', 'ms', 'Klasik Gelanggang Musim Baru', 'Koleksi gelanggang baharu sudah tiba. Putih bersih dan garis tegas — jadikan setiap hari seperti gelanggang sendiri.', 'Beli sekarang'),
+  ('cccccccc-1111-1111-1111-000000000002', 'ms', 'High-Top Malam Bandar', 'Apabila bandar menyala, high-top lebih menonjol. Berjalan dalam cahaya bersama MODEL MATCH.', 'Terokai'),
+  ('cccccccc-1111-1111-1111-000000000003', 'ms', 'Editorial But Chelsea', 'Sisi elastik, siluet kemas — satu but Chelsea membawa anda dari mesyuarat ke hujung minggu.', 'Lihat but'),
+  ('cccccccc-1111-1111-1111-000000000004', 'ms', 'Hujung Minggu Jejak', 'Potongan mid dengan cengkaman dan lapisan bernafas — jadikan jejak hujung minggu sebagai ritual hiking ringan.', 'Bersedia'),
+  ('cccccccc-1111-1111-1111-000000000005', 'ms', 'Aksesori Melengkapkan Gaya', 'Tali pinggang, beg silang dan topi — butiran kecil yang melengkapkan sikap.', 'Beli aksesori'),
+  ('cccccccc-1111-1111-1111-000000000006', 'ms', 'Ritual Penjagaan', 'Berus, krim dan shoe tree — jaga kasut kegemaran anda untuk musim akan datang.', 'Ketahui penjagaan')
 ON CONFLICT (post_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   caption = EXCLUDED.caption,
@@ -84,26 +85,26 @@ ON CONFLICT (post_id, locale) DO UPDATE SET
 -- Products (20 live demo products)
 -- ---------------------------------------------------------------------------
 INSERT INTO product_translations (product_id, locale, name, description) VALUES
-  ('bbbbbbbb-1111-1111-1111-000000000001', 'ms', 'Coca-Cola Klasik', 'Rasa klasik yang segar, tegas dan abadi'),
-  ('bbbbbbbb-1111-1111-1111-000000000002', 'ms', 'Biji Kopi Panggang Premium', 'Panggang dalam dengan aroma kaya dan tahan lama'),
-  ('bbbbbbbb-1111-1111-1111-000000000003', 'ms', 'Teh Hitam Organik Tanah Tinggi', 'Ditanam secara organik dengan selepas rasa manis'),
-  ('bbbbbbbb-1111-1111-1111-000000000004', 'ms', 'Kopi Cold Brew', 'Lembut dan rendah asid — kesegaran musim panas'),
-  ('bbbbbbbb-1111-1111-1111-000000000005', 'ms', 'Soda Limau Pudina', 'Segar, rangup dan hilangkan kepanasan'),
-  ('bbbbbbbb-1111-1111-1111-000000000006', 'ms', 'Latte Artisan', 'Buih lembut dicampur dengan espresso pekat'),
-  ('bbbbbbbb-1111-1111-1111-000000000007', 'ms', 'Ramen Pedas Korea', 'Mi kenyal dalam kuah pedas yang kaya'),
-  ('bbbbbbbb-1111-1111-1111-000000000008', 'ms', 'Pelbagai Coklat', 'Termasuk Mars, KitKat dan jualan terlaris lain'),
-  ('bbbbbbbb-1111-1111-1111-000000000009', 'ms', 'Biskut Mentega', 'Aroma mentega kaya yang cair di mulut'),
-  ('bbbbbbbb-1111-1111-1111-000000000010', 'ms', 'Kerepek Kentang Rangup', 'Kerepek rangup — snek menonton berjamaah yang sempurna'),
-  ('bbbbbbbb-1111-1111-1111-000000000011', 'ms', 'Kacang Campuran', 'Sihat, sedap dan berkhasiat sepenuhnya'),
-  ('bbbbbbbb-1111-1111-1111-000000000012', 'ms', 'Bar Granola Panggang', 'Serat tinggi, lemak rendah — pengganti hidangan sihat'),
-  ('bbbbbbbb-1111-1111-1111-000000000013', 'ms', 'Popcorn Pek Keluarga', 'Karamel manis — suasana pawagam di rumah'),
-  ('bbbbbbbb-1111-1111-1111-000000000014', 'ms', 'Pencuci Badan Berkhasiat', 'Essen susu untuk kulit lembut dan lembap'),
-  ('bbbbbbbb-1111-1111-1111-000000000015', 'ms', 'Ubat Gigi Herba', 'Penjagaan gusi dengan pudina herba segar'),
-  ('bbbbbbbb-1111-1111-1111-000000000016', 'ms', 'Syampu Minyak Pati', 'Memperbaiki kualiti rambut dan melicinkan kusut'),
-  ('bbbbbbbb-1111-1111-1111-000000000017', 'ms', 'Detergen Pembersihan Dalam', 'Pembersihan berkesan dengan tindakan antibakteria 99.9%'),
-  ('bbbbbbbb-1111-1111-1111-000000000018', 'ms', 'Pencuci Pinggan Lemon', 'Satu titis sudah cukup — lembut pada tangan'),
-  ('bbbbbbbb-1111-1111-1111-000000000019', 'ms', 'Tisu Premium', '3-lapis tebal — kekal kukuh apabila basah'),
-  ('bbbbbbbb-1111-1111-1111-000000000020', 'ms', 'Pembersih Pelbagai Permukaan', 'Sesuai untuk dapur dan bilik mandi')
+  ('bbbbbbbb-1111-1111-1111-000000000001', 'ms', 'Kasut Gelanggang Klasik', 'Garisan bersih dan bahagian atas bernafas — klasik gelanggang untuk setiap hari.'),
+  ('bbbbbbbb-1111-1111-1111-000000000002', 'ms', 'Pelari Bandar', 'Kusyen ringan untuk perjalanan bandar dan rentak santai.'),
+  ('bbbbbbbb-1111-1111-1111-000000000003', 'ms', 'High-Top Jalan Malam', 'Profil high-top gelap yang lebih menonjol selepas matahari terbenam.'),
+  ('bbbbbbbb-1111-1111-1111-000000000004', 'ms', 'Derby Kulit Minimal', 'Potongan derby kemas untuk pejabat dan rancangan malam.'),
+  ('bbbbbbbb-1111-1111-1111-000000000005', 'ms', 'But Chelsea Hitam', 'But Chelsea dengan sisi elastik — siluet kemas, mudah dipakai.'),
+  ('bbbbbbbb-1111-1111-1111-000000000006', 'ms', 'Hiker Jejak Mid', 'Potongan mid dengan cengkaman untuk jejak hujung minggu dan hiking ringan.'),
+  ('bbbbbbbb-1111-1111-1111-000000000007', 'ms', 'Slip-On Knit Lembut', 'Muat seperti stokin untuk langkah harian tanpa susah payah.'),
+  ('bbbbbbbb-1111-1111-1111-000000000008', 'ms', 'Court Low Retro', 'Warna retro pada siluet court rendah.'),
+  ('bbbbbbbb-1111-1111-1111-000000000009', 'ms', 'Sandal Platform', 'Sandal platform ringan untuk proporsi musim panas.'),
+  ('bbbbbbbb-1111-1111-1111-000000000010', 'ms', 'Loafer Penny', 'Loafer penny klasik — smart casual bila-bila masa.'),
+  ('bbbbbbbb-1111-1111-1111-000000000011', 'ms', 'Sneaker Dad Tebal', 'Tapak tebal dan bentuk retro untuk gaya jalanan berlapis.'),
+  ('bbbbbbbb-1111-1111-1111-000000000012', 'ms', 'Kasut Latihan Prestasi', 'Sokongan pelbagai arah untuk gim dan pemakaian harian.'),
+  ('bbbbbbbb-1111-1111-1111-000000000013', 'ms', 'But Pergelangan Suede', 'Tekstur suede lembut untuk gaya berlapis musim luruh.'),
+  ('bbbbbbbb-1111-1111-1111-000000000014', 'ms', 'Kanvas Low Klasik', 'Kanvas low-top ringan yang tidak pernah ketinggalan zaman.'),
+  ('bbbbbbbb-1111-1111-1111-000000000015', 'ms', 'Pelari Stokin', 'Kolar stokin bersepadu untuk lari yang lebih rapat dan ringan.'),
+  ('bbbbbbbb-1111-1111-1111-000000000016', 'ms', 'Tali Pinggang Kulit', 'Tali pinggang kulit ringkas untuk melengkapkan keseluruhan gaya.'),
+  ('bbbbbbbb-1111-1111-1111-000000000017', 'ms', 'Stokin Crew 3 Helai', 'Stokin crew selesa dalam pek sedia digilir.'),
+  ('bbbbbbbb-1111-1111-1111-000000000018', 'ms', 'Kit Penjagaan Kasut', 'Bersih, rawat dan poles — panjangkan hayat kasut anda.'),
+  ('bbbbbbbb-1111-1111-1111-000000000019', 'ms', 'Beg Silang Mini', 'Beg silang ringan yang membebaskan tangan dan melengkapkan gaya.'),
+  ('bbbbbbbb-1111-1111-1111-000000000020', 'ms', 'Topi Logo', 'Siluet baseball klasik dengan sikap MODEL MATCH.')
 ON CONFLICT (product_id, locale) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +19,11 @@ import { useTranslation } from "@/context/LocaleContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
+import {
+  leaveBrowseProduct,
+  openBrowseCatalog,
+  resolveBrowseReturnTo,
+} from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
 import { colors as theme } from "@/constants/theme";
 import {
@@ -27,6 +32,24 @@ import {
 } from "@/lib/productStock";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
+
+/**
+ * Normalizes Expo Router dynamic-segment params (string | string[]) to a single id.
+ */
+function resolveProductIdParam(value: string | string[] | undefined): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    const first = value[0];
+    if (typeof first === "string") {
+      const trimmed = first.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+  }
+  return null;
+}
 
 // ─── Accordion item ───────────────────────────────────────────────────────────
 
@@ -79,8 +102,14 @@ function Accordion({ title, children, open, onToggle }: AccordionProps): React.R
  *   - Fixed bottom add-to-bag CTA
  */
 export default function ProductDetailScreen(): React.ReactElement {
-  const { productId } = useLocalSearchParams<{ productId: string }>();
+  const params = useLocalSearchParams<{
+    productId: string | string[];
+    returnTo?: string | string[];
+  }>();
+  const productId = resolveProductIdParam(params.productId);
+  const returnTo = resolveBrowseReturnTo(params.returnTo);
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { translateProduct } = useContentTranslation();
@@ -90,7 +119,7 @@ export default function ProductDetailScreen(): React.ReactElement {
   const { createAddToCart, add_to_carts, updateAddToCart } = useAddToCartContext();
 
   const product = useMemo(
-    () => products.find((p) => p.id === productId),
+    () => (productId === null ? undefined : products.find((p) => p.id === productId)),
     [products, productId]
   );
 
@@ -118,6 +147,16 @@ export default function ProductDetailScreen(): React.ReactElement {
   const [adding, setAdding] = useState(false);
   const [addErrorKey, setAddErrorKey] = useState<string | null>(null);
   const [addErrorRaw, setAddErrorRaw] = useState<string | null>(null);
+
+  /** Reset local UI state when navigating to a different product on the reused screen. */
+  useEffect(() => {
+    setSelectedImageIdx(0);
+    setSelectedColorId(null);
+    setSelectedSizeId(null);
+    setOpenAccordion("description");
+    setAddErrorKey(null);
+    setAddErrorRaw(null);
+  }, [productId]);
 
   /** Auto-select when only one option */
   useEffect(() => {
@@ -185,6 +224,56 @@ export default function ProductDetailScreen(): React.ReactElement {
       await addToWishlist(product.id);
     }
   }, [addToWishlist, isSaved, product, removeFromWishlist, router, user]);
+
+  /**
+   * Restore the entry screen via `returnTo` (Home / Wishlist / catalog).
+   * Catalog opens still prefer an in-stack pop so list scroll is preserved;
+   * leftover sibling PDPs are skipped by jumping straight to the catalog.
+   */
+  const handleBack = useCallback((): void => {
+    if (returnTo === "home" || returnTo === "wishlist") {
+      leaveBrowseProduct(router, returnTo);
+      return;
+    }
+
+    const state = navigation.getState();
+    const localIndex = typeof state?.index === "number" ? state.index : 0;
+    const routes = state?.routes;
+    if (localIndex > 0 && Array.isArray(routes)) {
+      const previous = routes[localIndex - 1];
+      const previousName =
+        previous !== undefined && typeof previous.name === "string" ? previous.name : "";
+      if (previousName === "[productId]") {
+        openBrowseCatalog(router);
+        return;
+      }
+      router.back();
+      return;
+    }
+    openBrowseCatalog(router);
+  }, [navigation, returnTo, router]);
+
+  /**
+   * `withAnchor` leaves the catalog under this PDP, so gesture / hardware back
+   * would otherwise pop to Shop. Intercept those pops when the entry point was
+   * Home or Wishlist. Allow non-back removals (e.g. Shop tab → catalog reset).
+   */
+  useEffect(() => {
+    if (returnTo !== "home" && returnTo !== "wishlist") {
+      return;
+    }
+
+    const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+      const actionType = event.data.action.type;
+      if (actionType !== "GO_BACK" && actionType !== "POP") {
+        return;
+      }
+      event.preventDefault();
+      leaveBrowseProduct(router, returnTo);
+    });
+
+    return unsubscribe;
+  }, [navigation, returnTo, router]);
 
   const onAddToCart = useCallback(async (): Promise<void> => {
     setAddErrorKey(null);
@@ -257,7 +346,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           {t("product.notFound")}
         </Text>
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/browse")}
+          onPress={() => openBrowseCatalog(router)}
           style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
         >
           <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>
@@ -331,7 +420,7 @@ export default function ProductDetailScreen(): React.ReactElement {
 
           {/* Floating back button */}
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={handleBack}
             style={{
               position: "absolute",
               top: insets.top + 8,

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 
 import { useTranslation } from "@/context/LocaleContext";
+import { tenantBrand } from "@/lib/tenantBrand";
 
 const STORAGE_KEY = "onboarding_v1_done";
 const TOTAL_STEPS = 3;
@@ -62,7 +63,9 @@ export function OnboardingOverlay(): React.ReactElement | null {
         {step === 1 ? (
           <View className="flex-1 justify-between py-12">
             <View className="items-center mt-24">
-              <Text className="font-display text-5xl text-white tracking-widest mb-4">SYSTEM</Text>
+              <Text className="font-display text-5xl text-white tracking-widest mb-4">
+                {tenantBrand.displayName}
+              </Text>
               <Text className="text-gray-300">{t("onboarding.step1.tagline")}</Text>
             </View>
             <View className="items-center gap-6">

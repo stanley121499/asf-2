@@ -37,6 +37,7 @@ export interface CreatePendingOrderPayload {
   shipping_address_structured: ShippingAddressStructured;
   promoCode?: string;
   promotionId?: string;
+  warrantyCreditId?: string;
   serviceCode?: string;
 }
 

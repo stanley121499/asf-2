@@ -44,6 +44,8 @@ import { ConversationProvider } from "./ConversationContext";
 import { UserProvider } from "./UserContext";
 import { ClaimProvider } from "./ClaimContext";
 import { ClaimStatusLogProvider } from "./ClaimStatusLogContext";
+import { WarrantyPolicyProvider } from "./WarrantyPolicyContext";
+import { WarrantyCreditProvider } from "./WarrantyCreditContext";
 
 export const ProductContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <BrandProvider>
@@ -225,17 +227,23 @@ export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children
                                 <OrderProvider>
                                   <WishlistProvider>
                                     <PromotionProvider>
-                                      <Gate
-                                        flag="claims"
-                                        Provider={ClaimsCustomerProviders}
-                                        kids={
-                                          <Gate
-                                            flag="store_locations"
-                                            Provider={StoreLocationProvider}
-                                            kids={<NotificationProvider>{children}</NotificationProvider>}
-                                          />
-                                        }
-                                      />
+                                      <WarrantyCreditProvider>
+                                        <Gate
+                                          flag="claims"
+                                          Provider={ClaimsCustomerProviders}
+                                          kids={
+                                            <Gate
+                                              flag="store_locations"
+                                              Provider={StoreLocationProvider}
+                                              kids={
+                                                <NotificationProvider>
+                                                  {children}
+                                                </NotificationProvider>
+                                              }
+                                            />
+                                          }
+                                        />
+                                      </WarrantyCreditProvider>
                                     </PromotionProvider>
                                   </WishlistProvider>
                                 </OrderProvider>
@@ -263,7 +271,9 @@ export const SlimLandingContextBundle: React.FC<PropsWithChildren> = ({ children
 export const FullAdminContextBundle: React.FC<PropsWithChildren> = ({ children }) => (
   <ProductContextBundle>
     <PromotionProvider>
-      <StoreLocationProvider>{children}</StoreLocationProvider>
+      <StoreLocationProvider>
+        <WarrantyPolicyProvider>{children}</WarrantyPolicyProvider>
+      </StoreLocationProvider>
     </PromotionProvider>
   </ProductContextBundle>
 );

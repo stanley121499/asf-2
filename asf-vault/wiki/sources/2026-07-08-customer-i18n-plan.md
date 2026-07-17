@@ -23,6 +23,5 @@ Original bilingual plan targeting **`asf-2-next`** (localStorage `asf_locale`, t
 ## Related
 
 - [[wiki/concepts/customer-i18n-asf-2]]
-- [[wiki/sources/2026-07-08-customer-i18n-agent-prompts]]
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]
 - [[wiki/sources/2026-07-08-expo-customer-i18n-plan]]

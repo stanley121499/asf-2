@@ -93,6 +93,7 @@ export const createPendingOrderBodySchema = z
     shipping_address_structured: shippingStructuredSchema,
     promoCode: z.string().optional(),
     promotionId: uuidStringSchema.optional(),
+    warrantyCreditId: uuidStringSchema.optional(),
     /** Delyva service code chosen at checkout (validated server-side via re-quote). */
     serviceCode: z.string().min(1).optional(),
   })
@@ -292,6 +293,62 @@ export const storeLocationPatchBodySchema = z
 export const storeLocationIdParamSchema = z.object({
   id: uuidStringSchema,
 });
+
+export const warrantyEligibilityBodySchema = z
+  .object({
+    orderId: uuidStringSchema,
+    orderItemIds: z.array(uuidStringSchema).min(1, "At least one order item is required"),
+    claimTypeKey: z.string().trim().min(1, "claimTypeKey is required"),
+  })
+  .strict();
+
+export const warrantyCreditApplyBodySchema = z
+  .object({
+    creditId: uuidStringSchema,
+    cartSubtotalMyr: z.number().finite().nonnegative(),
+  })
+  .strict();
+
+export const warrantyClaimApproveBodySchema = z
+  .object({
+    claimId: uuidStringSchema,
+    items: z
+      .array(
+        z
+          .object({
+            claimItemId: uuidStringSchema,
+            approvedPercent: z.number().finite().min(0).max(100),
+          })
+          .strict()
+      )
+      .min(1, "At least one claim item is required"),
+    staffNotes: z.union([z.string(), z.null()]).optional(),
+  })
+  .strict();
+
+const warrantyTierInputSchema = z
+  .object({
+    id: uuidStringSchema.optional(),
+    days_from: z.number().int().nonnegative(),
+    days_to: z.number().int().nonnegative(),
+    discount_percent: z.number().finite().min(0).max(100),
+    sort_order: z.number().int().nonnegative(),
+  })
+  .strict()
+  .refine((t) => t.days_from <= t.days_to, {
+    message: "days_from must be <= days_to",
+  });
+
+export const warrantyPolicyPatchBodySchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    max_warranty_days: z.number().int().positive().optional(),
+    credit_expiry_days: z.number().int().positive().optional(),
+    module_label: z.union([z.string(), z.null()]).optional(),
+    active: z.boolean().optional(),
+    tiers: z.array(warrantyTierInputSchema).optional(),
+  })
+  .strict();
 
 export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
 export type CreatePendingOrderBody = z.infer<typeof createPendingOrderBodySchema>;

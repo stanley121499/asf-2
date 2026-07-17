@@ -12,6 +12,7 @@ import {
 } from "@/app/api/_lib/resolveShippingRate";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 import { isUuid } from "@/app/api/_lib/validation";
+import { consumeWarrantyCredit, validateWarrantyCreditForCart } from "@/app/api/_lib/warrantyCredits";
 
 import type { Database, Json } from "@/database.types";
 
@@ -74,6 +75,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } = validated.data;
   const promoCodeRaw = validated.data.promoCode;
   const promotionIdRaw = validated.data.promotionId;
+  const warrantyCreditIdRaw = validated.data.warrantyCreditId;
 
   const supabase = createServiceRoleClient();
 
@@ -143,6 +145,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  let warrantyCreditDiscountMyr = 0;
+  let warrantyCreditIdStored: string | null = null;
+
+  if (typeof warrantyCreditIdRaw === "string" && warrantyCreditIdRaw.length > 0) {
+    const creditResult = await validateWarrantyCreditForCart(
+      supabase,
+      userId,
+      warrantyCreditIdRaw,
+      subtotalMyr
+    );
+    if (creditResult.valid === false) {
+      return NextResponse.json({ error: creditResult.reason }, { status: 400 });
+    }
+    warrantyCreditDiscountMyr = creditResult.discountAmountMyr;
+    warrantyCreditIdStored = creditResult.creditId;
+  }
+
   let shippingRateMyr = FLAT_SHIPPING_MYR;
   let courierCode: string | null = null;
 
@@ -167,7 +186,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const totalMyr = Math.max(
     0,
-    subtotalMyr + shippingRateMyr - discountAmountMyr
+    subtotalMyr + shippingRateMyr - discountAmountMyr - warrantyCreditDiscountMyr
   );
 
   if (totalMyr <= 0) {
@@ -190,7 +209,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       shipping_rate: shippingRateMyr,
       courier_code: courierCode,
       promo_code: promoCodeStored,
-      discount_amount: discountAmountMyr,
+      discount_amount: discountAmountMyr + warrantyCreditDiscountMyr,
+      warranty_credit_id: warrantyCreditIdStored,
     })
     .select("id")
     .single();
@@ -198,6 +218,19 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (insertError !== null || inserted === null) {
     console.error("create-pending-order: insert", insertError?.message);
     return NextResponse.json({ error: "Failed to create pending order" }, { status: 500 });
+  }
+
+  if (warrantyCreditIdStored !== null) {
+    const consumed = await consumeWarrantyCredit(supabase, {
+      creditId: warrantyCreditIdStored,
+      userId,
+      orderId: inserted.id,
+      cartSubtotalMyr: subtotalMyr,
+    });
+    if (consumed.valid === false) {
+      await supabase.from("orders").delete().eq("id", inserted.id);
+      return NextResponse.json({ error: consumed.reason }, { status: 400 });
+    }
   }
 
   if (promotionIdForIncrement !== null) {

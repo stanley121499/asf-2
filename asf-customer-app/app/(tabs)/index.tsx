@@ -24,6 +24,11 @@ import { useProductContext } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
 import { colors } from "@/constants/theme";
 import { formatRm } from "@/lib/formatCurrency";
+import { openBrowseProduct } from "@/lib/browseNavigation";
+import { tenantBrand } from "@/lib/tenantBrand";
+import { HomeArrivalCeremony } from "@/components/home/HomeArrivalCeremony";
+import { HomeOffersStrip } from "@/components/home/HomeOffersStrip";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 
 function productThumb(p: Product): string {
   const first = p.medias[0];
@@ -31,12 +36,14 @@ function productThumb(p: Product): string {
 }
 
 /**
- * Home screen matching web HomePageClient exactly:
- * 1. Transparent top navbar (handled via StatusBar + scroll)
- * 2. Full-height hero (55% screen) — post image with dark gradient, two pill CTA buttons
- * 3. New arrivals — font-display heading + divider line, 2-col grid
- * 4. Categories — horizontal scroll of pill buttons with border
- * 5. Posts strip (if posts exist)
+ * Home screen:
+ * 1. Transparent top navbar (tenant brand + search/cart)
+ * 2. Session arrival ceremony (once per JS process)
+ * 3. Hero (~42% viewport) — post image, shop-primary CTA + secondary Highlights
+ * 4. Offers strip — all active promotions (flag-gated)
+ * 5. New arrivals — horizontal scroll row (~2.2 cards peek)
+ * 6. Categories — horizontal scroll of pill buttons with border
+ * 7. Posts strip (if posts exist)
  */
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
@@ -48,6 +55,8 @@ export default function HomeScreen(): React.ReactElement {
   const { posts } = usePostContext();
   const { postMedias } = usePostMediaContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
+  const { isEnabled } = useFeatureFlags();
+  const promotionsEnabled = isEnabled("promotions");
 
   const [scrollY, setScrollY] = useState(0);
 
@@ -89,7 +98,13 @@ export default function HomeScreen(): React.ReactElement {
 
   const isLoading = productsLoading || categoriesLoading;
 
-  const HERO_HEIGHT = Dimensions.get("window").height * 0.55;
+  const windowWidth = Dimensions.get("window").width;
+  const HERO_HEIGHT = Dimensions.get("window").height * 0.42;
+  const ARRIVAL_CARD_WIDTH = windowWidth * 0.44;
+  const brandTagline =
+    typeof tenantBrand.tagline === "string" && tenantBrand.tagline.length > 0
+      ? tenantBrand.tagline
+      : null;
 
   if (isLoading) {
     return (
@@ -99,8 +114,9 @@ export default function HomeScreen(): React.ReactElement {
     );
   }
 
-  const navbarBg = scrollY > 10 ? colors.bg : "transparent";
-  const navbarTextColor = scrollY > 10 ? colors.text : "#FFFFFF";
+  const navbarIsSolid = scrollY > 10;
+  const navbarBg = navbarIsSolid ? colors.bg : "transparent";
+  const navbarTextColor = navbarIsSolid ? colors.text : "#FFFFFF";
   const heroCaption =
     firstPost !== null
       ? translatePost(firstPost.id, "caption", firstPost.caption)
@@ -108,6 +124,7 @@ export default function HomeScreen(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <HomeArrivalCeremony style={{ flex: 1 }}>
       {/* ── Fixed top navbar ── */}
       <SafeAreaView
         edges={["top"]}
@@ -122,6 +139,19 @@ export default function HomeScreen(): React.ReactElement {
           borderBottomColor: colors.border,
         }}
       >
+        {!navbarIsSolid && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.42)",
+            }}
+          />
+        )}
         <View style={{ height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16 }}>
           <Text
             style={{
@@ -132,7 +162,7 @@ export default function HomeScreen(): React.ReactElement {
               fontWeight: "600",
             }}
           >
-            SYSTEM APP FORMULA
+            {tenantBrand.displayName}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <TouchableOpacity
@@ -160,9 +190,9 @@ export default function HomeScreen(): React.ReactElement {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── 1. Hero section — 55vh, full width ── */}
+        {/* ── 1. Hero section — ~42vh, full width ── */}
         <Pressable
-          onPress={() => router.push("/(tabs)/profile/highlights")}
+          onPress={() => router.push("/(tabs)/browse")}
           style={{ width: "100%", height: HERO_HEIGHT }}
           accessibilityLabel={t("home.heroAlt")}
         >
@@ -187,7 +217,7 @@ export default function HomeScreen(): React.ReactElement {
             />
           )}
 
-          {/* Spacer reserved for navbar readability (no CSS gradient props) */}
+          {/* Layered scrims keep white text readable without adding a gradient dependency. */}
           <View
             style={{
               position: "absolute",
@@ -195,11 +225,23 @@ export default function HomeScreen(): React.ReactElement {
               left: 0,
               right: 0,
               height: 120,
+              backgroundColor: "rgba(0,0,0,0.34)",
+            }}
+            pointerEvents="none"
+          />
+          <View
+            style={{
+              position: "absolute",
+              top: 72,
+              left: 0,
+              right: 0,
+              height: 96,
+              backgroundColor: "rgba(0,0,0,0.14)",
             }}
             pointerEvents="none"
           />
 
-          {/* Bottom gradient area */}
+          {/* Bottom caption scrim */}
           <View
             style={{
               position: "absolute",
@@ -207,10 +249,47 @@ export default function HomeScreen(): React.ReactElement {
               left: 0,
               right: 0,
               height: "60%",
+              backgroundColor: "rgba(0,0,0,0.34)",
               justifyContent: "flex-end",
               padding: 24,
             }}
           >
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: -72,
+                left: 0,
+                right: 0,
+                height: 96,
+                backgroundColor: "rgba(0,0,0,0.18)",
+              }}
+            />
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.18)",
+              }}
+            />
+            {brandTagline !== null && (
+              <Text
+                style={{
+                  fontFamily: "Inter_400Regular",
+                  color: "rgba(255,255,255,0.85)",
+                  fontSize: 13,
+                  letterSpacing: 1,
+                  marginBottom: 8,
+                }}
+                numberOfLines={1}
+              >
+                {brandTagline}
+              </Text>
+            )}
             {heroCaption.length > 0 && (
               <Text
                 style={{
@@ -225,38 +304,38 @@ export default function HomeScreen(): React.ReactElement {
                 {heroCaption}
               </Text>
             )}
-            <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
+            <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
               <Pressable
                 onPress={() => {
                   router.push("/(tabs)/browse");
                 }}
                 style={{
-                  paddingHorizontal: 20,
+                  paddingHorizontal: 22,
                   height: 44,
                   borderRadius: 99,
-                  backgroundColor: "rgba(255,255,255,0.92)",
+                  backgroundColor: colors.accent,
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-                  {t("home.heroCtaExplore")}
+                <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                  {t("home.heroCtaShop")}
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push("/(tabs)/profile/highlights")}
                 style={{
-                  paddingHorizontal: 20,
-                  height: 44,
+                  paddingHorizontal: 16,
+                  height: 40,
                   borderRadius: 99,
                   borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.7)",
-                  backgroundColor: "rgba(255,255,255,0.1)",
+                  borderColor: "rgba(255,255,255,0.55)",
+                  backgroundColor: "transparent",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
+                <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
                   {t("home.heroCtaHighlights")}
                 </Text>
               </Pressable>
@@ -264,9 +343,20 @@ export default function HomeScreen(): React.ReactElement {
           </View>
         </Pressable>
 
-        {/* ── 2. New arrivals grid ── */}
-        <View style={{ marginTop: 32, paddingHorizontal: 16 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        {/* ── Offers strip (active promos; hidden when flag off / empty) ── */}
+        {promotionsEnabled ? <HomeOffersStrip /> : null}
+
+        {/* ── 2. New arrivals — horizontal row ── */}
+        <View style={{ marginTop: 32 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 24,
+              paddingHorizontal: 16,
+            }}
+          >
             <Text
               style={{
                 fontFamily: "PlayfairDisplay_400Regular",
@@ -277,75 +367,92 @@ export default function HomeScreen(): React.ReactElement {
               {t("home.newArrivals")}
             </Text>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+            <Pressable onPress={() => router.push("/(tabs)/browse")} hitSlop={8}>
+              <Text style={{ fontSize: 13, color: colors.accent, fontFamily: "Inter_400Regular" }}>
+                {t("home.seeAllArrivals")}
+              </Text>
+            </Pressable>
           </View>
 
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            {sortedProducts.slice(0, 6).map((product) => {
-              const thumb = productThumb(product);
-              const saved = isInWishlist(product.id);
-              return (
-                <Pressable
-                  key={product.id}
-                  style={{ width: "48%" }}
-                  onPress={() => router.push(`/(tabs)/browse/${product.id}`)}
-                >
-                  <View
-                    style={{
-                      aspectRatio: 3 / 4,
-                      backgroundColor: colors.panel,
-                      overflow: "hidden",
-                      marginBottom: 8,
-                      width: "100%",
-                    }}
+          {sortedProducts.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+            >
+              {sortedProducts.slice(0, 10).map((product) => {
+                const thumb = productThumb(product);
+                const saved = isInWishlist(product.id);
+                return (
+                  <Pressable
+                    key={product.id}
+                    style={{ width: ARRIVAL_CARD_WIDTH }}
+                    onPress={() => openBrowseProduct(router, product.id, { returnTo: "home" })}
                   >
-                    {thumb.length > 0 ? (
-                      <Image
-                        source={{ uri: thumb }}
-                        style={{ width: "100%", height: "100%" }}
-                        contentFit="cover"
-                        accessibilityLabel={t("home.productAlt")}
-                      />
-                    ) : (
-                      <View style={{ flex: 1, backgroundColor: colors.panel }} />
-                    )}
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: colors.text,
-                      fontFamily: "Inter_400Regular",
-                      marginBottom: 4,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {translateProduct(product.id, "name", product.name ?? null)}
-                  </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <Text style={{ fontSize: 14, color: colors.accent, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-                      {formatRm(product.price)}
-                    </Text>
-                    <Pressable
-                      onPress={() => {
-                        void (saved ? removeFromWishlist(product.id) : addToWishlist(product.id));
+                    <View
+                      style={{
+                        aspectRatio: 3 / 4,
+                        backgroundColor: colors.panel,
+                        overflow: "hidden",
+                        marginBottom: 8,
+                        width: "100%",
                       }}
-                      hitSlop={8}
-                      style={{ padding: 4 }}
-                      accessibilityLabel={saved ? t("home.cardUnsaveAria") : t("home.cardSaveAria")}
                     >
-                      <Ionicons
-                        name={saved ? "heart" : "heart-outline"}
-                        size={18}
-                        color={saved ? colors.accent : colors.muted}
-                      />
-                    </Pressable>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {sortedProducts.length === 0 && (
-            <Text style={{ textAlign: "center", color: colors.muted, paddingVertical: 32, fontFamily: "Inter_400Regular" }}>
+                      {thumb.length > 0 ? (
+                        <Image
+                          source={{ uri: thumb }}
+                          style={{ width: "100%", height: "100%" }}
+                          contentFit="cover"
+                          accessibilityLabel={t("home.productAlt")}
+                        />
+                      ) : (
+                        <View style={{ flex: 1, backgroundColor: colors.panel }} />
+                      )}
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: colors.text,
+                        fontFamily: "Inter_400Regular",
+                        marginBottom: 4,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {translateProduct(product.id, "name", product.name ?? null)}
+                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 14, color: colors.accent, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
+                        {formatRm(product.price)}
+                      </Text>
+                      <Pressable
+                        onPress={() => {
+                          void (saved ? removeFromWishlist(product.id) : addToWishlist(product.id));
+                        }}
+                        hitSlop={8}
+                        style={{ padding: 4 }}
+                        accessibilityLabel={saved ? t("home.cardUnsaveAria") : t("home.cardSaveAria")}
+                      >
+                        <Ionicons
+                          name={saved ? "heart" : "heart-outline"}
+                          size={18}
+                          color={saved ? colors.accent : colors.muted}
+                        />
+                      </Pressable>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text
+              style={{
+                textAlign: "center",
+                color: colors.muted,
+                paddingVertical: 32,
+                paddingHorizontal: 16,
+                fontFamily: "Inter_400Regular",
+              }}
+            >
               {t("home.emptyProducts")}
             </Text>
           )}
@@ -447,6 +554,7 @@ export default function HomeScreen(): React.ReactElement {
           </View>
         )}
       </ScrollView>
+      </HomeArrivalCeremony>
     </View>
   );
 }

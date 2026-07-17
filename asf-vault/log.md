@@ -143,3 +143,49 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
   - [[wiki/concepts/customer-i18n-asf-2]] (updated: trilingual zh-CN/en/ms)
   - [[index.md]] (3 new source entries + concept blurb)
 - Notes: `ms` / `ms-MY` locked; DB CHECK widened + Malay seed applied on gswszoljvafugtdikimn; 717 UI keys × 3 locales; ContentTranslation fetches for en and ms; default remains zh-CN.
+
+## [2026-07-16] ingest | Expo customer home revamp plan + agent prompts
+
+- Sources: `raw/sources/2026-07-16-expo-customer-home-revamp-plan.md`, `raw/sources/2026-07-16-expo-customer-home-revamp-agent-prompts.md`
+- Wiki touched:
+  - [[wiki/sources/2026-07-16-expo-customer-home-revamp-plan]] (new)
+  - [[wiki/sources/2026-07-16-expo-customer-home-revamp-agent-prompts]] (new)
+  - [[index.md]] (2 new source entries)
+- Notes: Simon feedback → locked decisions (MODEL MATCH tenant brand, all active promos, once-per-session ceremony, worst-case urge). Four sequential agents for `asf-customer-app` home only; not yet executed.
+
+## [2026-07-17] ingest | MODEL MATCH catalog content revamp plan + agent prompts
+
+- Sources: `raw/sources/2026-07-17-model-match-catalog-revamp-plan.md`, `raw/sources/2026-07-17-model-match-catalog-revamp-agent-prompts.md`
+- Wiki touched:
+  - [[wiki/sources/2026-07-17-model-match-catalog-revamp-plan]] (new)
+  - [[wiki/sources/2026-07-17-model-match-catalog-revamp-agent-prompts]] (new)
+  - [[index.md]] (2 new source entries; home revamp prompts marked executed)
+- Notes: A1 footwear retheme; promotions retheme; images+names/captions; browser HTTP+appropriateness checks required. Six agents (promos → rename → images×2 → posts → i18n). Pending execution.
+
+## [2026-07-17] query | Expo Home + MODEL MATCH catalog session accomplishment
+
+- Outcome filed: [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]]
+- Scope captured: Home UX and ceremony, MODEL MATCH catalog/live promotions, zh-CN/en/ms overlays, hero/offers fixes, and origin-aware product navigation.
+- Verification recorded: typecheck clean, 724 locale keys × 3, complete product/category/post translations, unique product/post media, and physical-phone smoke testing.
+- Index updated with the synthesis as the delivered-program source of truth.
+
+## [2026-07-17] ingest | Warranty discount credits — design spec (built on claims module)
+
+- Source: `raw/sources/2026-07-09-warranty-discount-credits-design.md`
+- Wiki touched:
+  - [[wiki/sources/2026-07-09-warranty-discount-credits-design]] (new)
+  - [[wiki/concepts/warranty-discount-credits-asf-2]] (new)
+  - [[wiki/concepts/post-purchase-claims-module-asf-2]] (updated: added "Evolution — warranty discount credits" section resolving v1 gaps: DB tiers, `order_status_logs` delivery date, multi-item `claim_items`)
+  - [[wiki/entities/asf-2]] (updated: warranty credits feature block; updated 2026-07-08→2026-07-17; sources 81→82)
+  - [[wiki/00-overview]] (updated: current-focus bullet; sources 81→82)
+  - [[index.md]] (new concept + source entries; new 2026-07-09 sources section)
+- Notes: Human-verified warranty credit system on the `claims` feature flag — estimate-only time tiers, staff approval issues fixed-RM per-line-item `warranty_credits`, one-click cart redemption, single-use, 1-year expiry. New tables `warranty_policies`/`warranty_discount_tiers`/`claim_items`/`warranty_credits`. Working tree confirms all 7 implementation agents shipped in `asf-2-next` (migration `20260709120000_...`, `src/modules/warranty/*`, `api/warranty/*`, `WarrantyPolicy`/`WarrantyCredit` contexts). Open tension: an `asf-customer-app` port also appears in progress despite v1 being scoped web-only.
+
+## [2026-07-17] cleanup | Remove executed agent-prompt raw sources + tmp files (human override of raw immutability)
+
+- Human explicitly authorized deleting completed agent-prompt raw sources for this turn (overrides [[CLAUDE.md]] §3 raw immutability).
+- Raw deleted (6): `2026-07-09-warranty-discount-credits-agent-prompts.md` (ingested first), `2026-07-08-expo-customer-i18n-agent-prompts.md`, `2026-07-08-customer-i18n-agent-prompts.md`, `2026-07-16-expo-customer-ms-locale-agent-prompts.md`, `2026-07-16-expo-customer-home-revamp-agent-prompts.md`, `2026-07-17-model-match-catalog-revamp-agent-prompts.md`.
+- Wiki pages deleted (5): the corresponding `wiki/sources/*-agent-prompts.md` pages.
+- Inbound links fixed to avoid orphans: [[index.md]] (5 entries removed + section counts adjusted), [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]], [[wiki/concepts/customer-i18n-asf-2]], and the ms-locale / customer-i18n / home-revamp / catalog-revamp plan + session pages.
+- Repo tmp removed: `.tmp-mm-verify/` (53 untracked MODEL MATCH verification images) and tracked `temp/` folder (`translation_migration.md` + 6 Supabase CSV exports).
+- Note: prose "Companion prompts" references inside remaining raw plan/design files now point at deleted files; raw left unedited per immutability. Kept all `wiki/sources/doc-*_AGENT_PROMPTS*` doc-mirror pages (not in scope).

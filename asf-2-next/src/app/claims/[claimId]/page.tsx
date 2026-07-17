@@ -32,6 +32,7 @@ import {
 } from "@/modules/claims/claimPolicyConfig";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
 import { applyClaimStatusChange } from "@/modules/claims/claimStatusTransition";
+import { WarrantyCreditReviewPanel } from "@/components/claims/WarrantyCreditReviewPanel";
 import { supabase } from "@/utils/supabaseClient";
 import type { Tables } from "@/database.types";
 
@@ -56,7 +57,7 @@ const ClaimDetailPage: React.FC = () => {
   const claimId = useClaimIdParam();
   const router = useRouter();
   const { isEnabled } = useFeatureFlags();
-  const { claims, loading, updateClaim } = useClaimContext();
+  const { claims, loading, updateClaim, fetchClaimItems } = useClaimContext();
   const { listByClaimId } = useClaimStatusLogContext();
   const { users } = useUserContext();
   const { user: authUser } = useAuthContext();
@@ -355,6 +356,17 @@ const ClaimDetailPage: React.FC = () => {
             </div>
           </Card>
         </div>
+
+        <WarrantyCreditReviewPanel
+          claimId={claim.id}
+          claimStatus={claim.status}
+          claimType={typeLabel}
+          staffNotes={staffNotes}
+          fetchClaimItems={fetchClaimItems}
+          onApproved={() => {
+            void listByClaimId(claim.id).then(setStatusLogs);
+          }}
+        />
 
         {statusLogs.length > 0 ? (
           <Card>

@@ -35,6 +35,10 @@ import {
   type CheckoutPromoPayload,
 } from "@/utils/checkoutPromoStorage";
 import {
+  readCheckoutWarrantyCredit,
+  type CheckoutWarrantyCreditPayload,
+} from "@/utils/checkoutWarrantyCreditStorage";
+import {
   buildFlatFallbackRate,
   fetchDeliveryRates,
   FLAT_SHIPPING_MYR,
@@ -173,6 +177,8 @@ const CheckoutPage: React.FC = () => {
 
   /** Promo carried from cart via sessionStorage; totals are re-validated on the server. */
   const [checkoutPromo, setCheckoutPromo] = useState<CheckoutPromoPayload | null>(null);
+  const [checkoutWarrantyCredit, setCheckoutWarrantyCredit] =
+    useState<CheckoutWarrantyCreditPayload | null>(null);
 
   const [deliveryRates, setDeliveryRates] = useState<DeliveryRateOption[]>([]);
   const [ratesLoading, setRatesLoading] = useState(false);
@@ -181,6 +187,7 @@ const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     setCheckoutPromo(readCheckoutPromo());
+    setCheckoutWarrantyCredit(readCheckoutWarrantyCredit());
   }, []);
 
   useEffect(() => {
@@ -458,6 +465,9 @@ const CheckoutPage: React.FC = () => {
       if (checkoutPromo !== null) {
         pendingBody["promoCode"] = checkoutPromo.promoCode;
         pendingBody["promotionId"] = checkoutPromo.promotionId;
+      }
+      if (checkoutWarrantyCredit !== null) {
+        pendingBody["warrantyCreditId"] = checkoutWarrantyCredit.creditId;
       }
       pendingBody["serviceCode"] = selectedServiceCode;
 

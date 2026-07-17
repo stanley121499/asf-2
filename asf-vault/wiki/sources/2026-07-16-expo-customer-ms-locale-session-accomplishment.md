@@ -27,6 +27,5 @@ Session deliverable adding **Bahasa Melayu (`ms`)** as a third Expo customer loc
 
 - [[wiki/concepts/customer-i18n-asf-2]]
 - [[wiki/sources/2026-07-16-expo-customer-ms-locale-plan]]
-- [[wiki/sources/2026-07-16-expo-customer-ms-locale-agent-prompts]]
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]
 - [[wiki/concepts/mobile-app-architecture-asf-2]]

@@ -182,6 +182,7 @@ const OrderDetailPage = (): React.ReactElement => {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [fetchLoading, setFetchLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (authLoading) {
@@ -396,12 +397,46 @@ const OrderDetailPage = (): React.ReactElement => {
         {/* Items */}
         <div className="card-panel p-5">
           <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">商品 ({totalItems} 件)</h2>
+          {claimsEnabled && isOrderDelivered(order.status) ? (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-[var(--color-muted)]">选择需要报修的商品（可多选）</p>
+              {selectedItemIds.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(
+                      `/my-claims/new?orderId=${encodeURIComponent(order.id)}&orderItemIds=${selectedItemIds.map(encodeURIComponent).join(",")}`
+                    );
+                  }}
+                  className="text-xs font-medium bg-black text-white rounded-full px-4 py-2"
+                >
+                  报告问题 ({selectedItemIds.length})
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <div className="space-y-4">
             {order.items.map((item) => (
               <div
                 key={item.id}
                 className="flex gap-4 border-b border-[var(--color-border)] pb-4 last:border-0 last:pb-0"
               >
+                {claimsEnabled && isOrderDelivered(order.status) ? (
+                  <div className="pt-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedItemIds.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedItemIds((prev) => [...prev, item.id]);
+                        } else {
+                          setSelectedItemIds((prev) => prev.filter((id) => id !== item.id));
+                        }
+                      }}
+                      aria-label={`选择 ${item.product?.name ?? "商品"}`}
+                    />
+                  </div>
+                ) : null}
                 <div className="flex-1">
                   <h4 className="font-medium text-[var(--color-text)] text-sm mb-1">
                     {item.product?.name || "商品"}
@@ -422,24 +457,9 @@ const OrderDetailPage = (): React.ReactElement => {
                           order.created_at
                         );
                         return (
-                          <>
-                            <p className={`text-xs mb-2 ${eligibility.eligible ? "text-green-600" : "text-[var(--color-muted)]"}`}>
-                              {eligibility.eligible ? eligibility.reason : "该商品暂不可申请"}
-                            </p>
-                            {eligibility.eligible ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  router.push(
-                                    `/my-claims/new?orderId=${encodeURIComponent(order.id)}&orderItemId=${encodeURIComponent(item.id)}`
-                                  );
-                                }}
-                                className="text-xs font-medium border border-black rounded-full px-3 py-1"
-                              >
-                                报告问题
-                              </button>
-                            ) : null}
-                          </>
+                          <p className={`text-xs ${eligibility.eligible ? "text-green-600" : "text-[var(--color-muted)]"}`}>
+                            {eligibility.eligible ? eligibility.reason : "该商品暂不可申请"}
+                          </p>
                         );
                       })()}
                     </div>

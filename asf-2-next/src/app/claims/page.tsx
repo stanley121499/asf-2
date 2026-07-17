@@ -20,6 +20,7 @@ import {
 } from "@/modules/claims/claimPolicyConfig";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
 import { applyClaimStatusChange } from "@/modules/claims/claimStatusTransition";
+import { calculateCreditAmount } from "@/modules/warranty/calculateCreditAmount";
 import { supabase } from "@/utils/supabaseClient";
 
 type ClaimTab = ClaimStatus | "all";
@@ -67,6 +68,36 @@ const ClaimsQueuePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAssignedToMe, setShowAssignedToMe] = useState(false);
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
+  const [estimatedCreditByClaimId, setEstimatedCreditByClaimId] = useState<Record<string, number>>(
+    {}
+  );
+
+  useEffect(() => {
+    if (claims.length === 0) {
+      setEstimatedCreditByClaimId({});
+      return;
+    }
+    const claimIds = claims.map((c) => c.id);
+    void supabase
+      .from("claim_items")
+      .select("claim_id, line_item_price_myr, recommended_percent, credit_amount_myr")
+      .in("claim_id", claimIds)
+      .then(({ data }) => {
+        const totals: Record<string, number> = {};
+        for (const row of data ?? []) {
+          const issued = row.credit_amount_myr;
+          const amount =
+            issued !== null
+              ? Number(issued)
+              : calculateCreditAmount(
+                  Number(row.line_item_price_myr),
+                  Number(row.recommended_percent ?? 0)
+                );
+          totals[row.claim_id] = (totals[row.claim_id] ?? 0) + amount;
+        }
+        setEstimatedCreditByClaimId(totals);
+      });
+  }, [claims]);
 
   useEffect(() => {
     if (!isEnabled("claims")) {
@@ -210,6 +241,9 @@ const ClaimsQueuePage: React.FC = () => {
                       <p className="text-sm font-medium truncate">{claim.customerEmail}</p>
                       <p className="text-xs text-gray-500 truncate">
                         {claim.label} · {claim.typeLabel}
+                        {(estimatedCreditByClaimId[claim.id] ?? 0) > 0
+                          ? ` · Est. RM ${(estimatedCreditByClaimId[claim.id] ?? 0).toFixed(2)}`
+                          : ""}
                       </p>
                       <Badge color={getStatusBadgeColor(claim.status)} size="xs" className="mt-1 w-fit">
                         {getClaimStatusLabel(claim.status)}

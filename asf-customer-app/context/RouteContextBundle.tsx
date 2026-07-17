@@ -21,6 +21,8 @@ import { WishlistProvider } from "@/context/WishlistContext";
 import { PromotionProvider } from "@/context/PromotionContext";
 import { StoreLocationProvider } from "@/context/StoreLocationContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { ClaimProvider } from "@/context/ClaimContext";
+import { WarrantyCreditProvider } from "@/context/WarrantyCreditContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 
 /**
@@ -37,6 +39,7 @@ import { useFeatureFlags } from "@/context/FeatureFlagsContext";
  *   - WishlistProvider                  → `wishlist`
  *   - StoreLocationProvider             → `store_locations`
  *   - PromotionProvider                 → `promotions`
+ *   - ClaimProvider + WarrantyCreditProvider → `claims`
  */
 export function RouteContextBundle({ children }: PropsWithChildren): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
@@ -87,7 +90,11 @@ export function RouteContextBundle({ children }: PropsWithChildren): React.React
                                         Provider={StoreLocationProvider}
                                         kids={
                                           <Gate flag="promotions" Provider={PromotionProvider}>
-                                            <NotificationProvider>{children}</NotificationProvider>
+                                            <Gate flag="claims" Provider={ClaimProvider}>
+                                              <Gate flag="claims" Provider={WarrantyCreditProvider}>
+                                                <NotificationProvider>{children}</NotificationProvider>
+                                              </Gate>
+                                            </Gate>
                                           </Gate>
                                         }
                                       />

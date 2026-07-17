@@ -8,7 +8,7 @@ import NavbarHome from "@/components/navbar-home";
 import BottomNavbar from "@/components/home/bottom-nav";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
-import { useClaimContext } from "@/context/ClaimContext";
+import { useClaimContext, type ClaimItem } from "@/context/ClaimContext";
 import { useClaimStatusLogContext } from "@/context/ClaimStatusLogContext";
 import {
   claimPolicyConfig,
@@ -44,10 +44,12 @@ export default function CustomerClaimDetailPage(): React.ReactElement {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
-  const { claims } = useClaimContext();
+  const { claims, fetchClaimItems } = useClaimContext();
   const { listByClaimId } = useClaimStatusLogContext();
   const [statusLogs, setStatusLogs] = useState<Tables<"claim_status_change_logs">[]>([]);
   const [productName, setProductName] = useState<string | null>(null);
+  const [claimItems, setClaimItems] = useState<ClaimItem[]>([]);
+  const [itemProductNames, setItemProductNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!isEnabled("claims")) {
@@ -96,6 +98,28 @@ export default function CustomerClaimDetailPage(): React.ReactElement {
       cancelled = true;
     };
   }, [claim?.product_id]);
+
+  useEffect(() => {
+    if (claimId.length === 0) {
+      return;
+    }
+    void fetchClaimItems(claimId).then(async (items) => {
+      setClaimItems(items);
+      const productIds = items
+        .map((i) => i.product_id)
+        .filter((id): id is string => typeof id === "string");
+      if (productIds.length === 0) {
+        setItemProductNames({});
+        return;
+      }
+      const { data } = await supabase.from("products").select("id, name").in("id", productIds);
+      const map: Record<string, string> = {};
+      for (const p of data ?? []) {
+        map[p.id] = p.name;
+      }
+      setItemProductNames(map);
+    });
+  }, [claimId, fetchClaimItems]);
 
   const typeLabel = useMemo(() => {
     if (claim === null) {
@@ -149,6 +173,36 @@ export default function CustomerClaimDetailPage(): React.ReactElement {
             {getClaimStatusLabel(claim.status)}
           </p>
         </div>
+
+        {claimItems.length > 0 ? (
+          <div className="card-panel p-5 space-y-3 text-sm">
+            <p className="font-medium text-[var(--color-text)]">申请商品</p>
+            {claimItems.map((item) => (
+              <div key={item.id} className="border-b border-[var(--color-border)] pb-3 last:border-0">
+                <p className="font-medium">
+                  {item.product_id !== null
+                    ? (itemProductNames[item.product_id] ?? "商品")
+                    : "商品"}
+                </p>
+                {item.recommended_percent !== null && claim.status !== "approved" ? (
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
+                    预估抵扣（若审核通过）：RM{" "}
+                    {(
+                      (Number(item.line_item_price_myr) * Number(item.recommended_percent)) /
+                      100
+                    ).toFixed(2)}{" "}
+                    （{Number(item.recommended_percent).toFixed(0)}%）
+                  </p>
+                ) : null}
+                {item.credit_amount_myr !== null && claim.status === "approved" ? (
+                  <p className="text-xs text-green-700 mt-1">
+                    已发放保固抵扣：RM {Number(item.credit_amount_myr).toFixed(2)}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="card-panel p-5 space-y-3 text-sm">
           <div>

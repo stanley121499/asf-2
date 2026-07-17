@@ -15,7 +15,7 @@ import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
 import { FiMessageCircle } from "react-icons/fi";
 import { HiX, HiMenu, HiOutlineLocationMarker } from "react-icons/hi";
-import { MdPayment, MdAssignmentReturn } from "react-icons/md";
+import { MdPayment, MdAssignmentReturn, MdSecurity } from "react-icons/md";
 
 /**
  * Floating Action Button component for mobile
@@ -141,6 +141,21 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
                   : ""
               }>
               Claims
+            </Sidebar.Item>
+          )}
+
+          {isEnabled("claims") && (
+            <Sidebar.Item
+              icon={MdSecurity}
+              href="/settings/warranty"
+              onClick={onItemClick}
+              className={
+                "/settings/warranty" === currentPage ||
+                currentPage.startsWith("/settings/warranty/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Warranty Settings
             </Sidebar.Item>
           )}
 

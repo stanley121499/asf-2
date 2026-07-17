@@ -189,5 +189,6 @@ export function buildMockOrderRow(mock: OrderWithUser): OrderRow {
     shipping_label_url: null,
     shipping_rate: null,
     tracking_number: null,
+    warranty_credit_id: null,
   };
 }

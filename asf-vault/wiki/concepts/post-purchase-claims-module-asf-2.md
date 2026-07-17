@@ -81,8 +81,20 @@ Key: `claims` in `feature_flags`. Seed in `docs/sql/step_11_claims.sql`.
 - Web-only; mobile apps not yet updated
 - Policy is code-backed, not admin UI
 
+## Evolution — warranty discount credits (2026-07-09)
+
+Several v1 gaps above were addressed by the **warranty discount credits** system built on top of this module (see [[wiki/concepts/warranty-discount-credits-asf-2]], [[wiki/sources/2026-07-09-warranty-discount-credits-design]]):
+
+- Delivery event now sourced from `order_status_logs` (`new_status = 'delivered'`), not `order.created_at`.
+- Policy tiers moved to DB (`warranty_policies` + `warranty_discount_tiers`) with a `/settings/warranty` admin UI; `claimPolicyConfig.ts` kept as fallback.
+- Multi-item claims via new `claim_items`; per-item human-approved credits issued into `warranty_credits` and redeemed one-click in cart.
+
+The `claims` feature flag, table, and code name are **kept and extended**, not replaced.
+
 ## Related
 
 - [[wiki/entities/asf-2]]
 - [[wiki/sources/2026-06-26-post-purchase-claims-module]]
+- [[wiki/concepts/warranty-discount-credits-asf-2]]
+- [[wiki/sources/2026-07-09-warranty-discount-credits-design]]
 - [[wiki/concepts/store-locations-feature-asf-2]]
