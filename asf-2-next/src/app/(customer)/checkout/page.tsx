@@ -149,8 +149,6 @@ const CheckoutPage: React.FC = () => {
     }
   }, [isEnabled, router]);
 
-  if (!isEnabled("cart")) return null;
-
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.Shipping);
   const [address, setAddress] = useState<AddressFormState>({
     firstName: "",
@@ -871,6 +869,10 @@ const CheckoutPage: React.FC = () => {
         </div>
       </>
     );
+  }
+
+  if (!isEnabled("cart")) {
+    return null;
   }
 
   return (

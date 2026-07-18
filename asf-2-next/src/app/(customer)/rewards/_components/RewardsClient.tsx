@@ -88,8 +88,6 @@ const RewardsClient: React.FC = () => {
     }
   }, [isEnabled, router]);
 
-  if (!isEnabled("rewards")) return null;
-
   const [userPoints, setUserPoints] = useState<number>(0);
   const [stamps, setStamps] = useState<boolean[]>(createEmptyStamps);
   const [stampsLoading, setStampsLoading] = useState<boolean>(false);
@@ -198,6 +196,10 @@ const RewardsClient: React.FC = () => {
   const mockSale = 450;
   const mockGoal = 1000;
   const goalPercent = Math.min(100, (mockSale / mockGoal) * 100);
+
+  if (!isEnabled("rewards")) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] pb-24">

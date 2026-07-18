@@ -59,7 +59,6 @@ export default function SupportChatPage() {
     }
   }, [isEnabled, router]);
 
-  if (!isEnabled("support_chat")) return null;
   const {
     conversations,
     createConversation,
@@ -94,6 +93,10 @@ export default function SupportChatPage() {
     }
     void listMessagesByConversationId(activeConversationId);
   }, [activeConversationId, listMessagesByConversationId]);
+
+  if (!isEnabled("support_chat")) {
+    return null;
+  }
 
   if (loading) {
     return (

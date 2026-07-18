@@ -25,7 +25,6 @@ const WishlistPage: React.FC = () => {
     }
   }, [isEnabled, router]);
 
-  if (!isEnabled("wishlist")) return null;
   const [activeTab, setActiveTab] = useState<'products' | 'posts'>('products');
 
   const categoryNameById = useMemo<Record<string, string>>(() => {
@@ -58,6 +57,10 @@ const WishlistPage: React.FC = () => {
       .map(item => item.product)
       .filter((p): p is NonNullable<typeof p> => p !== null && p !== undefined);
   }, [wishlistItems]);
+
+  if (!isEnabled("wishlist")) {
+    return null;
+  }
 
   if (!user) {
     return (

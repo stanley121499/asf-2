@@ -21,7 +21,6 @@ const HighlightsClient: React.FC<HighlightsClientProps> = ({ posts, postMedias }
     }
   }, [isEnabled, router]);
 
-  if (!isEnabled("highlights")) return null;
   const featuredPosts = useMemo(() =>
     [...posts]
       .filter((p) => p.id !== "")
@@ -30,6 +29,10 @@ const HighlightsClient: React.FC<HighlightsClientProps> = ({ posts, postMedias }
           new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       ),
   [posts]);
+
+  if (!isEnabled("highlights")) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-bg)] pb-24">
