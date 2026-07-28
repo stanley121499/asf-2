@@ -13,6 +13,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useClaimContext, type ClaimItem } from "@/context/ClaimContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { formatClaimLabel } from "@/lib/claims/claimEligibility";
 import {
   getClaimResolutionLabel,
@@ -23,12 +24,12 @@ import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
 import { calculateCreditAmount } from "@/lib/warranty/calculateCreditAmount";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 /**
  * Customer claim detail — per-item estimates and issued credits after approval.
  */
 export default function ClaimDetailScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const { claimId } = useLocalSearchParams<{ claimId: string }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -88,10 +89,10 @@ export default function ClaimDetailScreen(): React.ReactElement {
 
   if (authLoading || user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={t("claims.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -99,14 +100,14 @@ export default function ClaimDetailScreen(): React.ReactElement {
 
   if (claim === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={t("claims.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 16, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, marginBottom: 16, fontFamily: "Inter_400Regular" }}>
             {t("claims.notFound")}
           </Text>
           <TouchableOpacity onPress={() => router.push("/(tabs)/profile/claims")}>
-            <Text style={{ fontSize: 14, color: colors.text, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, color: tokens.text, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
               {t("claims.backToList")}
             </Text>
           </TouchableOpacity>
@@ -120,33 +121,33 @@ export default function ClaimDetailScreen(): React.ReactElement {
   const headerTitle = formatClaimLabel(claim.id);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={headerTitle} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("claims.status")}</Text>
-          <Text style={{ fontSize: 17, fontWeight: "600", color: colors.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>
+        <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: tokens.border }}>
+          <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("claims.status")}</Text>
+          <Text style={{ fontSize: 17, fontWeight: "600", color: tokens.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>
             {getClaimStatusLabel(claim.status, t)}
           </Text>
         </View>
 
-        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("claims.type")}</Text>
-          <Text style={{ fontSize: 15, color: colors.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>{typeLabel}</Text>
+        <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: tokens.border }}>
+          <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("claims.type")}</Text>
+          <Text style={{ fontSize: 15, color: tokens.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>{typeLabel}</Text>
           {typeof claim.created_at === "string" && claim.created_at.length > 0 ? (
-            <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
               {formatDate(locale, claim.created_at)}
             </Text>
           ) : null}
         </View>
 
         {claimItems.length > 0 ? (
-          <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text, marginBottom: 12, fontFamily: "Inter_400Regular" }}>
+          <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: tokens.border }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: tokens.text, marginBottom: 12, fontFamily: "Inter_400Regular" }}>
               {t("claims.items")}
             </Text>
             {itemsLoading ? (
-              <ActivityIndicator color={colors.accent} />
+              <ActivityIndicator color={tokens.accent} />
             ) : (
               claimItems.map((item, idx) => {
                 const name =
@@ -164,14 +165,14 @@ export default function ClaimDetailScreen(): React.ReactElement {
                     style={{
                       paddingVertical: 12,
                       borderBottomWidth: idx < claimItems.length - 1 ? 1 : 0,
-                      borderBottomColor: colors.border,
+                      borderBottomColor: tokens.border,
                     }}
                   >
-                    <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>
+                    <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}>
                       {name}
                     </Text>
                     {recommended !== null && !isApproved ? (
-                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
+                      <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
                         {t("claims.estimatedCredit")}:{" "}
                         {t("claims.estimatedCreditDetail", {
                           amount: estimated.toFixed(2),
@@ -180,12 +181,12 @@ export default function ClaimDetailScreen(): React.ReactElement {
                       </Text>
                     ) : null}
                     {recommended === null && !isApproved ? (
-                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
+                      <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
                         {t("claims.staffWillDetermine")}
                       </Text>
                     ) : null}
                     {item.credit_amount_myr !== null && isApproved ? (
-                      <Text style={{ fontSize: 12, color: colors.success, marginTop: 6, fontFamily: "Inter_400Regular" }}>
+                      <Text style={{ fontSize: 12, color: tokens.success, marginTop: 6, fontFamily: "Inter_400Regular" }}>
                         {t("claims.issuedCredit")}: {formatRm(Number(item.credit_amount_myr))}
                       </Text>
                     ) : null}
@@ -197,18 +198,18 @@ export default function ClaimDetailScreen(): React.ReactElement {
         ) : null}
 
         {typeof claim.description === "string" && claim.description.length > 0 ? (
-          <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("claims.description")}</Text>
-            <Text style={{ fontSize: 14, color: colors.text, marginTop: 6, lineHeight: 22, fontFamily: "Inter_400Regular" }}>
+          <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: tokens.border }}>
+            <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("claims.description")}</Text>
+            <Text style={{ fontSize: 14, color: tokens.text, marginTop: 6, lineHeight: 22, fontFamily: "Inter_400Regular" }}>
               {claim.description}
             </Text>
           </View>
         ) : null}
 
         {claim.requested_resolution !== null ? (
-          <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("claims.requestedResolution")}</Text>
-            <Text style={{ fontSize: 14, color: colors.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>
+          <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: tokens.border }}>
+            <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("claims.requestedResolution")}</Text>
+            <Text style={{ fontSize: 14, color: tokens.text, marginTop: 4, fontFamily: "Inter_400Regular" }}>
               {getClaimResolutionLabel(claim.requested_resolution, t)}
             </Text>
           </View>

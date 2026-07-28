@@ -13,15 +13,18 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useClaimContext } from "@/context/ClaimContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
+import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import { formatClaimLabel } from "@/lib/claims/claimEligibility";
 import { getClaimStatusLabel, getClaimTypeLabel } from "@/lib/claims/claimPolicyConfig";
 import { formatDate } from "@/i18n/format";
-import { colors } from "@/constants/theme";
 
 /**
  * Customer claims list.
  */
 export default function ClaimsListScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
+  const { themeId } = useTheme();
+  const isNoir = themeId === "noir";
   const router = useRouter();
   const { t } = useTranslation();
   const { locale } = useLocale();
@@ -42,28 +45,37 @@ export default function ClaimsListScreen(): React.ReactElement {
 
   if (authLoading || user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: isNoir ? tokens.bg : tokens.panel }}>
         <SubPageHeader title={t("claims.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: isNoir ? tokens.bg : tokens.panel }}>
       <SubPageHeader title={t("claims.title")} />
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       ) : mine.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 8 }}>
+          <Text
+            style={{
+              fontFamily: isNoir ? "Inter_400Regular" : "PlayfairDisplay_400Regular",
+              fontSize: isNoir ? 16 : 18,
+              fontWeight: isNoir ? "600" : "400",
+              letterSpacing: isNoir ? 0.5 : 0,
+              color: tokens.text,
+              marginBottom: 8,
+            }}
+          >
             {t("claims.empty")}
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, textAlign: "center", fontFamily: "Inter_400Regular" }}>
             {t("claims.emptyBody")}
           </Text>
         </View>
@@ -83,26 +95,26 @@ export default function ClaimsListScreen(): React.ReactElement {
                 onPress={() => router.push(`/(tabs)/profile/claims/${item.id}`)}
                 activeOpacity={0.7}
                 style={{
-                  backgroundColor: "#FFFFFF",
-                  borderRadius: 16,
+                  backgroundColor: isNoir ? tokens.panel : tokens.bg,
+                  borderRadius: isNoir ? 2 : 16,
                   padding: 16,
                   marginBottom: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: tokens.border,
                 }}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text style={{ fontSize: 15, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+                  <Text style={{ fontSize: 15, fontWeight: "600", color: tokens.text, fontFamily: "Inter_400Regular" }}>
                     {formatClaimLabel(item.id)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                  <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                     {created}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 13, color: colors.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: tokens.muted, marginTop: 6, fontFamily: "Inter_400Regular" }}>
                   {typeLabel}
                 </Text>
-                <Text style={{ fontSize: 13, color: colors.accent, marginTop: 4, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: tokens.accent, marginTop: 4, fontFamily: "Inter_400Regular" }}>
                   {getClaimStatusLabel(item.status, t)}
                 </Text>
               </TouchableOpacity>

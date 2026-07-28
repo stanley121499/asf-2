@@ -16,9 +16,9 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Product } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
-import { colors } from "@/constants/theme";
 import { openBrowseProduct } from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
 
@@ -45,6 +45,7 @@ function WishlistCard({
   onOpen: () => void;
   onRemove: () => void;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { translateProduct } = useContentTranslation();
   const thumb = productThumb(product);
@@ -57,7 +58,7 @@ function WishlistCard({
       <View
         style={{
           aspectRatio: 3 / 4,
-          backgroundColor: colors.panel,
+          backgroundColor: tokens.panel,
           overflow: "hidden",
           marginBottom: 8,
           width: "100%",
@@ -70,13 +71,13 @@ function WishlistCard({
             contentFit="cover"
           />
         ) : (
-          <View style={{ flex: 1, backgroundColor: colors.panel }} />
+          <View style={{ flex: 1, backgroundColor: tokens.panel }} />
         )}
       </View>
       <Text
         style={{
           fontSize: 13,
-          color: colors.text,
+          color: tokens.text,
           fontFamily: "Inter_400Regular",
           marginBottom: 4,
         }}
@@ -94,7 +95,7 @@ function WishlistCard({
         <Text
           style={{
             fontSize: 14,
-            color: colors.accent,
+            color: tokens.accent,
             fontWeight: "500",
             fontFamily: "Inter_400Regular",
           }}
@@ -102,7 +103,7 @@ function WishlistCard({
           {formatRm(product.price)}
         </Text>
         <Pressable onPress={onRemove} hitSlop={8} style={{ padding: 4 }}>
-          <Ionicons name="heart" size={18} color={colors.accent} />
+          <Ionicons name="heart" size={18} color={tokens.accent} />
         </Pressable>
       </View>
     </Pressable>
@@ -116,11 +117,16 @@ function WishlistCard({
  * Mirrors the web `/wishlist` page (saved products grid, sign-in gate, empty state).
  */
 export default function WishlistScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
+  const { themeId } = useTheme();
+  const isNoir = themeId === "noir";
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const { wishlistItems, loading, removeFromWishlist } = useWishlistContext();
+  /** Display face: Inter under Noir; Playfair for Classic/Atelier. */
+  const displayFont = isNoir ? "Inter_400Regular" : "PlayfairDisplay_400Regular";
 
   // Redirect away when the wishlist feature is disabled platform-wide.
   useEffect(() => {
@@ -146,8 +152,8 @@ export default function WishlistScreen(): React.ReactElement {
         alignItems: "center",
         justifyContent: "center",
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: "#FFFFFF",
+        borderBottomColor: tokens.border,
+        backgroundColor: tokens.bg,
         flexDirection: "row",
       }}
     >
@@ -156,13 +162,15 @@ export default function WishlistScreen(): React.ReactElement {
         hitSlop={12}
         style={{ position: "absolute", left: 12, padding: 4 }}
       >
-        <Ionicons name="chevron-back" size={24} color={colors.text} />
+        <Ionicons name="chevron-back" size={24} color={tokens.text} />
       </TouchableOpacity>
       <Text
         style={{
-          fontFamily: "PlayfairDisplay_400Regular",
-          fontSize: 18,
-          color: colors.text,
+          fontFamily: displayFont,
+          fontSize: isNoir ? 16 : 18,
+          fontWeight: isNoir ? "600" : "400",
+          letterSpacing: isNoir ? 0.5 : 0,
+          color: tokens.text,
         }}
       >
         {t("wishlist.title")}
@@ -171,21 +179,23 @@ export default function WishlistScreen(): React.ReactElement {
   );
 
   if (!isEnabled("wishlist")) {
-    return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }} />;
+    return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }} />;
   }
 
   // Sign-in gate — wishlist rows are user-scoped (and RLS protected).
   if (user === null) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         {header}
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Ionicons name="heart-outline" size={40} color={colors.muted} />
+          <Ionicons name="heart-outline" size={40} color={tokens.muted} />
           <Text
             style={{
-              fontFamily: "PlayfairDisplay_400Regular",
-              fontSize: 20,
-              color: colors.text,
+              fontFamily: displayFont,
+              fontSize: isNoir ? 16 : 20,
+              fontWeight: isNoir ? "600" : "400",
+              letterSpacing: isNoir ? 0.5 : 0,
+              color: tokens.text,
               marginTop: 12,
               textAlign: "center",
             }}
@@ -195,7 +205,7 @@ export default function WishlistScreen(): React.ReactElement {
           <Text
             style={{
               fontSize: 13,
-              color: colors.muted,
+              color: tokens.muted,
               fontFamily: "Inter_400Regular",
               marginTop: 8,
               textAlign: "center",
@@ -208,13 +218,13 @@ export default function WishlistScreen(): React.ReactElement {
             activeOpacity={0.8}
             style={{
               marginTop: 20,
-              backgroundColor: colors.text,
+              backgroundColor: isNoir ? tokens.accent : tokens.text,
               paddingHorizontal: 32,
               paddingVertical: 12,
-              borderRadius: 12,
+              borderRadius: isNoir ? 2 : 12,
             }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ color: tokens.bg, fontSize: 14, fontFamily: "Inter_400Regular", fontWeight: isNoir ? "600" : "400" }}>
               {t("wishlist.signInCta")}
             </Text>
           </TouchableOpacity>
@@ -224,21 +234,23 @@ export default function WishlistScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       {header}
 
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       ) : savedProducts.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Ionicons name="heart-outline" size={40} color={colors.muted} />
+          <Ionicons name="heart-outline" size={40} color={tokens.muted} />
           <Text
             style={{
-              fontFamily: "PlayfairDisplay_400Regular",
-              fontSize: 20,
-              color: colors.text,
+              fontFamily: displayFont,
+              fontSize: isNoir ? 16 : 20,
+              fontWeight: isNoir ? "600" : "400",
+              letterSpacing: isNoir ? 0.5 : 0,
+              color: tokens.text,
               marginTop: 12,
             }}
           >
@@ -247,7 +259,7 @@ export default function WishlistScreen(): React.ReactElement {
           <Text
             style={{
               fontSize: 13,
-              color: colors.muted,
+              color: tokens.muted,
               fontFamily: "Inter_400Regular",
               marginTop: 8,
               textAlign: "center",
@@ -260,13 +272,13 @@ export default function WishlistScreen(): React.ReactElement {
             activeOpacity={0.8}
             style={{
               marginTop: 20,
-              backgroundColor: colors.text,
+              backgroundColor: isNoir ? tokens.accent : tokens.text,
               paddingHorizontal: 32,
               paddingVertical: 12,
-              borderRadius: 12,
+              borderRadius: isNoir ? 2 : 12,
             }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 14, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ color: tokens.bg, fontSize: 14, fontFamily: "Inter_400Regular", fontWeight: isNoir ? "600" : "400" }}>
               {t("wishlist.goShopping")}
             </Text>
           </TouchableOpacity>

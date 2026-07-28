@@ -48,6 +48,12 @@ Both mobile apps are functional. Web app 12-step execution plan completed.
 
 **Animated splash (2026-06-26):** Pixel2Motion pipeline for Simon MODEL MATCH logo; Variation 7 letter cascade embedded via WebView on both mobile apps. Motion SOT: `asf-customer-app/assets/splash/pixel2motion-output/`. See [[wiki/concepts/pixel2motion-splash-asf-2]].
 
+**Customer 仪式感 / motion (2026-07-17):** Ambient + day-to-day bold ceremony on `asf-customer-app` (home/Shop/PDP/add-to-bag/cart; session gates; Reanimated + haptics). Session SOT: [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]]; concept: [[wiki/concepts/expo-customer-ceremony-motion-asf-2]].
+
+**Customer beginner guide / App Guide (2026-07-17):** Permanent Profile hub + first-launch coach marks for absolute beginners / elderly (`components/guide/*`). Session SOT: [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]]; concept: [[wiki/concepts/expo-customer-beginner-guide-asf-2]].
+
+**Customer theme skins (2026-07-27 → 2026-07-28):** Three layout packs — Classic (default boutique), Atelier (ZARA lookbook), Noir (SSENSE night commerce). SUPERADMIN Appearance only. Session SOT: [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]]; concept: [[wiki/concepts/expo-customer-theme-skins-asf-2]].
+
 **Post-purchase claims (2026-06-26):** Reusable `claims` module (feature flag + config-driven policy); shoe-store default; customer order-item entry + staff queue. SQL: `asf-2-next/docs/sql/step_11_claims.sql`. See [[wiki/concepts/post-purchase-claims-module-asf-2]].
 
 **Warranty discount credits (2026-07-09):** Human-verified warranty credit system extending the `claims` module in `asf-2-next` — merchant-configurable time tiers (estimate only), staff approval issues fixed-RM per-line-item `warranty_credits`, one-click cart redemption, single-use, 1-year expiry. New tables `warranty_policies` / `warranty_discount_tiers` / `claim_items` / `warranty_credits`; delivery date from `order_status_logs`. SQL: `asf-2-next/docs/sql/step_12_warranty_discount_credits.sql`. See [[wiki/concepts/warranty-discount-credits-asf-2]], [[wiki/sources/2026-07-09-warranty-discount-credits-design]].
@@ -78,6 +84,12 @@ See [[wiki/sources/2026-04-25-mobile-apps-progress]] for full mobile app details
 - [[wiki/concepts/store-locations-feature-asf-2]]
 - [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]]
 - [[wiki/concepts/pixel2motion-splash-asf-2]]
+- [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]]
+- [[wiki/concepts/expo-customer-ceremony-motion-asf-2]]
+- [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]]
+- [[wiki/concepts/expo-customer-beginner-guide-asf-2]]
+- [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]]
+- [[wiki/concepts/expo-customer-theme-skins-asf-2]]
 - [[wiki/sources/2026-06-26-post-purchase-claims-module]]
 - [[wiki/concepts/post-purchase-claims-module-asf-2]]
 - [[wiki/concepts/warranty-discount-credits-asf-2]]

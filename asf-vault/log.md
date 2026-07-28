@@ -209,3 +209,50 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
 - Raw deleted: `2026-07-17-physical-warranty-registration-agent-prompts.md` (executed; human requested removal before commit)
 - Updated: [[index.md]], session accomplishment raw (prompt path notes)
 - Kept: design + session accomplishment sources and wiki concept/source pages
+
+## [2026-07-17] ingest | Expo customer ceremony / 仪式感 motion session
+
+- Source: `raw/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment.md`
+- Also kept (plans, not prompts): `2026-07-17-expo-customer-ceremony-motion-plan.md`, `2026-07-17-expo-customer-daily-bold-ceremony-plan.md`
+- Deleted before ingest (agent prompts, human-requested): `2026-07-17-expo-customer-ceremony-motion-agent-prompts.md`, `2026-07-17-expo-customer-daily-bold-ceremony-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]], [[wiki/concepts/expo-customer-ceremony-motion-asf-2]], [[wiki/entities/asf-2]], [[wiki/00-overview]], [[index.md]]
+- Notes: Ambient + day-to-day bold 仪式感 shipped on asf-customer-app; rare wins deferred; PressableScale / usePreventRemove bugfixes recorded.
+
+## [2026-07-18] cleanup + ingest | Expo customer beginner guide / App Guide
+
+- Human authorized deleting executed agent prompts before wiki ingest (overrides [[CLAUDE.md]] §3 for this file).
+- Raw deleted: `2026-07-17-expo-customer-beginner-guide-agent-prompts.md`
+- Raw added: `2026-07-17-expo-customer-beginner-guide-session-accomplishment.md` (session SOT)
+- Kept plan: `2026-07-17-expo-customer-beginner-guide-plan.md` (companion-prompts filename in prose is historical only)
+- Wiki touched: [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]], [[wiki/concepts/expo-customer-beginner-guide-asf-2]] (new), [[wiki/concepts/mobile-app-architecture-asf-2]], [[wiki/entities/asf-2]], [[wiki/00-overview]], [[index.md]]
+- Notes: Hub + first-launch coach marks shipped on asf-customer-app; language on welcome; device polish (spotlight focus remeasure, Skip in card, PressableScale `centerContent`).
+
+## [2026-07-28] raw | Expo customer Noir SSENSE bold pass plan + prompts
+
+- Sources added:
+  - `raw/sources/2026-07-28-expo-customer-noir-ssense-plan.md`
+  - `raw/sources/2026-07-28-expo-customer-noir-ssense-agent-prompts.md`
+- Also indexed prior Atelier editorial raws on [[index.md]] (paths only; full wiki ingest deferred until session accomplishment)
+- Notes: Noir-only SSENSE night commerce; 4 agents sized for ~200k; Home grid vs Shop list locked; same surface breadth as Atelier (Stores + Orders/Account).
+
+## [2026-07-28] raw | Expo customer Noir intentional redesign Round 2
+
+- Sources added:
+  - `raw/sources/2026-07-28-expo-customer-noir-intentional-plan.md`
+  - `raw/sources/2026-07-28-expo-customer-noir-intentional-agent-prompts.md` (**later deleted** after execution)
+- Indexed on [[index.md]]
+- Notes: Stanley QA after R1 — Home≈Shop jobs, Stores/Shop/PDP craft, Rewards dark contrast. 5 agents (0 contrast ∥ 1 Home ∥ 4 Stores → 2 Shop → 3 PDP). Home ≤8 curated; supersedes R1 24-grid.
+
+## [2026-07-28] cleanup + ingest | Theme skins session accomplishment (Atelier + Noir)
+
+- Human requested: delete agent prompts before wiki SOT so prompts do not enter wiki.
+- Raw **deleted** (executed prompts):
+  - `2026-07-27-expo-customer-theme-skins-agent-prompts.md`
+  - `2026-07-27-expo-customer-theme-skins-polish-agent-prompts.md`
+  - `2026-07-28-expo-customer-atelier-editorial-agent-prompts.md`
+  - `2026-07-28-expo-customer-noir-ssense-agent-prompts.md`
+  - `2026-07-28-expo-customer-noir-intentional-agent-prompts.md`
+- Raw **added**: `2026-07-28-expo-customer-theme-skins-session-accomplishment.md` (session SOT)
+- Kept plans: theme-skins, polish, atelier-editorial, noir-ssense, noir-intentional
+- Wiki touched: [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]], [[wiki/concepts/expo-customer-theme-skins-asf-2]] (new), [[index.md]]
+- Notes: Decisions + what landed for Classic/Atelier/Noir R1+R2; pitfalls (PressableScale row, Maps inner fill).

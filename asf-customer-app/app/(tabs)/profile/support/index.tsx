@@ -14,14 +14,15 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { ChatWindow } from "@/components/ChatWindow";
+import { ANCHORS, TourAnchor } from "@/components/guide";
 import { useConversationContext, type Conversation } from "@/context/ConversationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTicketContext } from "@/context/TicketContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import type { TablesInsert } from "@/database.types";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 type IssueTypeKey = "order" | "product" | "account" | "other";
 
@@ -64,6 +65,7 @@ function typeLabel(
  * Matches web support-chat layout.
  */
 export default function SupportScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
@@ -189,10 +191,10 @@ export default function SupportScreen(): React.ReactElement {
 
   if (authLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("support.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -200,10 +202,10 @@ export default function SupportScreen(): React.ReactElement {
 
   if (user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("support.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("support.loginRequired")}
           </Text>
         </View>
@@ -213,21 +215,21 @@ export default function SupportScreen(): React.ReactElement {
 
   if (submitted) {
     return (
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("support.title")} />
         <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
-            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: tokens.text }}>
               {t("support.ticketSubmitted")}
             </Text>
           </View>
           {createdTicketLabel.length > 0 && (
-            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 4, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 4, fontFamily: "Inter_400Regular" }}>
               {t("support.ticketNumberWithId", { id: createdTicketLabel })}
             </Text>
           )}
-          <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("support.continueReply")}
           </Text>
         </View>
@@ -242,7 +244,7 @@ export default function SupportScreen(): React.ReactElement {
             />
           ) : (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <ActivityIndicator color={colors.accent} />
+              <ActivityIndicator color={tokens.accent} />
             </View>
           )}
         </View>
@@ -251,25 +253,25 @@ export default function SupportScreen(): React.ReactElement {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: tokens.bg }}>
       <SubPageHeader title={t("support.title")} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 48 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 4 }}>
+        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text, marginBottom: 4 }}>
           {t("support.contactUs")}
         </Text>
-        <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 14, color: tokens.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
           {t("support.formIntroShort")}
         </Text>
 
         {error !== null && (
           <View style={{ backgroundColor: "#FEF2F2", borderWidth: 1, borderColor: "#FECACA", borderRadius: 12, padding: 12, marginBottom: 16 }}>
-            <Text style={{ fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+            <Text style={{ fontSize: 13, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
           </View>
         )}
 
         {/* Issue type pills */}
-        <Text style={{ fontSize: 13, fontWeight: "500", color: colors.text, marginBottom: 12, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 13, fontWeight: "500", color: tokens.text, marginBottom: 12, fontFamily: "Inter_400Regular" }}>
           {t("support.issueType")}
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
@@ -285,11 +287,11 @@ export default function SupportScreen(): React.ReactElement {
                   paddingVertical: 8,
                   borderRadius: 99,
                   borderWidth: 1,
-                  borderColor: active ? "#000000" : colors.border,
-                  backgroundColor: active ? "#000000" : "transparent",
+                  borderColor: active ? tokens.text : tokens.border,
+                  backgroundColor: active ? tokens.text : "transparent",
                 }}
               >
-                <Text style={{ fontSize: 13, color: active ? "#FFFFFF" : colors.text, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: active ? tokens.bg : tokens.text, fontFamily: "Inter_400Regular" }}>
                   {label}
                 </Text>
               </TouchableOpacity>
@@ -298,43 +300,43 @@ export default function SupportScreen(): React.ReactElement {
         </View>
 
         {/* Subject */}
-        <Text style={{ fontSize: 13, fontWeight: "500", color: colors.text, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 13, fontWeight: "500", color: tokens.text, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
           {t("support.subject")}
         </Text>
         <TextInput
           style={{
             height: 48,
-            backgroundColor: colors.panel,
+            backgroundColor: tokens.panel,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: tokens.border,
             borderRadius: 12,
             paddingHorizontal: 16,
             fontSize: 14,
-            color: colors.text,
+            color: tokens.text,
             fontFamily: "Inter_400Regular",
             marginBottom: 20,
           }}
           value={formData.subject}
           onChangeText={(subject) => setFormData((p) => ({ ...p, subject }))}
           placeholder={t("support.subjectPlaceholderShort")}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={tokens.muted}
         />
 
         {/* Description */}
-        <Text style={{ fontSize: 13, fontWeight: "500", color: colors.text, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 13, fontWeight: "500", color: tokens.text, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
           {t("support.description")}
         </Text>
         <TextInput
           style={{
             height: 140,
-            backgroundColor: colors.panel,
+            backgroundColor: tokens.panel,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: tokens.border,
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingTop: 12,
             fontSize: 14,
-            color: colors.text,
+            color: tokens.text,
             fontFamily: "Inter_400Regular",
             textAlignVertical: "top",
             marginBottom: 28,
@@ -342,31 +344,33 @@ export default function SupportScreen(): React.ReactElement {
           value={formData.description}
           onChangeText={(description) => setFormData((p) => ({ ...p, description }))}
           placeholder={t("support.descriptionPlaceholder")}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={tokens.muted}
           multiline
         />
 
         {/* Submit */}
-        <TouchableOpacity
-          onPress={() => void handleSubmit()}
-          disabled={isSubmitting}
-          style={{
-            height: 56,
-            backgroundColor: "#000000",
-            borderRadius: 99,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: isSubmitting ? 0.5 : 1,
-          }}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-              {t("support.submit")}
-            </Text>
-          )}
-        </TouchableOpacity>
+        <TourAnchor id={ANCHORS.support.submit}>
+          <TouchableOpacity
+            onPress={() => void handleSubmit()}
+            disabled={isSubmitting}
+            style={{
+              height: 56,
+              backgroundColor: tokens.text,
+              borderRadius: 99,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: isSubmitting ? 0.5 : 1,
+            }}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color={tokens.bg} />
+            ) : (
+              <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                {t("support.submit")}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </TourAnchor>
       </ScrollView>
     </KeyboardAvoidingView>
   );

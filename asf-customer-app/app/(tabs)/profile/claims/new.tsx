@@ -20,6 +20,7 @@ import { useClaimContext } from "@/context/ClaimContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation, useLocale } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import type { Database } from "@/database.types";
 import {
   createClaimEvidenceSessionId,
@@ -36,7 +37,6 @@ import type { PickedClaimPhoto } from "@/lib/claims/pickClaimPhotos";
 import { evaluateWarrantyCreditEstimate, type WarrantyCreditEstimate } from "@/lib/warranty/evaluateWarrantyCreditEstimate";
 import { resolveDeliveryDate } from "@/lib/warranty/resolveDeliveryDate";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
@@ -49,6 +49,7 @@ interface OrderItemWithProduct extends OrderItemRow {
  * Multi-item claim submission form.
  */
 export default function NewClaimScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { orderId: orderIdParam, orderItemIds: orderItemIdsParam } = useLocalSearchParams<{
     orderId?: string;
@@ -272,10 +273,10 @@ export default function NewClaimScreen(): React.ReactElement {
 
   if (authLoading || user === null || fetchLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={t("claims.newTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -283,10 +284,10 @@ export default function NewClaimScreen(): React.ReactElement {
 
   if (order === null || orderItems.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={t("claims.newTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("orders.notFound")}
           </Text>
         </View>
@@ -295,7 +296,7 @@ export default function NewClaimScreen(): React.ReactElement {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={t("claims.newTitle")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {orderItems.map((item) => {
@@ -313,19 +314,19 @@ export default function NewClaimScreen(): React.ReactElement {
             <View
               key={item.id}
               style={{
-                backgroundColor: "#FFFFFF",
+                backgroundColor: tokens.bg,
                 borderRadius: 16,
                 padding: 16,
                 marginBottom: 12,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: tokens.border,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}>
                 {displayName}
               </Text>
               {est !== undefined ? (
-                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
                   {est.usesAutoTier && est.estimatedCreditMyr > 0
                     ? `${t("claims.estimatedCredit")}: ${t("claims.estimatedCreditDetail", {
                         amount: est.estimatedCreditMyr.toFixed(2),
@@ -342,7 +343,7 @@ export default function NewClaimScreen(): React.ReactElement {
           <Text
             style={{
               fontSize: 12,
-              color: eligibility.eligible ? colors.success : colors.danger,
+              color: eligibility.eligible ? tokens.success : tokens.danger,
               marginBottom: 12,
               fontFamily: "Inter_400Regular",
             }}
@@ -351,8 +352,8 @@ export default function NewClaimScreen(): React.ReactElement {
           </Text>
         ) : null}
 
-        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+        <View style={{ backgroundColor: tokens.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: tokens.border }}>
+          <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
             {t("claims.selectClaimType")}
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
@@ -365,18 +366,18 @@ export default function NewClaimScreen(): React.ReactElement {
                   paddingVertical: 8,
                   borderRadius: 99,
                   borderWidth: 1,
-                  borderColor: claimType === ct.key ? "#000000" : colors.border,
-                  backgroundColor: claimType === ct.key ? "#000000" : "#FFFFFF",
+                  borderColor: claimType === ct.key ? tokens.text : tokens.border,
+                  backgroundColor: claimType === ct.key ? tokens.text : tokens.bg,
                 }}
               >
-                <Text style={{ fontSize: 12, color: claimType === ct.key ? "#FFFFFF" : colors.text, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 12, color: claimType === ct.key ? tokens.bg : tokens.text, fontFamily: "Inter_400Regular" }}>
                   {getClaimTypeLabel(ct.key, t)}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
             {t("claims.reason")}
           </Text>
           <TextInput
@@ -385,17 +386,17 @@ export default function NewClaimScreen(): React.ReactElement {
             style={{
               height: 44,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: tokens.border,
               borderRadius: 12,
               paddingHorizontal: 12,
               marginBottom: 16,
               fontSize: 14,
-              color: colors.text,
+              color: tokens.text,
               fontFamily: "Inter_400Regular",
             }}
           />
 
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
             {t("claims.description")}
           </Text>
           <TextInput
@@ -406,13 +407,13 @@ export default function NewClaimScreen(): React.ReactElement {
             style={{
               minHeight: 100,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: tokens.border,
               borderRadius: 12,
               paddingHorizontal: 12,
               paddingVertical: 10,
               marginBottom: 16,
               fontSize: 14,
-              color: colors.text,
+              color: tokens.text,
               textAlignVertical: "top",
               fontFamily: "Inter_400Regular",
             }}
@@ -420,7 +421,7 @@ export default function NewClaimScreen(): React.ReactElement {
 
           {selectedTypeConfig !== undefined ? (
             <>
-              <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
                 {t("claims.requestedResolution")}
               </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
@@ -433,14 +434,14 @@ export default function NewClaimScreen(): React.ReactElement {
                       paddingVertical: 8,
                       borderRadius: 99,
                       borderWidth: 1,
-                      borderColor: requestedResolution === r ? "#000000" : colors.border,
-                      backgroundColor: requestedResolution === r ? "#000000" : "#FFFFFF",
+                      borderColor: requestedResolution === r ? tokens.text : tokens.border,
+                      backgroundColor: requestedResolution === r ? tokens.text : tokens.bg,
                     }}
                   >
                     <Text
                       style={{
                         fontSize: 12,
-                        color: requestedResolution === r ? "#FFFFFF" : colors.text,
+                        color: requestedResolution === r ? tokens.bg : tokens.text,
                         fontFamily: "Inter_400Regular",
                       }}
                     >
@@ -452,10 +453,10 @@ export default function NewClaimScreen(): React.ReactElement {
             </>
           ) : null}
 
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 13, color: tokens.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
             {t("claims.evidence")}
           </Text>
-          <Text style={{ fontSize: 11, color: colors.muted, marginBottom: 10, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 11, color: tokens.muted, marginBottom: 10, fontFamily: "Inter_400Regular" }}>
             {t("claims.evidenceHint")}
           </Text>
           <ClaimEvidencePicker
@@ -475,14 +476,14 @@ export default function NewClaimScreen(): React.ReactElement {
             disabled={submitting || (eligibility !== null && !eligibility.eligible)}
             style={{
               height: 52,
-              backgroundColor: "#000000",
+              backgroundColor: tokens.text,
               borderRadius: 12,
               alignItems: "center",
               justifyContent: "center",
               opacity: submitting || (eligibility !== null && !eligibility.eligible) ? 0.5 : 1,
             }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+            <Text style={{ color: tokens.bg, fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
               {uploadProgress !== null
                 ? t("claims.uploadingPhotos", {
                     current: uploadProgress.uploaded,

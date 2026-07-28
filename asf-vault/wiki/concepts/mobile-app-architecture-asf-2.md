@@ -1,9 +1,9 @@
 ---
 title: "Mobile App Architecture — ASF-2"
 type: concept
-updated: 2026-07-08
-sources: 4
-tags: [asf-2, mobile, expo, react-native, rbac, push-notifications, i18n]
+updated: 2026-07-28
+sources: 7
+tags: [asf-2, mobile, expo, react-native, rbac, push-notifications, i18n, motion, onboarding, themes]
 ---
 
 # Mobile App Architecture — ASF-2
@@ -105,6 +105,24 @@ Customer app uses AsyncStorage `asf_locale` + JSON catalogs + Supabase `*_transl
 
 ---
 
+## Customer 仪式感 / motion (2026-07-17)
+
+After Pixel2Motion splash, customer UX uses a shared Reanimated + haptics kit (`lib/motion.ts`, `components/motion/*`) with once-per-session home/Shop gates and daily-bold PDP / add-to-bag / cart moments. See [[wiki/concepts/expo-customer-ceremony-motion-asf-2]].
+
+---
+
+## Customer beginner guide / App Guide (2026-07-17)
+
+Permanent Profile hub (**How to use this app**) plus a skippable first-launch coach-mark tour (after home ceremony) for absolute beginners / elderly. Shared engine under `components/guide/*`; language picker on welcome; `OnboardingOverlay` left unmounted. See [[wiki/concepts/expo-customer-beginner-guide-asf-2]].
+
+---
+
+## Customer theme skins (2026-07-27 → 2026-07-28)
+
+Three layout packs under `themes/{classic,atelier,noir}` with `ThemeContext` + registry; SUPERADMIN-only Appearance. Atelier = ZARA lookbook; Noir = SSENSE night commerce (Home curate vs Shop find). See [[wiki/concepts/expo-customer-theme-skins-asf-2]]; session SOT [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]].
+
+---
+
 ## Related
 
 - [[wiki/entities/asf-2]]
@@ -114,5 +132,11 @@ Customer app uses AsyncStorage `asf_locale` + JSON catalogs + Supabase `*_transl
 - [[wiki/concepts/context-provider-architecture-asf-2]]
 - [[wiki/concepts/pixel2motion-splash-asf-2]]
 - [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]]
+- [[wiki/concepts/expo-customer-ceremony-motion-asf-2]]
+- [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]]
+- [[wiki/concepts/expo-customer-beginner-guide-asf-2]]
+- [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]]
+- [[wiki/concepts/expo-customer-theme-skins-asf-2]]
+- [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]]
 - [[wiki/concepts/customer-i18n-asf-2]]
 - [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]]

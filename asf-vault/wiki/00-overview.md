@@ -1,8 +1,8 @@
 ---
 title: "asf-vault overview"
 type: overview
-updated: 2026-07-17
-sources: 82
+updated: 2026-07-18
+sources: 84
 tags: [llm-wiki, vault, asf-2]
 ---
 
@@ -35,6 +35,8 @@ tags: [llm-wiki, vault, asf-2]
 - **ASF-2 mobile apps progress** (2026-04-25): [[wiki/sources/2026-04-25-mobile-apps-progress]] — both Expo apps built and functional. Key schema corrections (products.status not active, product_stock.count not quantity). Next priority: demo data (Malaysia minimart seed).
 - **ASF-2 store locations** (2026-06-26): [[wiki/sources/2026-06-26-store-locations-feature]], [[wiki/concepts/store-locations-feature-asf-2]] — cross-platform store locator; customer `/stores` + mobile 门店 tab; admin/staff CRUD; route collision fix documented.
 - **ASF-2 animated splash** (2026-06-26): [[wiki/sources/2026-06-26-pixel2motion-model-match-splash]], [[wiki/concepts/pixel2motion-splash-asf-2]] — Pixel2Motion MODEL MATCH letter cascade on both Expo apps; WebView bundle pipeline documented.
+- **ASF-2 Expo customer 仪式感 / motion** (2026-07-17): [[wiki/concepts/expo-customer-ceremony-motion-asf-2]], [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]] — ambient + day-to-day bold ceremony after splash (home/Shop/PDP/bag/cart); rare wins deferred.
+- **ASF-2 Expo customer beginner guide / App Guide** (2026-07-17): [[wiki/concepts/expo-customer-beginner-guide-asf-2]], [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]] — Profile hub + first-launch coach marks for absolute beginners / elderly; agent prompts deleted after run.
 - **ASF-2 post-purchase claims** (2026-06-26): [[wiki/sources/2026-06-26-post-purchase-claims-module]], [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular `claims` feature (warranty/returns for shoes by default); config-swappable per client; web customer + staff flows.
 - **ASF-2 warranty discount credits** (2026-07-09): [[wiki/concepts/warranty-discount-credits-asf-2]], [[wiki/sources/2026-07-09-warranty-discount-credits-design]] — human-verified credit system on top of `claims`; estimate-only tiers, staff approval issues fixed-RM `warranty_credits`, one-click cart redemption; shipped in `asf-2-next`.
 - **ASF-2 customer i18n** (2026-07-08): [[wiki/concepts/customer-i18n-asf-2]], [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]] — Expo customer app bilingual (zh-CN/en); Supabase translation tables seeded; Next.js i18n stashed.

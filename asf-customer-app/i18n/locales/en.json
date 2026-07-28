@@ -54,7 +54,20 @@
     "loginRequired": "Please sign in.",
     "loginToEdit": "Sign in to edit your account.",
     "nameRequired": "Please enter your first and last name.",
-    "phonePlaceholder": "010-0000000"
+    "phonePlaceholder": "010-0000000",
+    "atelierAccountSection": "Account",
+    "atelierAccountHint": "Orders, collection, and care",
+    "atelierEditAccount": "Edit",
+    "appearance": "Theme (staff)",
+    "appearanceSubtitle": "Staff QA only. Switch Classic, Atelier, or Noir. Your choice is saved on this device.",
+    "themeStaff": "Theme (staff)",
+    "themeClassic": "Classic",
+    "themeAtelier": "Atelier",
+    "themeNoir": "Noir",
+    "themeClassicDesc": "Boutique landing with gold accents and an editorial shop feel.",
+    "themeAtelierDesc": "Magazine lookbook with warm paper tones and quieter chrome.",
+    "themeNoirDesc": "Immersive night retail — dark, dense, and always-on cart headers.",
+    "themeSelected": "Selected"
   },
   "alerts": {
     "dismiss": "Dismiss notification"
@@ -160,31 +173,76 @@
     "cardMarkReadAria": "Mark as read",
     "cardSaveAria": "Save",
     "cardUnsaveAria": "Remove from saved",
-    "placeholderImage": "Image"
+    "placeholderImage": "Image",
+    "atelierIntroTitle": "The edit",
+    "atelierIntroBody": "Quiet pieces, considered frames — browse at your own pace.",
+    "atelierCoverEyebrow": "This season",
+    "atelierChapterLabel": "Chapter {n}",
+    "atelierBridgeLabel": "In this edit",
+    "atelierBridgeLooks": "{count} looks",
+    "atelierChapterCaptionOpener": "The opening frame for this season's edit.",
+    "atelierChapterCaptionVariation": "A quieter cut — kept for the atmosphere.",
+    "atelierChapterCaptionClosing": "The closing plate before the full archive.",
+    "atelierViewLookbook": "View lookbook",
+    "atelierBrowseLookbook": "Browse the lookbook",
+    "atelierInsertLabel": "Insert",
+    "atelierJournalEyebrow": "From the journal",
+    "atelierJournalCta": "Read the journal",
+    "atelierShopTheEdit": "Shop the edit",
+    "atelierIndexTitle": "Index",
+    "atelierIndexHint": "Browse by category",
+    "noirFeedTitle": "Tonight",
+    "noirFeedHint": "A short edit for tonight — not the full catalog.",
+    "noirOffersHint": "Quick deals — apply at checkout.",
+    "noirNewLabel": "Drop",
+    "noirShopAll": "Shop all →",
+    "noirDropEyebrow": "Tonight's drop",
+    "noirDropAria": "Open drop {name}"
   },
   "highlights": {
     "title": "Featured picks",
-    "empty": "No content yet. Check back soon."
+    "noirTitle": "Featured",
+    "empty": "No content yet. Check back soon.",
+    "atelierIntroTitle": "Journal",
+    "atelierIntroBody": "Stories and frames from the edit — read slowly."
   },
   "catalog": {
     "all": "All",
     "filter": "Filter",
     "emptyTitle": "No products found",
     "backToHome": "Back to home",
-    "categoryFallback": "Category"
+    "categoryFallback": "Category",
+    "atelierTitle": "Lookbook",
+    "atelierArchiveEyebrow": "Archive",
+    "atelierCount": "{count} pieces",
+    "noirEyebrow": "Catalog",
+    "noirCount": "{count} items",
+    "noirInventoryTitle": "Inventory",
+    "noirResults": "{count} results",
+    "noirEmptyTitle": "Nothing in inventory",
+    "noirEmptyHint": "New pieces will land here when they go live.",
+    "noirNoResultsTitle": "No matches",
+    "noirNoResultsHint": "Try a different search or clear filters.",
+    "noirClearTools": "Clear search & filters",
+    "noirClearSearch": "Clear search"
   },
   "filter": {
+    "filterAndSort": "Filter & sort",
+    "categoryTitle": "Category",
     "sortTitle": "Sort by",
     "sortNewest": "Newest",
     "sortPriceAsc": "Price ↑",
     "sortPriceDesc": "Price ↓",
     "sortPriceLowHigh": "Price: low to high",
     "sortPriceHighLow": "Price: high to low",
-    "done": "Done"
+    "done": "Done",
+    "openAria": "Open filters and sort",
+    "summary": "{sort} · {category}"
   },
   "product": {
     "addToBag": "Add to bag",
     "addedToBag": "Added to bag",
+    "addedLabel": "Added",
     "addToBagFailed": "Could not add to bag",
     "quickView": "Quick view",
     "color": "Color",
@@ -206,6 +264,12 @@
     "unavailable": "Product unavailable",
     "notFound": "Product not found",
     "continueShopping": "Continue shopping",
+    "atelierEyebrow": "Lookbook",
+    "atelierSelectColor": "Select color",
+    "atelierSelectSize": "Select size",
+    "atelierCtaHintColor": "Select a color",
+    "atelierCtaHintSize": "Select a size",
+    "atelierCtaHintBoth": "Select color and size",
     "details": "Product details",
     "noDescription": "No description available.",
     "materialCare": "Materials & care",
@@ -698,7 +762,23 @@
     "emptyTitle": "No stores available",
     "googleMaps": "Google Maps",
     "waze": "Waze",
+    "directions": "Directions",
+    "mapsUnavailableTitle": "Unable to open maps",
+    "mapsUnavailableMessage": "Install Google Maps or Waze, or try again from a browser.",
     "permissionDenied": "Location permission denied. Distances are unavailable.",
+    "atelierEyebrow": "Places",
+    "atelierTitle": "Visit",
+    "atelierCount": "{count} places",
+    "atelierAddress": "Address",
+    "atelierPhone": "Phone",
+    "atelierHours": "Hours",
+    "noirEyebrow": "Locator",
+    "noirTitle": "Stores",
+    "noirCount": "{count} stores",
+    "noirMaps": "Maps",
+    "noirAddress": "Address",
+    "noirPhone": "Phone",
+    "noirHours": "Hours",
     "distance": {
       "within100m": "Within 100 m",
       "meters": "{count} m",
@@ -944,6 +1024,238 @@
       "1": "Great quality, true to size — love the design!",
       "2": "Fast shipping and nice packaging, slight color difference.",
       "3": "Perfect! Comfortable fabric and great details — will buy again."
+    }
+  },
+  "guide": {
+    "hubTitle": "How to use this app",
+    "hubSubtitle": "Tap a topic. We'll show you on the real screen.",
+    "profileEntry": "How to use this app",
+    "contactSupport": "Still need help? Contact support",
+    "replayWelcome": "Show the welcome tour again",
+    "restartOnboarding": "Restart the welcome tour (testing)",
+    "controls": {
+      "next": "Next",
+      "back": "Back",
+      "skip": "Skip",
+      "done": "Got it",
+      "exit": "Exit guide",
+      "stepIndicator": "Step {step} of {total}"
+    },
+    "topics": {
+      "findShoes": {
+        "title": "Find shoes",
+        "desc": "Browse and open a shoe's page"
+      },
+      "chooseSizeAddToBag": {
+        "title": "Choose size & add to bag",
+        "desc": "Pick a size and add it to your bag"
+      },
+      "payCheckout": {
+        "title": "Pay for your order",
+        "desc": "See how to pay, step by step"
+      },
+      "seeMyOrders": {
+        "title": "See my orders",
+        "desc": "Check where your order is"
+      },
+      "saveFavourites": {
+        "title": "Save favourites",
+        "desc": "Save shoes you like for later"
+      },
+      "changeLanguage": {
+        "title": "Change language",
+        "desc": "Switch the app to your language"
+      },
+      "myShoes": {
+        "title": "My shoes & warranty",
+        "desc": "Add a pair and track your warranty"
+      },
+      "rewards": {
+        "title": "Points & rewards",
+        "desc": "See your points and rewards, simply"
+      },
+      "askForHelp": {
+        "title": "Ask for help",
+        "desc": "Learn how to send us a message"
+      }
+    },
+    "firstLaunch": {
+      "hubTitle": "Welcome tour",
+      "hubDescription": "A quick look around the app",
+      "welcome": {
+        "title": "Welcome!",
+        "body": "This app lets you shop for shoes right from your phone. We'll show you the important buttons — you can skip any time.",
+        "languagePrompt": "Choose your language:"
+      },
+      "tabs": {
+        "title": "Your map",
+        "body": "These buttons at the bottom are your map. Home takes you here, Shop is where you find shoes, and Profile is your account and help.{extraTabs}",
+        "extra": " You'll also see {names} — feel free to explore them too."
+      },
+      "bag": {
+        "title": "Your shopping bag",
+        "body": "Shoes you want to buy go here. Tap the bag when you're ready to pay."
+      },
+      "shop": {
+        "title": "Finding shoes",
+        "body": "Tap a shoe to open it, choose a size, then add it to your bag."
+      },
+      "safetyNet": {
+        "title": "If you ever forget",
+        "body": "Open this page any time to learn each part of the app again."
+      },
+      "done": {
+        "title": "You're ready!",
+        "body": "Start from Home whenever you like. Tap Got it to finish."
+      }
+    },
+    "__smoke": {
+      "title": "Engine smoke test",
+      "description": "Internal check — not shown to users.",
+      "step1": {
+        "title": "Step one",
+        "body": "This is a temporary step used to test the guide engine."
+      },
+      "step2": {
+        "title": "Step two",
+        "body": "Tap Got it to finish this test tour."
+      }
+    },
+    "steps": {
+      "findShoes": {
+        "s1": {
+          "title": "Open Shop",
+          "body": "Tap Shop in the bottom bar. That's where all our shoes are."
+        },
+        "s2": {
+          "title": "Browse shoes",
+          "body": "Here are all our shoes. Scroll up and down to see more."
+        },
+        "s3": {
+          "title": "Open a shoe",
+          "body": "Tap any shoe to see its page and choose a size."
+        }
+      },
+      "chooseSizeAddToBag": {
+        "s1": {
+          "title": "Pick a shoe",
+          "body": "Tap any shoe you like to open its page."
+        },
+        "s2": {
+          "title": "Choose a size",
+          "body": "Tap the size that fits you."
+        },
+        "s3": {
+          "title": "Add to bag",
+          "body": "Tap \"Add to bag\" to save this shoe for buying later."
+        },
+        "s4": {
+          "title": "Check your bag",
+          "body": "The bag icon updates to show how many items are waiting for you."
+        }
+      },
+      "payCheckout": {
+        "s1": {
+          "title": "Your bag",
+          "body": "Items you want to buy go here. Tap the bag icon when you're ready to pay."
+        },
+        "s2": {
+          "title": "Review your bag",
+          "body": "Check your items and the total here before you pay."
+        },
+        "s3": {
+          "title": "How paying works",
+          "body": "Tap the button at the bottom to pay. You'll enter your address and pick a payment method — it only takes a minute."
+        },
+        "s4": {
+          "title": "All set",
+          "body": "Now you know how paying works. Come back to this guide anytime from Profile."
+        }
+      },
+      "seeMyOrders": {
+        "s1": {
+          "title": "Your orders",
+          "body": "Tap here to see everything you've ordered."
+        },
+        "s2": {
+          "title": "Your order list",
+          "body": "Here are your past orders, newest first. Tap any one to see more."
+        },
+        "s3": {
+          "title": "What the words mean",
+          "body": "Processing means we're getting it ready. Shipped means it's on the way. Delivered means it has arrived."
+        }
+      },
+      "saveFavourites": {
+        "s1": {
+          "title": "Save a shoe",
+          "body": "Tap the little heart on any shoe to save it for later."
+        },
+        "s2": {
+          "title": "Where saved shoes go",
+          "body": "Saved shoes go here — tap \"My wishlist\" any time."
+        },
+        "s3": {
+          "title": "All your favourites",
+          "body": "Everything you saved shows up here, ready for whenever you want to buy it."
+        }
+      },
+      "changeLanguage": {
+        "s1": {
+          "title": "Change language",
+          "body": "You can change the app's language any time you like."
+        },
+        "s2": {
+          "title": "Tap here",
+          "body": "Tap this row to see the list of languages."
+        },
+        "s3": {
+          "title": "Pick your language",
+          "body": "Choose English, 简体中文, or Bahasa Melayu. The app changes right away."
+        }
+      },
+      "myShoes": {
+        "s1": {
+          "title": "My Collection",
+          "body": "This is where your shoes and warranty cards live."
+        },
+        "s2": {
+          "title": "Activate a card",
+          "body": "Got a card with your shoes? Tap Activate to add it here."
+        },
+        "s3": {
+          "title": "Track your warranty",
+          "body": "Each card shows your shoe and how long its warranty lasts."
+        }
+      },
+      "rewards": {
+        "s1": {
+          "title": "Points & rewards",
+          "body": "Tap here to see your points and rewards."
+        },
+        "s2": {
+          "title": "Your points",
+          "body": "This shows how many points you have right now."
+        },
+        "s3": {
+          "title": "Collect stamps",
+          "body": "Every stamp brings you closer to a reward. Keep shopping to fill it up."
+        }
+      },
+      "askForHelp": {
+        "s1": {
+          "title": "Ask for help",
+          "body": "Tap here any time you need a real person to help you."
+        },
+        "s2": {
+          "title": "Send a message",
+          "body": "Tell us what's wrong, then tap Send."
+        },
+        "s3": {
+          "title": "We'll reply here",
+          "body": "Check back in this chat any time — we'll answer your message."
+        }
+      }
     }
   }
 }

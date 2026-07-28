@@ -14,12 +14,15 @@ import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AlertBanner } from "@/components/AlertBanner";
+import { GuideOverlay, GuideProvider } from "@/components/guide";
 import { NavigationSync } from "@/components/NavigationSync";
 import { AppProviders } from "@/components/Providers";
 import { SplashIntro } from "@/components/SplashIntro";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { colors } from "@/constants/theme";
+import { motion } from "@/lib/motion";
 import { preventNativeSplashAutoHide } from "@/lib/splashScreen";
 import * as SplashScreen from "expo-splash-screen";
 
@@ -32,6 +35,7 @@ preventNativeSplashAutoHide();
 function AppShell(): ReactElement {
   const { isEnabled } = useFeatureFlags();
   const { t } = useTranslation();
+  const tokens = useThemeTokens();
   const [introComplete, setIntroComplete] = useState(false);
 
   useEffect(() => {
@@ -44,13 +48,13 @@ function AppShell(): ReactElement {
   if (isEnabled("maintenance")) {
     return (
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={tokens.statusBarStyle} />
         <View
           style={{
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: colors.bg,
+            backgroundColor: tokens.bg,
             paddingHorizontal: 32,
           }}
         >
@@ -58,7 +62,7 @@ function AppShell(): ReactElement {
             style={{
               fontSize: 22,
               fontFamily: "PlayfairDisplay_400Regular",
-              color: colors.text,
+              color: tokens.text,
               marginBottom: 12,
               textAlign: "center",
             }}
@@ -69,7 +73,7 @@ function AppShell(): ReactElement {
             style={{
               fontSize: 14,
               fontFamily: "Inter_400Regular",
-              color: colors.muted,
+              color: tokens.muted,
               textAlign: "center",
             }}
           >
@@ -82,13 +86,32 @@ function AppShell(): ReactElement {
 
   return (
     <SafeAreaProvider>
-      <NavigationSync />
-      <StatusBar style="dark" />
-      <AlertBanner />
-      <Stack screenOptions={{ headerShown: false }} />
-      {!introComplete ? (
-        <SplashIntro onComplete={() => setIntroComplete(true)} />
-      ) : null}
+      <GuideProvider>
+        <NavigationSync />
+        <StatusBar style={tokens.statusBarStyle} />
+        <AlertBanner />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            animationDuration: motion.duration.base,
+          }}
+        >
+          {/* Auth flow — softer fade + gentle rise, slightly longer. */}
+          <Stack.Screen
+            name="(auth)"
+            options={{ animation: "fade_from_bottom", animationDuration: 320 }}
+          />
+          {/* Sheet-like layers rise from the bottom to read as modal surfaces. */}
+          <Stack.Screen name="cart" options={{ animation: "slide_from_bottom" }} />
+          <Stack.Screen name="wishlist" options={{ animation: "slide_from_bottom" }} />
+          <Stack.Screen name="checkout" options={{ animation: "slide_from_bottom" }} />
+        </Stack>
+        <GuideOverlay />
+        {!introComplete ? (
+          <SplashIntro onComplete={() => setIntroComplete(true)} />
+        ) : null}
+      </GuideProvider>
     </SafeAreaProvider>
   );
 }

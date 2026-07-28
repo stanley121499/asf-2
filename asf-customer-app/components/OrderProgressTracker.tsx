@@ -10,7 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { useTranslation } from "@/context/LocaleContext";
-import { colors } from "@/constants/theme";
+import { useThemeTokens } from "@/context/ThemeContext";
 
 /**
  * A single stage in the order lifecycle (label resolved via i18n at render time).
@@ -126,13 +126,14 @@ function Connector({
   filled,
   side,
 }: Readonly<{ filled: boolean; side: "left" | "right" }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View
       style={{
         position: "absolute",
         top: NODE_SIZE / 2 - LINE_HEIGHT / 2,
         height: LINE_HEIGHT,
-        backgroundColor: filled ? colors.text : colors.border,
+        backgroundColor: filled ? tokens.text : tokens.border,
         left: side === "left" ? 0 : "50%",
         right: side === "left" ? "50%" : 0,
       }}
@@ -160,6 +161,7 @@ function TrackerBody({
   stageIndex,
   t,
 }: Readonly<{ stageIndex: number; t: TranslateFn }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const activeStage = STAGES[stageIndex];
   const headline =
     activeStage !== undefined
@@ -169,13 +171,13 @@ function TrackerBody({
   return (
     <View>
       {/* Headline */}
-      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: colors.text }}>
+      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: tokens.text }}>
         {headline}
       </Text>
       <Text
         style={{
           fontSize: 13,
-          color: colors.muted,
+          color: tokens.muted,
           marginTop: 4,
           marginBottom: 24,
           fontFamily: "Inter_400Regular",
@@ -193,9 +195,9 @@ function TrackerBody({
           const rightFilled = idx < stageIndex;
           const label = t(`orders.timeline.${stage.labelKey}`);
 
-          const nodeBg = completed ? colors.text : current ? colors.accent : colors.panel;
-          const iconColor = completed || current ? "#FFFFFF" : colors.muted;
-          const labelColor = current || completed ? colors.text : colors.muted;
+          const nodeBg = completed ? tokens.text : current ? tokens.accent : tokens.panel;
+          const iconColor = completed || current ? tokens.bg : tokens.muted;
+          const labelColor = current || completed ? tokens.text : tokens.muted;
 
           return (
             <View key={stage.id} style={{ flex: 1, alignItems: "center" }}>
@@ -211,7 +213,7 @@ function TrackerBody({
                 {idx > 0 ? <Connector filled={leftFilled} side="left" /> : null}
                 {idx < STAGES.length - 1 ? <Connector filled={rightFilled} side="right" /> : null}
 
-                {current ? <PulseRing color={colors.accent} /> : null}
+                {current ? <PulseRing color={tokens.accent} /> : null}
 
                 <View
                   style={{
@@ -222,7 +224,7 @@ function TrackerBody({
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: current || completed ? 0 : 1,
-                    borderColor: colors.border,
+                    borderColor: tokens.border,
                   }}
                 >
                   <Ionicons
@@ -258,6 +260,7 @@ function TrackerBody({
  * Inner content for a cancelled order.
  */
 function CancelledBody({ t }: Readonly<{ t: TranslateFn }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
       <View
@@ -270,14 +273,14 @@ function CancelledBody({ t }: Readonly<{ t: TranslateFn }>): React.ReactElement 
           justifyContent: "center",
         }}
       >
-        <Ionicons name="close-circle-outline" size={26} color={colors.danger} />
+        <Ionicons name="close-circle-outline" size={26} color={tokens.danger} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text }}>
+        <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text }}>
           {t("orders.timeline.cancelled")}
         </Text>
         <Text
-          style={{ fontSize: 13, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}
+          style={{ fontSize: 13, color: tokens.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}
         >
           {t("orders.progress.cancelledHelp")}
         </Text>
@@ -296,6 +299,7 @@ export function OrderProgressTracker({
   status,
   embedded = false,
 }: Readonly<OrderProgressTrackerProps>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const stageIndex = statusToStageIndex(status);
   const cancelled = stageIndex === -1;
@@ -312,9 +316,9 @@ export function OrderProgressTracker({
   return (
     <View
       style={{
-        backgroundColor: "#FFFFFF",
+        backgroundColor: tokens.bg,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: tokens.border,
         borderRadius: 20,
         padding: 20,
       }}
@@ -330,6 +334,7 @@ export function OrderProgressTracker({
 export function OrderProgressDots({
   status,
 }: Readonly<OrderProgressTrackerProps>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const stageIndex = statusToStageIndex(status);
   const cancelled = stageIndex === -1;
@@ -337,8 +342,8 @@ export function OrderProgressDots({
   if (cancelled) {
     return (
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <Ionicons name="close-circle" size={14} color={colors.danger} />
-        <Text style={{ fontSize: 12, color: colors.danger, fontFamily: "Inter_400Regular" }}>
+        <Ionicons name="close-circle" size={14} color={tokens.danger} />
+        <Text style={{ fontSize: 12, color: tokens.danger, fontFamily: "Inter_400Regular" }}>
           {t("orders.status.cancelled")}
         </Text>
       </View>
@@ -356,7 +361,7 @@ export function OrderProgressDots({
               width: idx === stageIndex ? 18 : 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: reached ? colors.text : colors.border,
+              backgroundColor: reached ? tokens.text : tokens.border,
             }}
           />
         );

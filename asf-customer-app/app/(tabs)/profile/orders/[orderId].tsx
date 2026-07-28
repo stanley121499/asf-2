@@ -11,13 +11,13 @@ import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useOrderContext } from "@/context/product/OrderContext";
+import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Database } from "@/database.types";
 import { formatDate } from "@/i18n/format";
 import { isOrderDelivered } from "@/lib/claims/claimEligibility";
 import type { ShippingAddressStructured } from "@/lib/checkoutApi";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
@@ -91,14 +91,15 @@ function getProductImageUrl(product: ProductMini | null): string {
  * by a small letter-spaced title. Establishes the page's visual rhythm.
  */
 function SectionLabel({ title }: Readonly<{ title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10, marginLeft: 4 }}>
-      <View style={{ width: 16, height: 2, backgroundColor: colors.accent }} />
+      <View style={{ width: 16, height: 2, backgroundColor: tokens.accent }} />
       <Text
         style={{
           fontSize: 11,
           letterSpacing: 2,
-          color: colors.muted,
+          color: tokens.muted,
           fontFamily: "Inter_400Regular",
         }}
       >
@@ -109,21 +110,44 @@ function SectionLabel({ title }: Readonly<{ title: string }>): React.ReactElemen
 }
 
 /**
- * Plain white floating surface used for every section body on the warm canvas.
+ * Section body surface. Classic: floating rounded card. Atelier: flat paper
+ * panel with hairline. Noir: flat night panel with hairline (no shadow).
  */
 function Surface({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  const tokens = useThemeTokens();
+  const { themeId } = useTheme();
+  const isAtelier = themeId === "atelier";
+  const isNoir = themeId === "noir";
   return (
     <View
-      style={{
-        backgroundColor: "#FFFFFF",
-        borderRadius: 18,
-        padding: 18,
-        shadowColor: "#000000",
-        shadowOpacity: 0.04,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 1,
-      }}
+      style={
+        isAtelier
+          ? {
+              backgroundColor: tokens.panel,
+              borderRadius: 2,
+              padding: 18,
+              borderWidth: 1,
+              borderColor: tokens.border,
+            }
+          : isNoir
+            ? {
+                backgroundColor: tokens.panel,
+                borderRadius: 2,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: tokens.border,
+              }
+            : {
+                backgroundColor: tokens.bg,
+                borderRadius: 18,
+                padding: 18,
+                shadowColor: "#000000",
+                shadowOpacity: 0.04,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 1,
+              }
+      }
     >
       {children}
     </View>
@@ -134,6 +158,12 @@ function Surface({ children }: Readonly<{ children: React.ReactNode }>): React.R
  * Order detail — sticky header, fulfilment tracker, line items, totals.
  */
 export default function OrderDetailScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
+  const { themeId } = useTheme();
+  const isAtelier = themeId === "atelier";
+  const isNoir = themeId === "noir";
+  /** Paper/bg under Atelier+Noir; warm panel under Classic. */
+  const pageBg = isAtelier || isNoir ? tokens.bg : tokens.panel;
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -201,10 +231,10 @@ export default function OrderDetailScreen(): React.ReactElement {
 
   if (user === null || (order === undefined && (ordersLoading || directOrderLoading))) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: pageBg }}>
         <SubPageHeader title={t("orders.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -212,10 +242,10 @@ export default function OrderDetailScreen(): React.ReactElement {
 
   if (order === undefined) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: pageBg }}>
         <SubPageHeader title={t("orders.detailTitle")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("orders.notFound")}
           </Text>
         </View>
@@ -273,37 +303,65 @@ export default function OrderDetailScreen(): React.ReactElement {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: pageBg }}>
       <SubPageHeader title={t("orders.detailTitle")} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 56 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: isAtelier ? 24 : 16,
+          paddingTop: isAtelier ? 24 : 16,
+          paddingBottom: 56,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Hero: order ref + date + fulfilment tracker, all in one statement */}
         <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 24,
-            padding: 22,
-            marginBottom: 28,
-            shadowColor: "#000000",
-            shadowOpacity: 0.05,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 2,
-          }}
+          style={
+            isAtelier
+              ? {
+                  backgroundColor: tokens.panel,
+                  borderRadius: 2,
+                  padding: 22,
+                  marginBottom: 28,
+                  borderWidth: 1,
+                  borderColor: tokens.border,
+                }
+              : isNoir
+                ? {
+                    backgroundColor: tokens.panel,
+                    borderRadius: 2,
+                    padding: 16,
+                    marginBottom: 20,
+                    borderWidth: 1,
+                    borderColor: tokens.border,
+                  }
+                : {
+                    backgroundColor: tokens.bg,
+                    borderRadius: 24,
+                    padding: 22,
+                    marginBottom: 28,
+                    shadowColor: "#000000",
+                    shadowOpacity: 0.05,
+                    shadowRadius: 16,
+                    shadowOffset: { width: 0, height: 6 },
+                    elevation: 2,
+                  }
+          }
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 11, letterSpacing: 2, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 11, letterSpacing: 2, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                 {t("orders.orderLabel")}
               </Text>
-              <Text style={{ fontSize: 13, letterSpacing: 1, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 13, letterSpacing: 1, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
                 #{shortId}
               </Text>
             </View>
-            <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>{createdDate}</Text>
+            <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{createdDate}</Text>
           </View>
 
-          <View style={{ height: 1, backgroundColor: colors.border, marginBottom: 20 }} />
+          <View style={{ height: 1, backgroundColor: tokens.border, marginBottom: 20 }} />
 
           <OrderProgressTracker status={status} embedded />
         </View>
@@ -314,10 +372,10 @@ export default function OrderDetailScreen(): React.ReactElement {
             <SectionLabel title={t("orders.tracking")} />
             <Surface>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                   {t("orders.trackingNumber")}
                 </Text>
-                <Text style={{ fontSize: 14, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{tracking}</Text>
+                <Text style={{ fontSize: 14, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{tracking}</Text>
               </View>
             </Surface>
           </View>
@@ -327,7 +385,7 @@ export default function OrderDetailScreen(): React.ReactElement {
         <View style={{ marginBottom: 20 }}>
           <SectionLabel title={t("orders.shippingAddressTitle")} />
           <Surface>
-            <Text style={{ fontSize: 14, color: colors.text, lineHeight: 23, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, color: tokens.text, lineHeight: 23, fontFamily: "Inter_400Regular" }}>
               {shippingDisplay}
             </Text>
           </Surface>
@@ -337,19 +395,19 @@ export default function OrderDetailScreen(): React.ReactElement {
         <View style={{ marginBottom: 20 }}>
           <SectionLabel title={t("orders.items")} />
           {canReportIssue ? (
-            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, marginLeft: 4, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 12, color: tokens.muted, marginBottom: 8, marginLeft: 4, fontFamily: "Inter_400Regular" }}>
               {t("orders.selectItemsToClaim")}
             </Text>
           ) : null}
           <Surface>
             {itemsLoading ? (
-              <ActivityIndicator color={colors.accent} />
+              <ActivityIndicator color={tokens.accent} />
             ) : itemsError !== null ? (
-              <Text style={{ fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular" }}>{itemsError}</Text>
+              <Text style={{ fontSize: 13, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{itemsError}</Text>
             ) : items.length === 0 ? (
               <View style={{ alignItems: "center", paddingVertical: 12 }}>
-                <Ionicons name="cube-outline" size={26} color={colors.border} style={{ marginBottom: 8 }} />
-                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular", textAlign: "center" }}>
+                <Ionicons name="cube-outline" size={26} color={tokens.border} style={{ marginBottom: 8 }} />
+                <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular", textAlign: "center" }}>
                   {isPending ? t("orders.itemsPending") : t("orders.itemsEmpty")}
                 </Text>
               </View>
@@ -386,7 +444,7 @@ export default function OrderDetailScreen(): React.ReactElement {
                       gap: 12,
                       paddingVertical: 12,
                       borderBottomWidth: idx < items.length - 1 ? 1 : 0,
-                      borderBottomColor: colors.border,
+                      borderBottomColor: tokens.border,
                       backgroundColor: isSelected ? "rgba(201,169,110,0.08)" : "transparent",
                       borderRadius: isSelected ? 8 : 0,
                     }}
@@ -395,25 +453,25 @@ export default function OrderDetailScreen(): React.ReactElement {
                       <Ionicons
                         name={isSelected ? "checkbox" : "square-outline"}
                         size={22}
-                        color={isSelected ? colors.accent : colors.muted}
+                        color={isSelected ? tokens.accent : tokens.muted}
                       />
                     ) : null}
-                    <View style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", backgroundColor: colors.panel }}>
+                    <View style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", backgroundColor: tokens.panel }}>
                       {imageUrl.length > 0 ? (
                         <Image source={{ uri: imageUrl }} style={{ width: 56, height: 56 }} contentFit="cover" />
                       ) : (
                         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                          <Ionicons name="image-outline" size={22} color={colors.muted} />
+                          <Ionicons name="image-outline" size={22} color={tokens.muted} />
                         </View>
                       )}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }} numberOfLines={1}>{name}</Text>
-                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3, fontFamily: "Inter_400Regular" }}>
+                      <Text style={{ fontSize: 14, color: tokens.text, fontFamily: "Inter_400Regular" }} numberOfLines={1}>{name}</Text>
+                      <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 3, fontFamily: "Inter_400Regular" }}>
                         {formatRm(unit)} × {qty}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 14, color: colors.text, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
+                    <Text style={{ fontSize: 14, color: tokens.text, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
                       {formatRm(unit * qty)}
                     </Text>
                   </TouchableOpacity>
@@ -424,16 +482,54 @@ export default function OrderDetailScreen(): React.ReactElement {
           {canReportIssue && selectedItemIds.length > 0 ? (
             <TouchableOpacity
               onPress={onReportIssue}
-              style={{
-                marginTop: 12,
-                height: 48,
-                backgroundColor: "#000000",
-                borderRadius: 12,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={
+                isAtelier
+                  ? {
+                      marginTop: 12,
+                      height: 48,
+                      borderWidth: 1,
+                      borderColor: tokens.text,
+                      borderRadius: 2,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }
+                  : isNoir
+                    ? {
+                        marginTop: 12,
+                        height: 44,
+                        backgroundColor: tokens.accent,
+                        borderRadius: 2,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }
+                    : {
+                        marginTop: 12,
+                        height: 48,
+                        backgroundColor: tokens.text,
+                        borderRadius: 12,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }
+              }
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              <Text
+                style={
+                  isAtelier
+                    ? {
+                        color: tokens.text,
+                        fontSize: 13,
+                        letterSpacing: 1.5,
+                        textTransform: "uppercase",
+                        fontFamily: "Inter_400Regular",
+                      }
+                    : {
+                        color: tokens.bg,
+                        fontSize: 14,
+                        fontWeight: "600",
+                        fontFamily: "Inter_400Regular",
+                      }
+                }
+              >
                 {t("orders.claimSelected", { count: selectedItemIds.length })}
               </Text>
             </TouchableOpacity>
@@ -446,10 +542,10 @@ export default function OrderDetailScreen(): React.ReactElement {
           <Surface>
             {discount !== null && (
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                   {t("orders.discount")}
                 </Text>
-                <Text style={{ fontSize: 13, color: colors.success, fontFamily: "Inter_400Regular" }}>- {formatRm(discount)}</Text>
+                <Text style={{ fontSize: 13, color: tokens.success, fontFamily: "Inter_400Regular" }}>- {formatRm(discount)}</Text>
               </View>
             )}
 
@@ -458,24 +554,31 @@ export default function OrderDetailScreen(): React.ReactElement {
               style={{
                 borderBottomWidth: 1,
                 borderStyle: "dashed",
-                borderColor: colors.border,
+                borderColor: tokens.border,
                 marginBottom: 16,
               }}
             />
 
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-              <Text style={{ fontSize: 13, letterSpacing: 1, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 13, letterSpacing: 1, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                 {t("orders.total")}
               </Text>
-              <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 28, color: colors.text }}>
+              <Text
+                style={{
+                  fontFamily: isNoir ? "Inter_400Regular" : "PlayfairDisplay_400Regular",
+                  fontSize: isNoir ? 22 : 28,
+                  fontWeight: isNoir ? "600" : "400",
+                  color: tokens.text,
+                }}
+              >
                 {formatRm(totalAmount)}
               </Text>
             </View>
 
             {pointsEarned !== null && (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 }}>
-                <Ionicons name="star" size={14} color={colors.accent} />
-                <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                <Ionicons name="star" size={14} color={tokens.accent} />
+                <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                   {t("orders.pointsEarnedThis", { count: pointsEarned })}
                 </Text>
               </View>

@@ -9,11 +9,11 @@ import { usePaymentSheet } from "@stripe/stripe-react-native";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { getCheckoutApiErrorTranslationKey } from "@/i18n/errorMap";
 import { postCreatePaymentIntent } from "@/lib/checkoutApi";
 import { formatRm } from "@/lib/formatCurrency";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 /**
  * Identifier for a supported (or planned) payment gateway / method.
@@ -77,6 +77,7 @@ function Header({
   onBack,
   title,
 }: Readonly<{ onBack: () => void; title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View
       style={{
@@ -85,8 +86,8 @@ function Header({
         alignItems: "center",
         justifyContent: "center",
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: "#FFFFFF",
+        borderBottomColor: tokens.border,
+        backgroundColor: tokens.bg,
         position: "relative",
       }}
     >
@@ -95,9 +96,9 @@ function Header({
         hitSlop={8}
         style={{ position: "absolute", left: 16, width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
       >
-        <Ionicons name="arrow-back" size={22} color={colors.text} />
+        <Ionicons name="arrow-back" size={22} color={tokens.text} />
       </TouchableOpacity>
-      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
+      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: tokens.text }}>
         {title}
       </Text>
     </View>
@@ -122,6 +123,7 @@ function MethodRow({
   subtitle: string;
   comingSoonLabel: string;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const disabled = !option.available;
   return (
     <TouchableOpacity
@@ -136,8 +138,8 @@ function MethodRow({
         paddingVertical: 14,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: selected ? colors.text : colors.border,
-        backgroundColor: "#FFFFFF",
+        borderColor: selected ? tokens.text : tokens.border,
+        backgroundColor: tokens.bg,
         opacity: disabled ? 0.55 : 1,
       }}
     >
@@ -146,18 +148,18 @@ function MethodRow({
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: colors.panel,
+          backgroundColor: tokens.panel,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Ionicons name={option.icon} size={20} color={colors.accent} />
+        <Ionicons name={option.icon} size={20} color={tokens.accent} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 15, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
           {title}
         </Text>
-        <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
+        <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
           {subtitle}
         </Text>
       </View>
@@ -167,10 +169,10 @@ function MethodRow({
             paddingHorizontal: 8,
             paddingVertical: 3,
             borderRadius: 99,
-            backgroundColor: colors.panel,
+            backgroundColor: tokens.panel,
           }}
         >
-          <Text style={{ fontSize: 11, color: colors.muted, fontFamily: "Inter_400Regular" }}>{comingSoonLabel}</Text>
+          <Text style={{ fontSize: 11, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{comingSoonLabel}</Text>
         </View>
       ) : (
         <View
@@ -179,7 +181,7 @@ function MethodRow({
             height: 22,
             borderRadius: 11,
             borderWidth: selected ? 7 : 2,
-            borderColor: selected ? colors.text : colors.border,
+            borderColor: selected ? tokens.text : tokens.border,
           }}
         />
       )}
@@ -193,6 +195,7 @@ function MethodRow({
  * gateways are presented as "coming soon" placeholders.
  */
 export default function CheckoutPaymentScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
@@ -314,10 +317,10 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
 
   if (authLoading) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-          <ActivityIndicator size="large" color={colors.text} />
+          <ActivityIndicator size="large" color={tokens.text} />
         </View>
       </SafeAreaView>
     );
@@ -325,17 +328,17 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
 
   if (user === null) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-          <Text style={{ color: colors.muted, fontSize: 14, fontFamily: "Inter_400Regular", marginBottom: 16 }}>
+          <Text style={{ color: tokens.muted, fontSize: 14, fontFamily: "Inter_400Regular", marginBottom: 16 }}>
             {t("checkout.loginRequiredShort")}
           </Text>
           <TouchableOpacity
             onPress={() => router.replace("/(auth)/sign-in")}
-            style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+            style={{ height: 52, paddingHorizontal: 32, backgroundColor: tokens.text, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("checkout.goSignIn")}</Text>
+            <Text style={{ color: tokens.bg, fontSize: 15, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("checkout.goSignIn")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -344,17 +347,17 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
 
   if (orderId.length === 0) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         <Header onBack={() => router.back()} title={headerTitle} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-          <Text style={{ color: colors.danger, fontSize: 14, textAlign: "center", fontFamily: "Inter_400Regular", marginBottom: 16 }}>
+          <Text style={{ color: tokens.danger, fontSize: 14, textAlign: "center", fontFamily: "Inter_400Regular", marginBottom: 16 }}>
             {t("checkout.missingOrderId")}
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ height: 52, paddingHorizontal: 32, borderWidth: 1, borderColor: colors.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+            style={{ height: 52, paddingHorizontal: 32, borderWidth: 1, borderColor: tokens.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("checkout.back")}</Text>
+            <Text style={{ color: tokens.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("checkout.back")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -365,7 +368,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
   const payDisabled = paying || preparing || selectedMethod !== "card" || !sheetReady;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       <Header onBack={() => router.back()} title={headerTitle} />
 
       <ScrollView
@@ -377,28 +380,28 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
         <View
           style={{
             borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: "#FFFFFF",
+            borderColor: tokens.border,
+            backgroundColor: tokens.bg,
             borderRadius: 16,
             padding: 16,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.orderNumber")}</Text>
-            <Text style={{ fontSize: 14, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.orderNumber")}</Text>
+            <Text style={{ fontSize: 14, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
               #{orderRef}
             </Text>
           </View>
           <View
             style={{
               height: 1,
-              backgroundColor: colors.border,
+              backgroundColor: tokens.border,
               marginVertical: 12,
             }}
           />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.amountDue")}</Text>
-            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: colors.text }}>
+            <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("checkout.amountDue")}</Text>
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: tokens.text }}>
               {orderTotal !== null ? formatRm(orderTotal) : t("orderSuccess.notAvailable")}
             </Text>
           </View>
@@ -409,7 +412,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
           style={{
             fontFamily: "PlayfairDisplay_400Regular",
             fontSize: 16,
-            color: colors.text,
+            color: tokens.text,
             marginTop: 24,
             marginBottom: 12,
           }}
@@ -432,8 +435,8 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
 
         {/* Security note */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16, paddingHorizontal: 4 }}>
-          <Ionicons name="lock-closed-outline" size={14} color={colors.muted} />
-          <Text style={{ flex: 1, fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", lineHeight: 18 }}>
+          <Ionicons name="lock-closed-outline" size={14} color={tokens.muted} />
+          <Text style={{ flex: 1, fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular", lineHeight: 18 }}>
             {t("checkout.securityNote")}
           </Text>
         </View>
@@ -453,11 +456,11 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
               paddingVertical: 10,
             }}
           >
-            <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
+            <Ionicons name="alert-circle-outline" size={18} color={tokens.danger} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+              <Text style={{ fontSize: 13, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
               <TouchableOpacity onPress={() => void bootstrapSheet()} style={{ marginTop: 6 }}>
-                <Text style={{ fontSize: 13, color: colors.text, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 13, color: tokens.text, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
                   {t("checkout.retry")}
                 </Text>
               </TouchableOpacity>
@@ -470,9 +473,9 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
       <SafeAreaView
         edges={["bottom"]}
         style={{
-          backgroundColor: "#FFFFFF",
+          backgroundColor: tokens.bg,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: tokens.border,
           paddingHorizontal: 16,
           paddingTop: 12,
         }}
@@ -483,7 +486,7 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
           activeOpacity={0.85}
           style={{
             height: 56,
-            backgroundColor: "#000000",
+            backgroundColor: tokens.text,
             borderRadius: 99,
             alignItems: "center",
             justifyContent: "center",
@@ -491,9 +494,9 @@ export default function CheckoutPaymentScreen(): React.ReactElement {
           }}
         >
           {paying || preparing ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={tokens.bg} />
           ) : (
-            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+            <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
               {payLabel}
             </Text>
           )}

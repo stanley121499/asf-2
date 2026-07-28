@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { getCheckoutApiErrorTranslationKey } from "@/i18n/errorMap";
 import {
   buildFlatFallbackRate,
@@ -26,7 +27,6 @@ import {
 } from "@/lib/checkoutApi";
 import { formatRm } from "@/lib/formatCurrency";
 import { loadSavedShippingAddress, saveShippingAddress } from "@/lib/shippingAddressStorage";
-import { colors } from "@/constants/theme";
 
 /**
  * Props for a single labelled text field in the checkout form.
@@ -64,12 +64,13 @@ function Field({
   autoCapitalize = "none",
   muted = false,
 }: Readonly<FieldProps>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View style={{ marginBottom: 16 }}>
       <Text
         style={{
           fontSize: 13,
-          color: colors.muted,
+          color: tokens.muted,
           marginBottom: 6,
           fontFamily: "Inter_400Regular",
         }}
@@ -79,20 +80,20 @@ function Field({
       <TextInput
         style={{
           height: 50,
-          backgroundColor: muted ? colors.panel : "#FFFFFF",
+          backgroundColor: muted ? tokens.panel : tokens.bg,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: tokens.border,
           borderRadius: 12,
           paddingHorizontal: 14,
           fontSize: 15,
-          color: muted ? colors.muted : colors.text,
+          color: muted ? tokens.muted : tokens.text,
           fontFamily: "Inter_400Regular",
         }}
         value={value}
         onChangeText={onChangeText}
         editable={editable}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={tokens.muted}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
       />
@@ -130,6 +131,7 @@ function CourierMethodRow({
   onPress: () => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const etaLabel = formatEtaDays(option.etaDays, t);
   const displayName =
     option.serviceCode === "FLAT_STANDARD" ? t("checkout.flatRateName") : option.name;
@@ -145,8 +147,8 @@ function CourierMethodRow({
         paddingVertical: 14,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: selected ? colors.text : colors.border,
-        backgroundColor: "#FFFFFF",
+        borderColor: selected ? tokens.text : tokens.border,
+        backgroundColor: tokens.bg,
       }}
     >
       <View
@@ -154,24 +156,24 @@ function CourierMethodRow({
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: colors.panel,
+          backgroundColor: tokens.panel,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Ionicons name="cube-outline" size={20} color={colors.accent} />
+        <Ionicons name="cube-outline" size={20} color={tokens.accent} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 15, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
           {displayName}
         </Text>
         {etaLabel.length > 0 ? (
-          <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
+          <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular", marginTop: 2 }}>
             {etaLabel}
           </Text>
         ) : null}
       </View>
-      <Text style={{ fontSize: 15, color: colors.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+      <Text style={{ fontSize: 15, color: tokens.text, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
         {formatRm(option.price)}
       </Text>
       <View
@@ -180,7 +182,7 @@ function CourierMethodRow({
           height: 22,
           borderRadius: 11,
           borderWidth: selected ? 7 : 2,
-          borderColor: selected ? colors.text : colors.border,
+          borderColor: selected ? tokens.text : tokens.border,
         }}
       />
     </TouchableOpacity>
@@ -191,6 +193,7 @@ function CourierMethodRow({
  * Step 1: shipping address → courier choice → pending order → payment screen.
  */
 export default function CheckoutShippingScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
@@ -411,18 +414,18 @@ export default function CheckoutShippingScreen(): React.ReactElement {
 
   if (authLoading) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.text} />
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={tokens.text} />
       </SafeAreaView>
     );
   }
 
   if (user === null) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         <Header onBack={() => router.back()} title={t("checkout.shippingInfo")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ color: colors.muted, fontFamily: "Inter_400Regular", fontSize: 14 }}>
+          <Text style={{ color: tokens.muted, fontFamily: "Inter_400Regular", fontSize: 14 }}>
             {t("checkout.loginRequired")}
           </Text>
         </View>
@@ -431,7 +434,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       <Header onBack={() => router.back()} title={t("checkout.shippingInfo")} />
 
       <KeyboardAvoidingView
@@ -459,8 +462,8 @@ export default function CheckoutShippingScreen(): React.ReactElement {
                 paddingVertical: 10,
               }}
             >
-              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
-              <Text style={{ flex: 1, fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular" }}>
+              <Ionicons name="alert-circle-outline" size={18} color={tokens.danger} />
+              <Text style={{ flex: 1, fontSize: 13, color: tokens.danger, fontFamily: "Inter_400Regular" }}>
                 {error}
               </Text>
             </View>
@@ -471,7 +474,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
             style={{
               fontFamily: "PlayfairDisplay_400Regular",
               fontSize: 18,
-              color: colors.text,
+              color: tokens.text,
               marginBottom: 14,
             }}
           >
@@ -515,7 +518,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
             style={{
               fontFamily: "PlayfairDisplay_400Regular",
               fontSize: 18,
-              color: colors.text,
+              color: tokens.text,
               marginTop: 12,
               marginBottom: 14,
             }}
@@ -584,7 +587,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
                 style={{
                   fontFamily: "PlayfairDisplay_400Regular",
                   fontSize: 18,
-                  color: colors.text,
+                  color: tokens.text,
                   marginTop: 12,
                   marginBottom: 14,
                 }}
@@ -594,15 +597,15 @@ export default function CheckoutShippingScreen(): React.ReactElement {
 
               {ratesLoading ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 }}>
-                  <ActivityIndicator size="small" color={colors.text} />
-                  <Text style={{ fontSize: 13, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+                  <ActivityIndicator size="small" color={tokens.text} />
+                  <Text style={{ fontSize: 13, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                     {t("checkout.ratesLoading")}
                   </Text>
                 </View>
               ) : null}
 
               {ratesError !== null ? (
-                <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginBottom: 10 }}>
+                <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular", marginBottom: 10 }}>
                   {`${ratesError}${t("checkout.ratesFallbackSuffix")}`}
                 </Text>
               ) : null}
@@ -626,9 +629,9 @@ export default function CheckoutShippingScreen(): React.ReactElement {
         <SafeAreaView
           edges={["bottom"]}
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: tokens.bg,
             borderTopWidth: 1,
-            borderTopColor: colors.border,
+            borderTopColor: tokens.border,
             paddingHorizontal: 16,
             paddingTop: 12,
           }}
@@ -639,7 +642,7 @@ export default function CheckoutShippingScreen(): React.ReactElement {
             activeOpacity={0.85}
             style={{
               height: 56,
-              backgroundColor: "#000000",
+              backgroundColor: tokens.text,
               borderRadius: 99,
               alignItems: "center",
               justifyContent: "center",
@@ -647,9 +650,9 @@ export default function CheckoutShippingScreen(): React.ReactElement {
             }}
           >
             {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={tokens.bg} />
             ) : (
-              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
                 {t("checkout.continueToPayment")}
               </Text>
             )}
@@ -667,6 +670,7 @@ function Header({
   onBack,
   title,
 }: Readonly<{ onBack: () => void; title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View
       style={{
@@ -675,8 +679,8 @@ function Header({
         alignItems: "center",
         justifyContent: "center",
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: "#FFFFFF",
+        borderBottomColor: tokens.border,
+        backgroundColor: tokens.bg,
         position: "relative",
       }}
     >
@@ -685,9 +689,9 @@ function Header({
         hitSlop={8}
         style={{ position: "absolute", left: 16, width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
       >
-        <Ionicons name="arrow-back" size={22} color={colors.text} />
+        <Ionicons name="arrow-back" size={22} color={tokens.text} />
       </TouchableOpacity>
-      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text }}>
+      <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: tokens.text }}>
         {title}
       </Text>
     </View>

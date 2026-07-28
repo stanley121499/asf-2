@@ -10,11 +10,13 @@ import {
 } from "react-native";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
+import { ANCHORS, TourAnchor } from "@/components/guide";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
-import { colors, fonts } from "@/constants/theme";
+import { useThemeTokens } from "@/context/ThemeContext";
+import { fonts } from "@/constants/theme";
 import { formatDate } from "@/i18n/format";
 import type { RegistrationSummary } from "@/lib/warranty/warrantyRegistrationApi";
 import type { WarrantyRegistrationStatus } from "@/lib/warranty/warrantyTypes";
@@ -90,6 +92,7 @@ export default function CollectionListScreen(): React.ReactElement {
 function CollectionListContent({
   title,
 }: Readonly<{ title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { locale } = useLocale();
@@ -110,10 +113,10 @@ function CollectionListContent({
 
   if (authLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={title} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -124,34 +127,36 @@ function CollectionListContent({
   }
 
   const activateButton = (
-    <TouchableOpacity
-      onPress={handleActivate}
-      hitSlop={8}
-      accessibilityLabel={t("collection.activateCta")}
-      style={{
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text
+    <TourAnchor id={ANCHORS.collection.activate}>
+      <TouchableOpacity
+        onPress={handleActivate}
+        hitSlop={8}
+        accessibilityLabel={t("collection.activateCta")}
         style={{
-          fontSize: 13,
-          fontWeight: "600",
-          color: colors.text,
-          fontFamily: fonts.sans,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
         }}
       >
-        {t("collection.activateCta")}
-      </Text>
-    </TouchableOpacity>
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: "600",
+            color: tokens.text,
+            fontFamily: fonts.sans,
+          }}
+        >
+          {t("collection.activateCta")}
+        </Text>
+      </TouchableOpacity>
+    </TourAnchor>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={title} right={activateButton} />
       {loading && registrations.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       ) : registrations.length === 0 ? (
         <View
@@ -166,7 +171,7 @@ function CollectionListContent({
             style={{
               fontFamily: fonts.display,
               fontSize: 20,
-              color: colors.text,
+              color: tokens.text,
               marginBottom: 10,
               textAlign: "center",
             }}
@@ -176,7 +181,7 @@ function CollectionListContent({
           <Text
             style={{
               fontSize: 14,
-              color: colors.muted,
+              color: tokens.muted,
               textAlign: "center",
               fontFamily: fonts.sans,
               marginBottom: 28,
@@ -189,7 +194,7 @@ function CollectionListContent({
             onPress={handleActivate}
             activeOpacity={0.8}
             style={{
-              backgroundColor: colors.text,
+              backgroundColor: tokens.text,
               borderRadius: 12,
               paddingHorizontal: 28,
               paddingVertical: 14,
@@ -197,7 +202,7 @@ function CollectionListContent({
           >
             <Text
               style={{
-                color: colors.bg,
+                color: tokens.bg,
                 fontSize: 15,
                 fontFamily: fonts.sans,
               }}
@@ -232,7 +237,7 @@ function CollectionListContent({
                 onPress={() => handleOpenDetail(item.id)}
                 activeOpacity={0.7}
                 style={{
-                  backgroundColor: colors.bg,
+                  backgroundColor: tokens.bg,
                   borderRadius: 18,
                   padding: 14,
                   marginBottom: 12,
@@ -246,7 +251,7 @@ function CollectionListContent({
                     width: 72,
                     height: 72,
                     borderRadius: 14,
-                    backgroundColor: colors.panel,
+                    backgroundColor: tokens.panel,
                     overflow: "hidden",
                     alignItems: "center",
                     justifyContent: "center",
@@ -261,7 +266,7 @@ function CollectionListContent({
                   ) : (
                     <Text
                       style={{
-                        color: colors.accent,
+                        color: tokens.accent,
                         fontFamily: fonts.display,
                         fontSize: 22,
                       }}
@@ -283,7 +288,7 @@ function CollectionListContent({
                       style={{
                         flex: 1,
                         fontSize: 15,
-                        color: colors.text,
+                        color: tokens.text,
                         fontFamily: fonts.sans,
                       }}
                       numberOfLines={2}
@@ -293,7 +298,7 @@ function CollectionListContent({
                     <Text
                       style={{
                         fontSize: 11,
-                        color: colors.muted,
+                        color: tokens.muted,
                         fontFamily: fonts.sans,
                         letterSpacing: 0.4,
                         textTransform: "uppercase",
@@ -305,7 +310,7 @@ function CollectionListContent({
                   <Text
                     style={{
                       fontSize: 12,
-                      color: colors.muted,
+                      color: tokens.muted,
                       marginTop: 6,
                       fontFamily: fonts.sans,
                     }}
@@ -318,7 +323,7 @@ function CollectionListContent({
                   <Text
                     style={{
                       fontSize: 13,
-                      color: colors.text,
+                      color: tokens.text,
                       marginTop: 6,
                       fontFamily: fonts.sans,
                     }}

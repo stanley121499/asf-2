@@ -20,11 +20,12 @@ import QRCode from "react-native-qrcode-svg";
 import Svg, { Circle } from "react-native-svg";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
-import { colors, fonts } from "@/constants/theme";
+import { fonts } from "@/constants/theme";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
 import { buildWarrantyMonthTabs } from "@/lib/warranty/buildWarrantyMonthTabs";
@@ -189,6 +190,7 @@ export default function CollectionDetailScreen(): React.ReactElement {
 function CollectionDetailContent({
   title,
 }: Readonly<{ title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { locale } = useLocale();
   const { user, loading: authLoading } = useAuthContext();
@@ -380,10 +382,10 @@ function CollectionDetailContent({
 
   if (authLoading || (loading && registration === null)) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={title} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -408,7 +410,7 @@ function CollectionDetailContent({
 
   if (registration === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={title} />
         <View
           style={{
@@ -418,7 +420,7 @@ function CollectionDetailContent({
             paddingHorizontal: 28,
           }}
         >
-          <Text style={{ color: colors.text, fontFamily: fonts.sans }}>
+          <Text style={{ color: tokens.text, fontFamily: fonts.sans }}>
             {errorMessage ?? t("collection.notFound")}
           </Text>
         </View>
@@ -487,7 +489,7 @@ function CollectionDetailContent({
         : t("collection.offerTitleNow");
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={title} />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -497,7 +499,7 @@ function CollectionDetailContent({
             onRefresh={() => {
               void loadDetail(true);
             }}
-            tintColor={colors.accent}
+            tintColor={tokens.accent}
           />
         }
         contentContainerStyle={{ paddingBottom: 64 }}
@@ -505,7 +507,7 @@ function CollectionDetailContent({
         {/* Hero */}
         <View
           style={{
-            backgroundColor: colors.bg,
+            backgroundColor: tokens.bg,
             marginHorizontal: 16,
             marginTop: 8,
             borderRadius: 24,
@@ -515,7 +517,7 @@ function CollectionDetailContent({
           <View
             style={{
               height: heroHeight,
-              backgroundColor: colors.panel,
+              backgroundColor: tokens.panel,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -530,7 +532,7 @@ function CollectionDetailContent({
             ) : (
               <Text
                 style={{
-                  color: colors.accent,
+                  color: tokens.accent,
                   fontFamily: fonts.display,
                   fontSize: 56,
                 }}
@@ -545,7 +547,7 @@ function CollectionDetailContent({
               style={{
                 fontFamily: fonts.sans,
                 fontSize: 11,
-                color: colors.muted,
+                color: tokens.muted,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
               }}
@@ -562,7 +564,7 @@ function CollectionDetailContent({
               style={{
                 fontFamily: fonts.display,
                 fontSize: 28,
-                color: colors.text,
+                color: tokens.text,
                 marginTop: 8,
                 lineHeight: 34,
               }}
@@ -573,7 +575,7 @@ function CollectionDetailContent({
               style={{
                 fontFamily: fonts.sans,
                 fontSize: 13,
-                color: colors.muted,
+                color: tokens.muted,
                 marginTop: 10,
                 lineHeight: 19,
               }}
@@ -587,7 +589,7 @@ function CollectionDetailContent({
               style={{
                 fontFamily: fonts.sans,
                 fontSize: 13,
-                color: colors.muted,
+                color: tokens.muted,
                 marginTop: 4,
               }}
             >
@@ -605,7 +607,7 @@ function CollectionDetailContent({
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
-                backgroundColor: colors.bg,
+                backgroundColor: tokens.bg,
                 borderRadius: 12,
                 padding: 4,
                 gap: 2,
@@ -625,7 +627,7 @@ function CollectionDetailContent({
                       paddingHorizontal: 16,
                       paddingVertical: 10,
                       borderRadius: 9,
-                      backgroundColor: isSelected ? colors.text : "transparent",
+                      backgroundColor: isSelected ? tokens.text : "transparent",
                       minWidth: 88,
                       alignItems: "center",
                     }}
@@ -634,7 +636,7 @@ function CollectionDetailContent({
                       style={{
                         fontFamily: fonts.sans,
                         fontSize: 13,
-                        color: isSelected ? colors.bg : colors.muted,
+                        color: isSelected ? tokens.bg : tokens.muted,
                       }}
                     >
                       {t("collection.monthTab", { month: tier.monthIndex })}
@@ -644,7 +646,7 @@ function CollectionDetailContent({
                         style={{
                           fontFamily: fonts.sans,
                           fontSize: 10,
-                          color: isSelected ? colors.bg : colors.accent,
+                          color: isSelected ? tokens.bg : tokens.accent,
                           marginTop: 2,
                           opacity: isSelected ? 0.75 : 1,
                         }}
@@ -663,7 +665,7 @@ function CollectionDetailContent({
               style={{
                 fontFamily: fonts.sans,
                 fontSize: 12,
-                color: colors.muted,
+                color: tokens.muted,
                 letterSpacing: 0.8,
                 textTransform: "uppercase",
               }}
@@ -677,7 +679,7 @@ function CollectionDetailContent({
                   style={{
                     fontFamily: fonts.display,
                     fontSize: 44,
-                    color: colors.text,
+                    color: tokens.text,
                     marginTop: 10,
                     letterSpacing: -0.5,
                   }}
@@ -688,7 +690,7 @@ function CollectionDetailContent({
                   style={{
                     fontFamily: fonts.sans,
                     fontSize: 15,
-                    color: colors.text,
+                    color: tokens.text,
                     marginTop: 6,
                   }}
                 >
@@ -698,7 +700,7 @@ function CollectionDetailContent({
                   style={{
                     fontFamily: fonts.sans,
                     fontSize: 14,
-                    color: colors.muted,
+                    color: tokens.muted,
                     marginTop: 12,
                     lineHeight: 20,
                   }}
@@ -712,7 +714,7 @@ function CollectionDetailContent({
                   style={{
                     fontFamily: fonts.sans,
                     fontSize: 13,
-                    color: colors.muted,
+                    color: tokens.muted,
                     marginTop: 10,
                     lineHeight: 19,
                   }}
@@ -724,7 +726,7 @@ function CollectionDetailContent({
                     style={{
                       fontFamily: fonts.sans,
                       fontSize: 12,
-                      color: colors.accent,
+                      color: tokens.accent,
                       marginTop: 14,
                     }}
                   >
@@ -737,7 +739,7 @@ function CollectionDetailContent({
                 style={{
                   fontFamily: fonts.sans,
                   fontSize: 15,
-                  color: colors.muted,
+                  color: tokens.muted,
                   marginTop: 14,
                   lineHeight: 22,
                 }}
@@ -755,7 +757,7 @@ function CollectionDetailContent({
               disabled={claiming}
               activeOpacity={0.85}
               style={{
-                backgroundColor: colors.text,
+                backgroundColor: tokens.text,
                 borderRadius: 14,
                 paddingVertical: 16,
                 alignItems: "center",
@@ -764,11 +766,11 @@ function CollectionDetailContent({
               }}
             >
               {claiming ? (
-                <ActivityIndicator color={colors.bg} />
+                <ActivityIndicator color={tokens.bg} />
               ) : (
                 <Text
                   style={{
-                    color: colors.bg,
+                    color: tokens.bg,
                     fontFamily: fonts.sans,
                     fontSize: 15,
                     letterSpacing: 0.2,
@@ -789,7 +791,7 @@ function CollectionDetailContent({
             style={{
               fontFamily: fonts.display,
               fontSize: 18,
-              color: colors.text,
+              color: tokens.text,
             }}
           >
             {t("collection.calendarTitle")}
@@ -798,7 +800,7 @@ function CollectionDetailContent({
             style={{
               fontFamily: fonts.sans,
               fontSize: 12,
-              color: colors.muted,
+              color: tokens.muted,
               marginTop: 6,
               marginBottom: 18,
               lineHeight: 18,
@@ -869,7 +871,7 @@ function CollectionDetailContent({
                         alignItems: "center",
                         justifyContent: "center",
                         borderWidth: 1,
-                        borderColor: isPast ? colors.accent : colors.border,
+                        borderColor: isPast ? tokens.accent : tokens.border,
                         backgroundColor: isPast ? "#FBF7EF" : "transparent",
                       }}
                     >
@@ -877,7 +879,7 @@ function CollectionDetailContent({
                         style={{
                           fontFamily: fonts.sans,
                           fontSize: isPast ? 14 : 9,
-                          color: isPast ? colors.accent : colors.muted,
+                          color: isPast ? tokens.accent : tokens.muted,
                         }}
                       >
                         {isPast ? "✓" : dayIndex + 1}
@@ -896,9 +898,9 @@ function CollectionDetailContent({
               marginTop: 16,
             }}
           >
-            <CalendarLegend color={colors.accent} label={t("collection.completed")} />
-            <CalendarLegend color={colors.text} label={t("collection.today")} />
-            <CalendarLegend color={colors.border} label={t("collection.upcoming")} />
+            <CalendarLegend color={tokens.accent} label={t("collection.completed")} />
+            <CalendarLegend color={tokens.text} label={t("collection.today")} />
+            <CalendarLegend color={tokens.border} label={t("collection.upcoming")} />
           </View>
         </View>
 
@@ -911,7 +913,7 @@ function CollectionDetailContent({
         {errorMessage !== null ? (
           <Text
             style={{
-              color: colors.danger,
+              color: tokens.danger,
               fontFamily: fonts.sans,
               fontSize: 13,
               lineHeight: 19,
@@ -940,6 +942,7 @@ function DayProgressRing({
   progress: number;
   label: number;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const strokeWidth = 2.5;
   const radius = Math.max(1, (size - strokeWidth * 2) / 2);
   const circumference = 2 * Math.PI * radius;
@@ -957,7 +960,7 @@ function DayProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.border}
+          stroke={tokens.border}
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -965,7 +968,7 @@ function DayProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.text}
+          stroke={tokens.text}
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -978,7 +981,7 @@ function DayProgressRing({
       <Text
         style={{
           fontFamily: fonts.sans,
-          color: colors.text,
+          color: tokens.text,
           fontSize: 9,
         }}
       >
@@ -995,6 +998,7 @@ function CalendarLegend({
   color,
   label,
 }: Readonly<{ color: string; label: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
       <View
@@ -1004,10 +1008,10 @@ function CalendarLegend({
           borderRadius: 4,
           borderWidth: 1,
           borderColor: color,
-          backgroundColor: color === colors.border ? "transparent" : color,
+          backgroundColor: color === tokens.border ? "transparent" : color,
         }}
       />
-      <Text style={{ fontFamily: fonts.sans, fontSize: 11, color: colors.muted }}>
+      <Text style={{ fontFamily: fonts.sans, fontSize: 11, color: tokens.muted }}>
         {label}
       </Text>
     </View>
@@ -1024,6 +1028,7 @@ function VoucherCard({
   voucher: WarrantyRegistrationVoucher;
   qrPayload: string;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { locale } = useLocale();
   const isUsed = voucher.status === "used";
@@ -1038,7 +1043,7 @@ function VoucherCard({
   return (
     <View
       style={{
-        backgroundColor: colors.bg,
+        backgroundColor: tokens.bg,
         borderRadius: 20,
         padding: 24,
       }}
@@ -1049,7 +1054,7 @@ function VoucherCard({
           fontSize: 11,
           textTransform: "uppercase",
           letterSpacing: 1.1,
-          color: isActive ? colors.accent : colors.muted,
+          color: isActive ? tokens.accent : tokens.muted,
         }}
       >
         {isUsed
@@ -1062,7 +1067,7 @@ function VoucherCard({
         style={{
           fontFamily: fonts.display,
           fontSize: 36,
-          color: colors.text,
+          color: tokens.text,
           marginTop: 10,
         }}
       >
@@ -1072,7 +1077,7 @@ function VoucherCard({
         style={{
           fontFamily: fonts.sans,
           fontSize: 13,
-          color: colors.muted,
+          color: tokens.muted,
           marginTop: 4,
         }}
       >
@@ -1092,18 +1097,18 @@ function VoucherCard({
             style={{
               padding: 16,
               borderRadius: 12,
-              backgroundColor: colors.bg,
+              backgroundColor: tokens.bg,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: tokens.border,
             }}
           >
-            <QRCode value={qrPayload} size={200} color={colors.text} />
+            <QRCode value={qrPayload} size={200} color={tokens.text} />
           </View>
           <Text
             style={{
               fontFamily: fonts.sans,
               fontSize: 12,
-              color: colors.muted,
+              color: tokens.muted,
               marginTop: 16,
               textAlign: "center",
             }}
@@ -1114,7 +1119,7 @@ function VoucherCard({
       ) : (
         <View
           style={{
-            backgroundColor: colors.panel,
+            backgroundColor: tokens.panel,
             borderRadius: 12,
             padding: 16,
             marginVertical: 20,
@@ -1124,7 +1129,7 @@ function VoucherCard({
             style={{
               fontFamily: fonts.sans,
               fontSize: 14,
-              color: colors.text,
+              color: tokens.text,
               textAlign: "center",
             }}
           >
@@ -1135,7 +1140,7 @@ function VoucherCard({
               style={{
                 fontFamily: fonts.sans,
                 fontSize: 12,
-                color: colors.muted,
+                color: tokens.muted,
                 textAlign: "center",
                 marginTop: 5,
               }}
@@ -1150,7 +1155,7 @@ function VoucherCard({
         style={{
           fontFamily: fonts.sans,
           fontSize: 11,
-          color: colors.muted,
+          color: tokens.muted,
           textTransform: "uppercase",
           letterSpacing: 1,
           textAlign: "center",
@@ -1163,7 +1168,7 @@ function VoucherCard({
         style={{
           fontFamily: fonts.sans,
           fontSize: 24,
-          color: colors.text,
+          color: tokens.text,
           letterSpacing: 4,
           textAlign: "center",
           marginTop: 8,
@@ -1175,7 +1180,7 @@ function VoucherCard({
         style={{
           fontFamily: fonts.sans,
           fontSize: 12,
-          color: colors.muted,
+          color: tokens.muted,
           textAlign: "center",
           marginTop: 14,
         }}

@@ -10,8 +10,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CeremonySection, PressableScale } from "@/components/motion";
+import { ANCHORS, TourAnchor } from "@/components/guide";
 import { useAuthContext } from "@/context/AuthContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
@@ -20,10 +30,64 @@ import { usePromotionContext } from "@/context/PromotionContext";
 import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { getPromoErrorTranslationKey } from "@/i18n/errorMap";
 import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
-import { colors } from "@/constants/theme";
+import { hapticLight } from "@/lib/haptics";
+import { motion, motionEasing } from "@/lib/motion";
+import type { ThemeTokens } from "@/themes/types";
+
+/** Max line items that stagger on cart open; the rest render settled. */
+const CART_LINE_STAGGER_CAP = 6;
+
+/** Slight scale settle for order summary + checkout emphasis. */
+const CART_SUMMARY_SCALE_FROM = 1.03;
+/**
+ * One-shot gold opacity pulse on an already-applied savings line.
+ * Skips animation when reduced motion is on.
+ */
+function PromoSavingsPulse({
+  play,
+  children,
+}: Readonly<{
+  play: boolean;
+  children: React.ReactNode;
+}>): React.ReactElement {
+  const reducedMotion = useReducedMotion();
+  const skipAnimation = !play || reducedMotion === true;
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (skipAnimation) {
+      opacity.value = 1;
+      return;
+    }
+    opacity.value = withDelay(
+      motion.duration.dailyEntrance,
+      withSequence(
+        withTiming(0.45, {
+          duration: motion.duration.fast,
+          easing: motionEasing,
+        }),
+        withTiming(1, {
+          duration: motion.duration.base,
+          easing: motionEasing,
+        })
+      )
+    );
+  }, [skipAnimation, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  if (skipAnimation) {
+    return <View>{children}</View>;
+  }
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+}
 
 /**
  * Reads a single string search param (expo-router may return string | string[]).
@@ -53,6 +117,8 @@ const SHIPPING_ESTIMATE_MYR = 10;
  * Matches web /cart design: sticky header, item rows, promo input, order summary, checkout CTA.
  */
 export default function CartScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
+  const styles = createCartHeaderStyles(tokens);
   const router = useRouter();
   const params = useLocalSearchParams<{ promoCode?: string | string[] }>();
   const { t } = useTranslation();
@@ -149,6 +215,26 @@ export default function CartScreen(): React.ReactElement {
   const discount = promoDiscount + warrantyDiscount;
   const total = Math.max(0, subtotal + SHIPPING_ESTIMATE_MYR - discount);
 
+  const reducedMotion = useReducedMotion();
+  /** Cart counter ceremony plays once per mount when there are lines. */
+  const playCartCeremony =
+    reducedMotion !== true && linesWithProduct.length > 0;
+  const summaryStaggerIndex = Math.min(
+    linesWithProduct.length,
+    CART_LINE_STAGGER_CAP
+  );
+
+  /**
+   * Light open pulse when cart content is shown — not a success haptic.
+   * Fires once per mount with lines (skipped for empty / sign-in states).
+   */
+  useEffect(() => {
+    if (!playCartCeremony) {
+      return;
+    }
+    void hapticLight();
+  }, [playCartCeremony]);
+
   const applyPromo = async (): Promise<void> => {
     setPromoError(null);
     const code = promoInput.trim();
@@ -195,53 +281,87 @@ export default function CartScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.text} />
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={tokens.text} />
       </SafeAreaView>
     );
   }
 
   if (user === null) {
     return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.headerBack}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerBack}>
+            <PressableScale
+              onPress={() => router.back()}
+              haptic="light"
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t("cart.title")}
+              style={{
+                width: 44,
+                height: 44,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="arrow-back" size={22} color={tokens.text} />
+            </PressableScale>
+          </View>
           <Text style={styles.headerTitle}>{t("cart.title")}</Text>
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text, marginBottom: 8 }}>
             {t("cart.signInTitle")}
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginBottom: 24 }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, textAlign: "center", marginBottom: 24 }}>
             {t("cart.signInBody")}
           </Text>
-          <TouchableOpacity
+          <PressableScale
+            haptic="medium"
             onPress={() => router.push("/(auth)/sign-in")}
-            style={{ width: "100%", height: 56, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center", marginBottom: 12 }}
+            accessibilityRole="button"
+            centerContent
+            style={{ width: "100%", height: 56, backgroundColor: tokens.text, borderRadius: 99, alignItems: "center", justifyContent: "center", marginBottom: 12 }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("cart.signInCta")}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>{t("cart.signInCta")}</Text>
+          </PressableScale>
+          <PressableScale
+            haptic="light"
             onPress={() => router.push("/(tabs)/")}
-            style={{ width: "100%", height: 52, borderWidth: 1, borderColor: colors.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+            accessibilityRole="button"
+            centerContent
+            style={{ width: "100%", height: 52, borderWidth: 1, borderColor: tokens.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
           >
-            <Text style={{ color: colors.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("cart.backToHome")}</Text>
-          </TouchableOpacity>
+            <Text style={{ color: tokens.text, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("cart.backToHome")}</Text>
+          </PressableScale>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       {/* Sticky header — matches web sticky top bar */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <View style={styles.headerBack}>
+          <PressableScale
+            onPress={() => router.back()}
+            haptic="light"
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t("cart.title")}
+            style={{
+              width: 44,
+              height: 44,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="arrow-back" size={22} color={tokens.text} />
+          </PressableScale>
+        </View>
         <Text style={styles.headerTitle}>{t("cart.title")}</Text>
       </View>
 
@@ -253,20 +373,22 @@ export default function CartScreen(): React.ReactElement {
         {linesWithProduct.length === 0 ? (
           /* Empty cart */
           <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 80 }}>
-            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
+            <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text, marginBottom: 8 }}>
               {t("cart.emptyTitle")}
             </Text>
-            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>{t("cart.emptyBody")}</Text>
-            <TouchableOpacity
+            <Text style={{ fontSize: 14, color: tokens.muted, marginBottom: 24 }}>{t("cart.emptyBody")}</Text>
+            <PressableScale
+              haptic="medium"
               onPress={() => router.push("/(tabs)/browse")}
-              style={{ height: 52, paddingHorizontal: 32, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+              accessibilityRole="button"
+              style={{ height: 52, paddingHorizontal: 32, backgroundColor: tokens.text, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular" }}>{t("cart.goShopping")}</Text>
-            </TouchableOpacity>
+              <Text style={{ color: tokens.bg, fontSize: 15, fontFamily: "Inter_400Regular" }}>{t("cart.goShopping")}</Text>
+            </PressableScale>
           </View>
         ) : (
           <>
-            {/* Line items */}
+            {/* Line items — stagger first N; remainder settle immediately */}
             <View>
               {linesWithProduct.map(({ row, product }, index) => {
                 const thumb = product.medias[0]?.media_url ?? "";
@@ -281,112 +403,130 @@ export default function CartScreen(): React.ReactElement {
                   translatedName.length > 0
                     ? translatedName
                     : t("cart.productFallback");
+                const animateLine = playCartCeremony && index < CART_LINE_STAGGER_CAP;
                 return (
-                  <View
+                  <CeremonySection
                     key={row.id}
-                    style={{
-                      flexDirection: "row",
-                      gap: 16,
-                      paddingBottom: 24,
-                      marginBottom: isLast ? 0 : 24,
-                      borderBottomWidth: isLast ? 0 : 1,
-                      borderBottomColor: colors.border,
-                    }}
+                    index={index}
+                    play={animateLine}
+                    baseDelayMs={0}
+                    durationMs={motion.duration.dailyEntrance}
+                    staggerMs={motion.delay.dailyStagger}
                   >
-                    {/* Thumbnail — 100×100, rounded-lg */}
-                    <View style={{ width: 100, height: 100, borderRadius: 12, overflow: "hidden", backgroundColor: colors.panel }}>
-                      {thumb.length > 0 ? (
-                        <Image source={{ uri: thumb }} style={{ width: 100, height: 100 }} contentFit="cover" />
-                      ) : (
-                        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                          <Ionicons name="image-outline" size={28} color={colors.muted} />
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Details */}
-                    <View style={{ flex: 1, justifyContent: "space-between" }}>
-                      <View>
-                        <Text
-                          style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}
-                          numberOfLines={1}
-                        >
-                          {lineName}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4, fontFamily: "Inter_400Regular" }}>
-                          {/* Variant placeholder */}
-                        </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 16,
+                        paddingBottom: 24,
+                        marginBottom: isLast ? 0 : 24,
+                        borderBottomWidth: isLast ? 0 : 1,
+                        borderBottomColor: tokens.border,
+                      }}
+                    >
+                      {/* Thumbnail — 100×100, rounded-lg */}
+                      <View style={{ width: 100, height: 100, borderRadius: 12, overflow: "hidden", backgroundColor: tokens.panel }}>
+                        {thumb.length > 0 ? (
+                          <Image source={{ uri: thumb }} style={{ width: 100, height: 100 }} contentFit="cover" />
+                        ) : (
+                          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                            <Ionicons name="image-outline" size={28} color={tokens.muted} />
+                          </View>
+                        )}
                       </View>
 
-                      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 }}>
-                        <Text style={{ fontSize: 15, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>
-                          {formatRm(price)}
-                        </Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-                          {/* Trash */}
-                          <TouchableOpacity onPress={() => void deleteAddToCart(row.id)} hitSlop={8}>
-                            <Ionicons name="trash-outline" size={18} color={colors.muted} />
-                          </TouchableOpacity>
-                          {/* Qty stepper — pill style matching web */}
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              alignItems: "center",
-                              gap: 12,
-                              borderWidth: 1,
-                              borderColor: colors.border,
-                              borderRadius: 99,
-                              paddingHorizontal: 12,
-                              paddingVertical: 4,
-                            }}
+                      {/* Details */}
+                      <View style={{ flex: 1, justifyContent: "space-between" }}>
+                        <View>
+                          <Text
+                            style={{ fontSize: 14, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}
+                            numberOfLines={1}
                           >
-                            <TouchableOpacity
-                              onPress={() => void updateAddToCart({ id: row.id, amount: Math.max(1, row.amount - 1) })}
-                              disabled={row.amount <= 1}
-                              hitSlop={4}
+                            {lineName}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 4, fontFamily: "Inter_400Regular" }}>
+                            {/* Variant placeholder */}
+                          </Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 }}>
+                          <Text style={{ fontSize: 15, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}>
+                            {formatRm(price)}
+                          </Text>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                            {/* Trash */}
+                            <PressableScale
+                              haptic="light"
+                              onPress={() => void deleteAddToCart(row.id)}
+                              hitSlop={8}
+                              accessibilityRole="button"
                             >
-                              <Ionicons name="remove" size={14} color={row.amount <= 1 ? colors.border : colors.text} />
-                            </TouchableOpacity>
-                            <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, minWidth: 20, textAlign: "center", fontFamily: "Inter_400Regular" }}>
-                              {row.amount}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() => void updateAddToCart({ id: row.id, amount: row.amount + 1 })}
-                              hitSlop={4}
+                              <Ionicons name="trash-outline" size={18} color={tokens.muted} />
+                            </PressableScale>
+                            {/* Qty stepper — pill style matching web */}
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 12,
+                                borderWidth: 1,
+                                borderColor: tokens.border,
+                                borderRadius: 99,
+                                paddingHorizontal: 12,
+                                paddingVertical: 4,
+                              }}
                             >
-                              <Ionicons name="add" size={14} color={colors.text} />
-                            </TouchableOpacity>
+                              <PressableScale
+                                haptic="light"
+                                onPress={() => void updateAddToCart({ id: row.id, amount: Math.max(1, row.amount - 1) })}
+                                disabled={row.amount <= 1}
+                                hitSlop={4}
+                                accessibilityRole="button"
+                              >
+                                <Ionicons name="remove" size={14} color={row.amount <= 1 ? tokens.border : tokens.text} />
+                              </PressableScale>
+                              <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, minWidth: 20, textAlign: "center", fontFamily: "Inter_400Regular" }}>
+                                {row.amount}
+                              </Text>
+                              <PressableScale
+                                haptic="light"
+                                onPress={() => void updateAddToCart({ id: row.id, amount: row.amount + 1 })}
+                                hitSlop={4}
+                                accessibilityRole="button"
+                              >
+                                <Ionicons name="add" size={14} color={tokens.text} />
+                              </PressableScale>
+                            </View>
                           </View>
                         </View>
                       </View>
                     </View>
-                  </View>
+                  </CeremonySection>
                 );
               })}
             </View>
 
             {/* Promo code */}
             <View style={{ marginTop: 24 }}>
-              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>{t("cart.promoLabel")}</Text>
+              <Text style={{ fontSize: 12, color: tokens.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>{t("cart.promoLabel")}</Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <TextInput
                   style={{
                     flex: 1,
                     height: 44,
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: tokens.bg,
                     borderWidth: 1,
-                    borderColor: colors.border,
+                    borderColor: tokens.border,
                     borderRadius: 12,
                     paddingHorizontal: 12,
                     fontSize: 14,
-                    color: colors.text,
+                    color: tokens.text,
                     fontFamily: "Inter_400Regular",
                   }}
                   value={promoInput}
                   onChangeText={(v) => { setPromoInput(v); setPromoError(null); }}
                   autoCapitalize="characters"
                   placeholder={t("cart.promoPlaceholder")}
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor={tokens.muted}
                 />
                 <TouchableOpacity
                   onPress={() => void applyPromo()}
@@ -394,7 +534,7 @@ export default function CartScreen(): React.ReactElement {
                   style={{
                     height: 44,
                     paddingHorizontal: 16,
-                    backgroundColor: "#000000",
+                    backgroundColor: tokens.text,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
@@ -402,14 +542,14 @@ export default function CartScreen(): React.ReactElement {
                   }}
                 >
                   {promoLoading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <ActivityIndicator color={tokens.bg} size="small" />
                   ) : (
-                    <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>{t("cart.apply")}</Text>
+                    <Text style={{ color: tokens.bg, fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>{t("cart.apply")}</Text>
                   )}
                 </TouchableOpacity>
               </View>
               {promoError !== null && (
-                <Text style={{ fontSize: 12, color: colors.danger, marginTop: 6, fontFamily: "Inter_400Regular" }}>{promoError}</Text>
+                <Text style={{ fontSize: 12, color: tokens.danger, marginTop: 6, fontFamily: "Inter_400Regular" }}>{promoError}</Text>
               )}
               {appliedPromo !== null && (
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
@@ -417,7 +557,7 @@ export default function CartScreen(): React.ReactElement {
                     {t("cart.appliedPrefix", { code: appliedPromo.code })}
                   </Text>
                   <TouchableOpacity onPress={() => setAppliedPromo(null)}>
-                    <Text style={{ fontSize: 12, color: colors.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>{t("cart.remove")}</Text>
+                    <Text style={{ fontSize: 12, color: tokens.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>{t("cart.remove")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -431,62 +571,85 @@ export default function CartScreen(): React.ReactElement {
               />
             ) : null}
 
-            {/* Order summary */}
-            <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 24 }}>
-              <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: colors.text, marginBottom: 16 }}>
-                {t("cart.orderSummary")}
-              </Text>
-              <View style={{ gap: 12 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.subtotal")}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(subtotal)}</Text>
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.shippingEstimate")}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(SHIPPING_ESTIMATE_MYR)}</Text>
-                </View>
-                <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular", marginTop: -4 }}>
-                  {t("cart.shippingEstimateNote")}
-                </Text>
-                {promoDiscount > 0 && (
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.discount")}</Text>
-                    <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(promoDiscount)}</Text>
-                  </View>
-                )}
-                {warrantyDiscount > 0 && (
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.warrantyCreditsLabel")}</Text>
-                    <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(warrantyDiscount)}</Text>
-                  </View>
-                )}
-                <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, fontFamily: "Inter_400Regular" }}>{t("cart.total")}</Text>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, fontFamily: "Inter_400Regular" }}>{formatRm(total)}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Checkout CTA */}
-            <View style={{ marginTop: 32, gap: 12 }}>
-              <TouchableOpacity
-                onPress={onCheckout}
-                style={{
-                  height: 56,
-                  backgroundColor: "#000000",
-                  borderRadius: 99,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+            {/* Order summary + checkout — land last with slight emphasis */}
+            <TourAnchor id={ANCHORS.cart.review}>
+              <CeremonySection
+                index={summaryStaggerIndex}
+                play={playCartCeremony}
+                baseDelayMs={0}
+                durationMs={motion.duration.dailyEntrance}
+                staggerMs={motion.delay.dailyStagger}
+                scaleFrom={CART_SUMMARY_SCALE_FROM}
               >
-                <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
-                  {t("cart.goToCheckout")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/(tabs)/browse")} style={{ alignItems: "center", paddingVertical: 8 }}>
-                <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("cart.continueShoppingLink")}</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: tokens.border, paddingTop: 24 }}>
+                  <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 18, color: tokens.text, marginBottom: 16 }}>
+                    {t("cart.orderSummary")}
+                  </Text>
+                  <View style={{ gap: 12 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("cart.subtotal")}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}>{formatRm(subtotal)}</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("cart.shippingEstimate")}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, fontFamily: "Inter_400Regular" }}>{formatRm(SHIPPING_ESTIMATE_MYR)}</Text>
+                    </View>
+                    <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular", marginTop: -4 }}>
+                      {t("cart.shippingEstimateNote")}
+                    </Text>
+                    {promoDiscount > 0 && (
+                      <PromoSavingsPulse play={playCartCeremony && appliedPromo !== null}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                          <Text style={{ fontSize: 14, color: tokens.accent, fontFamily: "Inter_400Regular" }}>{t("cart.discount")}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.accent, fontFamily: "Inter_400Regular" }}>-{formatRm(promoDiscount)}</Text>
+                        </View>
+                      </PromoSavingsPulse>
+                    )}
+                    {warrantyDiscount > 0 && (
+                      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                        <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("cart.warrantyCreditsLabel")}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: "500", color: "#15803D", fontFamily: "Inter_400Regular" }}>-{formatRm(warrantyDiscount)}</Text>
+                      </View>
+                    )}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 12, borderTopWidth: 1, borderTopColor: tokens.border }}>
+                      <Text style={{ fontSize: 16, fontWeight: "700", color: tokens.text, fontFamily: "Inter_400Regular" }}>{t("cart.total")}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: "700", color: tokens.text, fontFamily: "Inter_400Regular" }}>{formatRm(total)}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Checkout CTA */}
+                <View style={{ marginTop: 32, gap: 12 }}>
+                  <PressableScale
+                    haptic="medium"
+                    onPress={onCheckout}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("cart.goToCheckout")}
+                    centerContent
+                    style={{
+                      height: 56,
+                      backgroundColor: tokens.text,
+                      borderRadius: 99,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                      {t("cart.goToCheckout")}
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    haptic="light"
+                    onPress={() => router.push("/(tabs)/browse")}
+                    accessibilityRole="button"
+                    centerContent
+                    style={{ alignItems: "center", paddingVertical: 8 }}
+                  >
+                    <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("cart.continueShoppingLink")}</Text>
+                  </PressableScale>
+                </View>
+              </CeremonySection>
+            </TourAnchor>
           </>
         )}
       </ScrollView>
@@ -517,6 +680,7 @@ function WarrantyCreditCartSection({
   applied,
   onApplied,
 }: Readonly<WarrantyCreditCartSectionProps>): React.ReactElement | null {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { locale } = useLocale();
   const { credits, applyCreditToCart } = useWarrantyCreditContext();
@@ -575,7 +739,7 @@ function WarrantyCreditCartSection({
 
   return (
     <View style={{ marginTop: 24 }}>
-      <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
+      <Text style={{ fontSize: 12, color: tokens.muted, marginBottom: 8, fontFamily: "Inter_400Regular" }}>
         {t("cart.warrantyCreditsLabel")}
       </Text>
       {activeCredits.map((credit) => (
@@ -586,21 +750,21 @@ function WarrantyCreditCartSection({
             alignItems: "center",
             justifyContent: "space-between",
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: tokens.border,
             borderRadius: 12,
             padding: 12,
             marginBottom: 8,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: tokens.bg,
           }}
         >
           <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: tokens.text, fontFamily: "Inter_400Regular" }}>
               {formatRm(credit.amountMyr)}
             </Text>
-            <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }} numberOfLines={1}>
+            <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 2, fontFamily: "Inter_400Regular" }} numberOfLines={1}>
               {credit.productName}
             </Text>
-            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 11, color: tokens.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}>
               {t("cart.warrantyCreditExpires", { date: formatDate(locale, credit.expiresAt) })}
             </Text>
           </View>
@@ -609,21 +773,21 @@ function WarrantyCreditCartSection({
             disabled={applying}
             style={{
               borderWidth: 1,
-              borderColor: "#000000",
+              borderColor: tokens.text,
               borderRadius: 99,
               paddingHorizontal: 14,
               paddingVertical: 6,
               opacity: applying ? 0.5 : 1,
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: tokens.text, fontFamily: "Inter_400Regular" }}>
               {t("cart.warrantyCreditApply")}
             </Text>
           </TouchableOpacity>
         </View>
       ))}
       {error !== null ? (
-        <Text style={{ fontSize: 12, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+        <Text style={{ fontSize: 12, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
       ) : null}
       {applied !== null ? (
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
@@ -631,7 +795,7 @@ function WarrantyCreditCartSection({
             {t("cart.warrantyCreditApplied", { amount: formatRm(applied.discountAmountMyr) })}
           </Text>
           <TouchableOpacity onPress={() => onApplied(null)}>
-            <Text style={{ fontSize: 12, color: colors.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 12, color: tokens.muted, textDecorationLine: "underline", fontFamily: "Inter_400Regular" }}>
               {t("cart.remove")}
             </Text>
           </TouchableOpacity>
@@ -641,28 +805,33 @@ function WarrantyCreditCartSection({
   );
 }
 
-const styles = {
-  header: {
-    height: 56,
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: "#FFFFFF",
-    position: "relative" as const,
-  },
-  headerBack: {
-    position: "absolute" as const,
-    left: 16,
-    width: 44,
-    height: 44,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-  },
-  headerTitle: {
-    fontFamily: "PlayfairDisplay_400Regular",
-    fontSize: 18,
-    color: colors.text,
-  },
-};
+/**
+ * Builds cart sticky-header styles from the active theme tokens.
+ */
+function createCartHeaderStyles(tokens: ThemeTokens) {
+  return {
+    header: {
+      height: 56,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      borderBottomWidth: 1,
+      borderBottomColor: tokens.border,
+      backgroundColor: tokens.bg,
+      position: "relative" as const,
+    },
+    headerBack: {
+      position: "absolute" as const,
+      left: 16,
+      width: 44,
+      height: 44,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+    },
+    headerTitle: {
+      fontFamily: "PlayfairDisplay_400Regular",
+      fontSize: 18,
+      color: tokens.text,
+    },
+  };
+}

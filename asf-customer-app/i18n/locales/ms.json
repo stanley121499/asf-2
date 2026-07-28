@@ -54,7 +54,20 @@
     "loginRequired": "Sila log masuk.",
     "loginToEdit": "Log masuk untuk edit akaun anda.",
     "nameRequired": "Sila masukkan nama pertama dan nama akhir.",
-    "phonePlaceholder": "010-0000000"
+    "phonePlaceholder": "010-0000000",
+    "atelierAccountSection": "Akaun",
+    "atelierAccountHint": "Pesanan, koleksi, dan penjagaan",
+    "atelierEditAccount": "Edit",
+    "appearance": "Tema (staf)",
+    "appearanceSubtitle": "QA staf sahaja. Tukar Klasik, Atelier, atau Noir. Pilihan anda disimpan pada peranti ini.",
+    "themeStaff": "Tema (staf)",
+    "themeClassic": "Klasik",
+    "themeAtelier": "Atelier",
+    "themeNoir": "Noir",
+    "themeClassicDesc": "Landing butik dengan aksen emas dan suasana beli-belah editorial.",
+    "themeAtelierDesc": "Lookbook majalah dengan nada kertas hangat dan krom yang lebih tenang.",
+    "themeNoirDesc": "Runcit malam yang immersif — gelap, padat, dengan beg di pengepala.",
+    "themeSelected": "Dipilih"
   },
   "alerts": {
     "dismiss": "Abaikan notifikasi"
@@ -160,31 +173,76 @@
     "cardMarkReadAria": "Tandakan sebagai dibaca",
     "cardSaveAria": "Simpan",
     "cardUnsaveAria": "Buang dari simpanan",
-    "placeholderImage": "Imej"
+    "placeholderImage": "Imej",
+    "atelierIntroTitle": "Edit pilihan",
+    "atelierIntroBody": "Potongan tenang, bingkai teliti — layari mengikut rentak anda.",
+    "atelierCoverEyebrow": "Musim ini",
+    "atelierChapterLabel": "Bab {n}",
+    "atelierBridgeLabel": "Dalam edit ini",
+    "atelierBridgeLooks": "{count} gaya",
+    "atelierChapterCaptionOpener": "Bingkai pembuka untuk edit musim ini.",
+    "atelierChapterCaptionVariation": "Potongan lebih tenang — dikekalkan untuk suasana.",
+    "atelierChapterCaptionClosing": "Plat penutup sebelum arkib penuh.",
+    "atelierViewLookbook": "Lihat lookbook",
+    "atelierBrowseLookbook": "Layari lookbook",
+    "atelierInsertLabel": "Sisipan",
+    "atelierJournalEyebrow": "Dari jurnal",
+    "atelierJournalCta": "Baca jurnal",
+    "atelierShopTheEdit": "Beli edit ini",
+    "atelierIndexTitle": "Indeks",
+    "atelierIndexHint": "Layari mengikut kategori",
+    "noirFeedTitle": "Malam ini",
+    "noirFeedHint": "Edit pendek untuk malam ini — bukan katalog penuh.",
+    "noirOffersHint": "Tawaran pantas — guna semasa checkout.",
+    "noirNewLabel": "Drop",
+    "noirShopAll": "Beli semua →",
+    "noirDropEyebrow": "Drop malam ini",
+    "noirDropAria": "Buka drop {name}"
   },
   "highlights": {
     "title": "Pilihan istimewa",
-    "empty": "Tiada kandungan lagi. Sila semak semula tidak lama lagi."
+    "noirTitle": "Sorotan",
+    "empty": "Tiada kandungan lagi. Sila semak semula tidak lama lagi.",
+    "atelierIntroTitle": "Jurnal",
+    "atelierIntroBody": "Cerita dan bingkai dari edit — baca perlahan."
   },
   "catalog": {
     "all": "Semua",
     "filter": "Tapis",
     "emptyTitle": "Tiada produk dijumpai",
     "backToHome": "Kembali ke laman utama",
-    "categoryFallback": "Kategori"
+    "categoryFallback": "Kategori",
+    "atelierTitle": "Lookbook",
+    "atelierArchiveEyebrow": "Arkib",
+    "atelierCount": "{count} gaya",
+    "noirEyebrow": "Katalog",
+    "noirCount": "{count} item",
+    "noirInventoryTitle": "Inventori",
+    "noirResults": "{count} hasil",
+    "noirEmptyTitle": "Tiada item dalam inventori",
+    "noirEmptyHint": "Item baharu akan muncul di sini apabila tersedia.",
+    "noirNoResultsTitle": "Tiada padanan",
+    "noirNoResultsHint": "Cuba carian lain atau kosongkan tapisan.",
+    "noirClearTools": "Kosongkan carian & tapisan",
+    "noirClearSearch": "Kosongkan carian"
   },
   "filter": {
+    "filterAndSort": "Tapis & susun",
+    "categoryTitle": "Kategori",
     "sortTitle": "Susun mengikut",
     "sortNewest": "Terbaru",
     "sortPriceAsc": "Harga ↑",
     "sortPriceDesc": "Harga ↓",
     "sortPriceLowHigh": "Harga: rendah ke tinggi",
     "sortPriceHighLow": "Harga: tinggi ke rendah",
-    "done": "Selesai"
+    "done": "Selesai",
+    "openAria": "Buka tapisan dan susunan",
+    "summary": "{sort} · {category}"
   },
   "product": {
     "addToBag": "Tambah ke beg",
     "addedToBag": "Telah ditambah ke beg",
+    "addedLabel": "Ditambah",
     "addToBagFailed": "Tidak dapat tambah ke beg",
     "quickView": "Lihat ringkas",
     "color": "Warna",
@@ -206,6 +264,12 @@
     "unavailable": "Produk tidak tersedia",
     "notFound": "Produk tidak dijumpai",
     "continueShopping": "Teruskan membeli-belah",
+    "atelierEyebrow": "Lookbook",
+    "atelierSelectColor": "Pilih warna",
+    "atelierSelectSize": "Pilih saiz",
+    "atelierCtaHintColor": "Pilih warna",
+    "atelierCtaHintSize": "Pilih saiz",
+    "atelierCtaHintBoth": "Pilih warna dan saiz",
     "details": "Butiran produk",
     "noDescription": "Tiada penerangan tersedia.",
     "materialCare": "Bahan & penjagaan",
@@ -698,7 +762,23 @@
     "emptyTitle": "Tiada cawangan tersedia",
     "googleMaps": "Google Maps",
     "waze": "Waze",
+    "directions": "Arah",
+    "mapsUnavailableTitle": "Tidak dapat membuka peta",
+    "mapsUnavailableMessage": "Pasang Google Maps atau Waze, atau cuba semula melalui pelayar.",
     "permissionDenied": "Kebenaran lokasi ditolak. Jarak tidak tersedia.",
+    "atelierEyebrow": "Tempat",
+    "atelierTitle": "Lawati",
+    "atelierCount": "{count} tempat",
+    "atelierAddress": "Alamat",
+    "atelierPhone": "Telefon",
+    "atelierHours": "Waktu",
+    "noirEyebrow": "Lokator",
+    "noirTitle": "Cawangan",
+    "noirCount": "{count} cawangan",
+    "noirMaps": "Maps",
+    "noirAddress": "Alamat",
+    "noirPhone": "Telefon",
+    "noirHours": "Waktu",
     "distance": {
       "within100m": "Dalam jarak 100 m",
       "meters": "{count} m",
@@ -944,6 +1024,238 @@
       "1": "Kualiti hebat, saiz tepat — suka reka bentuknya!",
       "2": "Penghantaran pantas dan pembungkusan kemas, sedikit perbezaan warna.",
       "3": "Sempurna! Kain selesa dan butiran hebat — akan beli lagi."
+    }
+  },
+  "guide": {
+    "hubTitle": "Cara guna aplikasi ini",
+    "hubSubtitle": "Ketik satu topik. Kami akan tunjukkan pada skrin sebenar.",
+    "profileEntry": "Cara guna aplikasi ini",
+    "contactSupport": "Masih perlukan bantuan? Hubungi sokongan",
+    "replayWelcome": "Tonton semula panduan permulaan",
+    "restartOnboarding": "Mula semula panduan permulaan (ujian)",
+    "controls": {
+      "next": "Seterusnya",
+      "back": "Kembali",
+      "skip": "Langkau",
+      "done": "Faham",
+      "exit": "Keluar dari panduan",
+      "stepIndicator": "Langkah {step} daripada {total}"
+    },
+    "topics": {
+      "findShoes": {
+        "title": "Cari kasut",
+        "desc": "Semak imbas dan buka halaman sepasang kasut"
+      },
+      "chooseSizeAddToBag": {
+        "title": "Pilih saiz & tambah ke beg",
+        "desc": "Pilih saiz dan tambahkannya ke beg"
+      },
+      "payCheckout": {
+        "title": "Bayar untuk pesanan anda",
+        "desc": "Lihat cara membayar, langkah demi langkah"
+      },
+      "seeMyOrders": {
+        "title": "Lihat pesanan saya",
+        "desc": "Semak status pesanan anda"
+      },
+      "saveFavourites": {
+        "title": "Simpan kegemaran",
+        "desc": "Simpan kasut yang anda suka untuk kemudian"
+      },
+      "changeLanguage": {
+        "title": "Tukar bahasa",
+        "desc": "Tukar aplikasi ke bahasa pilihan anda"
+      },
+      "myShoes": {
+        "title": "Kasut saya & waranti",
+        "desc": "Daftar sepasang kasut dan jejak waranti anda"
+      },
+      "rewards": {
+        "title": "Mata & ganjaran",
+        "desc": "Lihat mata dan ganjaran anda dengan mudah"
+      },
+      "askForHelp": {
+        "title": "Minta bantuan",
+        "desc": "Belajar cara menghantar mesej kepada kami"
+      }
+    },
+    "firstLaunch": {
+      "hubTitle": "Panduan permulaan",
+      "hubDescription": "Lihat sekilas aplikasi ini",
+      "welcome": {
+        "title": "Selamat datang!",
+        "body": "Aplikasi ini membolehkan anda membeli kasut terus dari telefon anda. Kami akan tunjukkan butang-butang penting — anda boleh langkau bila-bila masa.",
+        "languagePrompt": "Pilih bahasa anda:"
+      },
+      "tabs": {
+        "title": "Peta anda",
+        "body": "Butang-butang di bawah skrin ini adalah peta anda. Laman Utama membawa anda ke sini, Beli-belah untuk mencari kasut, dan Profil untuk akaun dan bantuan anda.{extraTabs}",
+        "extra": " Anda juga akan lihat {names} — jemput terokai juga."
+      },
+      "bag": {
+        "title": "Beg beli-belah anda",
+        "body": "Kasut yang anda mahu beli akan disimpan di sini. Ketik beg apabila anda bersedia untuk membayar."
+      },
+      "shop": {
+        "title": "Mencari kasut",
+        "body": "Ketik sepasang kasut untuk membukanya, pilih saiz, kemudian tambah ke beg anda."
+      },
+      "safetyNet": {
+        "title": "Jika anda terlupa",
+        "body": "Buka halaman ini bila-bila masa untuk belajar semula setiap bahagian aplikasi."
+      },
+      "done": {
+        "title": "Anda sudah sedia!",
+        "body": "Mula dari Laman Utama bila-bila masa. Ketik Faham untuk tamat."
+      }
+    },
+    "__smoke": {
+      "title": "Ujian enjin",
+      "description": "Semakan dalaman — tidak dipaparkan kepada pengguna.",
+      "step1": {
+        "title": "Langkah pertama",
+        "body": "Ini adalah langkah sementara untuk menguji enjin panduan."
+      },
+      "step2": {
+        "title": "Langkah kedua",
+        "body": "Ketik Faham untuk tamatkan lawatan ujian ini."
+      }
+    },
+    "steps": {
+      "findShoes": {
+        "s1": {
+          "title": "Buka Beli-belah",
+          "body": "Ketik Beli-belah di bar bawah. Di sana ada semua kasut kami."
+        },
+        "s2": {
+          "title": "Semak imbas kasut",
+          "body": "Ini semua kasut kami. Skrol atas dan bawah untuk lihat lebih banyak."
+        },
+        "s3": {
+          "title": "Buka sepasang kasut",
+          "body": "Ketik mana-mana kasut untuk lihat butirannya dan pilih saiz."
+        }
+      },
+      "chooseSizeAddToBag": {
+        "s1": {
+          "title": "Pilih sepasang kasut",
+          "body": "Ketik kasut yang anda suka untuk buka halamannya."
+        },
+        "s2": {
+          "title": "Pilih saiz",
+          "body": "Ketik saiz yang sesuai dengan anda."
+        },
+        "s3": {
+          "title": "Tambah ke beg",
+          "body": "Ketik \"Tambah ke beg\" untuk simpan kasut ini sebelum membeli."
+        },
+        "s4": {
+          "title": "Semak beg anda",
+          "body": "Ikon beg akan tunjukkan berapa banyak barang di dalamnya."
+        }
+      },
+      "payCheckout": {
+        "s1": {
+          "title": "Beg anda",
+          "body": "Barang yang anda mahu beli akan disimpan di sini. Ketik ikon beg apabila anda bersedia untuk membayar."
+        },
+        "s2": {
+          "title": "Semak beg anda",
+          "body": "Semak barang dan jumlah di sini sebelum anda membayar."
+        },
+        "s3": {
+          "title": "Cara membayar",
+          "body": "Ketik butang di bawah untuk membayar. Anda akan masukkan alamat dan pilih cara bayaran — hanya makan seminit."
+        },
+        "s4": {
+          "title": "Semua sedia",
+          "body": "Sekarang anda tahu cara membayar. Kembali ke panduan ini bila-bila masa dari Profil."
+        }
+      },
+      "seeMyOrders": {
+        "s1": {
+          "title": "Pesanan anda",
+          "body": "Ketik di sini untuk lihat semua yang pernah anda pesan."
+        },
+        "s2": {
+          "title": "Senarai pesanan anda",
+          "body": "Ini pesanan lepas anda, yang terbaru di atas. Ketik mana-mana satu untuk lihat lebih lanjut."
+        },
+        "s3": {
+          "title": "Maksud perkataan ini",
+          "body": "Diproses bermaksud kami sedang menyediakannya. Dihantar bermaksud sedang dalam penghantaran. Diterima bermaksud sudah sampai."
+        }
+      },
+      "saveFavourites": {
+        "s1": {
+          "title": "Simpan sepasang kasut",
+          "body": "Ketik ikon hati kecil pada mana-mana kasut untuk simpannya untuk kemudian."
+        },
+        "s2": {
+          "title": "Ke mana kasut yang disimpan pergi",
+          "body": "Kasut yang disimpan akan ada di sini — ketik \"Senarai kegemaran saya\" bila-bila masa."
+        },
+        "s3": {
+          "title": "Semua kegemaran anda",
+          "body": "Semua yang anda simpan akan dipaparkan di sini, sedia bila anda mahu membelinya."
+        }
+      },
+      "changeLanguage": {
+        "s1": {
+          "title": "Tukar bahasa",
+          "body": "Anda boleh tukar bahasa aplikasi bila-bila masa anda suka."
+        },
+        "s2": {
+          "title": "Ketik di sini",
+          "body": "Ketik baris ini untuk lihat senarai bahasa."
+        },
+        "s3": {
+          "title": "Pilih bahasa anda",
+          "body": "Pilih English, 简体中文, atau Bahasa Melayu. Aplikasi akan bertukar serta-merta."
+        }
+      },
+      "myShoes": {
+        "s1": {
+          "title": "Koleksi Saya",
+          "body": "Di sini tempat kasut dan kad jaminan anda disimpan."
+        },
+        "s2": {
+          "title": "Aktifkan kad",
+          "body": "Ada kad bersama kasut anda? Ketik Aktifkan untuk tambahkannya di sini."
+        },
+        "s3": {
+          "title": "Jejak jaminan anda",
+          "body": "Setiap kad menunjukkan kasut anda dan berapa lama lagi jaminannya."
+        }
+      },
+      "rewards": {
+        "s1": {
+          "title": "Mata & ganjaran",
+          "body": "Ketik di sini untuk lihat mata dan ganjaran anda."
+        },
+        "s2": {
+          "title": "Mata anda",
+          "body": "Ini menunjukkan berapa banyak mata yang anda ada sekarang."
+        },
+        "s3": {
+          "title": "Kumpul setem",
+          "body": "Setiap setem membawa anda lebih dekat dengan ganjaran. Terus membeli-belah untuk penuhkannya."
+        }
+      },
+      "askForHelp": {
+        "s1": {
+          "title": "Minta bantuan",
+          "body": "Ketik di sini bila-bila masa anda perlukan bantuan daripada orang sebenar."
+        },
+        "s2": {
+          "title": "Hantar mesej",
+          "body": "Beritahu kami masalah anda, kemudian ketik Hantar."
+        },
+        "s3": {
+          "title": "Kami akan balas di sini",
+          "body": "Semak semula perbualan ini bila-bila masa — kami akan balas mesej anda."
+        }
+      }
     }
   }
 }

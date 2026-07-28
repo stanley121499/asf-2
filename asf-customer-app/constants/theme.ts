@@ -7,6 +7,9 @@
  * --color-muted:  #6B7280
  * --color-border: #E5E5E3
  * --color-danger: #E8453C
+ *
+ * Classic defaults kept for gradual migration. Prefer `useThemeTokens()` on
+ * Tier A/B surfaces going forward (see `themes/classic/tokens.ts`).
  */
 export const colors = {
   accent: "#C9A96E",

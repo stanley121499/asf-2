@@ -13,10 +13,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PressableScale } from "@/components/motion";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { getErrorTranslationKey } from "@/i18n/errorMap";
-import { colors } from "@/constants/theme";
 
 /**
  * Sign-in screen matching the web app exactly:
@@ -26,6 +27,7 @@ import { colors } from "@/constants/theme";
  * - Submit button: bg-black, full-width, 56px, rounded-xl, white text
  */
 export default function SignInScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { signIn, loading: authLoading } = useAuthContext();
@@ -59,18 +61,18 @@ export default function SignInScreen(): React.ReactElement {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: tokens.bg }} edges={["top"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Top section — white bg, back button + ASF logo */}
-        <View style={{ height: 200, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
+        <View style={{ height: 200, backgroundColor: tokens.bg, alignItems: "center", justifyContent: "center" }}>
           <Pressable
             onPress={() => router.push("/(tabs)")}
             style={{ position: "absolute", top: 16, left: 16, flexDirection: "row", alignItems: "center" }}
           >
-            <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, color: tokens.text, fontFamily: "Inter_400Regular" }}>
               {t("auth.signIn.backHome")}
             </Text>
           </Pressable>
@@ -78,7 +80,7 @@ export default function SignInScreen(): React.ReactElement {
             style={{
               fontFamily: "PlayfairDisplay_400Regular",
               fontSize: 48,
-              color: colors.text,
+              color: tokens.text,
               letterSpacing: 8,
               fontWeight: "900",
             }}
@@ -91,7 +93,7 @@ export default function SignInScreen(): React.ReactElement {
         <ScrollView
           style={{
             flex: 1,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: tokens.bg,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             marginTop: -24,
@@ -103,7 +105,7 @@ export default function SignInScreen(): React.ReactElement {
             style={{
               fontFamily: "PlayfairDisplay_400Regular",
               fontSize: 24,
-              color: colors.text,
+              color: tokens.text,
               marginBottom: 24,
             }}
           >
@@ -112,12 +114,12 @@ export default function SignInScreen(): React.ReactElement {
 
           {error !== null && (
             <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#FEF2F2", borderRadius: 8 }}>
-              <Text style={{ fontSize: 14, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+              <Text style={{ fontSize: 14, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
             </View>
           )}
 
           {/* Email */}
-          <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
             {t("auth.signIn.email")}
           </Text>
           <TextInput
@@ -126,15 +128,15 @@ export default function SignInScreen(): React.ReactElement {
               paddingHorizontal: 16,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.panel,
-              color: colors.text,
+              borderColor: tokens.border,
+              backgroundColor: tokens.panel,
+              color: tokens.text,
               fontSize: 16,
               marginBottom: 16,
               fontFamily: "Inter_400Regular",
             }}
             placeholder={t("auth.signIn.emailPlaceholder")}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={tokens.muted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -144,7 +146,7 @@ export default function SignInScreen(): React.ReactElement {
           />
 
           {/* Password */}
-          <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
             {t("auth.signIn.password")}
           </Text>
           <View style={{ position: "relative", marginBottom: 8 }}>
@@ -155,14 +157,14 @@ export default function SignInScreen(): React.ReactElement {
                 paddingRight: 48,
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.panel,
-                color: colors.text,
+                borderColor: tokens.border,
+                backgroundColor: tokens.panel,
+                color: tokens.text,
                 fontSize: 16,
                 fontFamily: "Inter_400Regular",
               }}
               placeholder="••••••••"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={tokens.muted}
               secureTextEntry={!showPassword}
               autoComplete="password"
               value={password}
@@ -177,7 +179,7 @@ export default function SignInScreen(): React.ReactElement {
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color={colors.muted}
+                color={tokens.muted}
               />
             </Pressable>
           </View>
@@ -185,19 +187,23 @@ export default function SignInScreen(): React.ReactElement {
           {/* Forgot password */}
           <View style={{ alignItems: "flex-end", marginBottom: 24 }}>
             <Link href="/(auth)/forgot-password">
-              <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+              <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
                 {t("auth.signIn.forgotPassword")}
               </Text>
             </Link>
           </View>
 
           {/* Login button — bg-black, 56px, rounded-xl */}
-          <Pressable
+          <PressableScale
+            haptic="medium"
             onPress={() => void onSubmit()}
             disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel={t("auth.signIn.submit")}
+            centerContent
             style={{
               height: 56,
-              backgroundColor: "#000000",
+              backgroundColor: tokens.text,
               borderRadius: 12,
               alignItems: "center",
               justifyContent: "center",
@@ -205,39 +211,42 @@ export default function SignInScreen(): React.ReactElement {
             }}
           >
             {busy ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={tokens.bg} />
             ) : (
-              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
                 {t("auth.signIn.submit")}
               </Text>
             )}
-          </Pressable>
+          </PressableScale>
 
           {/* Browse without login */}
-          <Pressable
+          <PressableScale
+            haptic="light"
             onPress={() => router.push("/(tabs)")}
             disabled={busy}
+            accessibilityRole="button"
+            centerContent
             style={{
               height: 52,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: tokens.border,
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 32,
             }}
           >
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
               {t("auth.signIn.guestBrowse")}
             </Text>
-          </Pressable>
+          </PressableScale>
 
           {/* Register link */}
           <View style={{ alignItems: "center" }}>
-            <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
               {t("auth.signIn.noAccount")}{" "}
               <Link href="/(auth)/sign-up">
-                <Text style={{ color: colors.accent, fontWeight: "500" }}>{t("auth.signIn.signUpLink")}</Text>
+                <Text style={{ color: tokens.accent, fontWeight: "500" }}>{t("auth.signIn.signUpLink")}</Text>
               </Link>
             </Text>
           </View>

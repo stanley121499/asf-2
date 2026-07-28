@@ -2,19 +2,29 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import type { Database } from "@/database.types";
 import { formatRm } from "@/lib/formatCurrency";
+import { hapticSuccess } from "@/lib/haptics";
+import { motion, motionEasing } from "@/lib/motion";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 
 const FALLBACK_TIMEOUT_MS = 10_000;
+
+/** Module-level guard so Strict Mode remounts do not re-fire success haptic. */
+const celebratedCheckoutOrderIds = new Set<string>();
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -27,19 +37,20 @@ function shortOrderRef(orderId: string): string {
 }
 
 /**
- * Primary (filled black) action button.
+ * Primary (filled) action button — fill uses `tokens.text`, label uses `tokens.bg`.
  */
 function PrimaryButton({
   label,
   onPress,
 }: Readonly<{ label: string; onPress: () => void }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
-      style={{ height: 56, backgroundColor: "#000000", borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+      style={{ height: 56, backgroundColor: tokens.text, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
     >
-      <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+      <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -53,13 +64,14 @@ function SecondaryButton({
   label,
   onPress,
 }: Readonly<{ label: string; onPress: () => void }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
-      style={{ height: 52, borderWidth: 1, borderColor: colors.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
+      style={{ height: 52, borderWidth: 1, borderColor: tokens.border, borderRadius: 99, alignItems: "center", justifyContent: "center" }}
     >
-      <Text style={{ color: colors.text, fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
+      <Text style={{ color: tokens.text, fontSize: 14, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -70,10 +82,60 @@ function SecondaryButton({
  * Centered status layout used by every terminal state on this screen.
  */
 function StatusLayout({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
-    <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: "center" }}>{children}</View>
     </SafeAreaView>
+  );
+}
+
+/**
+ * Success check glyph — scales in with accent ring; fires {@link hapticSuccess} once per order.
+ */
+function SuccessCheckCeremony({
+  orderId,
+}: Readonly<{ orderId: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
+  const scale = useSharedValue(
+    celebratedCheckoutOrderIds.has(orderId) ? 1 : 0.6
+  );
+
+  useEffect(() => {
+    if (celebratedCheckoutOrderIds.has(orderId)) {
+      return;
+    }
+    celebratedCheckoutOrderIds.add(orderId);
+    scale.value = withTiming(1, {
+      duration: motion.duration.entrance,
+      easing: motionEasing,
+    });
+    void hapticSuccess();
+  }, [orderId, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: "rgba(201, 169, 110, 0.16)",
+          borderWidth: 1.5,
+          borderColor: tokens.accent,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 16,
+        },
+        animatedStyle,
+      ]}
+    >
+      <Ionicons name="checkmark-circle" size={44} color={tokens.success} />
+    </Animated.View>
   );
 }
 
@@ -81,6 +143,7 @@ function StatusLayout({ children }: Readonly<{ children: React.ReactNode }>): Re
  * Order confirmation: waits for webhook to mark order `processing` via Realtime (+ timeout fallback).
  */
 export default function CheckoutSuccessScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { orderId: orderIdParam } = useLocalSearchParams<{ orderId?: string }>();
@@ -187,7 +250,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
     return (
       <StatusLayout>
         <View style={{ alignItems: "center" }}>
-          <ActivityIndicator size="large" color={colors.text} />
+          <ActivityIndicator size="large" color={tokens.text} />
         </View>
       </StatusLayout>
     );
@@ -196,7 +259,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
   if (user === null) {
     return (
       <StatusLayout>
-        <Text style={{ color: colors.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ color: tokens.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
           {t("orderSuccess.loginRequired")}
         </Text>
         <PrimaryButton label={t("orderSuccess.goSignIn")} onPress={() => router.replace("/(auth)/sign-in")} />
@@ -207,7 +270,7 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
   if (!orderIdValid) {
     return (
       <StatusLayout>
-        <Text style={{ color: colors.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ color: tokens.muted, textAlign: "center", marginBottom: 24, fontSize: 14, fontFamily: "Inter_400Regular" }}>
           {t("orderSuccess.missingOrderParam")}
         </Text>
         <SecondaryButton label={t("orderSuccess.backHome")} onPress={() => router.replace("/(tabs)")} />
@@ -230,12 +293,12 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
               marginBottom: 16,
             }}
           >
-            <Ionicons name="alert-circle-outline" size={32} color={colors.danger} />
+            <Ionicons name="alert-circle-outline" size={32} color={tokens.danger} />
           </View>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 6 }}>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text, marginBottom: 6 }}>
             {t("orderSuccess.somethingWrong")}
           </Text>
-          <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 }}>
+          <Text style={{ color: tokens.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20 }}>
             {loadError}
           </Text>
         </View>
@@ -253,23 +316,11 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
     return (
       <StatusLayout>
         <View style={{ alignItems: "center", marginBottom: 24 }}>
-          <View
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 36,
-              backgroundColor: "rgba(34, 197, 94, 0.12)",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 16,
-            }}
-          >
-            <Ionicons name="checkmark-circle" size={44} color={colors.success} />
-          </View>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: colors.text, marginBottom: 8 }}>
+          <SuccessCheckCeremony orderId={order.id} />
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 24, color: tokens.text, marginBottom: 8 }}>
             {t("orderSuccess.title")}
           </Text>
-          <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
+          <Text style={{ color: tokens.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
             {t("orderSuccess.confirmedWithHash", { ref })}
           </Text>
         </View>
@@ -280,16 +331,16 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
             alignItems: "center",
             justifyContent: "space-between",
             borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: "#FFFFFF",
+            borderColor: tokens.border,
+            backgroundColor: tokens.bg,
             borderRadius: 16,
             paddingHorizontal: 16,
             paddingVertical: 16,
             marginBottom: 28,
           }}
         >
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>{t("orderSuccess.amountPaid")}</Text>
-          <Text style={{ fontSize: 18, color: colors.text, fontWeight: "700", fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>{t("orderSuccess.amountPaid")}</Text>
+          <Text style={{ fontSize: 18, color: tokens.text, fontWeight: "700", fontFamily: "Inter_400Regular" }}>
             {formatRm(total)}
           </Text>
         </View>
@@ -311,18 +362,18 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
               width: 72,
               height: 72,
               borderRadius: 36,
-              backgroundColor: colors.panel,
+              backgroundColor: tokens.panel,
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 16,
             }}
           >
-            <Ionicons name="time-outline" size={40} color={colors.accent} />
+            <Ionicons name="time-outline" size={40} color={tokens.accent} />
           </View>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: colors.text, marginBottom: 8 }}>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 22, color: tokens.text, marginBottom: 8 }}>
             {t("orderSuccess.paymentReceived")}
           </Text>
-          <Text style={{ color: colors.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
+          <Text style={{ color: tokens.muted, textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 }}>
             {t("orderSuccess.confirmingSlow")}
           </Text>
         </View>
@@ -337,8 +388,8 @@ export default function CheckoutSuccessScreen(): React.ReactElement {
   return (
     <StatusLayout>
       <View style={{ alignItems: "center" }}>
-        <ActivityIndicator size="large" color={colors.text} />
-        <Text style={{ color: colors.muted, marginTop: 16, fontSize: 14, fontFamily: "Inter_400Regular" }}>
+        <ActivityIndicator size="large" color={tokens.text} />
+        <Text style={{ color: tokens.muted, marginTop: 16, fontSize: 14, fontFamily: "Inter_400Regular" }}>
           {t("orderSuccess.confirmingOrder")}
         </Text>
       </View>

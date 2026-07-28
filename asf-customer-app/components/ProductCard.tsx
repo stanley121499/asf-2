@@ -1,12 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
+import { PressableScale } from "@/components/motion";
 import type { Product } from "@/context/product/ProductContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { colors } from "@/constants/theme";
+import { hapticSelection } from "@/lib/haptics";
+import { motion, motionEasing } from "@/lib/motion";
 
 export interface ProductCardProps {
   product: Product;
@@ -15,6 +24,59 @@ export interface ProductCardProps {
   onPress: () => void;
   wishlisted?: boolean;
   onWishlistPress?: () => void;
+}
+
+/**
+ * Wishlist heart with fashion-retail scale snap (1 → heartPeak → 1) + selection haptic.
+ */
+function WishlistHeartButton({
+  wishlisted,
+  onPress,
+  accessibilityLabel,
+}: Readonly<{
+  wishlisted: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+}>): React.ReactElement {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = (): void => {
+    void hapticSelection();
+    scale.value = withSequence(
+      withTiming(motion.scale.heartPeak, {
+        duration: motion.duration.press,
+        easing: motionEasing,
+      }),
+      withTiming(1, {
+        duration: motion.duration.fast,
+        easing: motionEasing,
+      })
+    );
+    onPress();
+  };
+
+  return (
+    <PressableScale
+      onPress={handlePress}
+      haptic="none"
+      hitSlop={8}
+      style={{ padding: 4 }}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Animated.View style={animatedStyle}>
+        <Ionicons
+          name={wishlisted ? "heart" : "heart-outline"}
+          size={18}
+          color={wishlisted ? colors.accent : colors.muted}
+        />
+      </Animated.View>
+    </PressableScale>
+  );
 }
 
 /**
@@ -40,8 +102,9 @@ export function ProductCard({
   const name = translatedName.length > 0 ? translatedName : t("common.product");
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
+      haptic="light"
       style={{ width: "48%" }}
       accessibilityRole="button"
       accessibilityLabel={name}
@@ -89,25 +152,15 @@ export function ProductCard({
           {priceLabel}
         </Text>
         {onWishlistPress !== undefined ? (
-          <Pressable
-            onPress={() => {
-              onWishlistPress();
-            }}
-            hitSlop={8}
-            style={{ padding: 4 }}
-            accessibilityRole="button"
+          <WishlistHeartButton
+            wishlisted={wishlisted}
+            onPress={onWishlistPress}
             accessibilityLabel={
               wishlisted ? t("product.removeFromWishlistAria") : t("product.addToWishlistAria")
             }
-          >
-            <Ionicons
-              name={wishlisted ? "heart" : "heart-outline"}
-              size={18}
-              color={wishlisted ? colors.accent : colors.muted}
-            />
-          </Pressable>
+          />
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

@@ -14,9 +14,9 @@ import {
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 /**
  * Narrows an unknown value to a non-empty trimmed string.
@@ -24,6 +24,9 @@ import { colors } from "@/constants/theme";
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
+
+/** Visual field treatment keyed by active theme pack. */
+type FieldVariant = "classic" | "atelier" | "noir";
 
 /**
  * Props for a single labelled text field on the account form.
@@ -43,6 +46,11 @@ interface FieldProps {
   keyboardType?: "default" | "phone-pad";
   /** Optional autocapitalisation behaviour. */
   autoCapitalize?: "none" | "words";
+  /**
+   * Theme field chrome: Classic bordered card · Atelier paper underline ·
+   * Noir night-settings underline on dark ground.
+   */
+  variant?: FieldVariant;
 }
 
 /**
@@ -56,29 +64,58 @@ function Field({
   placeholder,
   keyboardType = "default",
   autoCapitalize = "none",
+  variant = "classic",
 }: Readonly<FieldProps>): React.ReactElement {
+  const tokens = useThemeTokens();
+  const isUnderline = variant === "atelier" || variant === "noir";
+
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+    <View style={{ marginBottom: isUnderline ? 28 : 16 }}>
+      <Text
+        style={{
+          fontSize: isUnderline ? 11 : 13,
+          letterSpacing: isUnderline ? 1.5 : 0,
+          textTransform: isUnderline ? "uppercase" : "none",
+          color: tokens.muted,
+          marginBottom: isUnderline ? 10 : 6,
+          fontFamily: "Inter_400Regular",
+        }}
+      >
         {label}
       </Text>
       <TextInput
-        style={{
-          height: 50,
-          backgroundColor: "#FFFFFF",
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: 12,
-          paddingHorizontal: 14,
-          fontSize: 15,
-          color: colors.text,
-          fontFamily: "Inter_400Regular",
-        }}
+        style={
+          isUnderline
+            ? {
+                height: 44,
+                backgroundColor: "transparent",
+                borderWidth: 0,
+                borderBottomWidth: 1,
+                borderBottomColor: tokens.border,
+                borderRadius: 0,
+                paddingHorizontal: 0,
+                paddingVertical: 8,
+                fontSize: variant === "noir" ? 15 : 16,
+                color: tokens.text,
+                fontFamily: "Inter_400Regular",
+              }
+            : {
+                height: 50,
+                backgroundColor: tokens.bg,
+                borderWidth: 1,
+                borderColor: tokens.border,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                fontSize: 15,
+                color: tokens.text,
+                fontFamily: "Inter_400Regular",
+              }
+        }
         value={value}
         onChangeText={onChangeText}
         editable={editable}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={tokens.muted}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
       />
@@ -87,10 +124,32 @@ function Field({
 }
 
 /**
+ * Resolves the account form field variant from the active theme id.
+ */
+function fieldVariantForTheme(themeId: string): FieldVariant {
+  if (themeId === "atelier") {
+    return "atelier";
+  }
+  if (themeId === "noir") {
+    return "noir";
+  }
+  return "classic";
+}
+
+/**
  * Account settings — edit the customer's name and phone number.
- * Reached from the edit icon in the top-right of the profile header.
+ * Reached from the edit control on the profile hub.
+ *
+ * Atelier: paper colophon form (underline fields, square CTA).
+ * Noir: night-settings underline form + accent square CTA.
+ * Classic: bordered card fields + pill CTA.
  */
 export default function AccountSettingsScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
+  const { themeId } = useTheme();
+  const isAtelier = themeId === "atelier";
+  const isNoir = themeId === "noir";
+  const fieldVariant = fieldVariantForTheme(themeId);
   const router = useRouter();
   const { t } = useTranslation();
   const { user, user_detail } = useAuthContext();
@@ -109,9 +168,15 @@ export default function AccountSettingsScreen(): React.ReactElement {
     if (isNonEmpty(user_detail?.last_name)) {
       setLastName(String(user_detail?.last_name));
     }
-    const meta = (user?.user_metadata as Record<string, unknown> | undefined) ?? {};
-    if (isNonEmpty(meta["phone"])) {
-      setPhone(String(meta["phone"]));
+    const meta =
+      user?.user_metadata !== null &&
+      user?.user_metadata !== undefined &&
+      typeof user.user_metadata === "object"
+        ? user.user_metadata
+        : {};
+    const phoneValue = meta["phone"];
+    if (isNonEmpty(phoneValue)) {
+      setPhone(String(phoneValue));
     }
   }, [user, user_detail]);
 
@@ -166,10 +231,10 @@ export default function AccountSettingsScreen(): React.ReactElement {
 
   if (user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("settings.menuAccount")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("settings.loginToEdit")}
           </Text>
         </View>
@@ -178,7 +243,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: tokens.bg }}>
       <SubPageHeader title={t("settings.menuAccount")} />
 
       <KeyboardAvoidingView
@@ -187,17 +252,84 @@ export default function AccountSettingsScreen(): React.ReactElement {
       >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32 }}
+          contentContainerStyle={{
+            paddingHorizontal: isAtelier ? 24 : 16,
+            paddingTop: isAtelier ? 32 : 20,
+            paddingBottom: 32,
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {isAtelier ? (
+            <View style={{ marginBottom: 36 }}>
+              <Text
+                style={{
+                  fontFamily: "PlayfairDisplay_400Regular",
+                  fontSize: 28,
+                  lineHeight: 36,
+                  color: tokens.text,
+                  marginBottom: 8,
+                }}
+              >
+                {t("settings.menuAccount")}
+              </Text>
+              {typeof user.email === "string" && user.email.length > 0 ? (
+                <Text
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 20,
+                    color: tokens.muted,
+                    fontFamily: "Inter_400Regular",
+                  }}
+                >
+                  {user.email}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {isNoir ? (
+            <View
+              style={{
+                marginBottom: 24,
+                paddingBottom: 12,
+                borderBottomWidth: 1,
+                borderBottomColor: tokens.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  color: tokens.muted,
+                  fontFamily: "Inter_400Regular",
+                  marginBottom: 4,
+                }}
+              >
+                {t("settings.menuAccount")}
+              </Text>
+              {typeof user.email === "string" && user.email.length > 0 ? (
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: tokens.text,
+                    fontFamily: "Inter_400Regular",
+                  }}
+                >
+                  {user.email}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {error !== null ? (
-            <Text style={{ fontSize: 13, color: colors.danger, fontFamily: "Inter_400Regular", marginBottom: 16 }}>
+            <Text style={{ fontSize: 13, color: tokens.danger, fontFamily: "Inter_400Regular", marginBottom: 16 }}>
               {error}
             </Text>
           ) : null}
 
-          <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={{ flexDirection: "row", gap: isAtelier ? 20 : isNoir ? 16 : 12 }}>
             <View style={{ flex: 1 }}>
               <Field
                 label={t("settings.firstName")}
@@ -206,6 +338,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
                 editable={!saving}
                 autoCapitalize="words"
                 placeholder={t("settings.firstName")}
+                variant={fieldVariant}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -216,6 +349,7 @@ export default function AccountSettingsScreen(): React.ReactElement {
                 editable={!saving}
                 autoCapitalize="words"
                 placeholder={t("settings.lastName")}
+                variant={fieldVariant}
               />
             </View>
           </View>
@@ -227,16 +361,17 @@ export default function AccountSettingsScreen(): React.ReactElement {
             editable={!saving}
             keyboardType="phone-pad"
             placeholder={t("settings.phonePlaceholder")}
+            variant={fieldVariant}
           />
         </ScrollView>
 
         {/* Sticky footer CTA */}
         <View
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: tokens.bg,
             borderTopWidth: 1,
-            borderTopColor: colors.border,
-            paddingHorizontal: 16,
+            borderTopColor: tokens.border,
+            paddingHorizontal: isAtelier ? 24 : 16,
             paddingTop: 12,
             paddingBottom: 24,
           }}
@@ -245,19 +380,65 @@ export default function AccountSettingsScreen(): React.ReactElement {
             onPress={() => void handleSave()}
             disabled={saving}
             activeOpacity={0.85}
-            style={{
-              height: 56,
-              backgroundColor: "#000000",
-              borderRadius: 99,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: saving ? 0.6 : 1,
-            }}
+            style={
+              isAtelier
+                ? {
+                    height: 48,
+                    borderWidth: 1,
+                    borderColor: tokens.text,
+                    borderRadius: 2,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: saving ? 0.6 : 1,
+                  }
+                : isNoir
+                  ? {
+                      height: 48,
+                      backgroundColor: tokens.accent,
+                      borderRadius: 2,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: saving ? 0.6 : 1,
+                    }
+                  : {
+                      height: 56,
+                      backgroundColor: tokens.text,
+                      borderRadius: 99,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: saving ? 0.6 : 1,
+                    }
+            }
           >
             {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={isAtelier ? tokens.text : tokens.bg} />
             ) : (
-              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+              <Text
+                style={
+                  isAtelier
+                    ? {
+                        color: tokens.text,
+                        fontSize: 13,
+                        letterSpacing: 1.5,
+                        textTransform: "uppercase",
+                        fontFamily: "Inter_400Regular",
+                      }
+                    : isNoir
+                      ? {
+                          color: tokens.bg,
+                          fontSize: 13,
+                          fontWeight: "600",
+                          letterSpacing: 0.5,
+                          fontFamily: "Inter_400Regular",
+                        }
+                      : {
+                          color: tokens.bg,
+                          fontSize: 16,
+                          fontWeight: "600",
+                          fontFamily: "Inter_400Regular",
+                        }
+                }
+              >
                 {t("settings.saveChanges")}
               </Text>
             )}

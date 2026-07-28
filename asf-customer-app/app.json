@@ -19,7 +19,14 @@
       }
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "waze",
+          "comgooglemaps",
+          "maps"
+        ]
+      }
     },
     "android": {
       "package": "com.asf.customerapp",

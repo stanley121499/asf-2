@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { useTranslation } from "@/context/LocaleContext";
-import { colors } from "@/constants/theme";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { MAX_CLAIM_EVIDENCE_PHOTOS } from "@/lib/claims/claimEvidenceStorage";
 import {
   pickClaimPhotosFromLibrary,
@@ -42,13 +42,14 @@ function PhotoThumb({
   onRemove: (index: number) => void;
   disabled: boolean;
 }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <View
       style={{
         width: THUMB_SIZE,
         height: THUMB_SIZE,
         borderRadius: 10,
-        backgroundColor: "#E5E7EB",
+        backgroundColor: tokens.panel,
         overflow: "hidden",
       }}
     >
@@ -68,12 +69,12 @@ function PhotoThumb({
             width: 22,
             height: 22,
             borderRadius: 11,
-            backgroundColor: pressed ? colors.danger : "rgba(0,0,0,0.65)",
+            backgroundColor: pressed ? tokens.danger : "rgba(0,0,0,0.65)",
             alignItems: "center",
             justifyContent: "center",
           })}
         >
-          <Ionicons name="close" size={13} color="#FFFFFF" />
+          <Ionicons name="close" size={13} color={tokens.bg} />
         </Pressable>
       ) : null}
     </View>
@@ -87,6 +88,7 @@ function AddPhotoButton({
   disabled,
   onPress,
 }: Readonly<{ disabled: boolean; onPress: () => void }>): React.ReactElement {
+  const tokens = useThemeTokens();
   return (
     <Pressable
       onPress={onPress}
@@ -99,15 +101,15 @@ function AddPhotoButton({
           height: THUMB_SIZE,
           borderRadius: 10,
           borderWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: "#F3F4F6",
+          borderColor: tokens.border,
+          backgroundColor: tokens.panel,
           alignItems: "center",
           justifyContent: "center",
           gap: 4,
         }}
       >
-        <Ionicons name="camera-outline" size={24} color={colors.muted} />
-        <Text style={{ fontSize: 10, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+        <Ionicons name="camera-outline" size={24} color={tokens.muted} />
+        <Text style={{ fontSize: 10, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
           +
         </Text>
       </View>
@@ -123,6 +125,7 @@ export function ClaimEvidencePicker({
   onChange,
   disabled = false,
 }: Readonly<ClaimEvidencePickerProps>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
 
   const remainingSlots = MAX_CLAIM_EVIDENCE_PHOTOS - photos.length;
@@ -206,7 +209,7 @@ export function ClaimEvidencePicker({
             height: 48,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: tokens.border,
             borderStyle: "dashed",
             alignItems: "center",
             justifyContent: "center",
@@ -215,15 +218,15 @@ export function ClaimEvidencePicker({
             opacity: pressed ? 0.7 : canAddMore ? 1 : 0.5,
           })}
         >
-          <Ionicons name="images-outline" size={18} color={colors.text} />
-          <Text style={{ fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+          <Ionicons name="images-outline" size={18} color={tokens.text} />
+          <Text style={{ fontSize: 14, color: tokens.text, fontFamily: "Inter_400Regular" }}>
             {t("claims.addPhotos")}
           </Text>
         </Pressable>
       ) : null}
 
       {photos.length > 0 ? (
-        <Text style={{ fontSize: 11, color: colors.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 11, color: tokens.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
           {t("claims.photoCount", { count: photos.length, max: MAX_CLAIM_EVIDENCE_PHOTOS })}
         </Text>
       ) : null}
@@ -238,6 +241,7 @@ export function ClaimEvidenceUploadProgress({
   uploaded,
   total,
 }: Readonly<{ uploaded: number; total: number }>): React.ReactElement | null {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
 
   if (total <= 0) {
@@ -253,8 +257,8 @@ export function ClaimEvidenceUploadProgress({
         marginBottom: 12,
       }}
     >
-      <ActivityIndicator size="small" color={colors.accent} />
-      <Text style={{ fontSize: 12, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+      <ActivityIndicator size="small" color={tokens.accent} />
+      <Text style={{ fontSize: 12, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
         {t("claims.uploadingPhotos", { current: uploaded, total })}
       </Text>
     </View>

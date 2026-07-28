@@ -11,14 +11,15 @@ import {
 } from "react-native";
 
 import { useTranslation } from "@/context/LocaleContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/constants/theme";
 
 /**
  * Sends a Supabase password reset email.
  */
 export default function ForgotPasswordScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
@@ -57,7 +58,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: tokens.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
@@ -65,13 +66,13 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           style={{
             fontFamily: "PlayfairDisplay_400Regular",
             fontSize: 24,
-            color: colors.text,
+            color: tokens.text,
             marginBottom: 8,
           }}
         >
           {t("auth.forgotPassword.title")}
         </Text>
-        <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
+        <Text style={{ fontSize: 14, color: tokens.muted, marginBottom: 24, fontFamily: "Inter_400Regular" }}>
           {t("auth.forgotPassword.subtitle")}
         </Text>
 
@@ -87,17 +88,17 @@ export default function ForgotPasswordScreen(): React.ReactElement {
               paddingVertical: 8,
             }}
           >
-            <Text style={{ fontSize: 14, color: colors.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
+            <Text style={{ fontSize: 14, color: tokens.danger, fontFamily: "Inter_400Regular" }}>{error}</Text>
           </View>
         ) : null}
 
         {done ? (
-          <Text style={{ color: colors.text, marginBottom: 24, fontFamily: "Inter_400Regular", fontSize: 15 }}>
+          <Text style={{ color: tokens.text, marginBottom: 24, fontFamily: "Inter_400Regular", fontSize: 15 }}>
             {t("auth.forgotPassword.success")}
           </Text>
         ) : (
           <>
-            <Text style={{ fontSize: 14, fontWeight: "500", color: colors.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: tokens.text, marginBottom: 6, fontFamily: "Inter_400Regular" }}>
               {t("auth.forgotPassword.email")}
             </Text>
             <TextInput
@@ -106,15 +107,15 @@ export default function ForgotPasswordScreen(): React.ReactElement {
                 height: 52,
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.panel,
+                borderColor: tokens.border,
+                backgroundColor: tokens.panel,
                 paddingHorizontal: 16,
                 fontSize: 16,
-                color: colors.text,
+                color: tokens.text,
                 fontFamily: "Inter_400Regular",
               }}
               placeholder={t("auth.forgotPassword.emailPlaceholder")}
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={tokens.muted}
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -128,7 +129,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
               style={{
                 height: 56,
                 borderRadius: 12,
-                backgroundColor: "#000000",
+                backgroundColor: tokens.text,
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 16,
@@ -136,9 +137,9 @@ export default function ForgotPasswordScreen(): React.ReactElement {
               }}
             >
               {submitting ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={tokens.bg} />
               ) : (
-                <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
+                <Text style={{ color: tokens.bg, fontSize: 16, fontWeight: "600", fontFamily: "Inter_400Regular" }}>
                   {t("auth.forgotPassword.submit")}
                 </Text>
               )}
@@ -147,7 +148,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
         )}
 
         <Pressable onPress={() => router.push("/(auth)/sign-in")} disabled={submitting}>
-          <Text style={{ textAlign: "center", fontSize: 14, color: colors.text, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ textAlign: "center", fontSize: 14, color: tokens.text, fontFamily: "Inter_400Regular" }}>
             {t("auth.forgotPassword.backToSignIn")}
           </Text>
         </Pressable>

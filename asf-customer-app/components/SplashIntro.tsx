@@ -6,6 +6,8 @@ import { Animated, Easing, StyleSheet } from "react-native";
 import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
 
+import { hapticLight } from "@/lib/haptics";
+
 /** Bundled letter-cascade splash (Variation 7). Regenerate via `npm run build:splash`. */
 const SPLASH_HTML_ASSET = require("@/assets/splash/intro/splash-intro.html");
 
@@ -51,6 +53,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
   const [webReady, setWebReady] = useState(false);
   const completedRef = useRef(false);
   const holdScheduledRef = useRef(false);
+  const fadeHapticFiredRef = useRef(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -61,6 +64,11 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
       return;
     }
     completedRef.current = true;
+    // Light bridge haptic once when fade-out starts (not per-frame).
+    if (!fadeHapticFiredRef.current) {
+      fadeHapticFiredRef.current = true;
+      void hapticLight();
+    }
     // Fade the overlay out before unmounting so the home screen does not snap in.
     Animated.timing(opacity, {
       toValue: 0,

@@ -17,6 +17,9 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/concepts/customer-i18n-asf-2]] — trilingual zh-CN/en/ms customer i18n: Expo shipped; translation tables; Next stashed
 - [[wiki/concepts/store-locations-feature-asf-2]] — physical store locator: routes, RLS, API vs direct Supabase patterns, feature flag
 - [[wiki/concepts/pixel2motion-splash-asf-2]] — animated cold-start splash: Pixel2Motion → WebView bundle, both Expo apps, regeneration workflow
+- [[wiki/concepts/expo-customer-ceremony-motion-asf-2]] — ambient + day-to-day bold 仪式感 after splash (home/Shop/PDP/bag/cart)
+- [[wiki/concepts/expo-customer-beginner-guide-asf-2]] — App Guide hub + first-launch coach marks for absolute beginners / elderly
+- [[wiki/concepts/expo-customer-theme-skins-asf-2]] — Classic / Atelier / Noir layout packs; SUPERADMIN Appearance; Home≠Shop
 - [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular post-purchase claims: config-driven policy, feature flag, customer order entry + staff queue
 - [[wiki/concepts/warranty-discount-credits-asf-2]] — human-verified warranty credits on top of `claims`: estimate-only time tiers, staff approval, fixed-RM one-click cart redemption
 - [[wiki/concepts/physical-warranty-registration-asf-2]] — card-in-box physical warranty: My Collection, claim-once auto RM voucher, online or partner-store redeem
@@ -28,6 +31,39 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 ## Syntheses — delivered programs
 
 - [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]] — Source of truth for the MODEL MATCH Expo Home revamp, footwear catalog, promotions, i18n, and product-navigation fixes
+
+## Sources — 2026-07-28 Expo customer theme skins session (SOT)
+
+- [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]] — Session SOT: Classic/Atelier/Noir decisions + what landed; agent prompts deleted
+- `raw/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment.md` — Raw accomplishment
+
+## Sources — 2026-07-28 Expo customer Noir intentional redesign Round 2 (1)
+
+- `raw/sources/2026-07-28-expo-customer-noir-intentional-plan.md` — Plan: curate vs find jobs; Shop/PDP/Stores craft; dark Tier B; supersedes R1 Home 24-grid (prompts deleted)
+
+## Sources — 2026-07-28 Expo customer Noir SSENSE bold pass (1)
+
+- `raw/sources/2026-07-28-expo-customer-noir-ssense-plan.md` — Plan: SSENSE night commerce; Home≠Shop; full surface set (prompts deleted)
+
+## Sources — 2026-07-28 Expo customer Atelier editorial (1)
+
+- `raw/sources/2026-07-28-expo-customer-atelier-editorial-plan.md` — Plan: ZARA lookbook; Home≠Shop; Stores + profile shell (prompts deleted)
+
+## Sources — 2026-07-27 Expo customer theme skins foundation (2)
+
+- `raw/sources/2026-07-27-expo-customer-theme-skins-plan.md` — Foundation: 3 packs, cart chrome, Tier A/B (prompts deleted)
+- `raw/sources/2026-07-27-expo-customer-theme-skins-polish-plan.md` — Intent polish; SUPERADMIN-only Appearance (prompts deleted)
+
+## Sources — 2026-07-17 Expo customer beginner guide / App Guide (2)
+
+- [[wiki/sources/2026-07-17-expo-customer-beginner-guide-session-accomplishment]] — Session SOT: hub + first-launch + coach-mark engine; device polish; agent prompts deleted after run
+- `raw/sources/2026-07-17-expo-customer-beginner-guide-plan.md` — Plan: hub topics, anchors, i18n, architecture (prompts file deleted)
+
+## Sources — 2026-07-17 Expo customer ceremony / 仪式感 (3)
+
+- [[wiki/sources/2026-07-17-expo-customer-ceremony-motion-session-accomplishment]] — Session SOT: ambient + daily-bold shipped; decisions; bugfixes; agent prompts deleted after run
+- `raw/sources/2026-07-17-expo-customer-ceremony-motion-plan.md` — Ambient pass plan (primitives, home, nav, texture, milestones)
+- `raw/sources/2026-07-17-expo-customer-daily-bold-ceremony-plan.md` — Daily bold plan (home amplify, Shop, PDP, bag, cart)
 
 ## Sources — 2026-07-17 MODEL MATCH catalog revamp (1 new)
 

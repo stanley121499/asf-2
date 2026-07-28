@@ -6,19 +6,20 @@ import { NotificationRow } from "@/components/NotificationRow";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useNotificationContext } from "@/context/NotificationContext";
-import { colors } from "@/constants/theme";
+import { useThemeTokens } from "@/context/ThemeContext";
 
 /**
  * Notifications — sticky header, mark-all button, notification rows.
  */
 export default function NotificationsScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { user } = useAuthContext();
   const { notifications, loading, markAsRead, markAllAsRead, unreadCount } = useNotificationContext();
 
   const markAllButton = unreadCount > 0 ? (
     <TouchableOpacity onPress={() => void markAllAsRead()} hitSlop={8}>
-      <Text style={{ fontSize: 13, color: colors.accent, fontFamily: "Inter_400Regular" }}>
+      <Text style={{ fontSize: 13, color: tokens.accent, fontFamily: "Inter_400Regular" }}>
         {t("notifications.markAllRead")}
       </Text>
     </TouchableOpacity>
@@ -26,10 +27,10 @@ export default function NotificationsScreen(): React.ReactElement {
 
   if (user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("notifications.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("notifications.loginRequired")}
           </Text>
         </View>
@@ -39,25 +40,25 @@ export default function NotificationsScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("notifications.title")} right={markAllButton} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: tokens.bg }}>
       <SubPageHeader title={t("notifications.title")} right={markAllButton} />
 
       {notifications.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: colors.text, marginBottom: 8 }}>
+          <Text style={{ fontFamily: "PlayfairDisplay_400Regular", fontSize: 20, color: tokens.text, marginBottom: 8 }}>
             {t("notifications.empty")}
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, fontFamily: "Inter_400Regular" }}>
+          <Text style={{ fontSize: 14, color: tokens.muted, fontFamily: "Inter_400Regular" }}>
             {t("notifications.emptyHint")}
           </Text>
         </View>

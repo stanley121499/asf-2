@@ -13,10 +13,10 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
+import { useThemeTokens } from "@/context/ThemeContext";
 import { formatClaimLabel } from "@/lib/claims/claimEligibility";
 import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
-import { colors } from "@/constants/theme";
 
 type CreditTab = "active" | "used" | "expired";
 
@@ -24,6 +24,7 @@ type CreditTab = "active" | "used" | "expired";
  * Customer warranty credits list — active, used, and expired tabs.
  */
 export default function WarrantyCreditsScreen(): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   const { locale } = useLocale();
   const { user, loading: authLoading } = useAuthContext();
@@ -52,10 +53,10 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
 
   if (authLoading || user === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={t("warrantyCredits.title")} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -68,7 +69,7 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={t("warrantyCredits.title")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
@@ -81,14 +82,14 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
                 paddingVertical: 8,
                 borderRadius: 99,
                 borderWidth: 1,
-                borderColor: tab === item.key ? "#000000" : colors.border,
-                backgroundColor: tab === item.key ? "#000000" : "#FFFFFF",
+                borderColor: tab === item.key ? tokens.text : tokens.border,
+                backgroundColor: tab === item.key ? tokens.text : tokens.bg,
               }}
             >
               <Text
                 style={{
                   fontSize: 12,
-                  color: tab === item.key ? "#FFFFFF" : colors.text,
+                  color: tab === item.key ? tokens.bg : tokens.text,
                   fontFamily: "Inter_400Regular",
                 }}
               >
@@ -99,12 +100,12 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
         </View>
 
         {loading ? (
-          <ActivityIndicator color={colors.accent} style={{ marginTop: 32 }} />
+          <ActivityIndicator color={tokens.accent} style={{ marginTop: 32 }} />
         ) : filtered.length === 0 ? (
           <Text
             style={{
               textAlign: "center",
-              color: colors.muted,
+              color: tokens.muted,
               fontSize: 14,
               marginTop: 48,
               fontFamily: "Inter_400Regular",
@@ -136,33 +137,33 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
               <View
                 key={credit.id}
                 style={{
-                  backgroundColor: "#FFFFFF",
+                  backgroundColor: tokens.bg,
                   borderRadius: 16,
                   padding: 16,
                   marginBottom: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: tokens.border,
                 }}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 20, fontWeight: "600", color: colors.text, fontFamily: "Inter_400Regular" }}>
+                    <Text style={{ fontSize: 20, fontWeight: "600", color: tokens.text, fontFamily: "Inter_400Regular" }}>
                       {formatRm(credit.amountMyr)}
                     </Text>
-                    <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4, fontFamily: "Inter_400Regular" }}>
+                    <Text style={{ fontSize: 13, color: tokens.muted, marginTop: 4, fontFamily: "Inter_400Regular" }}>
                       {credit.productName}
                     </Text>
-                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
+                    <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 8, fontFamily: "Inter_400Regular" }}>
                       {credit.claimId !== null
                         ? t("warrantyCredits.fromClaim", { label: formatClaimLabel(credit.claimId) })
                         : t("warrantyCredits.fromRegistration")}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: colors.muted, textTransform: "uppercase", fontFamily: "Inter_400Regular" }}>
+                  <Text style={{ fontSize: 11, color: tokens.muted, textTransform: "uppercase", fontFamily: "Inter_400Regular" }}>
                     {statusLabel}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 12, fontFamily: "Inter_400Regular" }}>
+                <Text style={{ fontSize: 12, color: tokens.muted, marginTop: 12, fontFamily: "Inter_400Regular" }}>
                   {footer}
                 </Text>
               </View>

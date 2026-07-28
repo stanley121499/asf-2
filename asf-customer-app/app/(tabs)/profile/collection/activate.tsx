@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -12,8 +13,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { ClaimEvidencePicker } from "@/components/claims/ClaimEvidencePicker";
+import { PressableScale } from "@/components/motion";
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAlertContext } from "@/context/AlertContext";
 import { useAuthContext } from "@/context/AuthContext";
@@ -21,12 +28,14 @@ import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useStoreLocationContext } from "@/context/StoreLocationContext";
 import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
-import { colors } from "@/constants/theme";
+import { useThemeTokens } from "@/context/ThemeContext";
 import {
   createClaimEvidenceSessionId,
   uploadClaimEvidencePhoto,
 } from "@/lib/claims/claimEvidenceStorage";
 import type { PickedClaimPhoto } from "@/lib/claims/pickClaimPhotos";
+import { hapticSuccess } from "@/lib/haptics";
+import { motion, motionEasing } from "@/lib/motion";
 import { normalizeActivationCode } from "@/lib/warranty/normalizeActivationCode";
 
 /**
@@ -36,6 +45,9 @@ import { normalizeActivationCode } from "@/lib/warranty/normalizeActivationCode"
 const FEATURE_FLAG_KEY = "warranty_registration" as const;
 
 const PURCHASE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Module-level guard so Strict Mode remounts do not re-fire activate success haptic. */
+let activateSuccessHapticFired = false;
 
 /**
  * Narrows an unknown value to a non-empty trimmed string.
@@ -111,13 +123,14 @@ function Field({
   autoCapitalize = "none",
   optional = false,
 }: Readonly<FieldProps>): React.ReactElement {
+  const tokens = useThemeTokens();
   const { t } = useTranslation();
   return (
     <View style={{ marginBottom: 16 }}>
       <Text
         style={{
           fontSize: 13,
-          color: colors.muted,
+          color: tokens.muted,
           marginBottom: 6,
           fontFamily: "Inter_400Regular",
         }}
@@ -127,24 +140,129 @@ function Field({
       <TextInput
         style={{
           height: 50,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: tokens.bg,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: tokens.border,
           borderRadius: 12,
           paddingHorizontal: 14,
           fontSize: 15,
-          color: colors.text,
+          color: tokens.text,
           fontFamily: "Inter_400Regular",
         }}
         value={value}
         onChangeText={onChangeText}
         editable={editable}
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={tokens.muted}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
       />
+    </View>
+  );
+}
+
+/**
+ * Activate-success ceremony — check scale-in + accent ring + {@link hapticSuccess} once.
+ */
+function ActivateSuccessCeremony({
+  title,
+  message,
+  onContinue,
+  continueLabel,
+}: Readonly<{
+  title: string;
+  message: string;
+  onContinue: () => void;
+  continueLabel: string;
+}>): React.ReactElement {
+  const tokens = useThemeTokens();
+  const scale = useSharedValue(activateSuccessHapticFired ? 1 : 0.6);
+
+  useEffect(() => {
+    if (activateSuccessHapticFired) {
+      return;
+    }
+    activateSuccessHapticFired = true;
+    scale.value = withTiming(1, {
+      duration: motion.duration.entrance,
+      easing: motionEasing,
+    });
+    void hapticSuccess();
+  }, [scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
+      <SubPageHeader title={title} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: "rgba(201, 169, 110, 0.16)",
+              borderWidth: 1.5,
+              borderColor: tokens.accent,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            },
+            animatedStyle,
+          ]}
+        >
+          <Ionicons name="checkmark-circle" size={44} color={tokens.success} />
+        </Animated.View>
+        <Text
+          style={{
+            fontFamily: "PlayfairDisplay_400Regular",
+            fontSize: 22,
+            color: tokens.text,
+            marginBottom: 8,
+            textAlign: "center",
+          }}
+        >
+          {message}
+        </Text>
+        <PressableScale
+          haptic="medium"
+          onPress={onContinue}
+          accessibilityRole="button"
+          accessibilityLabel={continueLabel}
+          centerContent
+          style={{
+            marginTop: 28,
+            height: 52,
+            paddingHorizontal: 32,
+            backgroundColor: tokens.text,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 220,
+          }}
+        >
+          <Text
+            style={{
+              color: tokens.bg,
+              fontSize: 15,
+              fontFamily: "Inter_400Regular",
+            }}
+          >
+            {continueLabel}
+          </Text>
+        </PressableScale>
+      </View>
     </View>
   );
 }
@@ -169,6 +287,7 @@ export default function CollectionActivateScreen(): React.ReactElement {
 function CollectionActivateContent({
   title,
 }: Readonly<{ title: string }>): React.ReactElement {
+  const tokens = useThemeTokens();
   const router = useRouter();
   const { t } = useTranslation();
   const { showAlert } = useAlertContext();
@@ -186,6 +305,7 @@ function CollectionActivateContent({
   const [receiptPhotos, setReceiptPhotos] = useState<PickedClaimPhoto[]>([]);
   const [storeModalVisible, setStoreModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [activateSucceeded, setActivateSucceeded] = useState(false);
 
   useEffect(() => {
     if (user === null) {
@@ -226,10 +346,10 @@ function CollectionActivateContent({
 
   if (authLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.panel }}>
+      <View style={{ flex: 1, backgroundColor: tokens.panel }}>
         <SubPageHeader title={title} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={tokens.accent} />
         </View>
       </View>
     );
@@ -314,15 +434,27 @@ function CollectionActivateContent({
         return;
       }
 
-      showAlert(t("collection.activateSuccess"), "success");
-      router.replace("/(tabs)/profile/collection");
+      setActivateSucceeded(true);
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (activateSucceeded) {
+    return (
+      <ActivateSuccessCeremony
+        title={title}
+        message={t("collection.activateSuccess")}
+        continueLabel={t("settings.menuCollection")}
+        onContinue={() => {
+          router.replace("/(tabs)/profile/collection");
+        }}
+      />
+    );
+  }
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel }}>
+    <View style={{ flex: 1, backgroundColor: tokens.panel }}>
       <SubPageHeader title={title} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -336,7 +468,7 @@ function CollectionActivateContent({
           <Text
             style={{
               fontSize: 14,
-              color: colors.muted,
+              color: tokens.muted,
               marginBottom: 20,
               lineHeight: 20,
               fontFamily: "Inter_400Regular",
@@ -367,7 +499,7 @@ function CollectionActivateContent({
             <Text
               style={{
                 fontSize: 13,
-                color: colors.muted,
+                color: tokens.muted,
                 marginBottom: 6,
                 fontFamily: "Inter_400Regular",
               }}
@@ -380,9 +512,9 @@ function CollectionActivateContent({
               activeOpacity={0.7}
               style={{
                 height: 50,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: tokens.bg,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: tokens.border,
                 borderRadius: 12,
                 paddingHorizontal: 14,
                 justifyContent: "center",
@@ -392,7 +524,7 @@ function CollectionActivateContent({
                 style={{
                   fontSize: 15,
                   color:
-                    purchaseStoreId === null ? colors.muted : colors.text,
+                    purchaseStoreId === null ? tokens.muted : tokens.text,
                   fontFamily: "Inter_400Regular",
                 }}
               >
@@ -436,7 +568,7 @@ function CollectionActivateContent({
           <Text
             style={{
               fontSize: 13,
-              color: colors.muted,
+              color: tokens.muted,
               marginBottom: 8,
               fontFamily: "Inter_400Regular",
             }}
@@ -446,7 +578,7 @@ function CollectionActivateContent({
           <Text
             style={{
               fontSize: 12,
-              color: colors.muted,
+              color: tokens.muted,
               marginBottom: 10,
               fontFamily: "Inter_400Regular",
             }}
@@ -459,27 +591,30 @@ function CollectionActivateContent({
             disabled={submitting}
           />
 
-          <TouchableOpacity
+          <PressableScale
+            haptic="medium"
             onPress={() => {
               void handleSubmit();
             }}
             disabled={submitting}
-            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t("collection.submitActivate")}
+            centerContent
             style={{
               marginTop: 28,
               height: 52,
-              backgroundColor: submitting ? colors.muted : "#000000",
+              backgroundColor: submitting ? tokens.muted : tokens.text,
               borderRadius: 12,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
             {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={tokens.bg} />
             ) : (
               <Text
                 style={{
-                  color: "#FFFFFF",
+                  color: tokens.bg,
                   fontSize: 15,
                   fontFamily: "Inter_400Regular",
                 }}
@@ -487,7 +622,7 @@ function CollectionActivateContent({
                 {t("collection.submitActivate")}
               </Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -509,11 +644,11 @@ function CollectionActivateContent({
           <Pressable
             onPress={(event) => event.stopPropagation()}
             style={{
-              backgroundColor: "#FFFFFF",
+              backgroundColor: tokens.bg,
               borderRadius: 20,
               overflow: "hidden",
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: tokens.border,
               maxHeight: "70%",
             }}
           >
@@ -523,14 +658,14 @@ function CollectionActivateContent({
                 paddingTop: 20,
                 paddingBottom: 12,
                 borderBottomWidth: 1,
-                borderBottomColor: colors.border,
+                borderBottomColor: tokens.border,
               }}
             >
               <Text
                 style={{
                   fontFamily: "PlayfairDisplay_400Regular",
                   fontSize: 18,
-                  color: colors.text,
+                  color: tokens.text,
                 }}
               >
                 {t("collection.fields.purchaseStore")}
@@ -542,7 +677,7 @@ function CollectionActivateContent({
                   style={{
                     padding: 20,
                     fontSize: 14,
-                    color: colors.muted,
+                    color: tokens.muted,
                     fontFamily: "Inter_400Regular",
                   }}
                 >
@@ -561,15 +696,15 @@ function CollectionActivateContent({
                       paddingVertical: 16,
                       borderBottomWidth:
                         index === storeLocations.length - 1 ? 0 : 1,
-                      borderBottomColor: colors.border,
+                      borderBottomColor: tokens.border,
                       backgroundColor:
-                        purchaseStoreId === store.id ? colors.panel : "#FFFFFF",
+                        purchaseStoreId === store.id ? tokens.panel : tokens.bg,
                     }}
                   >
                     <Text
                       style={{
                         fontSize: 15,
-                        color: colors.text,
+                        color: tokens.text,
                         fontFamily: "Inter_400Regular",
                       }}
                     >
@@ -579,7 +714,7 @@ function CollectionActivateContent({
                       <Text
                         style={{
                           fontSize: 12,
-                          color: colors.muted,
+                          color: tokens.muted,
                           marginTop: 4,
                           fontFamily: "Inter_400Regular",
                         }}
@@ -597,13 +732,13 @@ function CollectionActivateContent({
                 alignItems: "center",
                 paddingVertical: 16,
                 borderTopWidth: 1,
-                borderTopColor: colors.border,
+                borderTopColor: tokens.border,
               }}
             >
               <Text
                 style={{
                   fontSize: 14,
-                  color: colors.muted,
+                  color: tokens.muted,
                   fontFamily: "Inter_400Regular",
                 }}
               >

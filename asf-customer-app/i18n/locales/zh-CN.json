@@ -54,7 +54,20 @@
     "loginRequired": "请先登录。",
     "loginToEdit": "登录后可编辑账户信息。",
     "nameRequired": "请填写名和姓。",
-    "phonePlaceholder": "010-0000000"
+    "phonePlaceholder": "010-0000000",
+    "atelierAccountSection": "账户",
+    "atelierAccountHint": "订单、收藏与售后",
+    "atelierEditAccount": "编辑",
+    "appearance": "主题（员工）",
+    "appearanceSubtitle": "仅供员工 QA。可切换经典、工坊或夜色。偏好会保存在本设备上。",
+    "themeStaff": "主题（员工）",
+    "themeClassic": "经典",
+    "themeAtelier": "工坊",
+    "themeNoir": "夜色",
+    "themeClassicDesc": "精品店落地页风格，金色点缀与编辑式购物体验。",
+    "themeAtelierDesc": "杂志画册感，暖纸色调与更安静的界面边框。",
+    "themeNoirDesc": "沉浸式夜间零售——深色、紧凑，购物车入口常驻顶栏。",
+    "themeSelected": "已选择"
   },
   "alerts": {
     "dismiss": "关闭通知"
@@ -160,31 +173,76 @@
     "cardMarkReadAria": "标记为已读",
     "cardSaveAria": "收藏",
     "cardUnsaveAria": "取消收藏",
-    "placeholderImage": "图片"
+    "placeholderImage": "图片",
+    "atelierIntroTitle": "本期精选",
+    "atelierIntroBody": "安静的单品、从容的构图 — 按自己的节奏浏览。",
+    "atelierCoverEyebrow": "本季",
+    "atelierChapterLabel": "章节 {n}",
+    "atelierBridgeLabel": "本期收录",
+    "atelierBridgeLooks": "{count} 个造型",
+    "atelierChapterCaptionOpener": "本季精选的开篇画面。",
+    "atelierChapterCaptionVariation": "更安静的一刀 — 为氛围而留。",
+    "atelierChapterCaptionClosing": "进入完整档案前的收束一页。",
+    "atelierViewLookbook": "查看画册",
+    "atelierBrowseLookbook": "浏览画册",
+    "atelierInsertLabel": "插页",
+    "atelierJournalEyebrow": "来自手记",
+    "atelierJournalCta": "阅读手记",
+    "atelierShopTheEdit": "选购本期",
+    "atelierIndexTitle": "目录",
+    "atelierIndexHint": "按分类浏览",
+    "noirFeedTitle": "今夜",
+    "noirFeedHint": "今夜短选 — 不是完整目录。",
+    "noirOffersHint": "快捷优惠 — 结算时可用。",
+    "noirNewLabel": "上新",
+    "noirShopAll": "全部商品 →",
+    "noirDropEyebrow": "今夜上新",
+    "noirDropAria": "打开上新 {name}"
   },
   "highlights": {
     "title": "精选推荐",
-    "empty": "暂无内容，敬请期待"
+    "noirTitle": "精选",
+    "empty": "暂无内容，敬请期待",
+    "atelierIntroTitle": "手记",
+    "atelierIntroBody": "本期编辑故事与画面 — 慢慢看。"
   },
   "catalog": {
     "all": "全部",
     "filter": "筛选",
     "emptyTitle": "暂无相关商品",
     "backToHome": "回到首页",
-    "categoryFallback": "分类"
+    "categoryFallback": "分类",
+    "atelierTitle": "画册",
+    "atelierArchiveEyebrow": "档案",
+    "atelierCount": "{count} 件",
+    "noirEyebrow": "目录",
+    "noirCount": "{count} 件",
+    "noirInventoryTitle": "库存",
+    "noirResults": "{count} 个结果",
+    "noirEmptyTitle": "暂无库存商品",
+    "noirEmptyHint": "新品上架后将显示在这里。",
+    "noirNoResultsTitle": "无匹配结果",
+    "noirNoResultsHint": "试试其他搜索词，或清除筛选条件。",
+    "noirClearTools": "清除搜索与筛选",
+    "noirClearSearch": "清除搜索"
   },
   "filter": {
+    "filterAndSort": "筛选与排序",
+    "categoryTitle": "分类",
     "sortTitle": "排序方式",
     "sortNewest": "最新",
     "sortPriceAsc": "价格 ↑",
     "sortPriceDesc": "价格 ↓",
     "sortPriceLowHigh": "价格从低到高",
     "sortPriceHighLow": "价格从高到低",
-    "done": "完成"
+    "done": "完成",
+    "openAria": "打开筛选与排序",
+    "summary": "{sort} · {category}"
   },
   "product": {
     "addToBag": "加入购物袋",
     "addedToBag": "已加入购物袋",
+    "addedLabel": "已加入",
     "addToBagFailed": "无法加入购物袋",
     "quickView": "快速查看",
     "color": "颜色",
@@ -206,6 +264,12 @@
     "unavailable": "商品不可用",
     "notFound": "未找到商品",
     "continueShopping": "继续购物",
+    "atelierEyebrow": "画册",
+    "atelierSelectColor": "选择颜色",
+    "atelierSelectSize": "选择尺码",
+    "atelierCtaHintColor": "请选择颜色",
+    "atelierCtaHintSize": "请选择尺码",
+    "atelierCtaHintBoth": "请选择颜色和尺码",
     "details": "商品详情",
     "noDescription": "暂无详情介绍。",
     "materialCare": "材质与保养",
@@ -698,7 +762,23 @@
     "emptyTitle": "暂无门店信息",
     "googleMaps": "Google 地图",
     "waze": "Waze",
+    "directions": "导航",
+    "mapsUnavailableTitle": "无法打开地图",
+    "mapsUnavailableMessage": "请安装 Google 地图或 Waze，或改用浏览器再试。",
     "permissionDenied": "未获得定位权限，无法显示距离。",
+    "atelierEyebrow": "地点",
+    "atelierTitle": "到店",
+    "atelierCount": "{count} 家门店",
+    "atelierAddress": "地址",
+    "atelierPhone": "电话",
+    "atelierHours": "营业时间",
+    "noirEyebrow": "定位",
+    "noirTitle": "门店",
+    "noirCount": "{count} 家门店",
+    "noirMaps": "地图",
+    "noirAddress": "地址",
+    "noirPhone": "电话",
+    "noirHours": "营业时间",
     "distance": {
       "within100m": "100 m 内",
       "meters": "{count} m",
@@ -944,6 +1024,238 @@
       "1": "质量非常好，尺码标准，非常喜欢这款设计！",
       "2": "发货速度很快，包装精美，但是稍微有点色差。",
       "3": "完美！材质很舒服，细节处理得很到位，会再次回购。"
+    }
+  },
+  "guide": {
+    "hubTitle": "如何使用本应用",
+    "hubSubtitle": "点选一个主题，我们会在真实画面上为您示范。",
+    "profileEntry": "如何使用本应用",
+    "contactSupport": "还需要帮助？联系客服",
+    "replayWelcome": "重新观看新手导览",
+    "restartOnboarding": "重新开始新手导览（测试用）",
+    "controls": {
+      "next": "下一步",
+      "back": "上一步",
+      "skip": "跳过",
+      "done": "知道了",
+      "exit": "退出教程",
+      "stepIndicator": "第 {step} 步（共 {total} 步）"
+    },
+    "topics": {
+      "findShoes": {
+        "title": "寻找鞋子",
+        "desc": "浏览商品，打开一款鞋子的页面"
+      },
+      "chooseSizeAddToBag": {
+        "title": "选尺码并加入购物袋",
+        "desc": "选好尺码，把它加入购物袋"
+      },
+      "payCheckout": {
+        "title": "付款购买",
+        "desc": "一步一步教您如何付款"
+      },
+      "seeMyOrders": {
+        "title": "查看我的订单",
+        "desc": "了解您的订单目前进度"
+      },
+      "saveFavourites": {
+        "title": "收藏喜欢的商品",
+        "desc": "把喜欢的鞋子先收藏起来"
+      },
+      "changeLanguage": {
+        "title": "更改语言",
+        "desc": "把应用切换成您习惯的语言"
+      },
+      "myShoes": {
+        "title": "我的鞋子与保修",
+        "desc": "登记鞋子并追踪保修期"
+      },
+      "rewards": {
+        "title": "积分与奖励",
+        "desc": "简单查看您的积分与奖励"
+      },
+      "askForHelp": {
+        "title": "寻求帮助",
+        "desc": "教您如何给客服发消息"
+      }
+    },
+    "firstLaunch": {
+      "hubTitle": "新手导览",
+      "hubDescription": "快速认识这个应用",
+      "welcome": {
+        "title": "欢迎！",
+        "body": "这个应用让您用手机就能买鞋。我们会为您介绍重要的按钮——您可以随时跳过。",
+        "languagePrompt": "请选择您的语言："
+      },
+      "tabs": {
+        "title": "您的地图",
+        "body": "屏幕最下面的这些按钮就是您的地图：「首页」带您回到这里，「购物」用来找鞋子，「我的」是您的账户和帮助中心。{extraTabs}",
+        "extra": "您还会看到{names}，也可以随时看看。"
+      },
+      "bag": {
+        "title": "您的购物袋",
+        "body": "想买的鞋子都会先放在这里。准备付款时，点击购物袋。"
+      },
+      "shop": {
+        "title": "寻找鞋子",
+        "body": "点击一款鞋子打开它，选择尺码，然后加入购物袋。"
+      },
+      "safetyNet": {
+        "title": "忘记了怎么用？",
+        "body": "随时打开这个页面，重新学习应用的每个部分。"
+      },
+      "done": {
+        "title": "准备好了！",
+        "body": "以后随时可以从首页开始。点击「知道了」结束导览。"
+      }
+    },
+    "__smoke": {
+      "title": "引擎测试",
+      "description": "内部检查，不会展示给用户。",
+      "step1": {
+        "title": "第一步",
+        "body": "这是用于测试引导引擎的临时步骤。"
+      },
+      "step2": {
+        "title": "第二步",
+        "body": "点击“知道了”结束这个测试教程。"
+      }
+    },
+    "steps": {
+      "findShoes": {
+        "s1": {
+          "title": "打开购物",
+          "body": "点击底部的「购物」，那里有我们所有的鞋子。"
+        },
+        "s2": {
+          "title": "浏览鞋子",
+          "body": "这里是我们所有的鞋子，上下滑动可以看到更多。"
+        },
+        "s3": {
+          "title": "打开一款鞋子",
+          "body": "点击任意一款鞋子，查看详情并选择尺码。"
+        }
+      },
+      "chooseSizeAddToBag": {
+        "s1": {
+          "title": "选一款鞋子",
+          "body": "点击您喜欢的鞋子，打开它的页面。"
+        },
+        "s2": {
+          "title": "选择尺码",
+          "body": "点击适合您的尺码。"
+        },
+        "s3": {
+          "title": "加入购物袋",
+          "body": "点击「加入购物袋」，先把这款鞋子放进购物袋。"
+        },
+        "s4": {
+          "title": "查看购物袋",
+          "body": "购物袋图标会显示里面有多少件商品。"
+        }
+      },
+      "payCheckout": {
+        "s1": {
+          "title": "您的购物袋",
+          "body": "想买的商品都会先放在这里。准备付款时，点击购物袋图标。"
+        },
+        "s2": {
+          "title": "查看购物袋",
+          "body": "付款前，先在这里检查您的商品和总金额。"
+        },
+        "s3": {
+          "title": "付款怎么操作",
+          "body": "点击下方的按钮开始付款，填写地址并选择付款方式，只需要一分钟。"
+        },
+        "s4": {
+          "title": "完成",
+          "body": "现在您知道怎么付款了。随时可以在「我的」页面重新打开这个教程。"
+        }
+      },
+      "seeMyOrders": {
+        "s1": {
+          "title": "您的订单",
+          "body": "点击这里查看您买过的所有商品。"
+        },
+        "s2": {
+          "title": "您的订单列表",
+          "body": "这里是您的历史订单，最新的在最上面。点击任意一个查看详情。"
+        },
+        "s3": {
+          "title": "这些字是什么意思",
+          "body": "「处理中」表示我们在准备货品，「已发货」表示正在运送，「已完成」表示已经送达。"
+        }
+      },
+      "saveFavourites": {
+        "s1": {
+          "title": "收藏一款鞋子",
+          "body": "点击鞋子上的小心心，把它先收藏起来。"
+        },
+        "s2": {
+          "title": "收藏的鞋子在这里",
+          "body": "收藏的鞋子会出现在这里——随时点击「我的收藏」查看。"
+        },
+        "s3": {
+          "title": "您所有的收藏",
+          "body": "您收藏的商品都会出现在这里，等您准备好购买。"
+        }
+      },
+      "changeLanguage": {
+        "s1": {
+          "title": "更改语言",
+          "body": "您可以随时更改应用的语言。"
+        },
+        "s2": {
+          "title": "点击这里",
+          "body": "点击这一行，查看语言列表。"
+        },
+        "s3": {
+          "title": "选择您的语言",
+          "body": "选择简体中文、English 或 Bahasa Melayu，应用会立即切换。"
+        }
+      },
+      "myShoes": {
+        "s1": {
+          "title": "我的产品",
+          "body": "这里存放您的鞋子和保修卡。"
+        },
+        "s2": {
+          "title": "激活一张卡",
+          "body": "有鞋子附带的卡吗？点击「激活」把它加进来。"
+        },
+        "s3": {
+          "title": "追踪保修期",
+          "body": "每张卡都会显示您的鞋子和保修期还剩多久。"
+        }
+      },
+      "rewards": {
+        "s1": {
+          "title": "积分与奖励",
+          "body": "点击这里查看您的积分与奖励。"
+        },
+        "s2": {
+          "title": "您的积分",
+          "body": "这里显示您目前有多少积分。"
+        },
+        "s3": {
+          "title": "收集印章",
+          "body": "每收集一个印章，就离奖励更近一步。多逛多买就能集满。"
+        }
+      },
+      "askForHelp": {
+        "s1": {
+          "title": "寻求帮助",
+          "body": "只要需要真人帮助，随时点击这里。"
+        },
+        "s2": {
+          "title": "发送消息",
+          "body": "告诉我们遇到了什么问题，然后点击发送。"
+        },
+        "s3": {
+          "title": "我们会在这里回复",
+          "body": "随时回来看看这个对话——我们会回复您的消息。"
+        }
+      }
     }
   }
 }

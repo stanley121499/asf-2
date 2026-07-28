@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
 
+import { motion } from "@/lib/motion";
+
 /**
  * Anchor the profile stack at `index` so direct navigation to a nested screen
  * (e.g. order detail / notifications from checkout) always keeps the profile
@@ -12,5 +14,21 @@ export const unstable_settings = {
 };
 
 export default function ProfileStackLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        animationDuration: motion.duration.base,
+      }}
+    >
+      {/*
+        Declare `index` first (same pattern as browse/_layout). Listing only
+        `appearance` made it the stack's first child — alphabetically before
+        `index` — so Profile tab opened Theme (staff) instead of the hub.
+      */}
+      <Stack.Screen name="index" />
+      <Stack.Screen name="appearance" />
+    </Stack>
+  );
 }

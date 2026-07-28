@@ -1,5 +1,7 @@
 import React from "react";
-import { Pressable, Text } from "react-native";
+import { Text } from "react-native";
+
+import { PressableScale } from "@/components/motion";
 import { colors } from "@/constants/theme";
 
 export interface CategoryPillProps {
@@ -15,8 +17,9 @@ export interface CategoryPillProps {
  */
 export function CategoryPill({ label, selected, onPress }: CategoryPillProps): React.ReactElement {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
+      haptic="light"
       accessibilityRole="button"
       accessibilityState={{ selected }}
       style={{
@@ -41,6 +44,6 @@ export function CategoryPill({ label, selected, onPress }: CategoryPillProps): R
       >
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
