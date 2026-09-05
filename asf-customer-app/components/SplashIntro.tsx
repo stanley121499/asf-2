@@ -1,4 +1,3 @@
-import { Asset } from "expo-asset";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactElement } from "react";
@@ -7,9 +6,7 @@ import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
 
 import { hapticLight } from "@/lib/haptics";
-
-/** Bundled letter-cascade splash (Variation 7). Regenerate via `npm run build:splash`. */
-const SPLASH_HTML_ASSET = require("@/assets/splash/intro/splash-intro.html");
+import { preloadSplashIntroAsset } from "@/lib/splashScreen";
 
 /**
  * Effective animation length in ms after the mobile playback-rate slow-down.
@@ -30,6 +27,15 @@ const SPLASH_EXTRA_HOLD_MS = 2000;
 /** Cross-fade length when dismissing the splash overlay into the app. */
 const SPLASH_FADE_MS = 450;
 
+/** Fallback if the WebView never posts {@link P2M_READY_MESSAGE}. */
+const NATIVE_SPLASH_FALLBACK_HIDE_MS = 3000;
+
+/** White surface — matches native splash + forced light HTML embed. */
+const SPLASH_SURFACE = "#ffffff";
+
+/** WebView message fired after the first painted animation frame. */
+const P2M_READY_MESSAGE = "p2m:ready";
+
 export type SplashIntroTheme = "light" | "dark";
 
 export interface SplashIntroProps {
@@ -41,7 +47,7 @@ export interface SplashIntroProps {
 
 /**
  * Full-screen WebView that plays the MODEL MATCH letter-cascade splash once.
- * Hides the native Expo splash when the WebView is ready.
+ * Keeps the native Expo splash visible until the WebView posts `p2m:ready`.
  */
 export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactElement {
   // Intentionally ignore the device colour scheme: the app shell is a light
@@ -50,20 +56,28 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
   const resolvedTheme: SplashIntroTheme = theme ?? "light";
 
   const [sourceUri, setSourceUri] = useState<string | null>(null);
-  const [webReady, setWebReady] = useState(false);
+  const [webLoaded, setWebLoaded] = useState(false);
   const completedRef = useRef(false);
+  const nativeSplashHiddenRef = useRef(false);
   const holdScheduledRef = useRef(false);
   const fadeHapticFiredRef = useRef(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const opacity = useRef(new Animated.Value(1)).current;
 
-  const backgroundColor = resolvedTheme === "dark" ? "#000000" : "#ffffff";
+  const hideNativeSplash = useCallback(() => {
+    if (nativeSplashHiddenRef.current) {
+      return;
+    }
+    nativeSplashHiddenRef.current = true;
+    void SplashScreen.hideAsync();
+  }, []);
 
   const finishIntro = useCallback(() => {
     if (completedRef.current) {
       return;
     }
     completedRef.current = true;
+    hideNativeSplash();
     // Light bridge haptic once when fade-out starts (not per-frame).
     if (!fadeHapticFiredRef.current) {
       fadeHapticFiredRef.current = true;
@@ -80,7 +94,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
         onComplete();
       }
     });
-  }, [onComplete, opacity]);
+  }, [hideNativeSplash, onComplete, opacity]);
 
   /**
    * Holds the finished logo for {@link SPLASH_EXTRA_HOLD_MS} before fading out.
@@ -106,10 +120,13 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     };
   }, []);
 
-  /** Seed theme before HTML runs (Android file:// URLs may drop query params). */
+  /**
+   * Seed light theme and white surface before HTML runs.
+   * Android file:// URLs may drop query params; inline CSS avoids the black WebView flash.
+   */
   const themeBootstrapScript = useMemo(
     () =>
-      `(function(){try{localStorage.setItem("p2m-splash-theme","${resolvedTheme}");document.documentElement.dataset.p2mTheme="${resolvedTheme}";}catch(e){}})();true;`,
+      `(function(){try{localStorage.setItem("p2m-splash-theme","${resolvedTheme}");document.documentElement.dataset.p2mTheme="${resolvedTheme}";document.documentElement.style.setProperty("--bg","${SPLASH_SURFACE}");document.documentElement.style.backgroundColor="${SPLASH_SURFACE}";if(document.body){document.body.style.backgroundColor="${SPLASH_SURFACE}";}}catch(e){}})();true;`,
     [resolvedTheme],
   );
 
@@ -117,17 +134,15 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     let cancelled = false;
 
     async function loadSplashAsset(): Promise<void> {
-      try {
-        const asset = Asset.fromModule(SPLASH_HTML_ASSET);
-        await asset.downloadAsync();
-        if (cancelled || asset.localUri === null || asset.localUri === undefined) {
-          return;
-        }
-        const uri = `${asset.localUri}?theme=${resolvedTheme}`;
-        setSourceUri(uri);
-      } catch {
-        finishIntro();
+      const uri = await preloadSplashIntroAsset(resolvedTheme);
+      if (cancelled) {
+        return;
       }
+      if (uri === null) {
+        finishIntro();
+        return;
+      }
+      setSourceUri(uri);
     }
 
     void loadSplashAsset();
@@ -138,7 +153,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
   }, [resolvedTheme, finishIntro]);
 
   useEffect(() => {
-    if (!webReady) {
+    if (!webLoaded) {
       return undefined;
     }
     const timeoutId = setTimeout(() => {
@@ -147,12 +162,29 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [webReady, finishIntro]);
+  }, [webLoaded, finishIntro]);
+
+  /** Safety net: never leave the native splash stuck if `p2m:ready` is missed. */
+  useEffect(() => {
+    if (!webLoaded) {
+      return undefined;
+    }
+    const fallbackHideId = setTimeout(() => {
+      hideNativeSplash();
+    }, NATIVE_SPLASH_FALLBACK_HIDE_MS);
+    return () => {
+      clearTimeout(fallbackHideId);
+    };
+  }, [webLoaded, hideNativeSplash]);
 
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
       try {
         const data = JSON.parse(event.nativeEvent.data) as { type?: string };
+        if (data.type === P2M_READY_MESSAGE) {
+          hideNativeSplash();
+          return;
+        }
         if (data.type === "p2m:complete") {
           scheduleFinishWithHold();
         }
@@ -160,7 +192,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
         /* non-JSON messages ignored */
       }
     },
-    [scheduleFinishWithHold],
+    [hideNativeSplash, scheduleFinishWithHold],
   );
 
   const webViewSource = useMemo(() => {
@@ -172,7 +204,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
 
   return (
     <Animated.View
-      style={[styles.container, { backgroundColor, opacity }]}
+      style={[styles.container, { backgroundColor: SPLASH_SURFACE, opacity }]}
       accessibilityLabel="App intro"
     >
       {webViewSource !== undefined ? (
@@ -192,8 +224,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
           domStorageEnabled
           injectedJavaScriptBeforeContentLoaded={themeBootstrapScript}
           onLoadEnd={() => {
-            setWebReady(true);
-            void SplashScreen.hideAsync();
+            setWebLoaded(true);
           }}
           onError={() => {
             finishIntro();
@@ -207,11 +238,11 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1000,
   },
   webview: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: SPLASH_SURFACE,
   },
 });

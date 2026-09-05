@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Video, ResizeMode } from "expo-av";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -20,6 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { CartButton } from "@/components/cart/CartButton";
+import { PostVideo } from "@/components/PostVideo";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
@@ -189,13 +189,12 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
           </View>
         ) : isVideo ? (
           <>
-            <Video
-              source={{ uri: mediaUrl }}
+            <PostVideo
+              uri={mediaUrl}
               style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
-              resizeMode={ResizeMode.CONTAIN}
+              contentFit="contain"
               shouldPlay
-              isMuted={isMuted}
-              isLooping
+              muted={isMuted}
             />
             <View
               style={{

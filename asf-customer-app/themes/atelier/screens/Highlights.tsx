@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { Video, ResizeMode } from "expo-av";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -26,6 +25,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 
+import { PostVideo } from "@/components/PostVideo";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
@@ -403,13 +403,12 @@ function ChapterPage({
           </Text>
         </View>
       ) : isVideo ? (
-        <Video
-          source={{ uri: mediaUrl }}
+        <PostVideo
+          uri={mediaUrl}
           style={{ width: SCREEN_WIDTH, height: pageHeight }}
-          resizeMode={ResizeMode.COVER}
+          contentFit="cover"
           shouldPlay={isActive}
-          isMuted={isMuted}
-          isLooping
+          muted={isMuted}
         />
       ) : (
         <Image
