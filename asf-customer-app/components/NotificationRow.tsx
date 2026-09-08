@@ -10,16 +10,35 @@ type NotificationRowType = Tables<"notifications">;
 
 export interface NotificationRowProps {
   notification: NotificationRowType;
-  onPress: (id: string) => void;
+  onPress: (notification: NotificationRowType) => void;
 }
 
+/**
+ * Picks an Ionicons glyph for a notification `type` string.
+ *
+ * @param type - Server notification type (e.g. `order_status_changed`)
+ * @returns Icon name from the Ionicons glyph map
+ */
 function iconForType(type: string): keyof typeof Ionicons.glyphMap {
   const lowered = type.toLowerCase();
-  if (lowered.includes("order")) {
+
+  if (lowered.includes("order") || lowered.includes("payment")) {
     return "bag-handle-outline";
+  }
+  if (lowered.includes("claim")) {
+    return "document-text-outline";
+  }
+  if (lowered.includes("warranty") || lowered.includes("registration")) {
+    return "shield-checkmark-outline";
   }
   if (lowered.includes("ticket")) {
     return "chatbubble-ellipses-outline";
+  }
+  if (lowered.includes("promo") || lowered.includes("promotion") || lowered.includes("campaign")) {
+    return "pricetag-outline";
+  }
+  if (lowered.includes("nearby") || lowered.includes("wishlist")) {
+    return "location-outline";
   }
   return "notifications-outline";
 }
@@ -45,7 +64,7 @@ export function NotificationRow({ notification, onPress }: NotificationRowProps)
   return (
     <Pressable
       className="mb-3 rounded-xl border border-border bg-panel overflow-hidden flex-row"
-      onPress={() => onPress(notification.id)}
+      onPress={() => onPress(notification)}
     >
       {unread ? <View className="w-1 bg-accent self-stretch" /> : null}
       <View className="flex-1 flex-row p-4">

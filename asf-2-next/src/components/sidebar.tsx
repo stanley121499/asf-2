@@ -14,8 +14,8 @@ import { GrAnalytics } from "react-icons/gr";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { DarkThemeToggle } from "flowbite-react";
 import { FiMessageCircle } from "react-icons/fi";
-import { HiX, HiMenu, HiOutlineLocationMarker } from "react-icons/hi";
-import { MdPayment, MdAssignmentReturn, MdSecurity } from "react-icons/md";
+import { HiX, HiMenu, HiOutlineGift, HiOutlineLocationMarker } from "react-icons/hi";
+import { MdPayment, MdAssignmentReturn, MdSecurity, MdNotifications, MdCampaign } from "react-icons/md";
 
 /**
  * Floating Action Button component for mobile
@@ -68,6 +68,38 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
                   : ""
               }>
               All Posts
+            </Sidebar.Item>
+          )}
+
+          {/* Notification templates — gated by `notifications` flag */}
+          {isEnabled("notifications") && (
+            <Sidebar.Item
+              icon={MdNotifications}
+              href="/notifications/templates"
+              onClick={onItemClick}
+              className={
+                currentPage === "/notifications/templates" ||
+                currentPage.startsWith("/notifications/templates/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Notif. Templates
+            </Sidebar.Item>
+          )}
+
+          {/* Promo campaigns — gated by `notifications` flag */}
+          {isEnabled("notifications") && (
+            <Sidebar.Item
+              icon={MdCampaign}
+              href="/notifications/campaigns"
+              onClick={onItemClick}
+              className={
+                currentPage === "/notifications/campaigns" ||
+                currentPage.startsWith("/notifications/campaigns/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Promo Campaigns
             </Sidebar.Item>
           )}
 
@@ -156,6 +188,22 @@ const SidebarContent: React.FC<{ onItemClick?: () => void; currentPage: string }
                   : ""
               }>
               Warranty Settings
+            </Sidebar.Item>
+          )}
+
+          {/* Rewards settings — gated by `rewards` flag */}
+          {isEnabled("rewards") && (
+            <Sidebar.Item
+              icon={HiOutlineGift}
+              href="/settings/rewards"
+              onClick={onItemClick}
+              className={
+                "/settings/rewards" === currentPage ||
+                currentPage.startsWith("/settings/rewards/")
+                  ? "bg-gray-100 dark:bg-gray-700"
+                  : ""
+              }>
+              Rewards Settings
             </Sidebar.Item>
           )}
 

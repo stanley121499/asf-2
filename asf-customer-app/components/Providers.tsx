@@ -2,7 +2,10 @@ import type { PropsWithChildren } from "react";
 import React from "react";
 import { StripeProvider } from "@stripe/stripe-react-native";
 
+import { BackgroundLocationRegistrar } from "@/components/BackgroundLocationRegistrar";
+import { PushTokenRegistrar } from "@/components/PushTokenRegistrar";
 import { AuthProvider } from "@/context/AuthContext";
+import "@/lib/backgroundLocation";
 import { AlertProvider } from "@/context/AlertContext";
 import { ContentTranslationProvider } from "@/context/ContentTranslationContext";
 import { FeatureFlagsProvider } from "@/context/FeatureFlagsContext";
@@ -19,6 +22,8 @@ const stripeKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
  * providers can conditionally skip mounting when their flag is off.
  * LocaleProvider wraps ContentTranslationProvider so overlays can read `locale`.
  * ThemeProvider sits beside locale so tabs/stack can read `useTheme` / `useThemeTokens`.
+ * {@link PushTokenRegistrar} and {@link BackgroundLocationRegistrar} mount inside
+ * RouteContextBundle so they can use NotificationContext / auth for push + Always location.
  */
 export function AppProviders({ children }: PropsWithChildren): React.ReactElement {
   return (
@@ -29,7 +34,11 @@ export function AppProviders({ children }: PropsWithChildren): React.ReactElemen
             <LocaleProvider>
               <ThemeProvider>
                 <ContentTranslationProvider>
-                  <RouteContextBundle>{children}</RouteContextBundle>
+                  <RouteContextBundle>
+                    <PushTokenRegistrar />
+                    <BackgroundLocationRegistrar />
+                    {children}
+                  </RouteContextBundle>
                 </ContentTranslationProvider>
               </ThemeProvider>
             </LocaleProvider>

@@ -68,6 +68,29 @@ export default function TabsLayout(): React.ReactElement {
   const router = useRouter();
 
   const tabBarRowHeight = pack.tabBar.minHeight ?? DEFAULT_TAB_BAR_ROW_HEIGHT;
+  const highlightsVisible = isEnabled("highlights");
+  const locationsVisible = isEnabled("store_locations");
+
+  /**
+   * Anchor ids to register against the whole tab bar (see
+   * `TabBarAnchorOverlay`) — only for tabs actually rendered, so a tour
+   * step can never spotlight a hidden tab.
+   *
+   * Must run unconditionally before any early return so TabsLayout never
+   * changes hook order between auth-loading and authenticated renders.
+   */
+  const visibleTabAnchorIds = useMemo((): AnchorId[] => {
+    const ids: AnchorId[] = [ANCHORS.tabbar.home, ANCHORS.tabbar.shop, ANCHORS.tabbar.profile];
+    if (highlightsVisible) {
+      ids.push(ANCHORS.tabbar.highlights);
+    }
+    if (locationsVisible) {
+      ids.push(ANCHORS.tabbar.locations);
+    }
+    return ids;
+  }, [highlightsVisible, locationsVisible]);
+
+  const tabBarHeight = tabBarRowHeight + insets.bottom;
 
   if (authLoading) {
     return (
@@ -86,27 +109,6 @@ export default function TabsLayout(): React.ReactElement {
   const highlightsTitle = t("nav.highlights");
   const locationsTitle = t("nav.locations");
   const profileTitle = t("nav.profile");
-
-  const highlightsVisible = isEnabled("highlights");
-  const locationsVisible = isEnabled("store_locations");
-
-  /**
-   * Anchor ids to register against the whole tab bar (see
-   * `TabBarAnchorOverlay`) — only for tabs actually rendered, so a tour
-   * step can never spotlight a hidden tab.
-   */
-  const visibleTabAnchorIds = useMemo((): AnchorId[] => {
-    const ids: AnchorId[] = [ANCHORS.tabbar.home, ANCHORS.tabbar.shop, ANCHORS.tabbar.profile];
-    if (highlightsVisible) {
-      ids.push(ANCHORS.tabbar.highlights);
-    }
-    if (locationsVisible) {
-      ids.push(ANCHORS.tabbar.locations);
-    }
-    return ids;
-  }, [highlightsVisible, locationsVisible]);
-
-  const tabBarHeight = tabBarRowHeight + insets.bottom;
 
   return (
     <View style={{ flex: 1 }}>

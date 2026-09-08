@@ -12,6 +12,8 @@ interface SubPageHeaderProps {
   title: string;
   /** Optional right-side element (e.g. "mark all read" button). */
   right?: React.ReactNode;
+  /** When set, replaces the default profile-stack back handler. */
+  onBack?: () => void;
   /**
    * When true, renders a trailing {@link CartButton} (Classic/Noir header-bag
    * rules). Ignored when `right` is provided — pass cart inside `right` instead.
@@ -30,6 +32,7 @@ interface SubPageHeaderProps {
 export function SubPageHeader({
   title,
   right,
+  onBack,
   showCart = false,
 }: SubPageHeaderProps): React.ReactElement {
   const router = useRouter();
@@ -49,6 +52,10 @@ export function SubPageHeader({
    * the parent navigators even when the local stack has nothing to pop.
    */
   const handleBack = (): void => {
+    if (onBack !== undefined) {
+      onBack();
+      return;
+    }
     const state = navigation.getState();
     const localIndex = typeof state?.index === "number" ? state.index : 0;
     if (localIndex > 0) {

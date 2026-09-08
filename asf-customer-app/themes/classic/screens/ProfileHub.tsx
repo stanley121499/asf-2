@@ -18,6 +18,7 @@ import { ANCHORS, FIRST_LAUNCH_TOUR_ID, TourAnchor, useGuide } from "@/component
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useNotificationContext } from "@/context/NotificationContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { useTheme } from "@/context/ThemeContext";
 import { colors } from "@/constants/theme";
@@ -137,6 +138,7 @@ export function ClassicProfileHubScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
   const { t, locale, setLocale } = useTranslation();
+  const { unreadCount } = useNotificationContext();
   const { themeId } = useTheme();
   const { startTour, activeStep } = useGuide();
   const scrollRef = useRef<ScrollView>(null);
@@ -355,6 +357,7 @@ export function ClassicProfileHubScreen(): React.ReactElement {
    * the "change language" hub topic (and the first-launch guide, later) can
    * spotlight it on the real Profile screen.
    * SUPERADMIN signed-in users also see Appearance above this row.
+   * When signed in, Notification settings sits beneath this row.
    */
   const languageMenuRow = (
     <TourAnchor id={ANCHORS.profile.language}>
@@ -363,7 +366,7 @@ export function ClassicProfileHubScreen(): React.ReactElement {
         label={t("settings.language")}
         badge={currentLanguageLabel}
         onPress={() => setLanguageModalVisible(true)}
-        borderBottom={false}
+        borderBottom={user !== null}
       />
     </TourAnchor>
   );
@@ -605,6 +608,12 @@ export function ClassicProfileHubScreen(): React.ReactElement {
             label={t("guide.restartOnboarding")}
             onPress={handleRestartOnboarding}
           />
+          <MenuRow
+            icon="notifications-outline"
+            label={t("settings.menuNotifications")}
+            badge={unreadCount > 0 ? String(unreadCount) : undefined}
+            onPress={() => router.push("/(tabs)/profile/notifications")}
+          />
           <TourAnchor id={ANCHORS.profile.orders}>
             <MenuRow icon="bag-outline" label={t("settings.menuOrders")} onPress={() => router.push("/(tabs)/profile/orders")} />
           </TourAnchor>
@@ -665,6 +674,12 @@ export function ClassicProfileHubScreen(): React.ReactElement {
         >
           {appearanceMenuRow}
           {languageMenuRow}
+          <MenuRow
+            icon="options-outline"
+            label={t("settings.menuNotificationSettings")}
+            onPress={() => router.push("/(tabs)/profile/notification-settings")}
+            borderBottom={false}
+          />
         </View>
 
         {/* Sign out */}

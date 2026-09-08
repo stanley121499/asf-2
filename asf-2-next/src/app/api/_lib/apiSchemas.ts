@@ -399,6 +399,158 @@ export const warrantyPolicyPatchBodySchema = z
   })
   .strict();
 
+const claimStatusSchema = z.enum([
+  "submitted",
+  "in_review",
+  "needs_info",
+  "approved",
+  "rejected",
+  "resolved",
+]);
+
+/**
+ * Staff claim status transition body for `POST /api/claims/[claimId]/status`.
+ */
+export const claimStatusChangeBodySchema = z
+  .object({
+    newStatus: claimStatusSchema,
+    notes: z.union([z.string(), z.null()]).optional(),
+    notifyExtraBody: z.string().optional(),
+    staff_notes: z.union([z.string(), z.null()]).optional(),
+    approved_resolution: z.string().optional(),
+    rejection_reason: z.string().optional(),
+  })
+  .strict();
+
+const orderStatusSchema = z.enum([
+  "pending",
+  "processing",
+  "shipped",
+  "completed",
+  "cancelled",
+]);
+
+/**
+ * Staff order status transition body for `POST /api/orders/[orderId]/status`.
+ */
+export const orderStatusChangeBodySchema = z
+  .object({
+    newStatus: orderStatusSchema,
+  })
+  .strict();
+
+const notificationTemplateLocaleFieldsSchema = z
+  .object({
+    title_template: z.string().min(1, "title_template is required"),
+    body_template: z.string().min(1, "body_template is required"),
+  })
+  .strict();
+
+/**
+ * Staff PUT body for upserting one transactional type × three locales.
+ */
+export const notificationTemplatesUpsertBodySchema = z
+  .object({
+    type: z.string().trim().min(1, "type is required"),
+    locales: z
+      .object({
+        en: notificationTemplateLocaleFieldsSchema,
+        "zh-CN": notificationTemplateLocaleFieldsSchema,
+        ms: notificationTemplateLocaleFieldsSchema,
+      })
+      .strict(),
+  })
+  .strict();
+
+/** Locales staff compose for promotional campaigns. */
+const notificationCampaignLocaleSchema = z.enum(["zh-CN", "en", "ms"]);
+
+/** Flat i18n map for campaign title or body (all three locales required as keys). */
+const notificationCampaignI18nSchema = z
+  .object({
+    en: z.string(),
+    "zh-CN": z.string(),
+    ms: z.string(),
+  })
+  .strict();
+
+/**
+ * Staff POST body for creating a promotional campaign draft.
+ *
+ * Requires non-empty title and body for `default_locale`. Other locales may be
+ * blank and fall back at send time (plan §8).
+ *
+ * `deep_link` convention (stored in notification metadata): Expo path such as
+ * `/(tabs)/browse`, or `product:<uuid>` / `order:<uuid>` style targets.
+ */
+export const notificationCampaignCreateBodySchema = z
+  .object({
+    title_i18n: notificationCampaignI18nSchema,
+    body_i18n: notificationCampaignI18nSchema,
+    default_locale: notificationCampaignLocaleSchema,
+    deep_link: z
+      .union([z.string(), z.null()])
+      .optional()
+      .transform((value): string | null => {
+        if (value === undefined || value === null) {
+          return null;
+        }
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : null;
+      }),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    const locale = data.default_locale;
+    const title = data.title_i18n[locale].trim();
+    const body = data.body_i18n[locale].trim();
+    if (title.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `title_i18n.${locale} is required for default_locale`,
+        path: ["title_i18n", locale],
+      });
+    }
+    if (body.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `body_i18n.${locale} is required for default_locale`,
+        path: ["body_i18n", locale],
+      });
+    }
+  });
+
+/** Path param for campaign send route. */
+export const notificationCampaignIdParamSchema = z.object({
+  id: uuidStringSchema,
+});
+
+/** Query param for listing store product stock by product. */
+export const storeProductStockQuerySchema = z.object({
+  productId: uuidStringSchema,
+});
+
+/**
+ * One store × SKU count row for upsert.
+ * `colorId` / `sizeId` may be null to match `product_stock` nullability.
+ */
+export const storeProductStockRowSchema = z
+  .object({
+    storeLocationId: uuidStringSchema,
+    colorId: z.union([uuidStringSchema, z.null()]),
+    sizeId: z.union([uuidStringSchema, z.null()]),
+    count: z.number().int().min(0, "count must be >= 0"),
+  })
+  .strict();
+
+/** PUT body: batch upsert store stock for one product. */
+export const storeProductStockUpsertBodySchema = z
+  .object({
+    productId: uuidStringSchema,
+    rows: z.array(storeProductStockRowSchema).max(2000),
+  })
+  .strict();
+
 export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
 export type CreatePendingOrderBody = z.infer<typeof createPendingOrderBodySchema>;
 export type DeliveryRatesBody = z.infer<typeof deliveryRatesBodySchema>;
@@ -413,3 +565,55 @@ export type WarrantyRegistrationActivateBody = z.infer<
 >;
 export type WarrantyRedeemPreviewBody = z.infer<typeof warrantyRedeemPreviewBodySchema>;
 export type WarrantyRedeemConfirmBody = z.infer<typeof warrantyRedeemConfirmBodySchema>;
+export type ClaimStatusChangeBody = z.infer<typeof claimStatusChangeBodySchema>;
+export type OrderStatusChangeBody = z.infer<typeof orderStatusChangeBodySchema>;
+export type NotificationTemplatesUpsertBody = z.infer<
+  typeof notificationTemplatesUpsertBodySchema
+>;
+export type NotificationCampaignCreateBody = z.infer<
+  typeof notificationCampaignCreateBodySchema
+>;
+export type StoreProductStockUpsertBody = z.infer<
+  typeof storeProductStockUpsertBodySchema
+>;
+export type StoreProductStockRowInput = z.infer<typeof storeProductStockRowSchema>;
+
+/**
+ * POST /api/location/snapshot — customer upsert of latest WGS-84 coordinates.
+ * Rejects out-of-range / non-finite coords (plan §12).
+ */
+export const locationSnapshotBodySchema = z
+  .object({
+    latitude: z.number().finite().gte(-90).lte(90),
+    longitude: z.number().finite().gte(-180).lte(180),
+    accuracyM: z.number().finite().nonnegative().optional(),
+  })
+  .strict();
+
+/** Content types eligible for first-view discovery point awards. */
+export const contentViewTypeSchema = z.enum(["product", "post", "promo"]);
+
+/**
+ * PATCH /api/rewards/settings — staff update for singleton rewards_settings.
+ */
+export const rewardsSettingsPatchBodySchema = z
+  .object({
+    content_view_points: z.number().int().nonnegative(),
+  })
+  .strict();
+
+/**
+ * POST /api/rewards/content-view — customer first-view award request.
+ * Points amount is never accepted from the client (server reads rewards_settings).
+ */
+export const contentViewAwardBodySchema = z
+  .object({
+    contentType: contentViewTypeSchema,
+    contentId: uuidStringSchema,
+  })
+  .strict();
+
+export type LocationSnapshotBody = z.infer<typeof locationSnapshotBodySchema>;
+export type RewardsSettingsPatchBody = z.infer<typeof rewardsSettingsPatchBodySchema>;
+export type ContentViewAwardBody = z.infer<typeof contentViewAwardBodySchema>;
+export type ContentViewType = z.infer<typeof contentViewTypeSchema>;

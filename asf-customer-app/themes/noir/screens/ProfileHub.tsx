@@ -18,6 +18,7 @@ import { PressableScale } from "@/components/motion";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useNotificationContext } from "@/context/NotificationContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Locale } from "@/i18n/types";
@@ -176,6 +177,7 @@ export function NoirProfileHubScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
   const { t, locale, setLocale } = useTranslation();
+  const { unreadCount } = useNotificationContext();
   const { themeId } = useTheme();
   const { startTour, activeStep } = useGuide();
   const scrollRef = useRef<ScrollView>(null);
@@ -435,7 +437,8 @@ export function NoirProfileHubScreen(): React.ReactElement {
   );
 
   /**
-   * Language row — signed-in users also see Appearance above this.
+   * Language row — signed-in users also see Appearance above this and
+   * Notification settings beneath.
    */
   const languageMenuRow = (
     <TourAnchor id={ANCHORS.profile.language}>
@@ -445,7 +448,7 @@ export function NoirProfileHubScreen(): React.ReactElement {
         badge={currentLanguageLabel}
         onPress={() => setLanguageModalVisible(true)}
         tokens={tokens}
-        borderBottom={false}
+        borderBottom={user !== null}
       />
     </TourAnchor>
   );
@@ -726,6 +729,13 @@ export function NoirProfileHubScreen(): React.ReactElement {
               onPress={handleRestartOnboarding}
               tokens={tokens}
             />
+            <DenseMenuRow
+              icon="notifications-outline"
+              label={t("settings.menuNotifications")}
+              badge={unreadCount > 0 ? String(unreadCount) : undefined}
+              onPress={() => router.push("/(tabs)/profile/notifications")}
+              tokens={tokens}
+            />
             <TourAnchor id={ANCHORS.profile.orders}>
               <DenseMenuRow
                 icon="bag-outline"
@@ -797,6 +807,13 @@ export function NoirProfileHubScreen(): React.ReactElement {
           <>
             {appearanceMenuRow}
             {languageMenuRow}
+            <DenseMenuRow
+              icon="options-outline"
+              label={t("settings.menuNotificationSettings")}
+              onPress={() => router.push("/(tabs)/profile/notification-settings")}
+              tokens={tokens}
+              borderBottom={false}
+            />
           </>,
         )}
 

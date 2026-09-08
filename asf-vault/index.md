@@ -6,6 +6,15 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 
 - [[wiki/00-overview]] — what this vault is and how to use it
 
+## Sources — 2026-09-08 Expo customer engagement (discovery points + nearby stock) — **implemented; QC pending device**
+
+- [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]] — First-view points + nearby wishlist stock; Rewards settings; store×SKU stock; demo inbox
+- `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan.md` — Full plan SOT
+- [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts]] — 7 agent prompts (~200k-sized)
+- `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts.md` — Copy-paste prompts (Agents 01–07)
+- [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]] — Agent 07 QC: 11 PASS / 1 FAIL / 5 SKIP; P0 none; Highlights linked-products P2
+- `raw/sources/2026-09-08-expo-customer-engagement-qc-notes.md` — Full QC matrix
+
 ## Concepts
 
 - [[wiki/concepts/llm-wiki-pattern]] — persistent wiki vs one-shot RAG; three layers; operations (ingest, query, lint)
@@ -31,6 +40,62 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 ## Syntheses — delivered programs
 
 - [[wiki/syntheses/2026-07-17-expo-customer-home-catalog-revamp-session-accomplishment]] — Source of truth for the MODEL MATCH Expo Home revamp, footwear catalog, promotions, i18n, and product-navigation fixes
+
+## Sources — 2026-09-03 Expo customer Storefront occupation taxonomy + Home filter — **planned program**
+
+- [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan]] — Occupation ranges + `kind_key` categories; Home filter rail; post hero; See all; Shop occupations-only
+- `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan.md` — Full plan SOT
+- [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts]] — 8 agent prompts (~200k-sized)
+- `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts.md` — Copy-paste prompts (Agents 01–08)
+- [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-qc-notes]] — Agent 08 QC: 15 PASS / 0 FAIL / 1 SKIP; pending device QC
+
+## Sources — 2026-08-25 Expo customer Storefront curated seed — **planned program**
+
+- `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-plan.md` — Full catalog bible, UUID scheme, 80 SKUs, 10 posts, image QC rules, 38-agent pack overview
+- `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-agent-prompts.md` — Copy-paste agent prompts (Agents 01–38)
+
+## Sources — 2026-08-24 Expo customer Storefront theme (Classic clone) — **session SOT**
+
+- [[wiki/sources/2026-08-24-expo-customer-storefront-theme-session-accomplishment]] — **What shipped + decisions + files** (authoritative for this program)
+- `raw/sources/2026-08-24-expo-customer-storefront-theme-session-accomplishment.md` — Raw session SOT
+- [[wiki/sources/2026-08-24-expo-customer-storefront-theme-plan]] — IA spec + QC checklist (reference)
+- `raw/sources/2026-08-24-expo-customer-storefront-theme-plan.md` — Full plan (agent prompts deleted)
+
+## Sources — 2026-08-12 Expo customer Home Noir differentiation Round 5 (Noir only)
+
+- [[wiki/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan]] — Classic frozen; Noir 1-col stream + chips + minimal journal
+- `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan.md` — Full R5 plan SOT
+- `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-agent-prompts.md` — 1 agent prompt
+
+## Sources — 2026-08-12 Expo customer Home cover + editorial body Round 4 (authoritative for Classic)
+
+- [[wiki/sources/2026-08-12-expo-customer-home-tidy-r4-plan]] — Tall cover + vertical grid body; kill product/post snap; restore hierarchy
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r4-plan.md` — Full Round 4 plan SOT
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r4-agent-prompts.md` — 3 agent prompts (1→3)
+
+## Sources — 2026-08-12 Expo customer Home editorial density Round 3 (composition superseded)
+
+- [[wiki/sources/2026-08-12-expo-customer-home-tidy-r3-plan]] — Shrink Frame 1; above-fold promo + 2 products; denser editorial scroll; DB has content
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r3-plan.md` — Full Round 3 plan SOT
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r3-agent-prompts.md` — 3 agent prompts (1→3)
+
+## Sources — 2026-08-12 Expo customer Home tidy revamp Round 2 (tidy grammar; density superseded)
+
+- [[wiki/sources/2026-08-12-expo-customer-home-tidy-r2-plan]] — Round 2: no peek, snap+affordance, no wordmark, push-down Frame 1, fixed promo banners
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r2-plan.md` — Round 2 plan
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r2-agent-prompts.md` — Round 2 prompts
+
+## Sources — 2026-08-12 Expo customer Home tidy revamp Round 1 (superseded for tidy grammar)
+
+- [[wiki/sources/2026-08-12-expo-customer-home-tidy-revamp-plan]] — Round 1: product Frame 1 + HOME_SPACE; failed Simon tidy on device
+- `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-plan.md` — Round 1 plan (historical)
+- `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-agent-prompts.md` — Round 1 prompts (historical)
+
+## Sources — 2026-07-28 Expo customer notifications (plan + prompts)
+
+- [[wiki/sources/2026-07-28-expo-customer-notifications-plan]] — Approved plan: Expo Push, templates, promo admin, prefs, deep links; no staff-app push
+- `raw/sources/2026-07-28-expo-customer-notifications-plan.md` — Full plan SOT
+- `raw/sources/2026-07-28-expo-customer-notifications-agent-prompts.md` — 8 agent prompts (1→8; producers + admin UIs split)
 
 ## Sources — 2026-07-28 Expo customer theme skins session (SOT)
 

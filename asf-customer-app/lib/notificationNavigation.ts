@@ -262,5 +262,11 @@ export function resolveNotificationHref(
     return hrefFromDeepLink(deepLink);
   }
 
+  // Nearby / wishlist metadata may only carry product_id (deep_link optional).
+  const productId = readStringField(record, "product_id");
+  if (productId !== null && isUuid(productId)) {
+    return `/(tabs)/browse/${productId}`;
+  }
+
   return null;
 }

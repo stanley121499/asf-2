@@ -7,9 +7,19 @@ export {
   type AddedToBagTrayProps,
 } from "./AddedToBagTray";
 export {
+  AchievementCeremony,
+  type AchievementCeremonyProps,
+} from "./AchievementCeremony";
+export {
   CeremonySection,
   type CeremonySectionProps,
 } from "./CeremonySection";
+export {
+  ContentViewAwardHost,
+  LinkedProductsAwardHost,
+  type ContentViewAwardHostProps,
+  type LinkedProductsAwardHostProps,
+} from "./ContentViewAwardHost";
 export { GoldSweep, type GoldSweepProps } from "./GoldSweep";
 export {
   PressableScale,

@@ -1,8 +1,8 @@
 ---
 title: "asf-vault overview"
 type: overview
-updated: 2026-07-18
-sources: 84
+updated: 2026-09-08
+sources: 90
 tags: [llm-wiki, vault, asf-2]
 ---
 
@@ -40,6 +40,11 @@ tags: [llm-wiki, vault, asf-2]
 - **ASF-2 post-purchase claims** (2026-06-26): [[wiki/sources/2026-06-26-post-purchase-claims-module]], [[wiki/concepts/post-purchase-claims-module-asf-2]] — modular `claims` feature (warranty/returns for shoes by default); config-swappable per client; web customer + staff flows.
 - **ASF-2 warranty discount credits** (2026-07-09): [[wiki/concepts/warranty-discount-credits-asf-2]], [[wiki/sources/2026-07-09-warranty-discount-credits-design]] — human-verified credit system on top of `claims`; estimate-only tiers, staff approval issues fixed-RM `warranty_credits`, one-click cart redemption; shipped in `asf-2-next`.
 - **ASF-2 customer i18n** (2026-07-08): [[wiki/concepts/customer-i18n-asf-2]], [[wiki/sources/2026-07-08-customer-i18n-session-accomplishment]] — Expo customer app bilingual (zh-CN/en); Supabase translation tables seeded; Next.js i18n stashed.
+- **ASF-2 Expo customer Home** (2026-08-12): [[wiki/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan]] — **Noir R5** (1-col curate stream; Classic frozen on R4). Classic body: [[wiki/sources/2026-08-12-expo-customer-home-tidy-r4-plan]]. Prompts: `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-agent-prompts.md`.
+- **ASF-2 Expo customer Storefront theme** (2026-08-24): [[wiki/sources/2026-08-24-expo-customer-storefront-theme-session-accomplishment]] — **Shipped** fourth pack `storefront` (Uniqlo Home, Taobao Shop, bell+returnTo); schema/seed; post-ship splash/nav fixes. Plan: [[wiki/sources/2026-08-24-expo-customer-storefront-theme-plan]]. **Next:** curated mock-data + image generation redo.
+- **ASF-2 Expo customer Storefront occupation taxonomy + Home filter** (2026-09-03): [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan]] — **Planned** Storefront-only: range=occupation, category=`kind_key` types; Shop occupations rail; Home category filter + post hero + See all. Prompts: [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts]] (8 agents). Partially supersedes Storefront Home hero + Shop sidebar IA.
+- **ASF-2 Expo customer notifications** (2026-07-28 plan): [[wiki/sources/2026-07-28-expo-customer-notifications-plan]] — Expo Push (not Firebase), DB templates, Next admin promos, three prefs, deep links; staff-app push out of scope. Prompts: `raw/sources/2026-07-28-expo-customer-notifications-agent-prompts.md`.
+- **ASF-2 Expo customer engagement** (2026-09-08): [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]] — discovery points + nearby wishlist stock; Rewards settings; `store_product_stock`; demo inbox. Agents 1–6 implemented; [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]] — **11 PASS / 1 FAIL / 5 SKIP**, P0 none, pending device/native E2E. Prompts: [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts]].
 
 ## See also
 

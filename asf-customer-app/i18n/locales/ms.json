@@ -44,6 +44,8 @@
     "menuCollection": "Koleksi Saya",
     "menuAccount": "Tetapan akaun",
     "menuSupport": "Hubungi sokongan",
+    "menuNotifications": "Notifikasi",
+    "menuNotificationSettings": "Tetapan notifikasi",
     "firstName": "Nama pertama",
     "lastName": "Nama akhir",
     "phone": "Nombor telefon",
@@ -59,14 +61,16 @@
     "atelierAccountHint": "Pesanan, koleksi, dan penjagaan",
     "atelierEditAccount": "Edit",
     "appearance": "Tema (staf)",
-    "appearanceSubtitle": "QA staf sahaja. Tukar Klasik, Atelier, atau Noir. Pilihan anda disimpan pada peranti ini.",
+    "appearanceSubtitle": "QA staf sahaja. Tukar Klasik, Atelier, Noir, atau Storefront. Pilihan anda disimpan pada peranti ini.",
     "themeStaff": "Tema (staf)",
     "themeClassic": "Klasik",
     "themeAtelier": "Atelier",
     "themeNoir": "Noir",
+    "themeStorefront": "Storefront",
     "themeClassicDesc": "Landing butik dengan aksen emas dan suasana beli-belah editorial.",
     "themeAtelierDesc": "Lookbook majalah dengan nada kertas hangat dan krom yang lebih tenang.",
     "themeNoirDesc": "Runcit malam yang immersif — gelap, padat, dengan beg di pengepala.",
+    "themeStorefrontDesc": "Ketibaan terkini gaya Uniqlo dan semakan taksonomi gaya Taobao.",
     "themeSelected": "Dipilih"
   },
   "alerts": {
@@ -149,19 +153,40 @@
   },
   "home": {
     "heroAlt": "Lookbook pilihan",
+    "productHeroAlt": "Produk terkini",
     "heroCtaExplore": "Terokai produk baharu →",
     "heroCtaShop": "Beli sekarang →",
+    "heroCtaViewProduct": "Lihat produk →",
     "heroCtaHighlights": "Kandungan pilihan →",
     "newArrivals": "Produk baharu",
+    "latestProducts": "Ketibaan terkini",
+    "categoryFilterAll": "Semua",
+    "comingSoon": "Akan datang",
+    "kind": {
+      "shoes": "Kasut",
+      "bags": "Beg",
+      "accessories": "Aksesori"
+    },
+    "loadMore": "Muat lagi",
+    "feedEnd": "Anda sudah melihat semuanya",
+    "arrivalsSubline": "Edit ringkas produk baharu.",
     "seeAllArrivals": "Lihat semua →",
+    "seeAll": "Lihat semua →",
     "offers": "Tawaran",
+    "offersSubline": "Guna semasa checkout.",
     "offerPercentOff": "Diskaun {value}%",
     "offerFixedOff": "Diskaun RM {value}",
     "offerCode": "Kod: {code}",
     "offerTapAria": "Guna tawaran {name}",
+    "frame1PromoCue": "Tawaran · {name}",
+    "frame1PromoCueAria": "Lihat tawaran {name}",
+    "swipeHint": "Leret",
+    "pageIndicator": "Halaman {current} daripada {total}",
     "productAlt": "Produk",
     "categories": "Beli mengikut kategori",
     "featured": "Pilihan istimewa",
+    "latestPosts": "Siaran terkini",
+    "postsSubline": "Dari jurnal.",
     "viewAll": "Lihat semua →",
     "postAlt": "Kandungan pilihan",
     "viewAllContent": "Lihat semua kandungan →",
@@ -226,6 +251,14 @@
     "noirClearTools": "Kosongkan carian & tapisan",
     "noirClearSearch": "Kosongkan carian"
   },
+  "shop": {
+    "emptyProducts": "Tiada produk dalam pilihan ini",
+    "emptyTiles": "Tiada subkategori di sini",
+    "searchAria": "Cari produk dalam pilihan semasa",
+    "loadingMore": "Memuatkan lagi…",
+    "sidebarEmpty": "Belum ada pekerjaan",
+    "comingSoon": "Akan datang"
+  },
   "filter": {
     "filterAndSort": "Tapis & susun",
     "categoryTitle": "Kategori",
@@ -284,6 +317,7 @@
     "reviewsEmpty": "Tiada ulasan lagi. Jadilah yang pertama menulis ulasan.",
     "addToWishlistAria": "Tambah ke senarai kegemaran",
     "removeFromWishlistAria": "Buang dari senarai kegemaran",
+    "colorSwatchAria": "Pilih warna {color}",
     "alt": "Produk"
   },
   "cart": {
@@ -486,6 +520,13 @@
     "alreadyIn": "Sudah ada dalam senarai kegemaran anda.",
     "added": "Telah ditambah ke senarai kegemaran.",
     "removed": "Telah dibuang dari senarai kegemaran."
+  },
+  "browse": {
+    "linkedProductsTitle": "Produk berkaitan",
+    "linkedProductsEmpty": "Tiada produk berkaitan",
+    "allProducts": "Semua produk",
+    "kindProducts": "Produk",
+    "productListEmpty": "Tiada produk dijumpai"
   },
   "orders": {
     "back": "Kembali",
@@ -818,6 +859,7 @@
   },
   "notifications": {
     "title": "Notifikasi",
+    "openInbox": "Buka notifikasi",
     "markAllRead": "Tandakan semua dibaca",
     "empty": "Tiada notifikasi lagi",
     "emptyHint": "Notifikasi anda akan dipaparkan di sini",
@@ -831,7 +873,27 @@
       "minutesAgo": "{count} minit lalu",
       "hoursAgo": "{count} jam lalu",
       "daysAgo": "{count} hari lalu"
-    }
+    },
+    "settingsLink": "Tetapan",
+    "settingsTitle": "Tetapan notifikasi",
+    "settingsIntro": "Pilih makluman yang muncul di skrin kunci. Kemas kini pesanan dan tuntutan masih muncul dalam peti masuk jika push dimatikan. Mematikan promosi atau stok berdekatan menyembunyikan mesej tersebut sepenuhnya (peti masuk dan push).",
+    "prefOrders": "Pesanan",
+    "prefOrdersHint": "Push untuk pengesahan, pembayaran, dan status pesanan",
+    "prefClaims": "Tuntutan & sokongan",
+    "prefClaimsHint": "Push untuk tuntutan, kredit waranti, dan tiket sokongan",
+    "prefPromotions": "Promosi",
+    "prefPromotionsHint": "Tawaran dan kempen — peti masuk dan push",
+    "prefNearbyStock": "Stok berdekatan",
+    "prefNearbyStockHint": "Apabila item senarai hajat ada stok di kedai berhampiran — peti masuk dan push (memerlukan lokasi Sentiasa)",
+    "locationPermissionTitle": "Benarkan lokasi Sentiasa",
+    "locationPermissionBody": "ASF menggunakan lokasi anda di latar belakang untuk memberitahu bila item senarai hajat tersedia di kedai berhampiran. Anda boleh mengubahnya bila-bila masa dalam Tetapan.",
+    "locationPermissionContinue": "Teruskan",
+    "locationPermissionNotNow": "Bukan sekarang",
+    "locationPermissionDenied": "Kebenaran lokasi Sentiasa tidak diberikan. Amaran stok berdekatan memerlukan akses lokasi — buka Tetapan untuk mendayakannya.",
+    "locationOpenSettings": "Buka Tetapan sistem untuk benarkan lokasi Sentiasa",
+    "prefsLoadFailed": "Tidak dapat memuatkan tetapan notifikasi.",
+    "prefsSaveFailed": "Tidak dapat menyimpan tetapan notifikasi. Cuba lagi.",
+    "batteryTip": "Pada telefon Xiaomi, OPPO, vivo, dan sesetengah Android lain, benarkan juga ASF dalam tetapan bateri / autostart supaya amaran skrin kunci tidak tertangguh."
   },
   "rewards": {
     "title": "Ganjaran saya",
@@ -872,7 +934,11 @@
     "historyOrder": "Pesanan #{id}",
     "historySignup": "Bonus pendaftaran",
     "historyRedeem": "Diskaun ditebus",
-    "daysAgo": "{count} hari lalu"
+    "daysAgo": "{count} hari lalu",
+    "discoveryEarnedTitle": "Mata diperoleh",
+    "discoveryPointsStrip": "+{count} mata",
+    "signInToEarnPoints": "Log masuk untuk dapat mata penemuan",
+    "discoveryAwardFailedDev": "Permintaan mata penemuan gagal ({status}). URL: {url}. Jalankan asf-2-next di LAN (0.0.0.0), pastikan EXPO_PUBLIC_API_URL sepadan, dan mulakan semula Metro selepas ubah .env."
   },
   "support": {
     "title": "Hubungi sokongan",

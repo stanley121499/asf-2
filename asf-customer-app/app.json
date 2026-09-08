@@ -55,9 +55,15 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow ASF to show nearby stores and distance."
+          "locationWhenInUsePermission": "Allow ASF to show nearby stores and distance.",
+          "locationAlwaysAndWhenInUsePermission": "Allow ASF to notify you when wishlist items are in stock at nearby stores.",
+          "locationAlwaysPermission": "Allow ASF to notify you when wishlist items are in stock at nearby stores.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
+      "expo-task-manager",
       [
         "expo-notifications",
         {

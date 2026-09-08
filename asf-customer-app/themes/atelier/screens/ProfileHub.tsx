@@ -22,6 +22,7 @@ import {
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
+import { useNotificationContext } from "@/context/NotificationContext";
 import { usePointsMembership } from "@/context/PointsMembershipContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Locale } from "@/i18n/types";
@@ -209,6 +210,7 @@ export function AtelierProfileHubScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const pointsAPI = usePointsMembership();
   const { t, locale, setLocale } = useTranslation();
+  const { unreadCount } = useNotificationContext();
   const { themeId } = useTheme();
   const { startTour, activeStep } = useGuide();
   const scrollRef = useRef<ScrollView>(null);
@@ -424,7 +426,7 @@ export function AtelierProfileHubScreen(): React.ReactElement {
 
   /**
    * Language row — SUPERADMIN signed-in users also see Appearance above this.
-   * Always last in the prefs list (no staff cycle row beneath).
+   * When signed in, Notification settings sits beneath this row.
    */
   const languageMenuRow = (
     <TourAnchor id={ANCHORS.profile.language}>
@@ -432,7 +434,7 @@ export function AtelierProfileHubScreen(): React.ReactElement {
         label={t("settings.language")}
         badge={currentLanguageLabel}
         onPress={() => setLanguageModalVisible(true)}
-        borderBottom={false}
+        borderBottom={user !== null}
         tokens={tokens}
       />
     </TourAnchor>
@@ -694,6 +696,12 @@ export function AtelierProfileHubScreen(): React.ReactElement {
             onPress={handleRestartOnboarding}
             tokens={tokens}
           />
+          <MenuRow
+            label={t("settings.menuNotifications")}
+            badge={unreadCount > 0 ? String(unreadCount) : undefined}
+            onPress={() => router.push("/(tabs)/profile/notifications")}
+            tokens={tokens}
+          />
           <TourAnchor id={ANCHORS.profile.orders}>
             <MenuRow
               label={t("settings.menuOrders")}
@@ -757,6 +765,12 @@ export function AtelierProfileHubScreen(): React.ReactElement {
           <SectionHeader title={t("settings.preferences")} tokens={tokens} />
           {appearanceMenuRow}
           {languageMenuRow}
+          <MenuRow
+            label={t("settings.menuNotificationSettings")}
+            onPress={() => router.push("/(tabs)/profile/notification-settings")}
+            borderBottom={false}
+            tokens={tokens}
+          />
         </View>
 
         <TouchableOpacity

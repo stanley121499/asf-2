@@ -29,6 +29,13 @@ export const motion = {
     ctaSlide: 360,
     /** Thin gold light sweep / underline wipe. */
     lightSweep: 520,
+    /**
+     * Discovery-points achievement burst (confetti + strip cycle).
+     * Keep the full sequence in the ~1.5–2.5s feel window.
+     */
+    achievementBurst: 2200,
+    /** Achievement strip slide in / out. */
+    achievementStrip: 280,
   },
   delay: {
     /** Stillness after splash unmount before brand beat. */
@@ -44,6 +51,11 @@ export const motion = {
      * (excluding enter/exit animation). ~900–1200ms feel window.
      */
     addTrayHold: 1000,
+    /**
+     * How long the discovery-points strip stays fully visible before exit
+     * (excluding enter/exit). Paired with {@link motion.duration.achievementBurst}.
+     */
+    achievementHold: 1600,
   },
   scale: {
     /** Pressable scale while pressed. */

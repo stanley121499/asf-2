@@ -43,3 +43,16 @@ export async function hapticSuccess(): Promise<void> {
     /* unsupported */
   }
 }
+
+/**
+ * Stronger achievement pulse for discovery-points ceremony.
+ * Heavy impact + success notification — stronger than add-to-bag medium.
+ */
+export async function hapticAchievement(): Promise<void> {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch {
+    /* unsupported on this device / simulator */
+  }
+}

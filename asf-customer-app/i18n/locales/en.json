@@ -44,6 +44,8 @@
     "menuCollection": "My Collection",
     "menuAccount": "Account settings",
     "menuSupport": "Contact support",
+    "menuNotifications": "Notifications",
+    "menuNotificationSettings": "Notification settings",
     "firstName": "First name",
     "lastName": "Last name",
     "phone": "Phone number",
@@ -59,14 +61,16 @@
     "atelierAccountHint": "Orders, collection, and care",
     "atelierEditAccount": "Edit",
     "appearance": "Theme (staff)",
-    "appearanceSubtitle": "Staff QA only. Switch Classic, Atelier, or Noir. Your choice is saved on this device.",
+    "appearanceSubtitle": "Staff QA only. Switch Classic, Atelier, Noir, or Storefront. Your choice is saved on this device.",
     "themeStaff": "Theme (staff)",
     "themeClassic": "Classic",
     "themeAtelier": "Atelier",
     "themeNoir": "Noir",
+    "themeStorefront": "Storefront",
     "themeClassicDesc": "Boutique landing with gold accents and an editorial shop feel.",
     "themeAtelierDesc": "Magazine lookbook with warm paper tones and quieter chrome.",
     "themeNoirDesc": "Immersive night retail — dark, dense, and always-on cart headers.",
+    "themeStorefrontDesc": "Uniqlo-style newest arrivals and Taobao-style taxonomy browse.",
     "themeSelected": "Selected"
   },
   "alerts": {
@@ -149,19 +153,40 @@
   },
   "home": {
     "heroAlt": "Featured lookbook",
+    "productHeroAlt": "Newest product",
     "heroCtaExplore": "Explore new arrivals →",
     "heroCtaShop": "Shop now →",
+    "heroCtaViewProduct": "View product →",
     "heroCtaHighlights": "Featured content →",
     "newArrivals": "New arrivals",
+    "latestProducts": "Latest arrivals",
+    "categoryFilterAll": "All",
+    "comingSoon": "Coming soon",
+    "kind": {
+      "shoes": "Shoes",
+      "bags": "Bags",
+      "accessories": "Accessories"
+    },
+    "loadMore": "Load more",
+    "feedEnd": "You're all caught up",
+    "arrivalsSubline": "A short edit of what's new.",
     "seeAllArrivals": "See all →",
+    "seeAll": "See all →",
     "offers": "Offers",
+    "offersSubline": "Apply at checkout.",
     "offerPercentOff": "{value}% off",
     "offerFixedOff": "RM {value} off",
     "offerCode": "Code: {code}",
     "offerTapAria": "Apply offer {name}",
+    "frame1PromoCue": "Offer · {name}",
+    "frame1PromoCueAria": "View offer {name}",
+    "swipeHint": "Swipe",
+    "pageIndicator": "Page {current} of {total}",
     "productAlt": "Product",
     "categories": "Shop by category",
     "featured": "Featured picks",
+    "latestPosts": "Latest posts",
+    "postsSubline": "From the journal.",
     "viewAll": "View all →",
     "postAlt": "Featured content",
     "viewAllContent": "View all content →",
@@ -226,6 +251,14 @@
     "noirClearTools": "Clear search & filters",
     "noirClearSearch": "Clear search"
   },
+  "shop": {
+    "emptyProducts": "No products in this selection",
+    "emptyTiles": "No subcategories here",
+    "searchAria": "Search products in the current selection",
+    "loadingMore": "Loading more…",
+    "sidebarEmpty": "No occupations yet",
+    "comingSoon": "Coming soon"
+  },
   "filter": {
     "filterAndSort": "Filter & sort",
     "categoryTitle": "Category",
@@ -284,6 +317,7 @@
     "reviewsEmpty": "No reviews yet. Be the first to write one.",
     "addToWishlistAria": "Add to wishlist",
     "removeFromWishlistAria": "Remove from wishlist",
+    "colorSwatchAria": "Select color {color}",
     "alt": "Product"
   },
   "cart": {
@@ -486,6 +520,13 @@
     "alreadyIn": "Already in your wishlist.",
     "added": "Added to wishlist.",
     "removed": "Removed from wishlist."
+  },
+  "browse": {
+    "linkedProductsTitle": "Linked products",
+    "linkedProductsEmpty": "No linked products",
+    "allProducts": "All products",
+    "kindProducts": "Products",
+    "productListEmpty": "No products found"
   },
   "orders": {
     "back": "Back",
@@ -818,6 +859,7 @@
   },
   "notifications": {
     "title": "Notifications",
+    "openInbox": "Open notifications",
     "markAllRead": "Mark all read",
     "empty": "No notifications yet",
     "emptyHint": "Your notifications will appear here",
@@ -831,7 +873,27 @@
       "minutesAgo": "{count} min ago",
       "hoursAgo": "{count} hr ago",
       "daysAgo": "{count} days ago"
-    }
+    },
+    "settingsLink": "Settings",
+    "settingsTitle": "Notification settings",
+    "settingsIntro": "Choose which alerts reach your lock screen. Order and claim updates still appear in your inbox when push is off. Turning off promotions or nearby stock hides those messages entirely (inbox and push).",
+    "prefOrders": "Orders",
+    "prefOrdersHint": "Push for order confirmation, payment, and status updates",
+    "prefClaims": "Claims & support",
+    "prefClaimsHint": "Push for claims, warranty credits, and support ticket updates",
+    "prefPromotions": "Promotions",
+    "prefPromotionsHint": "Offers and campaigns — inbox and push",
+    "prefNearbyStock": "Nearby stock",
+    "prefNearbyStockHint": "When a wishlist item is in stock at a store near you — inbox and push (needs Always location)",
+    "locationPermissionTitle": "Allow Always location",
+    "locationPermissionBody": "ASF uses your location in the background to tell you when wishlist items are available at nearby stores. You can change this anytime in Settings.",
+    "locationPermissionContinue": "Continue",
+    "locationPermissionNotNow": "Not now",
+    "locationPermissionDenied": "Always location was not granted. Nearby stock alerts need location access — open Settings to enable it.",
+    "locationOpenSettings": "Open system Settings to allow Always location",
+    "prefsLoadFailed": "Could not load notification settings.",
+    "prefsSaveFailed": "Could not save notification settings. Try again.",
+    "batteryTip": "On Xiaomi, OPPO, vivo, and some other Android phones, also allow ASF in battery / autostart settings so lock-screen alerts are not delayed."
   },
   "rewards": {
     "title": "My rewards",
@@ -872,7 +934,11 @@
     "historyOrder": "Order #{id}",
     "historySignup": "Sign-up bonus",
     "historyRedeem": "Redeemed discount",
-    "daysAgo": "{count} days ago"
+    "daysAgo": "{count} days ago",
+    "discoveryEarnedTitle": "Points earned",
+    "discoveryPointsStrip": "+{count} points",
+    "signInToEarnPoints": "Sign in to earn discovery points",
+    "discoveryAwardFailedDev": "Discovery points request failed ({status}). URL: {url}. Start asf-2-next on 0.0.0.0 and match EXPO_PUBLIC_API_URL; restart Metro after .env changes."
   },
   "support": {
     "title": "Contact support",

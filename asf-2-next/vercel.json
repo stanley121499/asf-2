@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/wishlist-nearby",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

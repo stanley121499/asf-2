@@ -5,10 +5,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { useAuthContext } from "@/context/AuthContext";
 import enMessages from "@/i18n/locales/en.json";
 import msMessages from "@/i18n/locales/ms.json";
 import zhCnMessages from "@/i18n/locales/zh-CN.json";
@@ -18,6 +20,7 @@ import {
   isSupportedLocale,
   type Locale,
 } from "@/i18n/types";
+import { supabase } from "@/lib/supabase";
 
 /** Named placeholders for `{param}` interpolation inside message templates. */
 type MessageParams = Record<string, string | number>;
@@ -104,11 +107,35 @@ async function readStoredLocale(): Promise<Locale> {
 }
 
 /**
+ * Writes `preferred_locale` on `user_details` for the signed-in customer.
+ * Soft-fails (logs only) so UI locale changes still succeed offline.
+ *
+ * @param userId - Authenticated user id
+ * @param locale - Supported app locale
+ */
+async function syncPreferredLocaleToDb(
+  userId: string,
+  locale: Locale,
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_details")
+    .update({ preferred_locale: locale })
+    .eq("id", userId);
+
+  if (error !== null) {
+    console.warn("[i18n] Failed to sync preferred_locale:", error.message);
+  }
+}
+
+/**
  * Provides app-wide locale state persisted in AsyncStorage (`asf_locale`).
+ * When authenticated, also syncs `user_details.preferred_locale` for push copy.
  */
 export function LocaleProvider({ children }: PropsWithChildren): React.ReactElement {
+  const { user, user_detail } = useAuthContext();
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [hydrated, setHydrated] = useState(false);
+  const localeSeededForUser = useRef<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -130,14 +157,54 @@ export function LocaleProvider({ children }: PropsWithChildren): React.ReactElem
   }, []);
 
   /**
-   * Updates the active locale and persists it to AsyncStorage.
+   * On login: if DB `preferred_locale` is null, write the current AsyncStorage locale.
+   * Runs once per user id so we do not overwrite a later language change.
    */
-  const setLocale = useCallback((nextLocale: Locale) => {
-    setLocaleState(nextLocale);
-    void AsyncStorage.setItem(LOCALE_STORAGE_KEY, nextLocale).catch((error: unknown) => {
-      console.warn("[i18n] Failed to persist locale to AsyncStorage:", error);
-    });
-  }, []);
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const userId = user?.id;
+    if (typeof userId !== "string" || userId.length === 0) {
+      localeSeededForUser.current = null;
+      return;
+    }
+
+    if (user_detail === null) {
+      return;
+    }
+
+    if (localeSeededForUser.current === userId) {
+      return;
+    }
+    localeSeededForUser.current = userId;
+
+    const dbLocale = user_detail.preferred_locale;
+    if (typeof dbLocale === "string" && isSupportedLocale(dbLocale)) {
+      return;
+    }
+
+    void syncPreferredLocaleToDb(userId, locale);
+  }, [hydrated, user?.id, user_detail, locale]);
+
+  /**
+   * Updates the active locale, persists to AsyncStorage, and syncs DB when signed in.
+   */
+  const setLocale = useCallback(
+    (nextLocale: Locale) => {
+      setLocaleState(nextLocale);
+      void AsyncStorage.setItem(LOCALE_STORAGE_KEY, nextLocale).catch((error: unknown) => {
+        console.warn("[i18n] Failed to persist locale to AsyncStorage:", error);
+      });
+
+      const userId = user?.id;
+      if (typeof userId === "string" && userId.length > 0) {
+        void syncPreferredLocaleToDb(userId, nextLocale);
+      }
+    },
+    [user?.id],
+  );
 
   const value = useMemo<LocaleContextValue>(
     () => ({

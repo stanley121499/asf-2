@@ -256,3 +256,116 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
 - Kept plans: theme-skins, polish, atelier-editorial, noir-ssense, noir-intentional
 - Wiki touched: [[wiki/sources/2026-07-28-expo-customer-theme-skins-session-accomplishment]], [[wiki/concepts/expo-customer-theme-skins-asf-2]] (new), [[index.md]]
 - Notes: Decisions + what landed for Classic/Atelier/Noir R1+R2; pitfalls (PressableScale row, Maps inner fill).
+
+## [2026-07-28] query | Customer notification system planning
+
+- Question: Which notifications for Expo customer app first, and how to implement?
+- Pages read: [[wiki/00-overview]], [[wiki/concepts/mobile-app-architecture-asf-2]], [[wiki/concepts/production-readiness-asf-2]], [[wiki/sources/2026-04-13-mobile-app-strategy]], [[wiki/sources/2026-04-25-mobile-apps-progress]], [[wiki/concepts/post-purchase-claims-module-asf-2]], [[wiki/concepts/customer-i18n-asf-2]], [[wiki/concepts/physical-warranty-registration-asf-2]]; plus live DB check (`notifications` exists, `push_tokens` missing) and code (`NotificationContext`, Stripe webhook, claims helpers)
+- Outcome: answer not filed; recommendation given in chat (in-app already partial; push + order-status producers are the gaps)
+
+
+## [2026-07-28] query | Customer notifications plan lock (design decisions)
+
+- Question: Lock full customer notification plan from design answers; no implementation yet
+- Decisions captured: editable DB templates (B); promo to all tokens (A) + prefs; Next admin compose (B); multilang with default fallback; deep links; customer-only (no staff-app push)
+- Outcome: plan presented in chat; not filed pending human approval
+
+
+## [2026-07-28] ingest | Expo customer notifications plan + agent prompts
+
+- Source: `raw/sources/2026-07-28-expo-customer-notifications-plan.md`, `raw/sources/2026-07-28-expo-customer-notifications-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-07-28-expo-customer-notifications-plan]], [[wiki/00-overview]], [[index.md]]
+- Notes: Locked decisions (templates B, promo A + prefs A, Next admin, multilang default fallback, customer-only). Five agents sized for ~200k context. Toggle set A (Orders / Claims & support / Promotions).
+
+
+## [2026-07-28] lint/update | Notifications agent pack 5 → 8
+
+- Human feedback: 5 agents under-split a large program (producers + dual admin UI + Expo).
+- Updated: `raw/sources/2026-07-28-expo-customer-notifications-agent-prompts.md`, plan §12, wiki source + index.
+- Notes: Agent 3 Stripe-only; 4 claims/warranty/physical; 5 order-status+support; 6 templates; 7 campaigns; 8 Expo.
+
+## [2026-08-12] ingest | Expo customer Home tidy revamp (Classic + Noir)
+
+- Source: `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-plan.md`, `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-12-expo-customer-home-tidy-revamp-plan]], [[index.md]]
+- Notes: Simon feedback locked — Frame1 newest product, strict viewport frames, demote categories, Classic+Noir only; 3 agents (shared layout → Classic → Noir) sized for ~200k context.
+
+## [2026-08-12] ingest | Expo customer Home tidy revamp Round 2
+
+- Source: `raw/sources/2026-08-12-expo-customer-home-tidy-r2-plan.md`, `raw/sources/2026-08-12-expo-customer-home-tidy-r2-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-12-expo-customer-home-tidy-r2-plan]], [[index.md]], [[wiki/00-overview]]
+- Notes: Device audit — Round 1 not tidy enough. R2 locks: remove Home wordmark; no peek (half card = cutoff); snap 2-up + Swipe/dots; push-down Frame 1 / kill scrims; fixed promo banners; keep categories as chip slider; product+promo+posts. 3 agents. Round 1 superseded for tidy grammar.
+
+## [2026-08-12] ingest | Expo customer Home editorial density Round 3
+
+- Source: `raw/sources/2026-08-12-expo-customer-home-tidy-r3-plan.md`, `raw/sources/2026-08-12-expo-customer-home-tidy-r3-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-12-expo-customer-home-tidy-r3-plan]], [[index.md]], [[wiki/00-overview]]
+- Notes: Home felt empty; DB OK (20 products, 6 posts, 4 active promos). R3: editorial storefront; Frame 1 ~48% usable; onload = Frame1 + promo + 2 product cards; denser scroll/higher caps; keep R2 tidy. 3 agents.
+
+## [2026-08-12] ingest | Expo customer Home cover + editorial body Round 4
+
+- Source: `raw/sources/2026-08-12-expo-customer-home-tidy-r4-plan.md`, `raw/sources/2026-08-12-expo-customer-home-tidy-r4-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-12-expo-customer-home-tidy-r4-plan]], [[index.md]], [[wiki/00-overview]]
+- Notes: R3 failed — short vertical scroll (snap sideways) + squashed hero lost focal point. R4: tall cover ≈ full first viewport; below-fold stacked promos + 2-col product grid + journal lead/grid; kill product/post snap. 3 agents.
+
+## [2026-08-12] ingest | Expo customer Home Noir differentiation Round 5
+
+- Source: `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan.md`, `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan]], [[index.md]], [[wiki/00-overview]]
+- Notes: Classic frozen. Noir: chips, 1-col large stream (cap ~7), journal ≤2 full-bleed, no categories. 1 agent.
+
+## [2026-08-24] ingest | Expo customer Storefront theme (Classic clone)
+
+- Source: `raw/sources/2026-08-24-expo-customer-storefront-theme-plan.md`, `raw/sources/2026-08-24-expo-customer-storefront-theme-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-08-24-expo-customer-storefront-theme-plan]], [[index.md]], [[wiki/00-overview]]
+- Notes: New theme id `storefront`. Home: newest hero + 2nd–7th grid with swatches; post/promo blocks + load more; Shop: flat taxonomy sidebar + next-level tiles + lazy products; bell on Home/Shop/Highlights. Schema gaps: color medias, post_products, taxonomy parent FKs, promo images. Initially 6 agents — expanded to **9** after review (split seed + platform wiring; fuller IA/acceptance).
+
+## [2026-08-24] update | Storefront plan/prompts expanded 6 → 9 agents
+
+- Human feedback: first pack felt too thin vs scope.
+- Updated same raw plan + prompts: deeper IA, seed bars, lib/component map, PDP/nav, linked route, Shop state rules; agents split schema | taxonomy seed | color/link seed | scaffold | contexts/tile/PDP | Home newest | Home feed | Shop | bells+smoke.
+- Wiki touched: [[wiki/sources/2026-08-24-expo-customer-storefront-theme-plan]], [[index.md]], [[wiki/00-overview]]
+
+## [2026-08-25] ingest | Storefront session accomplishment SOT
+
+- Source: `raw/sources/2026-08-24-expo-customer-storefront-theme-session-accomplishment.md`
+- Deleted: `raw/sources/2026-08-24-expo-customer-storefront-theme-agent-prompts.md` (post-run cleanup)
+- Wiki touched: [[wiki/sources/2026-08-24-expo-customer-storefront-theme-session-accomplishment]], [[index.md]], [[wiki/00-overview]], plan + plan wiki (status → shipped)
+- Notes: Documents shipped Storefront pack, locked decisions, migrations, seed caveats, post-ship fixes (splash, bell returnTo, push, warranty). Mock data flagged for full curated redo + image gen in next program.
+
+## [2026-08-24] update | Storefront coverage matrix + QC Agent 10
+
+- Human: double-check all requests covered; add QC.
+- Plan: §1.1 R1–R17 traceability; feed swatches required; seed proves all 4 taxonomy link styles + multi-post product; contexts explicitly use dept/range/brand; §11 full QC (SQL/UI/locale/regression).
+- Prompts: 9 → **10** agents (Agent 10 = formal QC, defect-first).
+- Wiki touched: [[wiki/sources/2026-08-24-expo-customer-storefront-theme-plan]], [[index.md]], [[wiki/00-overview]]
+
+## [2026-08-25] ingest | Storefront curated seed plan + agent prompts
+
+- Source: `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-plan.md`, `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-agent-prompts.md`
+- Wiki touched: [[index.md]]
+- Notes: Full mock-data redo for Storefront demo. 80 products (8 footwear + 4 accessory per category), 3 depts (no kids), zh canonical brands, new UUID scheme, soft-delete herbal + old demo. 10 posts (≥6 links), 4–6 promos. ~450 AI images with per-category gen+QC. **38 agents** in 6 phases for ~200k context windows. Image phasing TBD by Stanley. No implementation yet.
+
+
+## [2026-09-03] ingest | Storefront occupation taxonomy + Home filter plan + prompts
+
+- Source: `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan.md`, `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan]], [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts]], [[index.md]], [[wiki/00-overview]]
+- Notes: Stanley+Simon: range=occupation, category kind_key types; Shop occupations-only left rail; Home category filter rail refilters hero/arrivals/feed; hero=latest post; See all on every 2×3; Coming soon empty combos. **8 agents** for ~200k. Partially supersedes 2026-08-24 Storefront Home hero + Shop sidebar IA. No implementation yet.
+
+## [2026-09-03] qc | Storefront occupation taxonomy Agent 08
+- Source: `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-qc-notes.md`
+- Wiki touched: [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-qc-notes]]
+- Notes: Static QC 15 PASS / 0 FAIL / 1 SKIP (R1 device). Implementation-complete pending device QC.
+
+## [2026-09-08] ingest | Customer engagement discovery points + nearby stock plan + prompts
+
+- Source: `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan.md`, `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts.md`
+- Wiki touched: [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]], [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts]], [[index.md]], [[wiki/00-overview]]
+- Notes: Locked dual feature for Expo: first-view points (admin-editable amount, strong ceremony) + nearby wishlist stock (1.5km / 7d / Always location / normal push+inbox). Per-store color×size stock new. Demo notification seeds. **7 agents** for ~200k. No implementation yet.
+
+## [2026-09-08] qc | Customer engagement Agent 07
+
+- Source: `raw/sources/2026-09-08-expo-customer-engagement-qc-notes.md`
+- Wiki touched: [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]], [[index.md]], [[wiki/00-overview]]
+- Notes: §13 matrix 11 PASS / 1 FAIL (Highlights linked-products) / 5 SKIP (device/native). Ceremony not on nearby; stock_place unused. Demo inbox 6 rows. P0 none.

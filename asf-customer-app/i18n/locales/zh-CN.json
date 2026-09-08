@@ -44,6 +44,8 @@
     "menuCollection": "我的产品",
     "menuAccount": "账户设置",
     "menuSupport": "联系客服",
+    "menuNotifications": "通知",
+    "menuNotificationSettings": "通知设置",
     "firstName": "名",
     "lastName": "姓",
     "phone": "联系电话",
@@ -59,14 +61,16 @@
     "atelierAccountHint": "订单、收藏与售后",
     "atelierEditAccount": "编辑",
     "appearance": "主题（员工）",
-    "appearanceSubtitle": "仅供员工 QA。可切换经典、工坊或夜色。偏好会保存在本设备上。",
+    "appearanceSubtitle": "仅供员工 QA。可切换经典、工坊、夜色或精品橱窗。偏好会保存在本设备上。",
     "themeStaff": "主题（员工）",
     "themeClassic": "经典",
     "themeAtelier": "工坊",
     "themeNoir": "夜色",
+    "themeStorefront": "精品橱窗",
     "themeClassicDesc": "精品店落地页风格，金色点缀与编辑式购物体验。",
     "themeAtelierDesc": "杂志画册感，暖纸色调与更安静的界面边框。",
     "themeNoirDesc": "沉浸式夜间零售——深色、紧凑，购物车入口常驻顶栏。",
+    "themeStorefrontDesc": "优衣库式最新上新与淘宝式分类浏览。",
     "themeSelected": "已选择"
   },
   "alerts": {
@@ -149,19 +153,40 @@
   },
   "home": {
     "heroAlt": "首页精选",
+    "productHeroAlt": "最新商品",
     "heroCtaExplore": "探索新品 →",
     "heroCtaShop": "立即选购 →",
+    "heroCtaViewProduct": "查看商品 →",
     "heroCtaHighlights": "精选内容 →",
     "newArrivals": "新品上市",
+    "latestProducts": "最新商品",
+    "categoryFilterAll": "全部",
+    "comingSoon": "即将推出",
+    "kind": {
+      "shoes": "鞋履",
+      "bags": "包袋",
+      "accessories": "配件"
+    },
+    "loadMore": "加载更多",
+    "feedEnd": "已经到底了",
+    "arrivalsSubline": "今日精选上新。",
     "seeAllArrivals": "查看全部 →",
+    "seeAll": "查看全部 →",
     "offers": "优惠活动",
+    "offersSubline": "结账时可用。",
     "offerPercentOff": "{value}% 优惠",
     "offerFixedOff": "减 RM {value}",
     "offerCode": "优惠码：{code}",
     "offerTapAria": "使用优惠 {name}",
+    "frame1PromoCue": "优惠 · {name}",
+    "frame1PromoCueAria": "查看优惠 {name}",
+    "swipeHint": "滑动",
+    "pageIndicator": "第 {current} 页，共 {total} 页",
     "productAlt": "商品",
     "categories": "商品分类",
     "featured": "精选推荐",
+    "latestPosts": "最新动态",
+    "postsSubline": "来自手记。",
     "viewAll": "查看全部 →",
     "postAlt": "精选内容",
     "viewAllContent": "查看全部内容 →",
@@ -226,6 +251,14 @@
     "noirClearTools": "清除搜索与筛选",
     "noirClearSearch": "清除搜索"
   },
+  "shop": {
+    "emptyProducts": "该分类下暂无商品",
+    "emptyTiles": "暂无下级分类",
+    "searchAria": "在当前分类中搜索商品",
+    "loadingMore": "加载更多…",
+    "sidebarEmpty": "暂无职业分类",
+    "comingSoon": "即将推出"
+  },
   "filter": {
     "filterAndSort": "筛选与排序",
     "categoryTitle": "分类",
@@ -284,6 +317,7 @@
     "reviewsEmpty": "暂无评价，成为第一个撰写评价的用户。",
     "addToWishlistAria": "加入收藏",
     "removeFromWishlistAria": "取消收藏",
+    "colorSwatchAria": "选择颜色 {color}",
     "alt": "商品"
   },
   "cart": {
@@ -486,6 +520,13 @@
     "alreadyIn": "已在收藏夹中。",
     "added": "已加入收藏。",
     "removed": "已从收藏中移除。"
+  },
+  "browse": {
+    "linkedProductsTitle": "关联商品",
+    "linkedProductsEmpty": "暂无关联商品",
+    "allProducts": "全部商品",
+    "kindProducts": "商品",
+    "productListEmpty": "暂无商品"
   },
   "orders": {
     "back": "返回",
@@ -818,6 +859,7 @@
   },
   "notifications": {
     "title": "通知",
+    "openInbox": "打开通知",
     "markAllRead": "全部已读",
     "empty": "暂无通知",
     "emptyHint": "您的通知将在这里显示",
@@ -831,7 +873,27 @@
       "minutesAgo": "{count}分钟前",
       "hoursAgo": "{count}小时前",
       "daysAgo": "{count}天前"
-    }
+    },
+    "settingsLink": "设置",
+    "settingsTitle": "通知设置",
+    "settingsIntro": "选择哪些提醒会出现在锁屏。关闭推送后，订单与售后更新仍会留在收件箱；关闭促销或附近有货后，这类消息将不再推送也不会出现在收件箱。",
+    "prefOrders": "订单",
+    "prefOrdersHint": "订单确认、付款与状态变更的推送",
+    "prefClaims": "售后与客服",
+    "prefClaimsHint": "理赔、保修积分与客服工单的推送",
+    "prefPromotions": "促销",
+    "prefPromotionsHint": "优惠与活动 — 收件箱与推送",
+    "prefNearbyStock": "附近有货",
+    "prefNearbyStockHint": "心愿单商品在附近门店有货时提醒 — 收件箱与推送（需始终允许定位）",
+    "locationPermissionTitle": "允许始终使用定位",
+    "locationPermissionBody": "ASF 会在后台使用您的位置，以便在附近门店有心愿单商品库存时通知您。您可随时在系统设置中更改。",
+    "locationPermissionContinue": "继续",
+    "locationPermissionNotNow": "暂不",
+    "locationPermissionDenied": "未获得始终定位权限。附近有货提醒需要定位访问 — 请在系统设置中开启。",
+    "locationOpenSettings": "打开系统设置以允许始终定位",
+    "prefsLoadFailed": "无法加载通知设置。",
+    "prefsSaveFailed": "无法保存通知设置，请重试。",
+    "batteryTip": "在小米、OPPO、vivo 等部分安卓手机上，请同时在电池 / 自启动设置中允许 ASF，以免锁屏通知被延迟。"
   },
   "rewards": {
     "title": "我的奖励",
@@ -872,7 +934,11 @@
     "historyOrder": "订单 #{id}",
     "historySignup": "注册奖励",
     "historyRedeem": "兑换折扣",
-    "daysAgo": "{count}天前"
+    "daysAgo": "{count}天前",
+    "discoveryEarnedTitle": "获得积分",
+    "discoveryPointsStrip": "+{count} 积分",
+    "signInToEarnPoints": "登录即可获得浏览积分",
+    "discoveryAwardFailedDev": "浏览积分请求失败（{status}）。URL: {url}。请在局域网启动 asf-2-next（0.0.0.0），确认 EXPO_PUBLIC_API_URL 一致，并在改 .env 后重启 Metro。"
   },
   "support": {
     "title": "联系客服",

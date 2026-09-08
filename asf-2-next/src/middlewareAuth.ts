@@ -103,7 +103,19 @@ export function isCustomerProtectedPath(pathname: string): boolean {
     (p) => p === "/order-details" || p.startsWith("/order-details/"),
     (p) => p === "/settings" || p.startsWith("/settings/"),
     (p) => p === "/rewards" || p.startsWith("/rewards/"),
-    (p) => p === "/notifications" || p.startsWith("/notifications/"),
+    (p) => {
+      // Admin template/campaign UIs live under /notifications/* but are not
+      // the customer inbox at /notifications.
+      if (
+        p === "/notifications/templates" ||
+        p.startsWith("/notifications/templates/") ||
+        p === "/notifications/campaigns" ||
+        p.startsWith("/notifications/campaigns/")
+      ) {
+        return false;
+      }
+      return p === "/notifications" || p.startsWith("/notifications/");
+    },
     (p) => p === "/support-chat" || p.startsWith("/support-chat/"),
     (p) => p === "/my-claims" || p.startsWith("/my-claims/"),
   ];
@@ -139,6 +151,14 @@ export function isAdminProtectedPath(pathname: string): boolean {
     return true;
   }
   if (pathname === "/home-page-builder" || pathname.startsWith("/home-page-builder/")) {
+    return true;
+  }
+  if (
+    pathname === "/notifications/templates" ||
+    pathname.startsWith("/notifications/templates/") ||
+    pathname === "/notifications/campaigns" ||
+    pathname.startsWith("/notifications/campaigns/")
+  ) {
     return true;
   }
   return false;
@@ -276,6 +296,14 @@ export async function rbacMiddlewareResponse(
   request: NextRequest
 ): Promise<NextResponse | null> {
   const pathname = request.nextUrl.pathname;
+
+  /**
+   * API routes authenticate themselves (Bearer JWT for Expo, cookies for web,
+   * or cron secrets). Page RBAC must not redirect `/api/*` callers to sign-in.
+   */
+  if (pathname.startsWith("/api/")) {
+    return null;
+  }
 
   if (isPublicPath(pathname)) {
     return null;

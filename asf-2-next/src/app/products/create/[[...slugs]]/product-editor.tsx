@@ -28,6 +28,7 @@ import {
 import { FaChevronDown } from "react-icons/fa6";
 import { supabase } from "@/utils/supabaseClient";
 import MediaThumb from "@/components/MediaThumb";
+import StoreProductStockSection from "./StoreProductStockSection";
 
 /**
  * Interface for category v2 items from localStorage
@@ -632,6 +633,11 @@ const ProductEditor: React.FC<ProductEditorProps> = ({
                     }
                   />
                 </div>
+
+                {/* Per-store inventory (store_locations × color × size) — leave stock_place/code as-is */}
+                <div className="border-t border-gray-200 dark:border-gray-800 my-4"></div>
+                <StoreProductStockSection productId={selectedProduct?.id} />
+
                 {/* Product Description */}
                 <div className="mt-4">
                   <flowbiteReact.Label>Product Description</flowbiteReact.Label>
