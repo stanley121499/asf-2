@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -15,14 +14,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CartButton } from "@/components/cart/CartButton";
 import { ANCHORS, FIRST_LAUNCH_TOUR_ID, TourAnchor, useGuide } from "@/components/guide";
 import { PressableScale } from "@/components/motion";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useNotificationContext } from "@/context/NotificationContext";
-import { usePointsMembership } from "@/context/PointsMembershipContext";
+import { useOptionalPointsMembership } from "@/context/PointsMembershipContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Locale } from "@/i18n/types";
 import { resetFirstGuide } from "@/lib/appGuide";
+import { scheduleAfterIdle } from "@/lib/scheduleAfterIdle";
 import { supabase } from "@/lib/supabase";
 import type { ThemeTokens } from "@/themes/types";
 
@@ -175,7 +176,7 @@ export function NoirProfileHubScreen(): React.ReactElement {
   const tokens = useThemeTokens();
   const { user, user_detail, signOut, loading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
-  const pointsAPI = usePointsMembership();
+  const pointsAPI = useOptionalPointsMembership();
   const { t, locale, setLocale } = useTranslation();
   const { unreadCount } = useNotificationContext();
   const { themeId } = useTheme();
@@ -214,36 +215,52 @@ export function NoirProfileHubScreen(): React.ReactElement {
     }
   }, [user, user_detail]);
 
+  /**
+   * Defer points / warranty queries until after the tab focus paint so
+   * navigate→focused is not competing with network + setState on the JS thread.
+   */
   useEffect(() => {
-    if (user?.id) {
-      void pointsAPI.getUserPointsByUserId(user.id).then((r) => setUserPoints(r?.amount ?? 0));
+    const userId = user?.id;
+    if (userId === undefined || pointsAPI === null) {
+      return;
     }
-  }, [user, pointsAPI]);
+    const handle = scheduleAfterIdle(() => {
+      void pointsAPI.getUserPointsByUserId(userId).then((r) => setUserPoints(r?.amount ?? 0));
+    });
+    return () => {
+      handle.cancel();
+    };
+  }, [user?.id, pointsAPI]);
 
   useEffect(() => {
-    if (!isEnabled("claims") || user?.id === undefined) {
+    const claimsUserId = user?.id;
+    if (!isEnabled("claims") || claimsUserId === undefined) {
       setActiveCreditCount(0);
       return;
     }
+    const userId = claimsUserId;
     let cancelled = false;
-    void (async (): Promise<void> => {
-      const { data, error } = await supabase
-        .from("warranty_credits")
-        .select("id, status, expires_at")
-        .eq("user_id", user.id)
-        .eq("status", "active");
-      if (cancelled || error !== null) {
-        return;
-      }
-      const now = Date.now();
-      const count = (data ?? []).filter((row) => {
-        const expires = new Date(row.expires_at).getTime();
-        return Number.isFinite(expires) && expires >= now;
-      }).length;
-      setActiveCreditCount(count);
-    })();
+    const handle = scheduleAfterIdle(() => {
+      void (async (): Promise<void> => {
+        const { data, error } = await supabase
+          .from("warranty_credits")
+          .select("id, status, expires_at")
+          .eq("user_id", userId)
+          .eq("status", "active");
+        if (cancelled || error !== null) {
+          return;
+        }
+        const now = Date.now();
+        const count = (data ?? []).filter((row) => {
+          const expires = new Date(row.expires_at).getTime();
+          return Number.isFinite(expires) && expires >= now;
+        }).length;
+        setActiveCreditCount(count);
+      })();
+    });
     return () => {
       cancelled = true;
+      handle.cancel();
     };
   }, [isEnabled, user?.id]);
 
@@ -468,6 +485,19 @@ export function NoirProfileHubScreen(): React.ReactElement {
       />
     ) : null;
 
+  /**
+   * SUPERADMIN-only Design Lab — Home hero + store-welcome preview switcher.
+   */
+  const designLabMenuRow =
+    user !== null && isSuperAdmin ? (
+      <DenseMenuRow
+        icon="color-palette-outline"
+        label={t("settings.designLab")}
+        onPress={() => router.push("/(tabs)/profile/design-lab")}
+        tokens={tokens}
+      />
+    ) : null;
+
 
   const guideEntryMenuRow = (
     <TourAnchor id={ANCHORS.profile.guideEntry}>
@@ -497,18 +527,7 @@ export function NoirProfileHubScreen(): React.ReactElement {
   );
 
   if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: tokens.bg,
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+    return <PageLoadingSkeleton variant="profile" />;
   }
 
   if (user === null) {
@@ -783,14 +802,16 @@ export function NoirProfileHubScreen(): React.ReactElement {
                 tokens={tokens}
               />
             </TourAnchor>
-            <TourAnchor id={ANCHORS.profile.rewards}>
-              <DenseMenuRow
-                icon="star-outline"
-                label={t("settings.menuRewards")}
-                onPress={() => router.push("/(tabs)/profile/rewards")}
-                tokens={tokens}
-              />
-            </TourAnchor>
+            {isEnabled("rewards") ? (
+              <TourAnchor id={ANCHORS.profile.rewards}>
+                <DenseMenuRow
+                  icon="star-outline"
+                  label={t("settings.menuRewards")}
+                  onPress={() => router.push("/(tabs)/profile/rewards")}
+                  tokens={tokens}
+                />
+              </TourAnchor>
+            ) : null}
             <TourAnchor id={ANCHORS.profile.support}>
               <DenseMenuRow
                 icon="chatbubble-ellipses-outline"
@@ -806,6 +827,7 @@ export function NoirProfileHubScreen(): React.ReactElement {
         {listPanel(
           <>
             {appearanceMenuRow}
+            {designLabMenuRow}
             {languageMenuRow}
             <DenseMenuRow
               icon="options-outline"

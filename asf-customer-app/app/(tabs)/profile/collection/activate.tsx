@@ -26,8 +26,11 @@ import { useAlertContext } from "@/context/AlertContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
-import { useStoreLocationContext } from "@/context/StoreLocationContext";
-import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
+import { useStoreLocationContext, useStoreLocationP2Focus } from "@/context/StoreLocationContext";
+import {
+  useWarrantyRegistrationContext,
+  useWarrantyRegistrationP2Focus,
+} from "@/context/WarrantyRegistrationContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import {
   createClaimEvidenceSessionId,
@@ -294,6 +297,9 @@ function CollectionActivateContent({
   const { user, user_detail, loading: authLoading } = useAuthContext();
   const { storeLocations, loading: storesLoading } = useStoreLocationContext();
   const { activateRegistration } = useWarrantyRegistrationContext();
+
+  useStoreLocationP2Focus("store_locations:activate");
+  useWarrantyRegistrationP2Focus("warranty_registration:activate");
 
   const [code, setCode] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(todayLocalIsoDate());

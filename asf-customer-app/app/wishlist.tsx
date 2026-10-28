@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   Text,
@@ -12,13 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useAuthContext } from "@/context/AuthContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import type { Product } from "@/context/product/ProductContext";
-import { useWishlistContext } from "@/context/WishlistContext";
+import { useWishlistContext, useWishlistP2Focus } from "@/context/WishlistContext";
 import { openBrowseProduct } from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
 
@@ -127,6 +127,8 @@ export default function WishlistScreen(): React.ReactElement {
   const { wishlistItems, loading, removeFromWishlist } = useWishlistContext();
   /** Display face: Inter under Noir; Playfair for Classic/Atelier. */
   const displayFont = isNoir ? "Inter_400Regular" : "PlayfairDisplay_400Regular";
+
+  useWishlistP2Focus("wishlist");
 
   // Redirect away when the wishlist feature is disabled platform-wide.
   useEffect(() => {
@@ -237,10 +239,8 @@ export default function WishlistScreen(): React.ReactElement {
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: tokens.bg }}>
       {header}
 
-      {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={tokens.accent} />
-        </View>
+      {loading && savedProducts.length === 0 ? (
+        <PageLoadingSkeleton variant="list" />
       ) : savedProducts.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
           <Ionicons name="heart-outline" size={40} color={tokens.muted} />

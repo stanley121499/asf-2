@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  startTransition,
   PropsWithChildren,
 } from "react";
 import { getErrorTranslationKey } from "@/i18n/errorMap";
@@ -29,6 +30,47 @@ import {
   type ProductStockVariantRow,
   sumProductStockCounts,
 } from "@/lib/productStock";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
+
+/**
+ * P0 first-paint page — enough for Home above-the-fold (arrivals 2×3 + early
+ * Shop rows). Further pages load only when Shop / lists ask via
+ * {@link ProductActionsContextProps.loadMoreProducts}.
+ */
+const P0_PRODUCT_FETCH_LIMIT = 24;
+
+/** Subsequent infinite-query page size (Shop / product-list onEndReached). */
+const PRODUCT_PAGE_SIZE = 24;
+
+/**
+ * Joined select used for catalog pages and single-product ensure fetches.
+ * Storefront (R5–R6): `product_medias` includes `color_id` for colorway photos.
+ */
+const PRODUCT_JOIN_SELECT = `
+  *,
+  product_medias(id, product_id, media_url, arrangement, color_id, created_at, updated_at),
+  product_categories(*),
+  product_colors(*),
+  product_sizes(*),
+  product_stock(id, product_id, color_id, size_id, count)
+`;
+
+/**
+ * Emits a `[prio]` Metro breadcrumb in development only.
+ *
+ * @param message - Short priority-loading step label
+ * @param detail - Optional structured detail (counts, page index)
+ */
+function prioLog(message: string, detail?: unknown): void {
+  if (!__DEV__) {
+    return;
+  }
+  if (detail === undefined) {
+    console.log(`[prio] ${message}`);
+  } else {
+    console.log(`[prio] ${message}`, detail);
+  }
+}
 
 /** Product with computed client-side fields */
 export type Product = Database["public"]["Tables"]["products"]["Row"] & {
@@ -44,8 +86,32 @@ export type Products = { products: Product[] };
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
-interface ProductContextProps {
+/**
+ * Frequently-changing catalog snapshot — subscribers re-render when pages
+ * append or Realtime mutates the list.
+ */
+interface ProductDataContextProps {
   products: Product[];
+  /** True only during the initial P0 fetch (blocks Home/Shop first paint). */
+  loading: boolean;
+  /** True while a P1+ page request is in flight. */
+  loadingMore: boolean;
+  /** False when the last page returned fewer rows than the page size. */
+  hasMore: boolean;
+}
+
+/** Stable mutation + pagination API — does not change when the product list updates. */
+interface ProductActionsContextProps {
+  /**
+   * Fetches the next catalog page and appends it (deduped). No-ops when
+   * `hasMore` is false or a page request is already in flight.
+   */
+  loadMoreProducts: () => Promise<void>;
+  /**
+   * Ensures a single product (with joins) is present in the catalog state —
+   * used by PDP / deep links when the SKU is outside the loaded pages.
+   */
+  ensureProduct: (productId: string) => Promise<Product | undefined>;
   createProduct: (
     product: ProductInsert,
     selectedColors: string[],
@@ -60,18 +126,29 @@ interface ProductContextProps {
   ) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   restoreProduct: (productId: string) => Promise<void>;
-  loading: boolean;
   updateProductTimePost: (
     productId: string,
     productTimePost: string | null
   ) => Promise<void>;
 }
 
-const ProductContext = createContext<ProductContextProps | undefined>(undefined);
+/** Combined public shape (backward-compatible with existing consumers). */
+interface ProductContextProps
+  extends ProductDataContextProps,
+    ProductActionsContextProps {}
+
+const ProductDataContext = createContext<ProductDataContextProps | undefined>(
+  undefined
+);
+const ProductActionsContext = createContext<
+  ProductActionsContextProps | undefined
+>(undefined);
 
 export function ProductProvider({ children }: Readonly<PropsWithChildren>): React.ReactElement {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const { showAlert } = useAlertContext();
   const { t } = useTranslation();
   const { createProductColor, updateProductColor } = useProductColorContext();
@@ -85,6 +162,16 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
    */
   const showAlertRef = useRef<typeof showAlert | null>(null);
   const tRef = useRef(t);
+  /** Next `.range` start index for P1+ pages (avoids stale closures in loadMore). */
+  const nextOffsetRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingMoreRef = useRef(false);
+  /** Latest catalog snapshot for ensure/lookup without destabilizing actions. */
+  const productsRef = useRef<Product[]>(products);
+  /** In-flight ensure fetches keyed by product id (dedupe concurrent PDP opens). */
+  const ensureInflightRef = useRef<Map<string, Promise<Product | undefined>>>(
+    new Map()
+  );
 
   useEffect(() => {
     showAlertRef.current = showAlert;
@@ -93,6 +180,10 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
   useEffect(() => {
     tRef.current = t;
   }, [t]);
+
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   /**
    * Converts an unknown caught error to a safe human-readable message.
@@ -111,6 +202,15 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
   }, []);
 
   type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+
+  /** Joined products row shape returned by {@link PRODUCT_JOIN_SELECT}. */
+  type JoinedProductRow = ProductRow & {
+    product_medias?: ProductMedia[] | null;
+    product_categories?: ProductCategory[] | null;
+    product_colors?: ProductColor[] | null;
+    product_sizes?: ProductSize[] | null;
+    product_stock?: ProductStockVariantRow[] | null;
+  };
 
   /**
    * Maps a raw `products` row into the context's `Product` shape with safe defaults.
@@ -132,63 +232,233 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
   }, []);
 
   /**
-   * Fetches products with all related variant data via a direct join query.
-   * Using a direct select instead of RPC so it works reliably with the anon key.
+   * Maps a joined products row into the UI {@link Product} shape.
+   *
+   * Soft-deleted colors/sizes are filtered client-side after the join.
+   *
+   * @param row - Supabase join row including nested relations.
    */
-  const fetchProducts = useCallback(async (): Promise<void> => {
-    setLoading(true);
+  const mapJoinedRowToProduct = useCallback((row: JoinedProductRow): Product => {
+    const stockRows: ProductStockVariantRow[] = Array.isArray(row.product_stock)
+      ? row.product_stock
+      : [];
+    const stockCount = sumProductStockCounts(stockRows);
+    const colorRows: ProductColor[] = Array.isArray(row.product_colors)
+      ? row.product_colors
+      : [];
+    const sizeRows: ProductSize[] = Array.isArray(row.product_sizes)
+      ? row.product_sizes
+      : [];
+    const mediaRows: ProductMedia[] = Array.isArray(row.product_medias)
+      ? row.product_medias
+      : [];
+    const categoryRows: ProductCategory[] = Array.isArray(row.product_categories)
+      ? row.product_categories
+      : [];
 
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          *,
-          product_medias(*),
-          product_categories(*),
-          product_colors(*),
-          product_sizes(*),
-          product_stock(id, product_id, color_id, size_id, count)
-        `)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+    return {
+      ...row,
+      medias: mediaRows,
+      product_categories: categoryRows,
+      product_colors: colorRows.filter((c) => !isSoftDeletedRow(c)),
+      product_sizes: sizeRows.filter((s) => !isSoftDeletedRow(s)),
+      product_stocks: stockRows,
+      stock_status: "",
+      stock_count: stockCount,
+    };
+  }, []);
 
-      if (error !== null) {
-        showAlertRef.current?.(error.message, "error");
-        if (process.env.NODE_ENV === "development") {
-          console.error(error);
+  /**
+   * Appends products into state, skipping ids already present (Realtime / ensure).
+   *
+   * @param incoming - Newly fetched page or single product rows.
+   */
+  const appendProducts = useCallback((incoming: Product[]): void => {
+    if (incoming.length === 0) {
+      return;
+    }
+    setProducts((prev) => {
+      const seen = new Set(prev.map((product) => product.id));
+      const fresh = incoming.filter((product) => !seen.has(product.id));
+      if (fresh.length === 0) {
+        return prev;
+      }
+      return [...prev, ...fresh];
+    });
+  }, []);
+
+  /**
+   * Fetches one catalog page (joined) ordered by `created_at` desc.
+   *
+   * @param offset - Zero-based row offset (Supabase `.range` start).
+   * @param limit - Page size.
+   * @returns Mapped products, or `null` when the request failed (alert already shown).
+   */
+  const fetchProductPage = useCallback(
+    async (offset: number, limit: number): Promise<Product[] | null> => {
+      const safeOffset = Number.isFinite(offset) && offset >= 0 ? Math.floor(offset) : 0;
+      const safeLimit =
+        Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : PRODUCT_PAGE_SIZE;
+      const rangeEnd = safeOffset + safeLimit - 1;
+
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select(PRODUCT_JOIN_SELECT)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .range(safeOffset, rangeEnd);
+
+        if (error !== null) {
+          showAlertRef.current?.(error.message, "error");
+          if (process.env.NODE_ENV === "development") {
+            console.error(error);
+          }
+          return null;
         }
+
+        const rows: JoinedProductRow[] = Array.isArray(data)
+          ? (data as JoinedProductRow[])
+          : [];
+        return rows.map((row) => mapJoinedRowToProduct(row));
+      } catch (error: unknown) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("[ProductContext] Failed to fetch products:", error);
+        }
+        showAlertRef.current?.(
+          tRef.current(getErrorTranslationKey("Failed to fetch products")),
+          "error",
+        );
+        return null;
+      }
+    },
+    [mapJoinedRowToProduct]
+  );
+
+  /**
+   * P0 cold-start fetch — replaces catalog state with the first page only.
+   * Does not schedule a silent full-catalog hydrate.
+   */
+  const fetchInitialProducts = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const mapped = await fetchProductPage(0, P0_PRODUCT_FETCH_LIMIT);
+      if (mapped === null) {
         return;
       }
-
-      const mapped: Product[] = (data ?? []).map((row) => {
-        const stockRows = (row.product_stock ?? []) as ProductStockVariantRow[];
-        const stockCount = sumProductStockCounts(stockRows);
-
-        return {
-          ...row,
-          medias: (row.product_medias ?? []) as ProductMedia[],
-          product_categories: (row.product_categories ?? []) as ProductCategory[],
-          product_colors: (row.product_colors ?? []) as ProductColor[],
-          product_sizes: (row.product_sizes ?? []) as ProductSize[],
-          product_stocks: stockRows,
-          stock_status: "",
-          stock_count: stockCount,
-        };
-      });
-
       setProducts(mapped);
-    } catch (error: unknown) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("[ProductContext] Failed to fetch products:", error);
-      }
-      showAlertRef.current?.(
-        tRef.current(getErrorTranslationKey("Failed to fetch products")),
-        "error",
-      );
+      const more = mapped.length >= P0_PRODUCT_FETCH_LIMIT;
+      hasMoreRef.current = more;
+      setHasMore(more);
+      nextOffsetRef.current = mapped.length;
+      prioLog("P0 products ready", {
+        count: mapped.length,
+        hasMore: more,
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchProductPage]);
+
+  /**
+   * P1+ infinite page — appends the next range when Shop/Home lists ask.
+   */
+  const loadMoreProducts = useCallback(async (): Promise<void> => {
+    if (!hasMoreRef.current || loadingMoreRef.current) {
+      return;
+    }
+
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    const offset = nextOffsetRef.current;
+    const pageNumber = Math.floor(offset / PRODUCT_PAGE_SIZE) + 1;
+
+    try {
+      const mapped = await fetchProductPage(offset, PRODUCT_PAGE_SIZE);
+      if (mapped === null) {
+        return;
+      }
+
+      appendProducts(mapped);
+      nextOffsetRef.current = offset + mapped.length;
+      const more = mapped.length >= PRODUCT_PAGE_SIZE;
+      hasMoreRef.current = more;
+      setHasMore(more);
+      prioLog(`P1 page ${String(pageNumber)}`, {
+        count: mapped.length,
+        offset,
+        hasMore: more,
+      });
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [appendProducts, fetchProductPage]);
+
+  /**
+   * Loads one product by id into catalog state when missing (PDP / deep link).
+   *
+   * @param productId - Target product uuid.
+   * @returns The product when found, otherwise `undefined`.
+   */
+  const ensureProduct = useCallback(
+    async (productId: string): Promise<Product | undefined> => {
+      const trimmed = productId.trim();
+      if (trimmed.length === 0) {
+        return undefined;
+      }
+
+      const existing = productsRef.current.find(
+        (product) => product.id === trimmed
+      );
+      if (existing !== undefined) {
+        return existing;
+      }
+
+      const inflight = ensureInflightRef.current.get(trimmed);
+      if (inflight !== undefined) {
+        return inflight;
+      }
+
+      const request = (async (): Promise<Product | undefined> => {
+        try {
+          const { data, error } = await supabase
+            .from("products")
+            .select(PRODUCT_JOIN_SELECT)
+            .eq("id", trimmed)
+            .is("deleted_at", null)
+            .maybeSingle();
+
+          if (error !== null) {
+            if (process.env.NODE_ENV === "development") {
+              console.error("[ProductContext] ensureProduct failed:", error);
+            }
+            return undefined;
+          }
+          if (data === null) {
+            return undefined;
+          }
+
+          const mapped = mapJoinedRowToProduct(data as JoinedProductRow);
+          appendProducts([mapped]);
+          prioLog("ensureProduct", { id: trimmed });
+          return mapped;
+        } catch (error: unknown) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[ProductContext] ensureProduct error:", error);
+          }
+          return undefined;
+        } finally {
+          ensureInflightRef.current.delete(trimmed);
+        }
+      })();
+
+      ensureInflightRef.current.set(trimmed, request);
+      return request;
+    },
+    [appendProducts, mapJoinedRowToProduct]
+  );
 
   /**
    * Handles realtime changes for products and keeps local state in sync.
@@ -200,51 +470,76 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
         if (isSoftDeletedRow(payload.new)) {
           return;
         }
-        setProducts((prev) => [...prev, mapRowToProduct(payload.new)]);
+        startTransition(() => {
+          setProducts((prev) => [...prev, mapRowToProduct(payload.new)]);
+        });
       }
 
       if (payload.eventType === "UPDATE") {
         // Soft delete is an UPDATE; treat it like removal from active lists.
         if (isSoftDeletedRow(payload.new)) {
-          setProducts((prev) => prev.filter((p) => p.id !== payload.new.id));
+          startTransition(() => {
+            setProducts((prev) => prev.filter((p) => p.id !== payload.new.id));
+          });
           return;
         }
 
-        setProducts((prev) =>
-          prev.map((product) =>
-            product.id === payload.new.id ? { ...product, ...payload.new } : product
-          )
-        );
+        startTransition(() => {
+          setProducts((prev) =>
+            prev.map((product) =>
+              product.id === payload.new.id
+                ? { ...product, ...payload.new }
+                : product
+            )
+          );
+        });
       }
 
       if (payload.eventType === "DELETE") {
-        setProducts((prev) => prev.filter((product) => product.id !== payload.old.id));
+        startTransition(() => {
+          setProducts((prev) =>
+            prev.filter((product) => product.id !== payload.old.id)
+          );
+        });
       }
     },
     [mapRowToProduct]
   );
 
   /**
-   * Initial fetch + realtime subscription.
+   * First paint: P0 page only. Deferred Realtime stays; no silent full-catalog
+   * hydrate — further pages come from {@link loadMoreProducts} on demand.
    */
   useEffect(() => {
-    void fetchProducts();
+    let cancelled = false;
 
-    const subscription = supabase
-      .channel("products")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        (payload: RealtimePostgresChangesPayload<ProductRow>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
+    const bootstrap = async (): Promise<void> => {
+      await fetchInitialProducts();
+      if (cancelled) {
+        return;
+      }
+    };
+
+    void bootstrap();
+
+    const stopRealtime = scheduleDeferredRealtime(() =>
+      supabase
+        .channel("products")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "products" },
+          (payload: RealtimePostgresChangesPayload<ProductRow>) => {
+            handleRealtimeChanges(payload);
+          }
+        )
+        .subscribe()
+    );
 
     return () => {
-      subscription.unsubscribe();
+      cancelled = true;
+      stopRealtime();
     };
-  }, [fetchProducts, handleRealtimeChanges]);
+  }, [fetchInitialProducts, handleRealtimeChanges]);
 
   /**
    * Creates a product and all related variant records (colors, sizes, categories).
@@ -697,35 +992,94 @@ export function ProductProvider({ children }: Readonly<PropsWithChildren>): Reac
     []
   );
 
-  const value = useMemo<ProductContextProps>(
+  /**
+   * Data slice — changes whenever catalog pages / loading flags update.
+   * Screens that only need mutations should use {@link useProductActions}
+   * so they skip re-renders when the catalog list grows.
+   */
+  const dataValue = useMemo<ProductDataContextProps>(
     () => ({
       products,
+      loading,
+      loadingMore,
+      hasMore,
+    }),
+    [products, loading, loadingMore, hasMore]
+  );
+
+  /**
+   * Actions slice — identity-stable across catalog page appends.
+   */
+  const actionsValue = useMemo<ProductActionsContextProps>(
+    () => ({
+      loadMoreProducts,
+      ensureProduct,
       createProduct,
       updateProduct,
       deleteProduct,
       restoreProduct,
-      loading,
       updateProductTimePost,
     }),
     [
-      products,
+      loadMoreProducts,
+      ensureProduct,
       createProduct,
       updateProduct,
       deleteProduct,
       restoreProduct,
-      loading,
       updateProductTimePost,
     ]
   );
 
-  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
+  return (
+    <ProductActionsContext.Provider value={actionsValue}>
+      <ProductDataContext.Provider value={dataValue}>
+        {children}
+      </ProductDataContext.Provider>
+    </ProductActionsContext.Provider>
+  );
 }
 
-export function useProductContext() {
-  const context = useContext(ProductContext);
-  if (!context) {
-    throw new Error("useProductContext must be used within a ProductProvider");
+/**
+ * Catalog list + loading flag only. Prefer this over {@link useProductContext}
+ * when the screen does not call product mutations (avoids depending on the
+ * actions object identity, though data updates still re-render).
+ */
+export function useProductData(): ProductDataContextProps {
+  const context = useContext(ProductDataContext);
+  if (context === undefined) {
+    throw new Error("useProductData must be used within a ProductProvider");
   }
   return context;
+}
+
+/**
+ * Product mutation helpers only. Does not re-render when `products` changes.
+ */
+export function useProductActions(): ProductActionsContextProps {
+  const context = useContext(ProductActionsContext);
+  if (context === undefined) {
+    throw new Error("useProductActions must be used within a ProductProvider");
+  }
+  return context;
+}
+
+/**
+ * Combined catalog API (data + actions). Re-renders on every products update.
+ * Prefer {@link useProductData} / {@link useProductActions} when splitting helps.
+ */
+export function useProductContext(): ProductContextProps {
+  const data = useContext(ProductDataContext);
+  const actions = useContext(ProductActionsContext);
+  if (data === undefined || actions === undefined) {
+    throw new Error("useProductContext must be used within a ProductProvider");
+  }
+  return useMemo(
+    () => ({
+      ...data,
+      ...actions,
+    }),
+    [data, actions]
+  );
 }
 

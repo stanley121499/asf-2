@@ -1,13 +1,18 @@
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback } from "react";
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from "react-native";
-import { usePreventRemove } from "expo-router/react-navigation";
+import { FlatList, Text, TouchableOpacity, View } from "react-native";
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { NotificationRow } from "@/components/NotificationRow";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useAuthContext } from "@/context/AuthContext";
+import { useDesignPreview } from "@/context/DesignPreviewContext";
 import { useTranslation } from "@/context/LocaleContext";
-import { useNotificationContext } from "@/context/NotificationContext";
+import {
+  useNotificationContext,
+  useNotificationP2Focus,
+} from "@/context/NotificationContext";
+import { useStoreWelcome } from "@/context/StoreWelcomeContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import type { Tables } from "@/database.types";
 import {
@@ -15,6 +20,11 @@ import {
   resolveNotificationHref,
   resolveNotificationInboxReturnTo,
 } from "@/lib/notificationNavigation";
+import {
+  extractStoreWelcomePayload,
+  isNearbyWishlistStockNotification,
+} from "@/lib/storeWelcome";
+import { useInterceptedBackPrevention } from "@/lib/useInterceptedBackPrevention";
 
 type NotificationRowType = Tables<"notifications">;
 
@@ -29,7 +39,12 @@ export default function NotificationsScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
   const returnTo = resolveNotificationInboxReturnTo(params.returnTo);
   const { user } = useAuthContext();
-  const { notifications, loading, markAsRead, markAllAsRead, unreadCount } = useNotificationContext();
+  const { notifications, loading, markAsRead, markAllAsRead, unreadCount } =
+    useNotificationContext();
+  const { welcomeVariant } = useDesignPreview();
+  const { presentWelcome } = useStoreWelcome();
+
+  useNotificationP2Focus("notifications");
 
   /**
    * When opened from Storefront chrome, restore Home / Shop / Highlights instead
@@ -49,29 +64,45 @@ export default function NotificationsScreen(): React.ReactElement {
     }
   }, [navigation, returnTo, router]);
 
-  usePreventRemove(returnTo !== null, ({ data }) => {
-    const actionType = data.action.type;
-    if (actionType === "GO_BACK" || actionType === "POP") {
-      if (returnTo !== null) {
-        leaveNotificationInbox(router, returnTo);
-      }
-      return;
+  /**
+   * SDK 58: intercept system back when inbox was opened from Storefront chrome
+   * so we restore Home / Shop / Highlights instead of a stale Profile stack.
+   */
+  useInterceptedBackPrevention(returnTo !== null, () => {
+    if (returnTo !== null) {
+      leaveNotificationInbox(router, returnTo);
     }
-    navigation.dispatch(data.action);
   });
 
   /**
-   * Marks the row read, then navigates from metadata when a safe href exists.
+   * Marks the row read, then either presents store-welcome (nearby + variant ≠ off)
+   * or navigates from metadata when a safe href exists.
    */
   const handlePress = useCallback(
     (notification: NotificationRowType): void => {
       void markAsRead(notification.id);
+
+      const isNearby = isNearbyWishlistStockNotification(
+        notification.type,
+        notification.metadata,
+      );
+      if (isNearby && welcomeVariant !== "off") {
+        const welcomePayload = extractStoreWelcomePayload(
+          notification.type,
+          notification.metadata,
+        );
+        if (welcomePayload !== null) {
+          presentWelcome(welcomePayload, welcomeVariant);
+          return;
+        }
+      }
+
       const href = resolveNotificationHref(notification.metadata);
       if (href !== null) {
         router.push(href);
       }
     },
-    [markAsRead, router],
+    [markAsRead, presentWelcome, router, welcomeVariant],
   );
 
   const headerRight = (
@@ -109,13 +140,11 @@ export default function NotificationsScreen(): React.ReactElement {
     );
   }
 
-  if (loading) {
+  if (loading && notifications.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: tokens.bg }}>
         <SubPageHeader title={t("notifications.title")} right={headerRight} onBack={handleBack} />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={tokens.accent} />
-        </View>
+        <PageLoadingSkeleton variant="list" />
       </View>
     );
   }

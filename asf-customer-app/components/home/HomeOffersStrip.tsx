@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { colors } from "@/constants/theme";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { usePromotionContext } from "@/context/PromotionContext";
+import { HOME_SPACE } from "@/lib/homeLayout";
 import {
   filterActivePromotions,
   formatPromotionDiscountLabel,
@@ -13,7 +14,12 @@ import {
 } from "@/lib/promotions/activePromotions";
 
 /**
- * Horizontal strip of currently active promotions for the home screen.
+ * Horizontal strip of currently active promotions (variable-height text cards).
+ *
+ * **Round 2 Home:** prefer `HomePromoBannerPager` / `HomePromoBanner`
+ * (full-width fixed-height banners, no peek). This strip remains for any
+ * non-Home callers; Classic Home still imports it until Agent 2 swaps over.
+ *
  * Must only mount when the `promotions` feature flag is on (PromotionProvider present).
  * Renders nothing when the filtered list is empty.
  *
@@ -36,14 +42,14 @@ export function HomeOffersStrip(): React.ReactElement | null {
   }
 
   return (
-    <View style={{ marginTop: 28 }}>
+    <View style={{ marginTop: HOME_SPACE.lg }}>
       <Text
         style={{
           fontFamily: "PlayfairDisplay_400Regular",
           fontSize: 24,
           color: colors.text,
           paddingHorizontal: 16,
-          marginBottom: 16,
+          marginBottom: HOME_SPACE.md,
         }}
       >
         {t("home.offers")}
@@ -51,7 +57,7 @@ export function HomeOffersStrip(): React.ReactElement | null {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: HOME_SPACE.sm }}
       >
         {activePromos.map((promo) => {
           const discountLabel = formatPromotionDiscountLabel(promo);

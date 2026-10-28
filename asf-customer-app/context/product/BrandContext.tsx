@@ -11,10 +11,7 @@ import React, {
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
-
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
-import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
 
 type BrandRow = Database["public"]["Tables"]["brand"]["Row"];
 
@@ -37,8 +34,9 @@ interface BrandContextProps {
 const BrandContext = createContext<BrandContextProps | undefined>(undefined);
 
 export function BrandProvider({ children }: PropsWithChildren): React.ReactElement {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  /** Brands unused in customer list UIs — skip cold-start fetch + Realtime. */
+  const [brands] = useState<Brand[]>([]);
+  const [loading] = useState<boolean>(false);
   const { showAlert } = useAlertContext();
 
 
@@ -50,80 +48,6 @@ export function BrandProvider({ children }: PropsWithChildren): React.ReactEleme
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
-
-  /**
-   * Fetch all active brands from Supabase.
-   */
-  const fetchBrands = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("brand")
-        .select("*")
-        .eq("active", true)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setBrands((data ?? []).filter((b) => !isSoftDeletedRow(b)));
-    } catch (error: unknown) {
-      console.error("Failed to fetch brands:", error);
-      showAlertRef.current?.("Failed to fetch brands", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for brand changes.
-   */
-  const handleRealtimeChanges = useCallback((payload: RealtimePostgresChangesPayload<BrandRow>): void => {
-    if (payload.eventType === "INSERT") {
-      if (isSoftDeletedRow(payload.new)) {
-        return;
-      }
-      setBrands((prev) => [...prev, payload.new]);
-    }
-
-    if (payload.eventType === "UPDATE") {
-      const updated = payload.new;
-      if (isSoftDeletedRow(updated) || updated.active === false) {
-        setBrands((prev) => prev.filter((b) => b.id !== updated.id));
-      } else {
-        setBrands((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
-      }
-    }
-
-    if (payload.eventType === "DELETE") {
-      const removed = payload.old;
-      setBrands((prev) => prev.filter((b) => b.id !== removed.id));
-    }
-  }, []);
-
-  /**
-   * Initial fetch + realtime subscription.
-   */
-  useEffect(() => {
-    void fetchBrands();
-
-    const subscription = supabase
-      .channel("brand")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "brand" },
-        (payload: RealtimePostgresChangesPayload<BrandRow>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchBrands, handleRealtimeChanges]);
 
   /** Create a new brand row */
   const createBrand = useCallback(

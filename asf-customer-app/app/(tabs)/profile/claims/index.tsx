@@ -10,7 +10,7 @@ import {
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
-import { useClaimContext } from "@/context/ClaimContext";
+import { useClaimContext, useClaimP2Focus } from "@/context/ClaimContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
@@ -31,6 +31,8 @@ export default function ClaimsListScreen(): React.ReactElement {
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const { claims, loading } = useClaimContext();
+
+  useClaimP2Focus("claims");
 
   const mine = useMemo(() => {
     if (user === null) {

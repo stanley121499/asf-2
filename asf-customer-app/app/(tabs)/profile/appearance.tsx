@@ -1,19 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import { PressableScale } from "@/components/motion";
+import { getPointsCeremony } from "@/components/motion/pointsCeremony";
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
-import { getThemePack } from "@/themes/registry";
+import { getThemeTokens } from "@/themes/registry";
 import {
   THEME_IDS,
   type ThemeId,
   type ThemeTokens,
 } from "@/themes/types";
+
+/** Fake +1 used only for SUPERADMIN Appearance preview (no award write). */
+const PREVIEW_POINTS = 1;
 
 /**
  * Returns the i18n name key for a theme id.
@@ -25,7 +29,10 @@ function themeNameKey(themeId: ThemeId): string {
   if (themeId === "atelier") {
     return "settings.themeAtelier";
   }
-  return "settings.themeNoir";
+  if (themeId === "noir") {
+    return "settings.themeNoir";
+  }
+  return "settings.themeStorefront";
 }
 
 /**
@@ -38,7 +45,10 @@ function themeDescriptionKey(themeId: ThemeId): string {
   if (themeId === "atelier") {
     return "settings.themeAtelierDesc";
   }
-  return "settings.themeNoirDesc";
+  if (themeId === "noir") {
+    return "settings.themeNoirDesc";
+  }
+  return "settings.themeStorefrontDesc";
 }
 
 interface ThemeOptionCardProps {
@@ -64,7 +74,8 @@ function ThemeOptionCard({
   description,
   selectedLabel,
 }: Readonly<ThemeOptionCardProps>): React.ReactElement {
-  const previewTokens = getThemePack(themeId).tokens;
+  /** Tokens-only — do not require inactive packs' screen trees for swatches. */
+  const previewTokens = getThemeTokens(themeId);
 
   return (
     <PressableScale
@@ -169,6 +180,7 @@ function ThemeOptionCard({
 /**
  * Staff-only theme Appearance picker (SUPERADMIN QA).
  * Persists via `setTheme` → AsyncStorage `asf_theme`. Non-staff are redirected to Profile.
+ * Includes a fake +1 points-ceremony preview for the active theme.
  */
 export default function AppearanceScreen(): React.ReactElement {
   const router = useRouter();
@@ -177,8 +189,15 @@ export default function AppearanceScreen(): React.ReactElement {
   const { themeId, setTheme } = useTheme();
   const tokens = useThemeTokens();
 
+  const [ceremonyVisible, setCeremonyVisible] = useState(false);
+
   const isSuperAdmin = user_detail?.role === "SUPERADMIN";
   const canAccess = !loading && user !== null && isSuperAdmin;
+
+  const PointsCeremony = useMemo(
+    () => getPointsCeremony(themeId),
+    [themeId]
+  );
 
   /**
    * Defense in depth: deep links / stale stacks must not expose theme QA to non-staff.
@@ -210,8 +229,24 @@ export default function AppearanceScreen(): React.ReactElement {
     if (nextThemeId === themeId) {
       return;
     }
+    setCeremonyVisible(false);
     setTheme(nextThemeId);
   };
+
+  /**
+   * Fires the active theme’s points ceremony with a fake +1 (no award write).
+   */
+  const handlePreviewCeremony = useCallback((): void => {
+    setCeremonyVisible(false);
+    // Remount next frame so rapid re-taps restart the animation cleanly.
+    requestAnimationFrame(() => {
+      setCeremonyVisible(true);
+    });
+  }, []);
+
+  const onDismissCeremony = useCallback((): void => {
+    setCeremonyVisible(false);
+  }, []);
 
   if (!canAccess) {
     return (
@@ -258,7 +293,57 @@ export default function AppearanceScreen(): React.ReactElement {
             selectedLabel={t("settings.themeSelected")}
           />
         ))}
+
+        <PressableScale
+          onPress={handlePreviewCeremony}
+          haptic="medium"
+          accessibilityRole="button"
+          accessibilityLabel={t("settings.previewPointsCeremony")}
+          style={{
+            backgroundColor: tokens.accent,
+            borderRadius: 14,
+            paddingVertical: 14,
+            paddingHorizontal: 16,
+            alignItems: "center",
+            marginTop: 8,
+            marginBottom: 8,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "600",
+              color: "#FFFFFF",
+              fontFamily: "Inter_400Regular",
+            }}
+          >
+            {t("settings.previewPointsCeremony")}
+          </Text>
+        </PressableScale>
+        <Text
+          style={{
+            fontSize: 12,
+            lineHeight: 16,
+            color: tokens.muted,
+            fontFamily: "Inter_400Regular",
+          }}
+        >
+          {t("settings.previewPointsCeremonyHint")}
+        </Text>
       </ScrollView>
+
+      <PointsCeremony
+        visible={ceremonyVisible}
+        points={PREVIEW_POINTS}
+        titleLabel={t("rewards.discoveryEarnedTitle")}
+        pointsLabel={t("rewards.discoveryPointsStrip", {
+          count: PREVIEW_POINTS,
+        })}
+        onDismiss={onDismissCeremony}
+        accessibilityLabel={t("rewards.discoveryPointsStrip", {
+          count: PREVIEW_POINTS,
+        })}
+      />
     </View>
   );
 }

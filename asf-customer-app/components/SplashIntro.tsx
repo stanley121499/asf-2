@@ -1,10 +1,10 @@
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactElement } from "react";
-import { Animated, Easing, StyleSheet } from "react-native";
-import { WebView } from "react-native-webview";
-import type { WebViewMessageEvent } from "react-native-webview";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { ComponentType, ReactElement } from "react";
+import { Animated, Easing, StyleSheet, View } from "react-native";
 
+import { bootLog } from "@/lib/bootLog";
+import { isExpoGoRuntime } from "@/lib/expoRuntime";
 import { hapticLight } from "@/lib/haptics";
 import { preloadSplashIntroAsset } from "@/lib/splashScreen";
 
@@ -27,14 +27,36 @@ const SPLASH_EXTRA_HOLD_MS = 2000;
 /** Cross-fade length when dismissing the splash overlay into the app. */
 const SPLASH_FADE_MS = 450;
 
-/** Fallback if the WebView never posts {@link P2M_READY_MESSAGE}. */
-const NATIVE_SPLASH_FALLBACK_HIDE_MS = 3000;
+/**
+ * Hide the native Expo splash even if the WebView never posts `p2m:ready`
+ * (common when file:// HTML stalls on some Android WebViews).
+ */
+const NATIVE_SPLASH_SOFT_HIDE_MS = 2500;
+
+/**
+ * Soft-skip the custom intro and enter the app when WebView never loads or
+ * never finishes — keeps a blank overlay from blocking home indefinitely.
+ */
+const SPLASH_SOFT_SKIP_MS = 4000;
 
 /** White surface — matches native splash + forced light HTML embed. */
 const SPLASH_SURFACE = "#ffffff";
 
 /** WebView message fired after the first painted animation frame. */
 const P2M_READY_MESSAGE = "p2m:ready";
+
+/**
+ * Expo Go cannot reliably host the HTML WebView ceremony (missing / stub native
+ * binary). Skip the intro instantly — no soft-timeout wait, no fade, no asset
+ * download. Dev builds and release APKs still play the full ceremony.
+ *
+ * Prefer {@link shouldSkipSplashCeremony} at call sites: a frozen module const
+ * can lie across Fast Refresh if Constants were unread when the module first
+ * evaluated. AppShell also skips Expo Go before this file is ever required.
+ */
+function shouldSkipSplashCeremony(): boolean {
+  return isExpoGoRuntime();
+}
 
 export type SplashIntroTheme = "light" | "dark";
 
@@ -45,11 +67,71 @@ export interface SplashIntroProps {
   theme?: SplashIntroTheme;
 }
 
+type WebViewMessageEvent = {
+  nativeEvent: {
+    data: string;
+  };
+};
+
+type WebViewProps = {
+  source: { uri: string };
+  style: object;
+  containerStyle: object;
+  pointerEvents: "none";
+  scrollEnabled: boolean;
+  bounces: boolean;
+  overScrollMode: "never";
+  showsHorizontalScrollIndicator: boolean;
+  showsVerticalScrollIndicator: boolean;
+  originWhitelist: string[];
+  allowFileAccess: boolean;
+  allowFileAccessFromFileURLs: boolean;
+  javaScriptEnabled: boolean;
+  domStorageEnabled: boolean;
+  injectedJavaScriptBeforeContentLoaded: string;
+  onLoadEnd: () => void;
+  onError: () => void;
+  onHttpError?: () => void;
+  onMessage: (event: WebViewMessageEvent) => void;
+};
+
+type WebViewModuleShape = {
+  WebView?: ComponentType<WebViewProps>;
+  default?: ComponentType<WebViewProps>;
+};
+
+/**
+ * Lazily loads `react-native-webview` so a missing native binary cannot crash
+ * splash mount — we skip straight into the app instead.
+ */
+function loadWebViewComponent(): ComponentType<WebViewProps> | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional soft-fail require
+    const mod: WebViewModuleShape = require("react-native-webview");
+    if (typeof mod.WebView === "function") {
+      return mod.WebView;
+    }
+    if (typeof mod.default === "function") {
+      return mod.default;
+    }
+    return null;
+  } catch (err) {
+    console.warn(
+      "[splash] react-native-webview unavailable",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
 /**
  * Full-screen WebView that plays the MODEL MATCH letter-cascade splash once.
  * Keeps the native Expo splash visible until the WebView posts `p2m:ready`.
+ * Soft-fails (skips intro) when WebView or the HTML asset is unavailable,
+ * and always soft-skips within {@link SPLASH_SOFT_SKIP_MS} if the WebView hangs.
+ * Expo Go skips the ceremony entirely on the first layout pass.
  */
-export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactElement {
+export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactElement | null {
   // Intentionally ignore the device colour scheme: the app shell is a light
   // (white) experience, so the splash is forced to light to avoid a black
   // "video box" flash before hand-off. Pass `theme` explicitly to override.
@@ -57,6 +139,12 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
 
   const [sourceUri, setSourceUri] = useState<string | null>(null);
   const [webLoaded, setWebLoaded] = useState(false);
+  const [WebViewComponent, setWebViewComponent] = useState<ComponentType<WebViewProps> | null>(
+    null,
+  );
+  const skipCeremony = shouldSkipSplashCeremony();
+  /** False on Expo Go from first render so we never paint a blank white overlay. */
+  const [showOverlay, setShowOverlay] = useState(() => !skipCeremony);
   const completedRef = useRef(false);
   const nativeSplashHiddenRef = useRef(false);
   const holdScheduledRef = useRef(false);
@@ -69,21 +157,44 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
       return;
     }
     nativeSplashHiddenRef.current = true;
-    void SplashScreen.hideAsync();
+    bootLog("SplashScreen.hideAsync (milestone)");
+    void SplashScreen.hideAsync().catch(() => {
+      /* already hidden or unsupported */
+    });
   }, []);
 
+  /**
+   * Instant hand-off used when the ceremony cannot run (Expo Go / missing
+   * WebView / asset failure). No fade, no extra hold, no haptic — home must
+   * become visible on the same tick as the skip decision.
+   */
+  const skipIntroImmediately = useCallback(() => {
+    if (completedRef.current) {
+      return;
+    }
+    completedRef.current = true;
+    setShowOverlay(false);
+    bootLog("SplashIntro done (milestone)");
+    hideNativeSplash();
+    onComplete();
+  }, [hideNativeSplash, onComplete]);
+
+  /**
+   * Ceremony completion: fade the overlay out before unmounting so a healthy
+   * intro does not snap into home.
+   */
   const finishIntro = useCallback(() => {
     if (completedRef.current) {
       return;
     }
     completedRef.current = true;
+    bootLog("SplashIntro done (milestone)");
     hideNativeSplash();
     // Light bridge haptic once when fade-out starts (not per-frame).
     if (!fadeHapticFiredRef.current) {
       fadeHapticFiredRef.current = true;
       void hapticLight();
     }
-    // Fade the overlay out before unmounting so the home screen does not snap in.
     Animated.timing(opacity, {
       toValue: 0,
       duration: SPLASH_FADE_MS,
@@ -91,6 +202,7 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished) {
+        setShowOverlay(false);
         onComplete();
       }
     });
@@ -121,6 +233,64 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
   }, []);
 
   /**
+   * Resolve skip vs ceremony before paint. Expo Go and missing WebView call
+   * {@link skipIntroImmediately} so AppShell is never blocked by soft timers.
+   */
+  useLayoutEffect(() => {
+    bootLog("SplashIntro mount");
+
+    if (skipCeremony) {
+      bootLog("SplashIntro Expo Go — instant skip");
+      skipIntroImmediately();
+      return;
+    }
+
+    const loaded = loadWebViewComponent();
+    if (loaded === null) {
+      bootLog("SplashIntro WebView missing — skip");
+      skipIntroImmediately();
+      return;
+    }
+
+    bootLog("SplashIntro WebView ready");
+    setWebViewComponent(() => loaded);
+  }, [skipCeremony, skipIntroImmediately]);
+
+  /**
+   * Soft-skip only while the ceremony WebView is stuck (never `onLoadEnd`).
+   * Skipped entirely on Expo Go / missing-WebView paths.
+   */
+  useEffect(() => {
+    if (skipCeremony || WebViewComponent === null || webLoaded) {
+      return undefined;
+    }
+    const softSkipId = setTimeout(() => {
+      bootLog("SplashIntro soft-skip timeout");
+      skipIntroImmediately();
+    }, SPLASH_SOFT_SKIP_MS);
+    return () => {
+      clearTimeout(softSkipId);
+    };
+  }, [skipCeremony, webLoaded, WebViewComponent, skipIntroImmediately]);
+
+  /**
+   * Always peel the native icon splash after a short wait during ceremony —
+   * do not gate on WebView `onLoadEnd` / `p2m:ready`.
+   */
+  useEffect(() => {
+    if (skipCeremony || WebViewComponent === null) {
+      return undefined;
+    }
+    const softHideId = setTimeout(() => {
+      bootLog("SplashScreen.hideAsync (soft timeout)");
+      hideNativeSplash();
+    }, NATIVE_SPLASH_SOFT_HIDE_MS);
+    return () => {
+      clearTimeout(softHideId);
+    };
+  }, [skipCeremony, hideNativeSplash, WebViewComponent]);
+
+  /**
    * Seed light theme and white surface before HTML runs.
    * Android file:// URLs may drop query params; inline CSS avoids the black WebView flash.
    */
@@ -130,19 +300,39 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     [resolvedTheme],
   );
 
+  /**
+   * Load the splash HTML only when a real WebView will play it — never on the
+   * Expo Go / missing-WebView instant-skip paths.
+   */
   useEffect(() => {
+    if (skipCeremony || WebViewComponent === null) {
+      return undefined;
+    }
+
     let cancelled = false;
 
     async function loadSplashAsset(): Promise<void> {
-      const uri = await preloadSplashIntroAsset(resolvedTheme);
-      if (cancelled) {
-        return;
+      try {
+        const uri = await preloadSplashIntroAsset(resolvedTheme);
+        if (cancelled) {
+          return;
+        }
+        if (uri === null) {
+          bootLog("SplashIntro asset null — skip");
+          skipIntroImmediately();
+          return;
+        }
+        bootLog("SplashIntro asset uri set");
+        setSourceUri(uri);
+      } catch (err) {
+        console.warn(
+          "[splash] asset preload soft-failed",
+          err instanceof Error ? err.message : err,
+        );
+        if (!cancelled) {
+          skipIntroImmediately();
+        }
       }
-      if (uri === null) {
-        finishIntro();
-        return;
-      }
-      setSourceUri(uri);
     }
 
     void loadSplashAsset();
@@ -150,12 +340,13 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     return () => {
       cancelled = true;
     };
-  }, [resolvedTheme, finishIntro]);
+  }, [skipCeremony, resolvedTheme, skipIntroImmediately, WebViewComponent]);
 
   useEffect(() => {
     if (!webLoaded) {
       return undefined;
     }
+    bootLog("SplashIntro WebView onLoadEnd — animation timer started");
     const timeoutId = setTimeout(() => {
       finishIntro();
     }, SPLASH_DURATION_MS + SPLASH_HOLD_MS + 400 + SPLASH_EXTRA_HOLD_MS);
@@ -164,28 +355,25 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     };
   }, [webLoaded, finishIntro]);
 
-  /** Safety net: never leave the native splash stuck if `p2m:ready` is missed. */
-  useEffect(() => {
-    if (!webLoaded) {
-      return undefined;
-    }
-    const fallbackHideId = setTimeout(() => {
-      hideNativeSplash();
-    }, NATIVE_SPLASH_FALLBACK_HIDE_MS);
-    return () => {
-      clearTimeout(fallbackHideId);
-    };
-  }, [webLoaded, hideNativeSplash]);
-
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
       try {
-        const data = JSON.parse(event.nativeEvent.data) as { type?: string };
-        if (data.type === P2M_READY_MESSAGE) {
+        const parsed: unknown = JSON.parse(event.nativeEvent.data);
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          Array.isArray(parsed)
+        ) {
+          return;
+        }
+        const typeValue = Reflect.get(parsed, "type");
+        if (typeValue === P2M_READY_MESSAGE) {
+          bootLog("SplashIntro p2m:ready");
           hideNativeSplash();
           return;
         }
-        if (data.type === "p2m:complete") {
+        if (typeValue === "p2m:complete") {
+          bootLog("SplashIntro p2m:complete");
           scheduleFinishWithHold();
         }
       } catch {
@@ -202,16 +390,25 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
     return { uri: sourceUri };
   }, [sourceUri]);
 
+  if (!showOverlay) {
+    return null;
+  }
+
   return (
     <Animated.View
       style={[styles.container, { backgroundColor: SPLASH_SURFACE, opacity }]}
       accessibilityLabel="App intro"
     >
-      {webViewSource !== undefined ? (
-        <WebView
+      {WebViewComponent !== null && webViewSource !== undefined ? (
+        <WebViewComponent
           source={webViewSource}
           style={styles.webview}
           containerStyle={styles.webview}
+          /**
+           * Block touches so preview HTML click→replay handlers cannot restart
+           * playback. Parent overlay still fills the screen and absorbs taps.
+           */
+          pointerEvents="none"
           scrollEnabled={false}
           bounces={false}
           overScrollMode="never"
@@ -227,11 +424,18 @@ export function SplashIntro({ onComplete, theme }: SplashIntroProps): ReactEleme
             setWebLoaded(true);
           }}
           onError={() => {
-            finishIntro();
+            bootLog("SplashIntro WebView onError — skip");
+            skipIntroImmediately();
+          }}
+          onHttpError={() => {
+            bootLog("SplashIntro WebView onHttpError — skip");
+            skipIntroImmediately();
           }}
           onMessage={handleMessage}
         />
-      ) : null}
+      ) : (
+        <View style={[styles.webview, { backgroundColor: SPLASH_SURFACE }]} />
+      )}
     </Animated.View>
   );
 }

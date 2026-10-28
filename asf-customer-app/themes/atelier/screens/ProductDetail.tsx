@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { usePreventRemove } from "expo-router/react-navigation";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -45,6 +44,7 @@ import {
   getProductStockQuantity,
   resolveProductStockRow,
 } from "@/lib/productStock";
+import { useInterceptedBackPrevention } from "@/lib/useInterceptedBackPrevention";
 import { atelierMotion } from "@/themes/atelier/motion";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -354,7 +354,7 @@ export function AtelierProductDetailScreen(): React.ReactElement {
   const reducedMotion = useReducedMotion();
   const { t } = useTranslation();
   const { translateProduct } = useContentTranslation();
-  const { products, loading } = useProductContext();
+  const { products, loading, ensureProduct } = useProductContext();
   const { user } = useAuthContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
   const { createAddToCart, add_to_carts, updateAddToCart } = useAddToCartContext();
@@ -365,6 +365,17 @@ export function AtelierProductDetailScreen(): React.ReactElement {
     () => (productId === null ? undefined : products.find((p) => p.id === productId)),
     [products, productId]
   );
+
+  /**
+   * Deep links / older SKUs may sit outside the P0 page — fetch that row on
+   * demand instead of waiting for a full-catalog hydrate.
+   */
+  useEffect(() => {
+    if (productId === null || product !== undefined || loading) {
+      return;
+    }
+    void ensureProduct(productId);
+  }, [productId, product, loading, ensureProduct]);
 
   const sortedMedias = useMemo(
     () => [...(product?.medias ?? [])].sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0)),
@@ -519,13 +530,8 @@ export function AtelierProductDetailScreen(): React.ReactElement {
 
   const shouldInterceptBack = returnTo === "home" || returnTo === "wishlist";
 
-  usePreventRemove(shouldInterceptBack, ({ data }) => {
-    const actionType = data.action.type;
-    if (actionType === "GO_BACK" || actionType === "POP") {
-      leaveBrowseProduct(router, returnTo);
-      return;
-    }
-    navigation.dispatch(data.action);
+  useInterceptedBackPrevention(shouldInterceptBack, () => {
+    leaveBrowseProduct(router, returnTo);
   });
 
   const onAddToCart = useCallback(async (): Promise<void> => {

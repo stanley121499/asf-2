@@ -15,6 +15,7 @@ import { useAlertContext } from "../AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
 import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
 
 /** Category row type with optional nested children (client-only). */
 export type Category = Database["public"]["Tables"]["categories"]["Row"] & { children?: Category[] };
@@ -50,6 +51,8 @@ export function CategoryProvider({ children }: Readonly<PropsWithChildren>): Rea
 
   /**
    * Fetch all active categories from Supabase.
+   * `select("*")` includes `range_id` (occupation parent) and `kind_key`
+   * (shared product-type slug for Storefront Home filter chips).
    */
   const fetchCategories = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -58,6 +61,7 @@ export function CategoryProvider({ children }: Readonly<PropsWithChildren>): Rea
         .from("categories")
         .select("*")
         .eq("active", true)
+        .is("deleted_at", null)
         .order("arrangement", { ascending: true });
 
       if (error) {
@@ -100,25 +104,23 @@ export function CategoryProvider({ children }: Readonly<PropsWithChildren>): Rea
   }, []);
 
   /**
-   * Initial fetch + realtime subscription.
+   * Initial fetch; Realtime deferred so cold start is not channel-bound.
    */
   useEffect(() => {
     void fetchCategories();
 
-    const subscription = supabase
-      .channel("categories")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "categories" },
-        (payload: RealtimePostgresChangesPayload<Category>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return scheduleDeferredRealtime(() =>
+      supabase
+        .channel("categories")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "categories" },
+          (payload: RealtimePostgresChangesPayload<Category>) => {
+            handleRealtimeChanges(payload);
+          }
+        )
+        .subscribe()
+    );
   }, [fetchCategories, handleRealtimeChanges]);
 
   /** Create a category */

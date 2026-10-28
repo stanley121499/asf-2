@@ -1,4 +1,3 @@
-import * as Location from "expo-location";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,13 +13,60 @@ import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useThemeTokens } from "@/context/ThemeContext";
-import {
-  getBackgroundLocationPermissionStatus,
-  openAppLocationSettings,
-  requestAlwaysLocationPermission,
-  syncNearbyBackgroundLocation,
-} from "@/lib/backgroundLocation";
+import { NEARBY_STOCK_ALERTS_ENABLED } from "@/lib/nearbyStockAlerts";
 import { supabase } from "@/lib/supabase";
+
+/** Permission status mirrored from `@/lib/backgroundLocation` (avoid eager import). */
+type NearbyLocationPermissionStatus =
+  | "granted"
+  | "denied"
+  | "undetermined"
+  | "unavailable";
+
+/**
+ * Minimal surface of `@/lib/backgroundLocation` loaded only when the nearby
+ * kill-switch is on — keeps TaskManager / expo-location off the settings path.
+ */
+type BackgroundLocationApi = {
+  getBackgroundLocationPermissionStatus: () => Promise<NearbyLocationPermissionStatus>;
+  openAppLocationSettings: () => Promise<void>;
+  requestAlwaysLocationPermission: () => Promise<
+    "granted" | "denied" | "unavailable"
+  >;
+  syncNearbyBackgroundLocation: (options: {
+    userId: string | null;
+    nearbyEnabled: boolean;
+    requestPermission: boolean;
+  }) => Promise<string>;
+};
+
+/**
+ * Lazily requires background location helpers. Call only when
+ * {@link NEARBY_STOCK_ALERTS_ENABLED} is true.
+ *
+ * @returns Typed background-location API, or null if the module is missing
+ */
+function loadBackgroundLocationApi(): BackgroundLocationApi | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional soft-fail require
+    const mod = require("@/lib/backgroundLocation") as BackgroundLocationApi;
+    if (
+      typeof mod.getBackgroundLocationPermissionStatus !== "function" ||
+      typeof mod.openAppLocationSettings !== "function" ||
+      typeof mod.requestAlwaysLocationPermission !== "function" ||
+      typeof mod.syncNearbyBackgroundLocation !== "function"
+    ) {
+      return null;
+    }
+    return mod;
+  } catch (err) {
+    console.warn(
+      "[prefs] backgroundLocation load soft-failed",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
 
 /** Local prefs shape mirrored from `notification_preferences`. */
 type PrefsState = {
@@ -34,7 +80,8 @@ const DEFAULT_PREFS: PrefsState = {
   orders_push: true,
   claims_push: true,
   promotions: true,
-  nearby_stock_push: true,
+  /** Seed off while the nearby feature kill-switch is the default. */
+  nearby_stock_push: false,
 };
 
 type PrefKey = keyof PrefsState;
@@ -53,14 +100,23 @@ export default function NotificationSettingsScreen(): React.ReactElement {
   const [savingKey, setSavingKey] = useState<PrefKey | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [locationStatus, setLocationStatus] = useState<
-    Location.PermissionStatus | "unavailable" | null
+    NearbyLocationPermissionStatus | null
   >(null);
 
   /**
    * Refreshes Always / background location permission for the Nearby section.
    */
   const refreshLocationStatus = useCallback(async (): Promise<void> => {
-    const status = await getBackgroundLocationPermissionStatus();
+    if (!NEARBY_STOCK_ALERTS_ENABLED) {
+      setLocationStatus("unavailable");
+      return;
+    }
+    const api = loadBackgroundLocationApi();
+    if (api === null) {
+      setLocationStatus("unavailable");
+      return;
+    }
+    const status = await api.getBackgroundLocationPermissionStatus();
     setLocationStatus(status);
   }, []);
 
@@ -123,7 +179,8 @@ export default function NotificationSettingsScreen(): React.ReactElement {
           orders_push: data.orders_push,
           claims_push: data.claims_push,
           promotions: data.promotions,
-          nearby_stock_push: data.nearby_stock_push !== false,
+          nearby_stock_push:
+            NEARBY_STOCK_ALERTS_ENABLED && data.nearby_stock_push === true,
         });
       }
 
@@ -161,14 +218,20 @@ export default function NotificationSettingsScreen(): React.ReactElement {
               text: t("notifications.locationPermissionContinue"),
               onPress: () => {
                 void (async () => {
-                  const permission = await requestAlwaysLocationPermission();
+                  const api = loadBackgroundLocationApi();
+                  if (api === null) {
+                    setError(t("notifications.locationPermissionDenied"));
+                    resolve();
+                    return;
+                  }
+                  const permission = await api.requestAlwaysLocationPermission();
                   if (permission !== "granted") {
                     setError(t("notifications.locationPermissionDenied"));
                     await refreshLocationStatus();
                     resolve();
                     return;
                   }
-                  await syncNearbyBackgroundLocation({
+                  await api.syncNearbyBackgroundLocation({
                     userId: uid,
                     nearbyEnabled: true,
                     requestPermission: false,
@@ -225,14 +288,20 @@ export default function NotificationSettingsScreen(): React.ReactElement {
       }
 
       if (key === "nearby_stock_push") {
+        if (!NEARBY_STOCK_ALERTS_ENABLED) {
+          return;
+        }
         if (nextValue) {
           await promptAndEnableNearbyLocation(uid);
         } else {
-          await syncNearbyBackgroundLocation({
-            userId: uid,
-            nearbyEnabled: false,
-            requestPermission: false,
-          });
+          const api = loadBackgroundLocationApi();
+          if (api !== null) {
+            await api.syncNearbyBackgroundLocation({
+              userId: uid,
+              nearbyEnabled: false,
+              requestPermission: false,
+            });
+          }
           await refreshLocationStatus();
         }
       }
@@ -284,18 +353,22 @@ export default function NotificationSettingsScreen(): React.ReactElement {
       title: t("notifications.prefPromotions"),
       description: t("notifications.prefPromotionsHint"),
     },
-    {
-      key: "nearby_stock_push",
-      title: t("notifications.prefNearbyStock"),
-      description: t("notifications.prefNearbyStockHint"),
-    },
+    ...(NEARBY_STOCK_ALERTS_ENABLED
+      ? [
+          {
+            key: "nearby_stock_push" as const,
+            title: t("notifications.prefNearbyStock"),
+            description: t("notifications.prefNearbyStockHint"),
+          },
+        ]
+      : []),
   ];
 
   const showLocationSettingsLink =
     prefs.nearby_stock_push &&
     locationStatus !== null &&
     locationStatus !== "unavailable" &&
-    locationStatus !== Location.PermissionStatus.GRANTED;
+    locationStatus !== "granted";
 
   return (
     <View style={{ flex: 1, backgroundColor: tokens.bg }}>
@@ -399,7 +472,10 @@ export default function NotificationSettingsScreen(): React.ReactElement {
         {showLocationSettingsLink ? (
           <TouchableOpacity
             onPress={() => {
-              void openAppLocationSettings();
+              const api = loadBackgroundLocationApi();
+              if (api !== null) {
+                void api.openAppLocationSettings();
+              }
             }}
             accessibilityRole="button"
             accessibilityLabel={t("notifications.locationOpenSettings")}

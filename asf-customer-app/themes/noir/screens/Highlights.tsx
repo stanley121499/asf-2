@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -19,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { CartButton } from "@/components/cart/CartButton";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { PostVideo } from "@/components/PostVideo";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
@@ -27,6 +27,7 @@ import { usePostContext } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import type { Tables } from "@/database.types";
+import { openLinkedProducts } from "@/lib/browseNavigation";
 import type { ThemeTokens } from "@/themes/types";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -179,7 +180,6 @@ function NightMediaFrame({
   const mediaUrl = firstMedia?.media_url ?? null;
   const isVideo = (firstMedia?.media_type ?? "image") === "video";
   const caption = translatePost(post.id, "caption", post.caption);
-  const ctaText = translatePost(post.id, "cta_text", post.cta_text);
 
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -249,6 +249,14 @@ function NightMediaFrame({
     }
   }, [isSaved, post.id]);
 
+  /** Home parity: open linked-products so post content-view awards can fire. */
+  const openPostLinkedProducts = (): void => {
+    openLinkedProducts(router, "post", post.id);
+  };
+
+  const mediaA11yLabel =
+    caption.length > 0 ? caption : t("post.featuredContent");
+
   return (
     <View
       style={{
@@ -259,8 +267,11 @@ function NightMediaFrame({
         paddingBottom: 14,
       }}
     >
-      {/* Media plate — edge-to-edge, no caption overlay */}
-      <View
+      {/* Media plate — tap → linked-products (Home parity / QC A3b) */}
+      <Pressable
+        onPress={openPostLinkedProducts}
+        accessibilityRole="button"
+        accessibilityLabel={mediaA11yLabel}
         style={{
           width: SCREEN_WIDTH,
           height: MEDIA_HEIGHT,
@@ -319,12 +330,10 @@ function NightMediaFrame({
             source={{ uri: mediaUrl }}
             style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
             contentFit="cover"
-            accessibilityLabel={
-              caption.length > 0 ? caption : t("post.featuredContent")
-            }
+            accessibilityLabel={mediaA11yLabel}
           />
         )}
-      </View>
+      </Pressable>
 
       {/* Secondary caption + sparse actions under the frame */}
       <View style={{ paddingHorizontal: 14, paddingTop: 12 }}>
@@ -421,28 +430,6 @@ function NightMediaFrame({
             </Text>
           </TouchableOpacity>
         </View>
-
-        {ctaText.length > 0 ? (
-          <Pressable
-            onPress={() => router.push("/(tabs)/browse")}
-            style={{ marginTop: 12, paddingVertical: 2 }}
-            accessibilityRole="button"
-            accessibilityLabel={ctaText}
-          >
-            <Text
-              style={{
-                color: tokens.accent,
-                fontSize: 12,
-                fontWeight: "600",
-                letterSpacing: 0.6,
-                textTransform: "uppercase",
-                fontFamily: "Inter_400Regular",
-              }}
-            >
-              {ctaText}
-            </Text>
-          </Pressable>
-        ) : null}
       </View>
 
       <CommentSheet
@@ -500,19 +487,8 @@ export function NoirHighlightsScreen(): React.ReactElement {
 
   const loading = postsLoading || mediaLoading;
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: tokens.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+  if (loading && featured.length === 0) {
+    return <PageLoadingSkeleton variant="highlights" />;
   }
 
   return (

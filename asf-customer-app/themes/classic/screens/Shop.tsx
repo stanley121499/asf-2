@@ -17,6 +17,7 @@ import { CartButton } from "@/components/cart/CartButton";
 import { ProductCard } from "@/components/ProductCard";
 import { ANCHORS, TourAnchor } from "@/components/guide";
 import { CeremonySection, GoldSweep } from "@/components/motion";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
@@ -40,24 +41,37 @@ type SortMode = "newest" | "price_asc" | "price_desc";
  */
 export function ClassicShopScreen(): React.ReactElement {
   const { categories, loading: catLoading } = useCategoryContext();
-  const { products, loading: prodLoading } = useProductContext();
+  const {
+    products,
+    loading: prodLoading,
+    hasMore,
+    loadingMore,
+    loadMoreProducts,
+  } = useProductContext();
 
   const loading = catLoading || prodLoading;
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
+  if (loading && products.length === 0) {
+    return <PageLoadingSkeleton variant="shop" />;
   }
 
-  return <BrowseCatalogBody categories={categories} products={products} />;
+  return (
+    <BrowseCatalogBody
+      categories={categories}
+      products={products}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      loadMoreProducts={loadMoreProducts}
+    />
+  );
 }
 
 type BrowseCatalogBodyProps = {
   categories: ReturnType<typeof useCategoryContext>["categories"];
   products: Product[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMoreProducts: () => Promise<void>;
 };
 
 /**
@@ -67,6 +81,9 @@ type BrowseCatalogBodyProps = {
 function BrowseCatalogBody({
   categories,
   products,
+  hasMore,
+  loadingMore,
+  loadMoreProducts,
 }: BrowseCatalogBodyProps): React.ReactElement {
   const router = useRouter();
   const { t } = useTranslation();
@@ -270,6 +287,23 @@ function BrowseCatalogBody({
             contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 12 }}
             showsVerticalScrollIndicator={false}
             style={{ flex: 1 }}
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={5}
+            removeClippedSubviews
+            onEndReached={() => {
+              if (hasMore && !loadingMore) {
+                void loadMoreProducts();
+              }
+            }}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                  <ActivityIndicator size="small" color={colors.accent} />
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <Text style={{ textAlign: "center", color: colors.muted, paddingVertical: 64, fontFamily: "Inter_400Regular" }}>
                 {t("catalog.emptyTitle")}

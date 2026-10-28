@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +12,7 @@ import { useTranslation } from "@/context/LocaleContext";
 import { useTheme } from "@/context/ThemeContext";
 import { openBrowseCatalog } from "@/lib/browseNavigation";
 import { hapticLight, hapticSelection } from "@/lib/haptics";
+import { logNavigateStart, markTapStart } from "@/lib/interactionLog";
 
 /** Fallback row height when the active pack omits `tabBar.minHeight`. */
 const DEFAULT_TAB_BAR_ROW_HEIGHT = 60;
@@ -33,15 +34,27 @@ interface TabPressEvent {
  * Builds tab `listeners` that fire a selection haptic only when the press moves
  * focus to a different tab. Re-pressing the already-focused tab stays silent so
  * users are not buzzed on every tap of their current tab.
+ *
+ * Haptic runs immediately; navigation stays on React Navigation's default path
+ * (no sync heavy work here) so the tab chrome can respond without waiting on us.
+ * Dev Metro `[tap]` / `[nav]` lines mark press → tab switch latency.
+ *
+ * @param tabName - Greppable tab id (`home`, `browse`, …)
  */
-function tabSwitchListeners({ navigation }: { navigation: TabPressNavigation }) {
-  return {
+function tabSwitchListeners(
+  tabName: string
+): (args: { navigation: TabPressNavigation }) => {
+  tabPress: () => void;
+} {
+  return ({ navigation }: { navigation: TabPressNavigation }) => ({
     tabPress: (): void => {
+      markTapStart(`tab:${tabName}`);
       if (!navigation.isFocused()) {
         void hapticSelection();
+        logNavigateStart(`tab:${tabName}`);
       }
     },
-  };
+  });
 }
 
 /**
@@ -55,12 +68,16 @@ const hiddenItemStyle = { display: "none" as const };
  * Bottom tabs: Home, Shop, Highlights, Stores, Profile.
  * Labels come from `t("nav.*")` so they flip with locale.
  *
+ * Guests may browse tabs (sign-in CTA lives on Profile / gated screens).
+ * Auth loading still blocks the first paint so a restored session does not
+ * briefly flash guest chrome before signed-in UI.
+ *
  * Tabs gated by feature flags:
  *   - highlights — hidden when `highlights` flag is off
  *   - locations  — hidden when `store_locations` flag is off
  */
 export default function TabsLayout(): React.ReactElement {
-  const { user, loading: authLoading } = useAuthContext();
+  const { loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const { t, locale } = useTranslation();
   const { pack, tokens } = useTheme();
@@ -77,7 +94,7 @@ export default function TabsLayout(): React.ReactElement {
    * step can never spotlight a hidden tab.
    *
    * Must run unconditionally before any early return so TabsLayout never
-   * changes hook order between auth-loading and authenticated renders.
+   * changes hook order between auth-loading and ready renders.
    */
   const visibleTabAnchorIds = useMemo((): AnchorId[] => {
     const ids: AnchorId[] = [ANCHORS.tabbar.home, ANCHORS.tabbar.shop, ANCHORS.tabbar.profile];
@@ -100,10 +117,6 @@ export default function TabsLayout(): React.ReactElement {
     );
   }
 
-  if (user === null) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
-
   const homeTitle = t("nav.home");
   const shopTitle = t("nav.shop");
   const highlightsTitle = t("nav.highlights");
@@ -116,6 +129,18 @@ export default function TabsLayout(): React.ReactElement {
         key={locale}
         screenOptions={{
           headerShown: false,
+          /**
+           * Mount a tab's scene only on first visit (RN default is already
+           * lazy, set explicitly so Shop/Profile cost is paid on first focus
+           * instead of at cold start).
+           */
+          lazy: true,
+          /**
+           * Freeze inactive tab scenes so catalog page appends / Home
+           * animations cannot steal the JS thread while another tab mounts
+           * or focuses — the main driver of 2–4s navigate→focus deltas.
+           */
+          freezeOnBlur: true,
           tabBarActiveTintColor: pack.tabBar.activeTintColor,
           tabBarInactiveTintColor: pack.tabBar.inactiveTintColor,
           tabBarLabelStyle: {
@@ -141,23 +166,36 @@ export default function TabsLayout(): React.ReactElement {
             title: homeTitle,
             tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={20} color={color} />,
           }}
-          listeners={tabSwitchListeners}
+          listeners={tabSwitchListeners("home")}
         />
 
-        {/* Shop — always visible; tab press always lands on catalog, not a leftover PDP */}
+        {/*
+          Shop — always visible. `popToTopOnBlur` clears leftover PDPs when
+          leaving the tab so the next focus lands on catalog without a
+          preventDefault + deferred navigate (which added 1–3s of lag via
+          `startTransition` under JS load). Re-tapping Shop while focused
+          still resets to catalog synchronously.
+        */}
         <Tabs.Screen
           name="browse"
           options={{
             title: shopTitle,
+            popToTopOnBlur: true,
             tabBarIcon: ({ color }) => <Ionicons name="bag-outline" size={20} color={color} />,
           }}
           listeners={({ navigation }: { navigation: TabPressNavigation }) => ({
             tabPress: (event: TabPressEvent): void => {
-              event.preventDefault();
-              // Switching into Shop is a tab change (selection tick); re-tapping the
-              // already-focused Shop tab is an intentional catalog reset (light tap).
+              markTapStart("tab:browse");
               void (navigation.isFocused() ? hapticLight() : hapticSelection());
-              openBrowseCatalog(router);
+              if (navigation.isFocused()) {
+                // Already on Shop (e.g. PDP) — reset to catalog now.
+                event.preventDefault();
+                openBrowseCatalog(router);
+                return;
+              }
+              // Unfocused: let React Navigation switch tabs immediately.
+              // Stack was already popped to catalog via popToTopOnBlur.
+              logNavigateStart("tab:browse");
             },
           })}
         />
@@ -173,7 +211,7 @@ export default function TabsLayout(): React.ReactElement {
                 }
               : { title: highlightsTitle, tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
           }
-          listeners={tabSwitchListeners}
+          listeners={tabSwitchListeners("highlights")}
         />
 
         {/* Stores — gated by `store_locations` feature flag */}
@@ -189,17 +227,22 @@ export default function TabsLayout(): React.ReactElement {
                 }
               : { title: locationsTitle, tabBarButton: hiddenButton, tabBarItemStyle: hiddenItemStyle }
           }
-          listeners={tabSwitchListeners}
+          listeners={tabSwitchListeners("locations")}
         />
 
-        {/* Profile — always visible */}
+        {/*
+          Profile — always visible. `popToTopOnBlur` clears leftover Design Lab /
+          notifications / nested hub screens when leaving the tab so the next
+          Profile tap lands on the hub (same pattern as Shop).
+        */}
         <Tabs.Screen
           name="profile"
           options={{
             title: profileTitle,
+            popToTopOnBlur: true,
             tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={20} color={color} />,
           }}
-          listeners={tabSwitchListeners}
+          listeners={tabSwitchListeners("profile")}
         />
       </Tabs>
 

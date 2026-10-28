@@ -14,6 +14,7 @@ import { useAlertContext } from "../AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
 import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
 
 /** Range row CRUD context with realtime sync. */
 type RangeRow = Database["public"]["Tables"]["ranges"]["Row"];
@@ -48,14 +49,16 @@ export function RangeProvider({ children }: PropsWithChildren): React.ReactEleme
 
   /**
    * Fetch all active ranges from Supabase.
+   * Includes `department_id` parent FK for Storefront Shop taxonomy (plan §3.2 / §5.2).
    */
   const fetchRanges = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("ranges")
-        .select("*")
+        .select("id, name, media_url, active, created_at, deleted_at, department_id")
         .eq("active", true)
+        .is("deleted_at", null)
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -94,25 +97,23 @@ export function RangeProvider({ children }: PropsWithChildren): React.ReactEleme
   }, []);
 
   /**
-   * Initial fetch + realtime subscription.
+   * Initial fetch; Realtime deferred past first paint.
    */
   useEffect(() => {
     void fetchRanges();
 
-    const subscription = supabase
-      .channel("ranges")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "ranges" },
-        (payload: RealtimePostgresChangesPayload<RangeRow>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return scheduleDeferredRealtime(() =>
+      supabase
+        .channel("ranges")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "ranges" },
+          (payload: RealtimePostgresChangesPayload<RangeRow>) => {
+            handleRealtimeChanges(payload);
+          }
+        )
+        .subscribe()
+    );
   }, [fetchRanges, handleRealtimeChanges]);
 
   /**

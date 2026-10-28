@@ -24,7 +24,10 @@ import { fonts } from "@/constants/theme";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
-import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
+import {
+  useWarrantyRegistrationContext,
+  useWarrantyRegistrationP2Focus,
+} from "@/context/WarrantyRegistrationContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import { formatDate } from "@/i18n/format";
 import { formatRm } from "@/lib/formatCurrency";
@@ -198,6 +201,9 @@ function CollectionDetailContent({
     useWarrantyRegistrationContext();
   const params = useLocalSearchParams<{ registrationId?: string | string[] }>();
   const { width } = useWindowDimensions();
+
+  useWarrantyRegistrationP2Focus("warranty_registration:detail");
+
   const [registration, setRegistration] =
     useState<RegistrationSummary | null>(null);
   const [voucher, setVoucher] =

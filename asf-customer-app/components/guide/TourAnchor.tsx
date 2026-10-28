@@ -126,17 +126,19 @@ export function useTourAnchor(id: AnchorId): {
   }, [activeStep, id, measure]);
 
   /**
-   * Re-measures whenever the screen this anchor lives on gains focus —
-   * the moment its window rect is guaranteed to reflect what's actually
-   * on screen (see the effect above for why `activeStep` alone can fire
-   * too early, while the tab is still hidden). Runs for every focus, not
-   * just tour-driven ones, which is harmless: it simply keeps this
-   * anchor's registered rect fresh for whenever a tour does target it.
+   * Re-measures when this screen gains focus *and* this anchor is the
+   * active spotlight target. Measuring every TourAnchor on every tab
+   * focus (with retries + settle re-check) was burning JS during the
+   * navigate→focus window; the `activeStep` effect above still covers
+   * same-screen step advances, and this focus path covers the
+   * cross-tab case where `activeStep` flips before the tab is visible.
    */
   useFocusEffect(
     useCallback(() => {
-      measure();
-    }, [measure]),
+      if (activeStep?.anchorId === id) {
+        measure();
+      }
+    }, [activeStep?.anchorId, id, measure]),
   );
 
   return { ref, onLayout };

@@ -9,7 +9,7 @@ import { ANCHORS, TourAnchor } from "@/components/guide";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
-import { usePointsMembership } from "@/context/PointsMembershipContext";
+import { useOptionalPointsMembership } from "@/context/PointsMembershipContext";
 import { useTheme, useThemeTokens } from "@/context/ThemeContext";
 import { getErrorTranslationKey } from "@/i18n/errorMap";
 import { supabase } from "@/lib/supabase";
@@ -59,11 +59,8 @@ export default function RewardsScreen(): React.ReactElement {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
-  const pointsAPI = usePointsMembership();
-
-  if (!isEnabled("rewards")) {
-    return <Redirect href="/(tabs)/profile" />;
-  }
+  const pointsAPI = useOptionalPointsMembership();
+  const rewardsAvailable = isEnabled("rewards") && pointsAPI !== null;
 
   const [userPoints, setUserPoints] = useState(0);
   const [stamps, setStamps] = useState<boolean[]>(createEmptyStamps);
@@ -71,13 +68,15 @@ export default function RewardsScreen(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      void pointsAPI.getUserPointsByUserId(user.id).then((r) => setUserPoints(r?.amount ?? 0));
+    const userId = user?.id;
+    if (!rewardsAvailable || userId === undefined || pointsAPI === null) {
+      return;
     }
-  }, [user, pointsAPI]);
+    void pointsAPI.getUserPointsByUserId(userId).then((r) => setUserPoints(r?.amount ?? 0));
+  }, [user?.id, pointsAPI, rewardsAvailable]);
 
   useEffect(() => {
-    if (authLoading || typeof user?.id !== "string") {
+    if (!rewardsAvailable || authLoading || typeof user?.id !== "string") {
       setStamps(createEmptyStamps());
       return;
     }
@@ -102,7 +101,7 @@ export default function RewardsScreen(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, authLoading, t]);
+  }, [user?.id, authLoading, t, rewardsAvailable]);
 
   const handleStampClick = useCallback(async (index: number) => {
     if (typeof user?.id !== "string" || stampsLoading || stamps[index]) return;
@@ -119,6 +118,10 @@ export default function RewardsScreen(): React.ReactElement {
       setError(t(getErrorTranslationKey(upErr.message)));
     }
   }, [stamps, stampsLoading, user?.id, t]);
+
+  if (!rewardsAvailable) {
+    return <Redirect href="/(tabs)/profile" />;
+  }
 
   const tierKey = resolveTier(userPoints);
   const tierName =

@@ -19,9 +19,13 @@ export default function BrowseStackLayout() {
         headerShown: false,
         animation: "slide_from_right",
         animationDuration: motion.duration.base,
+        /** Keep inactive PDPs from re-rendering under catalog page appends. */
+        freezeOnBlur: true,
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="linked-products" />
+      <Stack.Screen name="product-list" />
       <Stack.Screen name="[productId]" />
     </Stack>
   );

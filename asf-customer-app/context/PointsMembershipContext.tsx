@@ -355,6 +355,15 @@ export function usePointsMembership(): PointsMembershipAPI {
   return ctx
 }
 
+/**
+ * Returns points/membership API when inside {@link PointsMembershipProvider};
+ * otherwise `null`. Use on Profile hub (and similar) that mount whether or not
+ * the `rewards` feature flag Gate wrapped the provider in `RouteContextBundle`.
+ */
+export function useOptionalPointsMembership(): PointsMembershipAPI | null {
+  return useContext(PointsMembershipContext)
+}
+
 export default PointsMembershipContext
 
 

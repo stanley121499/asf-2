@@ -15,14 +15,9 @@ import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import type { Product } from "@/context/product/ProductContext";
+import { HOME_ASPECT } from "@/lib/homeLayout";
 import { hapticSelection } from "@/lib/haptics";
 import { motion, motionEasing } from "@/lib/motion";
-
-/**
- * Tall portrait ratio for Home drop moments — SNKRS/GOAT scale,
- * deliberately larger than Shop list thumbs or the retired 2-col grid cells.
- */
-const FEATURED_ASPECT = 3 / 4;
 
 export interface NoirFeaturedCardProps {
   product: Product;
@@ -113,8 +108,12 @@ function FeaturedHeart({
 }
 
 /**
- * Noir Home large product moment — full-bleed tall media with commerce meta.
- * Single-column SNKRS/GOAT energy; must not match Shop dense list cells.
+ * Noir large product moment — full-bleed tall 3:4 media with commerce meta.
+ *
+ * **Round 5 Home** uses this as the 1-col drop stream card (full content
+ * width minus page padding). Must not match Shop dense list cells.
+ * Pass {@link NoirFeaturedCardProps.guideHeart} only on the first stream card
+ * and optional {@link NoirFeaturedCardProps.indexLabel} ordinals (`01`…).
  */
 export function NoirFeaturedCard({
   product,
@@ -146,7 +145,7 @@ export function NoirFeaturedCard({
       <View
         style={{
           width: "100%",
-          aspectRatio: FEATURED_ASPECT,
+          aspectRatio: HOME_ASPECT.productCard,
           backgroundColor: tokens.panel,
           overflow: "hidden",
         }}

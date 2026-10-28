@@ -10,7 +10,7 @@ import {
 
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
-import { useClaimContext, type ClaimItem } from "@/context/ClaimContext";
+import { useClaimContext, useClaimP2Focus, type ClaimItem } from "@/context/ClaimContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { useThemeTokens } from "@/context/ThemeContext";
@@ -37,6 +37,8 @@ export default function ClaimDetailScreen(): React.ReactElement {
   const { user, loading: authLoading } = useAuthContext();
   const { isEnabled } = useFeatureFlags();
   const { claims, fetchClaimItems } = useClaimContext();
+
+  useClaimP2Focus("claims:detail");
 
   const [claimItems, setClaimItems] = useState<ClaimItem[]>([]);
   const [itemProductNames, setItemProductNames] = useState<Record<string, string>>({});

@@ -4,47 +4,128 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ANCHORS, TourAnchor, useGuide } from "@/components/guide";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import {
   hasAttemptedFirstLaunchTrigger,
   hasSeenFirstGuide,
   markFirstLaunchTriggerAttempted,
 } from "@/lib/appGuide";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
-import { useTranslation } from "@/context/LocaleContext";
+import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { usePostContext, type Post } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { useCategoryContext, type Category } from "@/context/product/CategoryContext";
 import type { Product } from "@/context/product/ProductContext";
 import { useProductContext } from "@/context/product/ProductContext";
 import { useWishlistContext } from "@/context/WishlistContext";
+import { useOptionalPromotionContext } from "@/context/PromotionContext";
+import type { Promotion } from "@/context/PromotionContext";
 import { colors } from "@/constants/theme";
 import { formatRm } from "@/lib/formatCurrency";
 import { openBrowseProduct } from "@/lib/browseNavigation";
-import { tenantBrand } from "@/lib/tenantBrand";
 import { motion } from "@/lib/motion";
 import {
+  HOME_ASPECT,
+  HOME_CLASSIC_OVERLAY_NAV_ROW_HEIGHT,
+  HOME_GRID_COLUMNS,
+  HOME_PRODUCT_GRID_CAP,
+  HOME_SPACE,
+  frame1CoverMediaHeight,
+  getHomeGridMetrics,
+  getHomeUsableHeight,
+} from "@/lib/homeLayout";
+import {
+  filterActivePromotions,
+  resolvePromotionDisplayTitle,
+} from "@/lib/promotions/activePromotions";
+import {
   HomeArrivalCeremony,
-  HomeBrandBeat,
   useHomeCeremony,
 } from "@/components/home/HomeArrivalCeremony";
-import { HomeOffersStrip } from "@/components/home/HomeOffersStrip";
+import {
+  HomeProductGrid,
+  HomeProductGridMediaFrame,
+} from "@/components/home/HomeProductGrid";
+import { HomePromoBannerStack } from "@/components/home/HomePromoBannerStack";
 import { CartButton } from "@/components/cart/CartButton";
 import { CeremonySection, PressableScale } from "@/components/motion";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 
-function productThumb(p: Product): string {
-  const first = p.medias[0];
+/**
+ * Cap for Classic Home new-products grid — Round 4 Home≠Shop.
+ * Prefer shared {@link HOME_PRODUCT_GRID_CAP}; headroom stays ≤14.
+ */
+const HOME_CLASSIC_ARRIVALS_CAP = HOME_PRODUCT_GRID_CAP;
+
+/**
+ * Cap for Classic Home journal posts — lead + grid (≥6 available; headroom 8).
+ */
+const HOME_CLASSIC_POSTS_CAP = 8;
+
+/**
+ * Classic in-flow top bar row height (search + bag), excluding safe-area top.
+ * Reuses the Round 1 overlay-nav token — same row height, now push-down chrome.
+ */
+const HOME_CLASSIC_INFLOW_HEADER_ROW_HEIGHT =
+  HOME_CLASSIC_OVERLAY_NAV_ROW_HEIGHT;
+
+/**
+ * In-flow Frame 1 commerce plate height (name + price + primary CTA + padding).
+ * Passed as `commerceChrome` to {@link frame1CoverMediaHeight}.
+ * Nav is subtracted via `inFlowHeaderHeight`, not here.
+ */
+const FRAME1_COMMERCE_RESERVE = 120;
+
+/**
+ * Thin Frame 1 promo cue reserve — only added when an active promo exists
+ * and the tall cover still leaves readable hero media.
+ */
+const FRAME1_PROMO_CUE_RESERVE = 36;
+
+/**
+ * Minimum Frame 1 hero media height before dropping the optional promo cue.
+ * Keeps the cover focal when commerce + cue would squash media.
+ */
+const FRAME1_HERO_MEDIA_MIN = 180;
+
+/** Horizontal padding for Home section shells / headers. */
+const HOME_HORIZONTAL_PADDING = 16;
+
+/**
+ * Returns the first product media URL, or an empty string when none.
+ *
+ * @param product - Catalog product with medias array.
+ */
+function productThumb(product: Product): string {
+  const first = product.medias[0];
   return typeof first?.media_url === "string" ? first.media_url : "";
+}
+
+/**
+ * Picks Frame 1 primary product: newest with media, else newest overall.
+ * Never returns a half-empty broken frame — caller may still show a calm placeholder.
+ *
+ * @param sortedNewestFirst - Products sorted by `created_at` descending.
+ */
+function pickFrame1Product(sortedNewestFirst: readonly Product[]): Product | null {
+  if (sortedNewestFirst.length === 0) {
+    return null;
+  }
+  for (const product of sortedNewestFirst) {
+    if (productThumb(product).length > 0) {
+      return product;
+    }
+  }
+  return sortedNewestFirst[0] ?? null;
 }
 
 interface SaveHeartButtonProps {
@@ -90,17 +171,17 @@ function SaveHeartButton({
 }
 
 /**
- * Classic Home skin — boutique landing (Tier A).
- * 1. Transparent top navbar (tenant brand + search + header bag)
- * 2. Session arrival ceremony (once per JS process)
- * 3. Hero (~42% viewport) — post image, shop-primary CTA + secondary Highlights
- * 4. Offers strip — all active promotions (flag-gated)
- * 5. New arrivals — horizontal scroll row (~2.2 cards peek)
- * 6. Categories — horizontal scroll of pill buttons with border
- * 7. Posts strip (if posts exist)
+ * Classic Home skin — boutique landing (Tier A), Round 4 cover + editorial body.
+ *
+ * Round 2 tidy grammar kept: no peek, no MODEL MATCH wordmark, fixed promo
+ * banners, push-down commerce (no stacked scrims), Home≠Shop cap.
+ *
+ * Round 4: Frame 1 = tall full-usable cover via {@link frame1CoverMediaHeight}
+ * (not R3 {@link getHomeAboveFoldBudget} packing). Below fold = stacked
+ * promos → 2-col product grid → journal lead + grid → quiet wrap chips.
+ * Products/posts no longer use {@link HomeSnapSection}.
  */
 export function ClassicHomeScreen(): React.ReactElement {
-  const { translatePost } = useContentTranslation();
   const { products, loading: productsLoading } = useProductContext();
   const { categories, loading: categoriesLoading } = useCategoryContext();
   const { posts } = usePostContext();
@@ -108,6 +189,19 @@ export function ClassicHomeScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const { startTour } = useGuide();
   const promotionsEnabled = isEnabled("promotions");
+  const promoCtx = useOptionalPromotionContext();
+  const insets = useSafeAreaInsets();
+
+  const activePromotions = useMemo((): Promotion[] => {
+    if (promoCtx === null) {
+      return [];
+    }
+    return filterActivePromotions(promoCtx.promotions);
+  }, [promoCtx]);
+
+  const activePromoCount = activePromotions.length;
+  const frame1Promo =
+    activePromoCount > 0 ? (activePromotions[0] ?? null) : null;
 
   /**
    * Triggers the first-launch App Guide once the home arrival ceremony has
@@ -129,8 +223,6 @@ export function ClassicHomeScreen(): React.ReactElement {
     })();
   }, [startTour]);
 
-  const [scrollY, setScrollY] = useState(0);
-
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => {
       const da = new Date(a.created_at ?? 0).getTime();
@@ -141,9 +233,15 @@ export function ClassicHomeScreen(): React.ReactElement {
 
   const sortedCategories = useMemo(() => {
     return [...categories].sort((a, b) => {
-      if (a.arrangement !== null && b.arrangement !== null) return a.arrangement - b.arrangement;
-      if (a.arrangement !== null) return -1;
-      if (b.arrangement !== null) return 1;
+      if (a.arrangement !== null && b.arrangement !== null) {
+        return a.arrangement - b.arrangement;
+      }
+      if (a.arrangement !== null) {
+        return -1;
+      }
+      if (b.arrangement !== null) {
+        return 1;
+      }
       return (a.name ?? "").localeCompare(b.name ?? "");
     });
   }, [categories]);
@@ -161,39 +259,70 @@ export function ClassicHomeScreen(): React.ReactElement {
   const sortedPosts = useMemo(() => {
     return [...posts]
       .filter((p) => p.id.length > 0)
-      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.created_at ?? 0).getTime() -
+          new Date(a.created_at ?? 0).getTime()
+      );
   }, [posts]);
 
-  const firstPost = sortedPosts.length > 0 ? sortedPosts[0] : null;
-  const heroImage = firstPost !== null ? postMediaMap.get(firstPost.id) ?? null : null;
+  const frame1Product = useMemo(
+    () => pickFrame1Product(sortedProducts),
+    [sortedProducts]
+  );
 
   const isLoading = productsLoading || categoriesLoading;
 
   const windowWidth = Dimensions.get("window").width;
-  const HERO_HEIGHT = Dimensions.get("window").height * 0.42;
-  const ARRIVAL_CARD_WIDTH = windowWidth * 0.44;
-  const brandTagline =
-    typeof tenantBrand.tagline === "string" && tenantBrand.tagline.length > 0
-      ? tenantBrand.tagline
-      : null;
+  const windowHeight = Dimensions.get("window").height;
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
+  const usableHeight = getHomeUsableHeight({
+    windowHeight,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+    inFlowHeaderHeight: HOME_CLASSIC_INFLOW_HEADER_ROW_HEIGHT,
+  });
+
+  const hasOffers = promotionsEnabled && activePromoCount > 0;
+  const hasPromoCue = frame1Promo !== null;
+
+  const gridMetrics = useMemo(
+    () =>
+      getHomeGridMetrics({
+        windowWidth,
+        horizontalPadding: HOME_HORIZONTAL_PADDING,
+        gap: HOME_SPACE.sm,
+        columns: HOME_GRID_COLUMNS,
+      }),
+    [windowWidth]
+  );
+
+  /**
+   * Prefer full commerce + optional promo cue when the tall cover still leaves
+   * readable hero media. Drop the cue only if it would squash the focal point.
+   */
+  const chromeWithCue =
+    FRAME1_COMMERCE_RESERVE + FRAME1_PROMO_CUE_RESERVE;
+  const heroWithFullChrome = frame1CoverMediaHeight(
+    usableHeight,
+    chromeWithCue
+  );
+  const showFrame1PromoCue =
+    hasPromoCue && heroWithFullChrome >= FRAME1_HERO_MEDIA_MIN;
+  const chromeBudget =
+    FRAME1_COMMERCE_RESERVE +
+    (showFrame1PromoCue ? FRAME1_PROMO_CUE_RESERVE : 0);
+  const heroHeight = frame1CoverMediaHeight(usableHeight, chromeBudget);
+
+  if (isLoading && products.length === 0) {
+    return <PageLoadingSkeleton variant="home" />;
   }
 
-  const heroCaption =
-    firstPost !== null
-      ? translatePost(firstPost.id, "caption", firstPost.caption)
-      : "";
-
-  const hasOffers = promotionsEnabled;
   const hasCategories = sortedCategories.length > 0;
   const hasPosts = sortedPosts.length > 0;
+  const hasArrivals = sortedProducts.length > 0;
 
+  // Ceremony indices stay coherent as optional sections appear / disappear.
   let sectionIndex = 0;
   const heroIndex = sectionIndex;
   sectionIndex += 1;
@@ -201,14 +330,16 @@ export function ClassicHomeScreen(): React.ReactElement {
   if (hasOffers) {
     sectionIndex += 1;
   }
-  const arrivalsIndex = sectionIndex;
-  sectionIndex += 1;
-  const categoriesIndex = hasCategories ? sectionIndex : null;
-  if (hasCategories) {
+  const arrivalsIndex = hasArrivals ? sectionIndex : null;
+  if (hasArrivals) {
     sectionIndex += 1;
   }
   const postsIndex = hasPosts ? sectionIndex : null;
   if (hasPosts) {
+    sectionIndex += 1;
+  }
+  const categoriesIndex = hasCategories ? sectionIndex : null;
+  if (hasCategories) {
     sectionIndex += 1;
   }
   const lastContentIndex = Math.max(0, sectionIndex - 1);
@@ -221,18 +352,17 @@ export function ClassicHomeScreen(): React.ReactElement {
         onFinish={handleCeremonyFinish}
       >
         <HomeCeremonyBody
-          scrollY={scrollY}
-          setScrollY={setScrollY}
-          heroHeight={HERO_HEIGHT}
-          arrivalCardWidth={ARRIVAL_CARD_WIDTH}
-          brandTagline={brandTagline}
-          heroImage={heroImage}
-          heroCaption={heroCaption}
+          usableHeight={usableHeight}
+          heroHeight={heroHeight}
+          showFrame1PromoCue={showFrame1PromoCue}
+          gridMetrics={gridMetrics}
+          frame1Product={frame1Product}
+          frame1Promo={frame1Promo}
           heroIndex={heroIndex}
           offersIndex={offersIndex}
           arrivalsIndex={arrivalsIndex}
-          categoriesIndex={categoriesIndex}
           postsIndex={postsIndex}
+          categoriesIndex={categoriesIndex}
           sortedProducts={sortedProducts}
           sortedCategories={sortedCategories}
           sortedPosts={sortedPosts}
@@ -244,18 +374,24 @@ export function ClassicHomeScreen(): React.ReactElement {
 }
 
 type HomeCeremonyBodyProps = {
-  scrollY: number;
-  setScrollY: React.Dispatch<React.SetStateAction<number>>;
+  /**
+   * Usable Home height below the in-flow bar — Round 4 cover driver
+   * ({@link getHomeUsableHeight}).
+   */
+  usableHeight: number;
+  /** Initial Frame 1 media height from token commerce chrome reserves. */
   heroHeight: number;
-  arrivalCardWidth: number;
-  brandTagline: string | null;
-  heroImage: string | null;
-  heroCaption: string;
+  /** Whether to render the thin Frame 1 promo cue (media-gated). */
+  showFrame1PromoCue: boolean;
+  /** Round 4 2-col grid metrics for products + journal rest. */
+  gridMetrics: ReturnType<typeof getHomeGridMetrics>;
+  frame1Product: Product | null;
+  frame1Promo: Promotion | null;
   heroIndex: number;
   offersIndex: number | null;
-  arrivalsIndex: number;
-  categoriesIndex: number | null;
+  arrivalsIndex: number | null;
   postsIndex: number | null;
+  categoriesIndex: number | null;
   sortedProducts: Product[];
   sortedCategories: Category[];
   sortedPosts: Post[];
@@ -266,18 +402,17 @@ type HomeCeremonyBodyProps = {
  * Home content under {@link HomeArrivalCeremony} — uses ceremony context for stagger.
  */
 function HomeCeremonyBody({
-  scrollY,
-  setScrollY,
+  usableHeight,
   heroHeight,
-  arrivalCardWidth,
-  brandTagline,
-  heroImage,
-  heroCaption,
+  showFrame1PromoCue,
+  gridMetrics,
+  frame1Product,
+  frame1Promo,
   heroIndex,
   offersIndex,
   arrivalsIndex,
-  categoriesIndex,
   postsIndex,
+  categoriesIndex,
   sortedProducts,
   sortedCategories,
   sortedPosts,
@@ -285,68 +420,120 @@ function HomeCeremonyBody({
 }: HomeCeremonyBodyProps): React.ReactElement {
   const router = useRouter();
   const { t } = useTranslation();
+  const { locale } = useLocale();
   const { translateCategory, translateProduct, translatePost } =
     useContentTranslation();
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
+  const { isInWishlist, addToWishlist, removeFromWishlist } =
+    useWishlistContext();
   const { play, contentBaseDelayMs } = useHomeCeremony();
 
-  const navbarIsSolid = scrollY > 10;
-  const navbarBg = navbarIsSolid ? colors.bg : "transparent";
-  const navbarTextColor = navbarIsSolid ? colors.text : "#FFFFFF";
+  const [commerceHeight, setCommerceHeight] = useState(0);
+
+  const frame1Thumb =
+    frame1Product !== null ? productThumb(frame1Product) : "";
+  const frame1Name =
+    frame1Product !== null
+      ? translateProduct(
+          frame1Product.id,
+          "name",
+          frame1Product.name ?? null
+        )
+      : "";
+  const promoCueTitle =
+    frame1Promo !== null
+      ? resolvePromotionDisplayTitle(frame1Promo, locale)
+      : "";
+
+  const arrivalProducts = useMemo(
+    () => sortedProducts.slice(0, HOME_CLASSIC_ARRIVALS_CAP),
+    [sortedProducts]
+  );
+
+  const latestPosts = useMemo(
+    () => sortedPosts.slice(0, HOME_CLASSIC_POSTS_CAP),
+    [sortedPosts]
+  );
+
+  /**
+   * Journal split: one full-width lead when ≥1 post; remaining posts in the
+   * 2-col grid. Single post → lead only (no empty grid).
+   */
+  const leadPost = latestPosts.length > 0 ? (latestPosts[0] ?? null) : null;
+  const journalGridPosts = useMemo(
+    () => (latestPosts.length > 1 ? latestPosts.slice(1) : []),
+    [latestPosts]
+  );
+
+  const openFrame1Product = (): void => {
+    if (frame1Product !== null) {
+      openBrowseProduct(router, frame1Product.id, { returnTo: "home" });
+      return;
+    }
+    router.push("/(tabs)/browse");
+  };
+
+  /**
+   * Prefer measured commerce plate height so Frame 1 cover ≈ full usable
+   * (media = usable − commerce). Fall back to token heroHeight before first layout.
+   */
+  const mediaHeight =
+    commerceHeight > 0
+      ? frame1CoverMediaHeight(usableHeight, commerceHeight)
+      : heroHeight;
+
+  const leadUri =
+    leadPost !== null ? (postMediaMap.get(leadPost.id) ?? "") : "";
+  const leadCaption =
+    leadPost !== null
+      ? translatePost(leadPost.id, "caption", leadPost.caption)
+      : "";
 
   return (
     <>
-      {/* ── Fixed top navbar (brand beat participates in ceremony) ── */}
+      {/* ── In-flow top bar: search + bag only (no MODEL MATCH wordmark) ── */}
       <SafeAreaView
         edges={["top"]}
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 40,
-          backgroundColor: navbarBg,
-          borderBottomWidth: scrollY > 10 ? 1 : 0,
+          backgroundColor: colors.bg,
+          borderBottomWidth: 1,
           borderBottomColor: colors.border,
         }}
       >
-        {!navbarIsSolid && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.42)",
-            }}
-          />
-        )}
         <View
           style={{
-            height: 56,
+            height: HOME_CLASSIC_INFLOW_HEADER_ROW_HEIGHT,
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 16,
+            justifyContent: "flex-end",
+            paddingHorizontal: HOME_HORIZONTAL_PADDING,
           }}
         >
-          <HomeBrandBeat color={navbarTextColor} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <TourAnchor id={ANCHORS.home.search}>
               <PressableScale
                 haptic="light"
-                style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+                style={{
+                  width: 44,
+                  height: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
                 onPress={() => router.push("/(tabs)/browse")}
                 accessibilityRole="button"
                 accessibilityLabel={t("nav.openSearch")}
               >
-                <Ionicons name="search-outline" size={22} color={navbarTextColor} />
+                <Ionicons
+                  name="search-outline"
+                  size={22}
+                  color={colors.text}
+                />
               </PressableScale>
             </TourAnchor>
             <TourAnchor id={ANCHORS.home.bag}>
-              <CartButton color={navbarTextColor} accessibilityLabel={t("nav.openCart")} />
+              <CartButton
+                color={colors.text}
+                accessibilityLabel={t("nav.openCart")}
+              />
             </TourAnchor>
           </View>
         </View>
@@ -355,11 +542,9 @@ function HomeCeremonyBody({
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
-        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── 1. Hero — bold scale settle + fade/up (day-to-day amplify) ── */}
+        {/* ── Frame 1 — tall full-usable cover (no stacked scrims) ── */}
         <CeremonySection
           index={heroIndex}
           play={play}
@@ -367,267 +552,263 @@ function HomeCeremonyBody({
           durationMs={motion.duration.dailyEntrance}
           scaleFrom={motion.scale.heroStartBold}
         >
-          <Pressable
-            onPress={() => router.push("/(tabs)/browse")}
-            style={{ width: "100%", height: heroHeight }}
-            accessibilityLabel={t("home.heroAlt")}
-          >
-            {heroImage !== null && heroImage.length > 0 ? (
-              <Image
-                source={{ uri: heroImage }}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: "100%",
-                  height: "100%",
-                }}
-                contentFit="cover"
-              />
-            ) : (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "#111",
-                }}
-              />
-            )}
+          <View>
+            <Pressable
+              onPress={openFrame1Product}
+              style={{ width: "100%", height: mediaHeight }}
+              accessibilityLabel={t("home.productHeroAlt")}
+            >
+              {frame1Thumb.length > 0 ? (
+                <Image
+                  source={{ uri: frame1Thumb }}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: colors.panel,
+                  }}
+                />
+              )}
+            </Pressable>
 
+            {/* Push-down commerce plate — below media, no scrims. */}
             <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 120,
-                backgroundColor: "rgba(0,0,0,0.34)",
+              onLayout={(event) => {
+                const next = Math.round(event.nativeEvent.layout.height);
+                if (next > 0 && next !== commerceHeight) {
+                  setCommerceHeight(next);
+                }
               }}
-              pointerEvents="none"
-            />
-            <View
               style={{
-                position: "absolute",
-                top: 72,
-                left: 0,
-                right: 0,
-                height: 96,
-                backgroundColor: "rgba(0,0,0,0.14)",
-              }}
-              pointerEvents="none"
-            />
-
-            <View
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "60%",
-                backgroundColor: "rgba(0,0,0,0.34)",
-                justifyContent: "flex-end",
-                padding: 24,
+                paddingHorizontal: HOME_HORIZONTAL_PADDING,
+                paddingTop: HOME_SPACE.md,
+                paddingBottom: HOME_SPACE.sm,
+                backgroundColor: colors.bg,
               }}
             >
-              <View
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  top: -72,
-                  left: 0,
-                  right: 0,
-                  height: 96,
-                  backgroundColor: "rgba(0,0,0,0.18)",
-                }}
-              />
-              <View
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: "rgba(0,0,0,0.18)",
-                }}
-              />
-              {brandTagline !== null && (
-                <Text
+              {showFrame1PromoCue &&
+              frame1Promo !== null &&
+              promoCueTitle.length > 0 ? (
+                <Pressable
+                  onPress={() => router.push("/(tabs)/browse")}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("home.frame1PromoCueAria", {
+                    name: promoCueTitle,
+                  })}
                   style={{
-                    fontFamily: "Inter_400Regular",
-                    color: "rgba(255,255,255,0.85)",
-                    fontSize: 13,
-                    letterSpacing: 1,
-                    marginBottom: 8,
+                    marginBottom: HOME_SPACE.sm,
+                    paddingVertical: HOME_SPACE.xs,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
                   }}
-                  numberOfLines={1}
                 >
-                  {brandTagline}
-                </Text>
-              )}
-              {heroCaption.length > 0 && (
+                  <Text
+                    style={{
+                      fontFamily: "Inter_400Regular",
+                      fontSize: 12,
+                      color: colors.accent,
+                      letterSpacing: 0.4,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {t("home.frame1PromoCue", { name: promoCueTitle })}
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              {frame1Name.length > 0 ? (
                 <Text
                   style={{
                     fontFamily: "PlayfairDisplay_400Regular",
-                    color: "#FFFFFF",
-                    fontSize: 18,
-                    marginBottom: 16,
-                    lineHeight: 26,
+                    color: colors.text,
+                    fontSize: 22,
+                    lineHeight: 28,
+                    marginBottom: HOME_SPACE.xs,
                   }}
                   numberOfLines={2}
                 >
-                  {heroCaption}
+                  {frame1Name}
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: "PlayfairDisplay_400Regular",
+                    color: colors.text,
+                    fontSize: 22,
+                    lineHeight: 28,
+                    marginBottom: HOME_SPACE.xs,
+                  }}
+                  numberOfLines={1}
+                >
+                  {t("home.newArrivals")}
                 </Text>
               )}
-              <View
+
+              {frame1Product !== null ? (
+                <Text
+                  style={{
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 15,
+                    color: colors.accent,
+                    fontWeight: "500",
+                    marginBottom: HOME_SPACE.md,
+                  }}
+                >
+                  {formatRm(frame1Product.price)}
+                </Text>
+              ) : (
+                <View style={{ height: HOME_SPACE.md }} />
+              )}
+
+              <PressableScale
+                haptic="medium"
+                onPress={openFrame1Product}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  frame1Product !== null
+                    ? t("home.heroCtaViewProduct")
+                    : t("home.heroCtaShop")
+                }
                 style={{
-                  flexDirection: "row",
-                  gap: 12,
-                  flexWrap: "wrap",
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 22,
+                  height: 44,
+                  borderRadius: 99,
+                  backgroundColor: colors.accent,
                   alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <PressableScale
-                  haptic="medium"
-                  onPress={() => {
-                    router.push("/(tabs)/browse");
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("home.heroCtaShop")}
+                <Text
                   style={{
-                    paddingHorizontal: 22,
-                    height: 44,
-                    borderRadius: 99,
-                    backgroundColor: colors.accent,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    color: "#FFFFFF",
+                    fontSize: 14,
+                    fontWeight: "600",
+                    fontFamily: "Inter_400Regular",
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "#FFFFFF",
-                      fontSize: 14,
-                      fontWeight: "600",
-                      fontFamily: "Inter_400Regular",
-                    }}
-                  >
-                    {t("home.heroCtaShop")}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  haptic="light"
-                  onPress={() => router.push("/(tabs)/profile/highlights")}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("home.heroCtaHighlights")}
-                  style={{
-                    paddingHorizontal: 16,
-                    height: 40,
-                    borderRadius: 99,
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.55)",
-                    backgroundColor: "transparent",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "rgba(255,255,255,0.9)",
-                      fontSize: 13,
-                      fontWeight: "500",
-                      fontFamily: "Inter_400Regular",
-                    }}
-                  >
-                    {t("home.heroCtaHighlights")}
-                  </Text>
-                </PressableScale>
-              </View>
+                  {frame1Product !== null
+                    ? t("home.heroCtaViewProduct")
+                    : t("home.heroCtaShop")}
+                </Text>
+              </PressableScale>
             </View>
-          </Pressable>
+          </View>
         </CeremonySection>
 
-        {/* ── Offers strip ── */}
+        {/* ── Offers — stacked fixed banners (below fold) ── */}
         {offersIndex !== null ? (
           <CeremonySection
             index={offersIndex}
             play={play}
             baseDelayMs={contentBaseDelayMs}
           >
-            <HomeOffersStrip />
+            <HomePromoBannerStack
+              subtitle={t("home.offersSubline")}
+              contentPaddingHorizontal={HOME_HORIZONTAL_PADDING}
+              style={{ marginTop: HOME_SPACE.md }}
+            />
           </CeremonySection>
         ) : null}
 
-        {/* ── New arrivals ── */}
-        <CeremonySection
-          index={arrivalsIndex}
-          play={play}
-          baseDelayMs={contentBaseDelayMs}
-        >
-          <View style={{ marginTop: 32 }}>
+        {/* ── The edit — vertical 2-col product grid (no snap) ── */}
+        {arrivalsIndex !== null ? (
+          <CeremonySection
+            index={arrivalsIndex}
+            play={play}
+            baseDelayMs={contentBaseDelayMs}
+          >
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 24,
-                paddingHorizontal: 16,
+                marginTop: HOME_SPACE.md,
+                paddingHorizontal: HOME_HORIZONTAL_PADDING,
               }}
             >
-              <Text
+              <View
                 style={{
-                  fontFamily: "PlayfairDisplay_400Regular",
-                  fontSize: 24,
-                  color: colors.text,
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  marginBottom: HOME_SPACE.md,
                 }}
               >
-                {t("home.newArrivals")}
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-              <Pressable onPress={() => router.push("/(tabs)/browse")} hitSlop={8}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: colors.accent,
-                    fontFamily: "Inter_400Regular",
-                  }}
+                <View style={{ flex: 1, paddingRight: HOME_SPACE.sm }}>
+                  <Text
+                    style={{
+                      fontFamily: "PlayfairDisplay_400Regular",
+                      fontSize: 24,
+                      color: colors.text,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {t("home.newArrivals")}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Inter_400Regular",
+                      fontSize: 12,
+                      color: colors.muted,
+                      marginTop: HOME_SPACE.xs,
+                      lineHeight: 16,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {t("home.arrivalsSubline")}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/browse")}
+                  hitSlop={8}
+                  style={{ paddingTop: 4 }}
                 >
-                  {t("home.seeAllArrivals")}
-                </Text>
-              </Pressable>
-            </View>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: colors.accent,
+                      fontFamily: "Inter_400Regular",
+                    }}
+                  >
+                    {t("home.seeAllArrivals")}
+                  </Text>
+                </Pressable>
+              </View>
 
-            {sortedProducts.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-              >
-                {sortedProducts.slice(0, 10).map((product, productIndex) => {
+              <HomeProductGrid
+                items={arrivalProducts}
+                metrics={gridMetrics}
+                keyExtractor={(product) => product.id}
+                renderItem={(product, index, cardWidth) => {
                   const thumb = productThumb(product);
                   const saved = isInWishlist(product.id);
                   return (
                     <Pressable
-                      key={product.id}
-                      style={{ width: arrivalCardWidth }}
+                      style={{ width: cardWidth }}
                       onPress={() =>
-                        openBrowseProduct(router, product.id, { returnTo: "home" })
+                        openBrowseProduct(router, product.id, {
+                          returnTo: "home",
+                        })
                       }
                     >
-                      <View
-                        style={{
-                          aspectRatio: 3 / 4,
-                          backgroundColor: colors.panel,
-                          overflow: "hidden",
-                          marginBottom: 8,
-                          width: "100%",
-                        }}
+                      <HomeProductGridMediaFrame
+                        width={cardWidth}
+                        backgroundColor={colors.panel}
                       >
                         {thumb.length > 0 ? (
                           <Image
@@ -637,9 +818,11 @@ function HomeCeremonyBody({
                             accessibilityLabel={t("home.productAlt")}
                           />
                         ) : (
-                          <View style={{ flex: 1, backgroundColor: colors.panel }} />
+                          <View
+                            style={{ flex: 1, backgroundColor: colors.panel }}
+                          />
                         )}
-                      </View>
+                      </HomeProductGridMediaFrame>
                       <Text
                         style={{
                           fontSize: 13,
@@ -649,7 +832,11 @@ function HomeCeremonyBody({
                         }}
                         numberOfLines={1}
                       >
-                        {translateProduct(product.id, "name", product.name ?? null)}
+                        {translateProduct(
+                          product.id,
+                          "name",
+                          product.name ?? null
+                        )}
                       </Text>
                       <View
                         style={{
@@ -669,7 +856,7 @@ function HomeCeremonyBody({
                           {formatRm(product.price)}
                         </Text>
                         <SaveHeartButton
-                          isFirstCard={productIndex === 0}
+                          isFirstCard={index === 0}
                           saved={saved}
                           onPress={() => {
                             void (saved
@@ -677,156 +864,229 @@ function HomeCeremonyBody({
                               : addToWishlist(product.id));
                           }}
                           accessibilityLabel={
-                            saved ? t("home.cardUnsaveAria") : t("home.cardSaveAria")
+                            saved
+                              ? t("home.cardUnsaveAria")
+                              : t("home.cardSaveAria")
                           }
                         />
                       </View>
                     </Pressable>
                   );
-                })}
-              </ScrollView>
-            ) : (
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: colors.muted,
-                  paddingVertical: 32,
-                  paddingHorizontal: 16,
-                  fontFamily: "Inter_400Regular",
                 }}
-              >
-                {t("home.emptyProducts")}
-              </Text>
-            )}
-          </View>
-        </CeremonySection>
+              />
+            </View>
+          </CeremonySection>
+        ) : null}
 
-        {/* ── Categories ── */}
+        {/* ── Journal — full-width lead + 2-col grid (no snap) ── */}
+        {postsIndex !== null && leadPost !== null ? (
+          <CeremonySection
+            index={postsIndex}
+            play={play}
+            baseDelayMs={contentBaseDelayMs}
+          >
+            <View
+              style={{
+                marginTop: HOME_SPACE.md,
+                paddingHorizontal: HOME_HORIZONTAL_PADDING,
+              }}
+            >
+              <View style={{ marginBottom: HOME_SPACE.md }}>
+                <Text
+                  style={{
+                    fontFamily: "PlayfairDisplay_400Regular",
+                    fontSize: 24,
+                    color: colors.text,
+                  }}
+                  numberOfLines={1}
+                >
+                  {t("home.latestPosts")}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 12,
+                    color: colors.muted,
+                    marginTop: HOME_SPACE.xs,
+                    lineHeight: 16,
+                  }}
+                  numberOfLines={1}
+                >
+                  {t("home.postsSubline")}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={() => router.push("/(tabs)/profile/highlights")}
+                style={{
+                  width: "100%",
+                  aspectRatio: HOME_ASPECT.productCard,
+                  backgroundColor: colors.panel,
+                  overflow: "hidden",
+                  marginBottom:
+                    journalGridPosts.length > 0 ? HOME_SPACE.sm : 0,
+                }}
+                accessibilityLabel={t("home.postAlt")}
+              >
+                {leadUri.length > 0 ? (
+                  <Image
+                    source={{ uri: leadUri }}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="cover"
+                  />
+                ) : null}
+                {leadCaption.length > 0 ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "rgba(0,0,0,0.45)",
+                      padding: HOME_SPACE.sm,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#FFFFFF",
+                        fontSize: 13,
+                        fontFamily: "Inter_400Regular",
+                      }}
+                      numberOfLines={2}
+                    >
+                      {leadCaption}
+                    </Text>
+                  </View>
+                ) : null}
+              </Pressable>
+
+              {journalGridPosts.length > 0 ? (
+                <HomeProductGrid
+                  items={journalGridPosts}
+                  metrics={gridMetrics}
+                  keyExtractor={(post) => post.id}
+                  renderItem={(post, _index, cardWidth) => {
+                    const uri = postMediaMap.get(post.id) ?? "";
+                    const caption = translatePost(
+                      post.id,
+                      "caption",
+                      post.caption
+                    );
+                    return (
+                      <Pressable
+                        onPress={() =>
+                          router.push("/(tabs)/profile/highlights")
+                        }
+                        style={{ width: cardWidth }}
+                        accessibilityLabel={t("home.postAlt")}
+                      >
+                        <HomeProductGridMediaFrame
+                          width={cardWidth}
+                          aspectRatio={HOME_ASPECT.productCard}
+                          backgroundColor={colors.panel}
+                          style={{ marginBottom: 0 }}
+                        >
+                          {uri.length > 0 ? (
+                            <Image
+                              source={{ uri }}
+                              style={{ width: "100%", height: "100%" }}
+                              contentFit="cover"
+                            />
+                          ) : null}
+                          {caption.length > 0 ? (
+                            <View
+                              style={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                backgroundColor: "rgba(0,0,0,0.45)",
+                                padding: HOME_SPACE.xs,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: "#FFFFFF",
+                                  fontSize: 11,
+                                  fontFamily: "Inter_400Regular",
+                                }}
+                                numberOfLines={2}
+                              >
+                                {caption}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </HomeProductGridMediaFrame>
+                      </Pressable>
+                    );
+                  }}
+                />
+              ) : null}
+            </View>
+          </CeremonySection>
+        ) : null}
+
+        {/* ── Categories — quiet equal wrap chips ── */}
         {categoriesIndex !== null ? (
           <CeremonySection
             index={categoriesIndex}
             play={play}
             baseDelayMs={contentBaseDelayMs}
           >
-            <View style={{ marginTop: 40 }}>
+            <View
+              style={{
+                marginTop: HOME_SPACE.md,
+                marginBottom: HOME_SPACE.sm,
+                paddingHorizontal: HOME_HORIZONTAL_PADDING,
+              }}
+            >
               <Text
                 style={{
-                  fontFamily: "PlayfairDisplay_400Regular",
-                  fontSize: 24,
-                  color: colors.text,
-                  paddingHorizontal: 16,
-                  marginBottom: 16,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 13,
+                  color: colors.muted,
+                  letterSpacing: 0.6,
+                  marginBottom: HOME_SPACE.md,
                 }}
+                numberOfLines={1}
               >
                 {t("home.categories")}
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: HOME_SPACE.xs,
+                }}
               >
                 {sortedCategories.map((cat) => (
                   <Pressable
                     key={cat.id}
                     onPress={() => router.push("/(tabs)/browse")}
                     style={{
-                      paddingHorizontal: 20,
-                      paddingVertical: 10,
+                      paddingVertical: 4,
+                      paddingHorizontal: HOME_SPACE.sm,
                       borderRadius: 99,
                       borderWidth: 1,
                       borderColor: colors.border,
-                      backgroundColor: "#FFFFFF",
+                      backgroundColor: "transparent",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 14,
-                        color: colors.text,
+                        fontSize: 12,
+                        color: colors.muted,
                         fontFamily: "Inter_400Regular",
                       }}
+                      numberOfLines={1}
                     >
                       {translateCategory(cat.id, cat.name ?? null)}
                     </Text>
                   </Pressable>
                 ))}
-              </ScrollView>
-            </View>
-          </CeremonySection>
-        ) : null}
-
-        {/* ── Posts strip ── */}
-        {postsIndex !== null ? (
-          <CeremonySection
-            index={postsIndex}
-            play={play}
-            baseDelayMs={contentBaseDelayMs}
-          >
-            <View style={{ marginTop: 40 }}>
-              <Text
-                style={{
-                  fontFamily: "PlayfairDisplay_400Regular",
-                  fontSize: 24,
-                  color: colors.text,
-                  paddingHorizontal: 16,
-                  marginBottom: 16,
-                }}
-              >
-                {t("home.featured")}
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-              >
-                {sortedPosts.slice(0, 10).map((post) => {
-                  const uri = postMediaMap.get(post.id) ?? "";
-                  const caption = translatePost(post.id, "caption", post.caption);
-                  return (
-                    <Pressable
-                      key={post.id}
-                      onPress={() => router.push("/(tabs)/profile/highlights")}
-                      style={{
-                        width: 140,
-                        aspectRatio: 3 / 4,
-                        backgroundColor: colors.panel,
-                        overflow: "hidden",
-                      }}
-                      accessibilityLabel={t("home.postAlt")}
-                    >
-                      {uri.length > 0 && (
-                        <Image
-                          source={{ uri }}
-                          style={{ width: "100%", height: "100%" }}
-                          contentFit="cover"
-                        />
-                      )}
-                      {caption.length > 0 && (
-                        <View
-                          style={{
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            backgroundColor: "rgba(0,0,0,0.5)",
-                            padding: 8,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: "#FFFFFF",
-                              fontSize: 11,
-                              fontFamily: "Inter_400Regular",
-                            }}
-                            numberOfLines={2}
-                          >
-                            {caption}
-                          </Text>
-                        </View>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+              </View>
             </View>
           </CeremonySection>
         ) : null}

@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { Database } from "@/database.types";
+import { useP2FocusRetain } from "@/lib/useP2FocusRetain";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "./AuthContext";
 
@@ -22,6 +23,8 @@ export interface NotificationContextValue {
   loading: boolean;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  /** P2: retain fetch + INSERT realtime while a notifications surface is focused. */
+  retainFocus: () => () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
@@ -48,18 +51,37 @@ function isNotificationRow(value: unknown): value is NotificationRow {
 /**
  * Provides the current user's notification list, unread count, realtime INSERT
  * updates, and optimistic mark-as-read operations with rollback on failure.
+ *
+ * Initial fetch + realtime run only while a screen holds {@link retainFocus} (P2).
  */
 export function NotificationProvider({ children }: PropsWithChildren): React.ReactElement {
   const { user } = useAuthContext();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [retainCount, setRetainCount] = useState(0);
 
   const userId = user?.id;
 
+  const retainFocus = useCallback((): (() => void) => {
+    setRetainCount((count) => count + 1);
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      setRetainCount((count) => Math.max(0, count - 1));
+    };
+  }, []);
+
   /**
-   * Loads the latest notifications when the authenticated user id changes.
+   * Loads the latest notifications and subscribes to INSERTs while retained.
    */
   useEffect(() => {
+    if (retainCount === 0) {
+      return;
+    }
+
     if (typeof userId !== "string" || userId.length === 0) {
       setNotifications([]);
       setLoading(false);
@@ -67,7 +89,6 @@ export function NotificationProvider({ children }: PropsWithChildren): React.Rea
     }
 
     const uid = userId;
-
     let cancelled = false;
 
     async function fetchNotifications(): Promise<void> {
@@ -96,19 +117,6 @@ export function NotificationProvider({ children }: PropsWithChildren): React.Rea
 
     void fetchNotifications();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-
-  /**
-   * Subscribes to new notification rows for the current user only.
-   */
-  useEffect(() => {
-    if (typeof userId !== "string" || userId.length === 0) {
-      return;
-    }
-
     const handleInsert = (payload: RealtimePostgresChangesPayload<NotificationRow>): void => {
       const row = payload.new;
       if (row === null || row === undefined || !isNotificationRow(row)) {
@@ -123,23 +131,24 @@ export function NotificationProvider({ children }: PropsWithChildren): React.Rea
     };
 
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(`notifications:${uid}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${uid}`,
         },
         handleInsert
       )
       .subscribe();
 
     return () => {
+      cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [retainCount, userId]);
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => n.read_at === null).length,
@@ -216,8 +225,9 @@ export function NotificationProvider({ children }: PropsWithChildren): React.Rea
       loading,
       markAsRead,
       markAllAsRead,
+      retainFocus,
     }),
-    [notifications, unreadCount, loading, markAsRead, markAllAsRead]
+    [notifications, unreadCount, loading, markAsRead, markAllAsRead, retainFocus]
   );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
@@ -232,4 +242,10 @@ export function useNotificationContext(): NotificationContextValue {
     throw new Error("useNotificationContext must be used within a NotificationProvider");
   }
   return context;
+}
+
+/** P2: notifications fetch/realtime while this screen is focused. */
+export function useNotificationP2Focus(name: string = "notifications"): void {
+  const { retainFocus } = useNotificationContext();
+  useP2FocusRetain(name, retainFocus);
 }

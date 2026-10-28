@@ -2,9 +2,9 @@ import type { ComponentType } from "react";
 
 /**
  * Stable theme identifiers for the customer app multi-skin system.
- * Exactly three themes ship in v1.
+ * Classic / Atelier / Noir plus Storefront (Classic-clone IA program).
  */
-export type ThemeId = "classic" | "atelier" | "noir";
+export type ThemeId = "classic" | "atelier" | "noir" | "storefront";
 
 /**
  * Visual design tokens shared across Tier A layouts and Tier B shells.
@@ -59,7 +59,12 @@ export type ThemePack = {
 };
 
 /** Ordered list of valid theme ids (cycle order for staff switcher). */
-export const THEME_IDS: readonly ThemeId[] = ["classic", "atelier", "noir"] as const;
+export const THEME_IDS: readonly ThemeId[] = [
+  "classic",
+  "atelier",
+  "noir",
+  "storefront",
+] as const;
 
 /** Default theme when storage is empty or invalid. */
 export const DEFAULT_THEME_ID: ThemeId = "classic";
@@ -71,5 +76,10 @@ export const THEME_STORAGE_KEY = "asf_theme";
  * Type guard for values read from AsyncStorage.
  */
 export function isThemeId(value: unknown): value is ThemeId {
-  return value === "classic" || value === "atelier" || value === "noir";
+  return (
+    value === "classic" ||
+    value === "atelier" ||
+    value === "noir" ||
+    value === "storefront"
+  );
 }

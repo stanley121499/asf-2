@@ -69,7 +69,7 @@ export default function SignInScreen(): React.ReactElement {
         {/* Top section — white bg, back button + ASF logo */}
         <View style={{ height: 200, backgroundColor: tokens.bg, alignItems: "center", justifyContent: "center" }}>
           <Pressable
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => router.replace("/(tabs)")}
             style={{ position: "absolute", top: 16, left: 16, flexDirection: "row", alignItems: "center" }}
           >
             <Text style={{ fontSize: 14, color: tokens.text, fontFamily: "Inter_400Regular" }}>
@@ -219,12 +219,13 @@ export default function SignInScreen(): React.ReactElement {
             )}
           </PressableScale>
 
-          {/* Browse without login */}
+          {/* Browse without login — replace so auth gate cannot bounce back */}
           <PressableScale
             haptic="light"
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => router.replace("/(tabs)")}
             disabled={busy}
             accessibilityRole="button"
+            accessibilityLabel={t("auth.signIn.guestBrowse")}
             centerContent
             style={{
               height: 52,

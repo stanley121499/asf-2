@@ -21,8 +21,7 @@ import { useTicketContext } from "@/context/TicketContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useThemeTokens } from "@/context/ThemeContext";
-import type { TablesInsert } from "@/database.types";
-import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/apiFetch";
 
 type IssueTypeKey = "order" | "product" | "account" | "other";
 
@@ -173,15 +172,16 @@ export default function SupportScreen(): React.ReactElement {
       const messages = msgRow !== undefined ? [msgRow] : [];
       setLocalConversation({ ...conversation, messages });
       setActiveConversationId(conversation.id);
-      const row: TablesInsert<"notifications"> = {
-        user_id: user.id,
-        type: "ticket_created",
-        title: t("support.notifTitle"),
-        body: t("support.notifBody", { label }),
-      };
-      const { error: notifErr } = await supabase.from("notifications").insert(row);
-      if (notifErr !== null) {
-        setError(t("support.alerts.notificationFailedShort", { message: notifErr.message }));
+      try {
+        const notifyRes = await apiFetch(
+          `/api/tickets/${encodeURIComponent(ticket.id)}/notify-created`,
+          { method: "POST" }
+        );
+        if (!notifyRes.ok) {
+          setError(t("support.alerts.notificationFailedShort", { message: "notify failed" }));
+        }
+      } catch {
+        setError(t("support.alerts.notificationFailedShort", { message: "notify failed" }));
       }
       setSubmitted(true);
     } finally {

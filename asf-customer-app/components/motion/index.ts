@@ -20,6 +20,11 @@ export {
   type ContentViewAwardHostProps,
   type LinkedProductsAwardHostProps,
 } from "./ContentViewAwardHost";
+export {
+  getPointsCeremony,
+  type PointsCeremonyComponent,
+  type PointsCeremonyProps,
+} from "./pointsCeremony";
 export { GoldSweep, type GoldSweepProps } from "./GoldSweep";
 export {
   PressableScale,

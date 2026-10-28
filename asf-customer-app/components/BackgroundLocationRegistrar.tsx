@@ -10,31 +10,42 @@ import { useAuthContext } from "@/context/AuthContext";
 import {
   syncNearbyBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { isExpoGoRuntime } from "@/lib/pushNotifications";
+import { isExpoGoRuntime } from "@/lib/expoRuntime";
+import { NEARBY_STOCK_ALERTS_ENABLED } from "@/lib/nearbyStockAlerts";
 import { supabase } from "@/lib/supabase";
 
 /**
- * Loads `nearby_stock_push` for the signed-in user (defaults to true when missing).
+ * Loads `nearby_stock_push` for the signed-in user.
+ * Defaults to **false** when the row is missing or the query fails so cold start
+ * never begins Always location until the customer opts in (settings / existing row).
  *
  * @param userId - Authenticated customer UUID
  */
 async function loadNearbyStockPref(userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("notification_preferences")
-    .select("nearby_stock_push")
-    .eq("user_id", userId)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from("notification_preferences")
+      .select("nearby_stock_push")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  if (error !== null) {
-    console.warn("[nearby-location] pref load failed:", error.message);
-    return true;
+    if (error !== null) {
+      console.warn("[nearby-location] pref load failed:", error.message);
+      return false;
+    }
+
+    if (data === null) {
+      return false;
+    }
+
+    return data.nearby_stock_push === true;
+  } catch (err) {
+    console.warn(
+      "[nearby-location] pref load soft-failed",
+      err instanceof Error ? err.message : err,
+    );
+    return false;
   }
-
-  if (data === null) {
-    return true;
-  }
-
-  return data.nearby_stock_push !== false;
 }
 
 /**
@@ -46,6 +57,10 @@ export function BackgroundLocationRegistrar(): null {
   const lastSyncedKey = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!NEARBY_STOCK_ALERTS_ENABLED) {
+      return;
+    }
+
     if (Platform.OS === "web" || isExpoGoRuntime()) {
       return;
     }
@@ -56,38 +71,46 @@ export function BackgroundLocationRegistrar(): null {
     let cancelled = false;
 
     async function sync(requestPermission: boolean): Promise<void> {
-      if (userId === null) {
-        lastSyncedKey.current = null;
-        await syncNearbyBackgroundLocation({
-          userId: null,
-          nearbyEnabled: false,
-          requestPermission: false,
+      try {
+        if (userId === null) {
+          lastSyncedKey.current = null;
+          await syncNearbyBackgroundLocation({
+            userId: null,
+            nearbyEnabled: false,
+            requestPermission: false,
+          });
+          return;
+        }
+
+        const nearbyEnabled = await loadNearbyStockPref(userId);
+        if (cancelled) {
+          return;
+        }
+
+        const syncKey = `${userId}:${nearbyEnabled ? "1" : "0"}`;
+        if (!requestPermission && lastSyncedKey.current === syncKey) {
+          return;
+        }
+
+        // Auto-sync never prompts; only starts when Always is already granted.
+        const result = await syncNearbyBackgroundLocation({
+          userId,
+          nearbyEnabled,
+          requestPermission,
         });
-        return;
-      }
 
-      const nearbyEnabled = await loadNearbyStockPref(userId);
-      if (cancelled) {
-        return;
-      }
+        if (cancelled) {
+          return;
+        }
 
-      const syncKey = `${userId}:${nearbyEnabled ? "1" : "0"}`;
-      if (!requestPermission && lastSyncedKey.current === syncKey) {
-        return;
-      }
-
-      const result = await syncNearbyBackgroundLocation({
-        userId,
-        nearbyEnabled,
-        requestPermission,
-      });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (result === "started" || result === "stopped") {
-        lastSyncedKey.current = syncKey;
+        if (result === "started" || result === "stopped") {
+          lastSyncedKey.current = syncKey;
+        }
+      } catch (err) {
+        console.warn(
+          "[nearby-location] registrar sync soft-failed",
+          err instanceof Error ? err.message : err,
+        );
       }
     }
 

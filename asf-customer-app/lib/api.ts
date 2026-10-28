@@ -141,11 +141,21 @@ function parseConfiguredApiUrl(value: string): URL | null {
 }
 
 /**
+ * Returns true when {@link getApiBaseUrl} would resolve a usable base URL.
+ */
+export function isApiBaseUrlConfigured(): boolean {
+  return getApiBaseUrl().length > 0;
+}
+
+/**
  * Returns the Next.js app base URL (no trailing slash) used for `/api/*` routes.
  *
  * In `__DEV__`, stale LAN IPs in `EXPO_PUBLIC_API_URL` (common when Wi‑Fi changes)
  * are replaced with Expo’s current packager host while keeping the configured port.
  * Public HTTPS URLs (e.g. Vercel) are left unchanged.
+ *
+ * Soft-fails (empty string + console error) when unset so production/dev-client
+ * builds never crash on import or first API call from a missing EAS env var.
  *
  * @example http://192.168.1.10:3000 or https://your-app.vercel.app
  */
@@ -164,9 +174,11 @@ export function getApiBaseUrl(): string {
       return inferred;
     }
 
-    throw new Error(
-      "EXPO_PUBLIC_API_URL is not set. Add it to .env (e.g. http://192.168.x.x:3000)."
+    console.error(
+      "[api] EXPO_PUBLIC_API_URL is not set. Add it to .env for local runs, " +
+        "or as an EAS environment variable for production/dev-client builds.",
     );
+    return "";
   }
 
   if (inferred !== null && isLoopbackUrl(trimmed)) {
@@ -192,7 +204,7 @@ export function getApiBaseUrl(): string {
           {
             configured: trimmed.replace(/\/+$/, ""),
             resolved: inferred,
-          }
+          },
         );
         return inferred;
       }

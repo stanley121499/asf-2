@@ -3,7 +3,9 @@ import React from "react";
 import { View } from "react-native";
 
 import { ContentViewAwardHost } from "@/components/motion/ContentViewAwardHost";
+import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTheme } from "@/context/ThemeContext";
+import { useWishlistP2Focus } from "@/context/WishlistContext";
 import { isContentViewAwardUuid } from "@/lib/contentViewAward";
 
 /**
@@ -29,6 +31,14 @@ function resolveProductIdParam(
 }
 
 /**
+ * Retains wishlist sync for PDP hearts when the wishlist feature is on.
+ */
+function ProductWishlistP2Bridge(): null {
+  useWishlistP2Focus("wishlist:pdp");
+  return null;
+}
+
+/**
  * Thin product-inner route — mounts the active theme pack's ProductDetail skin
  * and fires the first-view discovery-points award for all themes.
  *
@@ -36,6 +46,7 @@ function resolveProductIdParam(
  * `useLocalSearchParams`.
  */
 export default function ProductDetailRoute(): React.ReactElement {
+  const { isEnabled } = useFeatureFlags();
   const { pack } = useTheme();
   const Screen = pack.screens.ProductDetail;
   const params = useLocalSearchParams<{
@@ -49,6 +60,7 @@ export default function ProductDetailRoute(): React.ReactElement {
 
   return (
     <View style={{ flex: 1 }}>
+      {isEnabled("wishlist") ? <ProductWishlistP2Bridge /> : null}
       <Screen />
       <ContentViewAwardHost contentType="product" contentId={awardId} />
     </View>

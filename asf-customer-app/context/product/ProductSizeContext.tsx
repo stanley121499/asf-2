@@ -11,10 +11,7 @@ import React, {
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
-
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
-import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
 
 export type ProductSize = Database["public"]["Tables"]["product_sizes"]["Row"];
 export type ProductSizeInsert = Database["public"]["Tables"]["product_sizes"]["Insert"];
@@ -32,8 +29,9 @@ interface ProductSizeContextProps {
 const ProductSizeContext = createContext<ProductSizeContextProps | undefined>(undefined);
 
 export function ProductSizeProvider({ children }: PropsWithChildren) {
-  const [productSizes, setProductSizes] = useState<ProductSize[]>([]);
-  const [loading, setLoading] = useState(true);
+  /** Lists unused in customer UI — sizes embed on Product joins. */
+  const [productSizes] = useState<ProductSize[]>([]);
+  const [loading] = useState(false);
   const { showAlert } = useAlertContext();
 
 
@@ -46,83 +44,6 @@ export function ProductSizeProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
-
-  /**
-   * Fetch all product sizes from Supabase.
-   */
-  const fetchProductSizes = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("product_sizes")
-        .select("*");
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setProductSizes((data ?? []).filter((s) => !isSoftDeletedRow(s)));
-    } catch (error: unknown) {
-      console.error("Failed to fetch product sizes:", error);
-      showAlertRef.current?.("Failed to fetch product sizes", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for product size changes.
-   */
-  const handleRealtimeChanges = useCallback(
-    (payload: RealtimePostgresChangesPayload<ProductSize>): void => {
-      if (payload.eventType === "INSERT") {
-        if (isSoftDeletedRow(payload.new)) {
-          return;
-        }
-        setProductSizes((prev) => [...prev, payload.new]);
-      }
-
-      if (payload.eventType === "UPDATE") {
-        if (isSoftDeletedRow(payload.new)) {
-          setProductSizes((prev) => prev.filter((s) => s.id !== payload.new.id));
-          return;
-        }
-
-        setProductSizes((prev) =>
-          prev.map((productSize) => (productSize.id === payload.new.id ? payload.new : productSize))
-        );
-      }
-
-      if (payload.eventType === "DELETE") {
-        setProductSizes((prev) => prev.filter((productSize) => productSize.id !== payload.old.id));
-      }
-    },
-    []
-  );
-
-  /**
-   * Fetch once on mount and subscribe to realtime changes.
-   * Auth-guarded: skip if there is no active user session.
-   */
-  useEffect(() => {
-    void fetchProductSizes();
-
-    const subscription = supabase
-      .channel("product_sizes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "product_sizes" },
-        (payload: RealtimePostgresChangesPayload<ProductSize>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProductSizes, handleRealtimeChanges]);
 
   /**
    * Create a new product size row.

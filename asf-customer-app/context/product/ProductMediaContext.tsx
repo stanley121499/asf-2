@@ -12,13 +12,16 @@ import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
 
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
 export type ProductMedia = Database["public"]["Tables"]["product_medias"]["Row"];
 export type ProductMediaInsert = Database["public"]["Tables"]["product_medias"]["Insert"];
 export type ProductMediaUpdate = Database["public"]["Tables"]["product_medias"]["Update"];
 
 interface ProductMediaContextProps {
+  /**
+   * Always empty in the customer app — product medias arrive embedded on
+   * {@link Product} via `ProductContext` (`product_medias` join). Kept so
+   * mutation helpers and type imports stay stable.
+   */
   productMedias: ProductMedia[];
   createProductMedia: (productMedia: ProductMediaInsert) => Promise<void>;
   updateProductMedia: (productMedia: ProductMediaUpdate) => Promise<void>;
@@ -29,11 +32,15 @@ interface ProductMediaContextProps {
 
 const ProductMediaContext = createContext<ProductMediaContextProps | undefined>(undefined);
 
-export function ProductMediaProvider({ children }: PropsWithChildren) {
-  const [productMedias, setProductMedias] = useState<ProductMedia[]>([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * Lean media provider: no full-table hydrate and no Realtime channel.
+ * Catalog screens read medias from `ProductContext` products (already joined).
+ * This removes a duplicate cold-start fetch + WebSocket against `product_medias`.
+ */
+export function ProductMediaProvider({ children }: PropsWithChildren): React.ReactElement {
+  const [productMedias] = useState<ProductMedia[]>([]);
+  const [loading] = useState(false);
   const { showAlert } = useAlertContext();
-
 
   /**
    * A ref wrapper for AlertContext's `showAlert` to avoid effect dependency loops.
@@ -45,75 +52,8 @@ export function ProductMediaProvider({ children }: PropsWithChildren) {
   }, [showAlert]);
 
   /**
-   * Fetch all product medias from Supabase.
-   */
-  const fetchProductMedias = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.from("product_medias").select("*");
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setProductMedias(data ?? []);
-    } catch (error: unknown) {
-      console.error("Failed to fetch product medias:", error);
-      showAlertRef.current?.("Failed to fetch product medias", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for product media changes.
-   */
-  const handleRealtimeChanges = useCallback(
-    (payload: RealtimePostgresChangesPayload<ProductMedia>): void => {
-      if (payload.eventType === "INSERT") {
-        setProductMedias((prev) => [...prev, payload.new]);
-      }
-
-      if (payload.eventType === "UPDATE") {
-        setProductMedias((prev) =>
-          prev.map((productMedia) => (productMedia.id === payload.new.id ? payload.new : productMedia))
-        );
-      }
-
-      if (payload.eventType === "DELETE") {
-        setProductMedias((prev) => prev.filter((productMedia) => productMedia.id !== payload.old.id));
-      }
-    },
-    []
-  );
-
-  /**
-   * Fetch once on mount and subscribe to realtime changes.
-   * Auth-guarded: skip if there is no active user session.
-   */
-  useEffect(() => {
-    void fetchProductMedias();
-
-    const subscription = supabase
-      .channel("product_medias")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "product_medias" },
-        (payload: RealtimePostgresChangesPayload<ProductMedia>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProductMedias, handleRealtimeChanges]);
-
-  /**
-   * Create a product media row.\n   *
-   * NOTE: List updates are handled by realtime subscriptions.\n   *
+   * Create a product media row (write-only; list owned by ProductContext joins).
+   *
    * @param productMedia - Insert payload for `product_medias`.
    */
   const createProductMedia = useCallback(async (productMedia: ProductMediaInsert): Promise<void> => {
@@ -131,7 +71,8 @@ export function ProductMediaProvider({ children }: PropsWithChildren) {
   }, []);
 
   /**
-   * Update a product media row.\n   *
+   * Update a product media row.
+   *
    * @param productMedia - Update payload; must include an `id`.
    */
   const updateProductMedia = useCallback(async (productMedia: ProductMediaUpdate): Promise<void> => {
@@ -155,7 +96,8 @@ export function ProductMediaProvider({ children }: PropsWithChildren) {
   }, []);
 
   /**
-   * Delete a product media row.\n   *
+   * Delete a product media row.
+   *
    * @param productMediaId - Media ID to delete.
    */
   const deleteProductMedia = useCallback(async (productMediaId: string): Promise<void> => {
@@ -178,7 +120,8 @@ export function ProductMediaProvider({ children }: PropsWithChildren) {
   }, []);
 
   /**
-   * Delete all product medias for a given product.\n   *
+   * Delete all product medias for a given product.
+   *
    * @param productId - Product ID to delete medias for.
    */
   const deleteAllProductMediaByProductId = useCallback(async (productId: string): Promise<void> => {
@@ -224,13 +167,12 @@ export function ProductMediaProvider({ children }: PropsWithChildren) {
       {children}
     </ProductMediaContext.Provider>
   );
-
 }
 
-export function useProductMediaContext() {
+export function useProductMediaContext(): ProductMediaContextProps {
   const context = useContext(ProductMediaContext);
 
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useProductMediaContext must be used within a ProductMediaProvider");
   }
 

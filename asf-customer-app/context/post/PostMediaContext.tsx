@@ -8,9 +8,11 @@ import React, {
   PropsWithChildren,
 } from "react";
 import { supabase } from "@/lib/supabase";
+import { sanitizeSupabaseErrorMessage } from "@/lib/supabaseErrorMessage";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
 
 export type PostMedia = Database["public"]["Tables"]["post_medias"]["Row"];
 export type PostMediaInsert = Database["public"]["Tables"]["post_medias"]["Insert"];
@@ -33,20 +35,38 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
   const { showAlert } = useAlertContext();
 
   /**
-   * Fetch all post medias.
+   * Fetch all post medias. Retries briefly on gateway failures so Home hero
+   * cover URIs can recover after transient Cloudflare timeouts.
    */
   const fetchPostMedias = useCallback(async (): Promise<void> => {
     setLoading(true);
+    const maxAttempts = 3;
+    let lastSafeMessage = "Network request failed";
 
     try {
-      const { data, error } = await supabase.from("post_medias").select("*");
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const { data, error } = await supabase.from("post_medias").select("*");
 
-      if (error) {
-        showAlert(error.message, "error");
-        return;
+        if (!error) {
+          setPostMedias(data ?? []);
+          return;
+        }
+
+        lastSafeMessage = sanitizeSupabaseErrorMessage(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(
+            `Failed to fetch post medias (attempt ${String(attempt)}/${String(maxAttempts)}):`,
+            lastSafeMessage
+          );
+        }
+        if (attempt < maxAttempts) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 700 * attempt);
+          });
+        }
       }
 
-      setPostMedias(data ?? []);
+      showAlert(lastSafeMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -76,20 +96,18 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     void fetchPostMedias();
 
-    const subscription = supabase
-      .channel("post_medias")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "post_medias" },
-        (payload: RealtimePostgresChangesPayload<PostMedia>) => {
-          handleChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return scheduleDeferredRealtime(() =>
+      supabase
+        .channel("post_medias")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "post_medias" },
+          (payload: RealtimePostgresChangesPayload<PostMedia>) => {
+            handleChanges(payload);
+          }
+        )
+        .subscribe()
+    );
   }, [fetchPostMedias, handleChanges]);
 
   /**
@@ -99,7 +117,7 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
     const { error } = await supabase.from("post_medias").insert(postMedia);
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlert(sanitizeSupabaseErrorMessage(error), "error");
     }
   }, [showAlert]);
 
@@ -113,7 +131,7 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
       .match({ id: postMedia.id });
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlert(sanitizeSupabaseErrorMessage(error), "error");
     }
   }, [showAlert]);
 
@@ -127,7 +145,7 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
       .match({ id: postMediaId });
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlert(sanitizeSupabaseErrorMessage(error), "error");
     }
   }, [showAlert]);
 
@@ -141,7 +159,7 @@ export function PostMediaProvider({ children }: PropsWithChildren) {
       .match({ post_id: postId });
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlert(sanitizeSupabaseErrorMessage(error), "error");
     }
   }, [showAlert]);
 
@@ -180,4 +198,14 @@ export function usePostMediaContext() {
   }
 
   return context;
+}
+
+/**
+ * Returns post-media context when inside {@link PostMediaProvider}; otherwise `null`.
+ * Use on screens / idle warm that mount whether or not the `highlights` gate
+ * omitted the provider (`RouteContextBundle`).
+ */
+export function useOptionalPostMediaContext(): PostMediaContextProps | null {
+  const context = useContext(PostMediaContext);
+  return context ?? null;
 }

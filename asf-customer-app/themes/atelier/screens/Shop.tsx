@@ -17,6 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ANCHORS, TourAnchor } from "@/components/guide";
 import { CeremonySection, GoldSweep } from "@/components/motion";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
@@ -288,31 +289,37 @@ function archiveColumnWidth(windowWidth: number): number {
 export function AtelierShopScreen(): React.ReactElement {
   const tokens = useThemeTokens();
   const { categories, loading: catLoading } = useCategoryContext();
-  const { products, loading: prodLoading } = useProductContext();
+  const {
+    products,
+    loading: prodLoading,
+    hasMore,
+    loadingMore,
+    loadMoreProducts,
+  } = useProductContext();
 
   const loading = catLoading || prodLoading;
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: tokens.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+  if (loading && products.length === 0) {
+    return <PageLoadingSkeleton variant="shop" />;
   }
 
-  return <AtelierCatalogBody categories={categories} products={products} />;
+  return (
+    <AtelierCatalogBody
+      categories={categories}
+      products={products}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      loadMoreProducts={loadMoreProducts}
+    />
+  );
 }
 
 type AtelierCatalogBodyProps = {
   categories: ReturnType<typeof useCategoryContext>["categories"];
   products: Product[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMoreProducts: () => Promise<void>;
 };
 
 /**
@@ -322,6 +329,9 @@ type AtelierCatalogBodyProps = {
 function AtelierCatalogBody({
   categories,
   products,
+  hasMore,
+  loadingMore,
+  loadMoreProducts,
 }: AtelierCatalogBodyProps): React.ReactElement {
   const tokens = useThemeTokens();
   const router = useRouter();
@@ -601,6 +611,23 @@ function AtelierCatalogBody({
           showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          removeClippedSubviews
+          onEndReached={() => {
+            if (hasMore && !loadingMore) {
+              void loadMoreProducts();
+            }
+          }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                <ActivityIndicator size="small" color={tokens.accent} />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <Text
               style={{

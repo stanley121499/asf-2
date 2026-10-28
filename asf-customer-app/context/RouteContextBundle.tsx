@@ -34,15 +34,28 @@ import { useFeatureFlags } from "@/context/FeatureFlagsContext";
  * subscriptions are not opened when the corresponding module is disabled.
  * This reduces channel count and database load for clients on restricted packages.
  *
+ * Cold-start lean providers (no full-table hydrate / no Realtime): ProductMedia,
+ * ProductSize, ProductColor, ProductCategory, Brand, Department, AddToCartLog —
+ * catalog joins on ProductContext already embed medias / variants / category links.
+ *
+ * Remaining UI data providers may still mount at the root; P2 modules
+ * (wishlist, claims, warranty, notifications, store locations, promotions)
+ * fetch/subscribe only while a focused screen holds `retainFocus` via
+ * `useP2FocusRetain` — not at cold-start provider mount.
+ *
+ * Non-critical Realtime on catalog providers is deferred until after first
+ * paint (`lib/deferredRealtime`).
+ *
  * Gated providers:
  *   - PostMediaProvider + PostProvider  → `highlights`
  *   - PointsMembershipProvider          → `rewards`
- *   - WishlistProvider                  → `wishlist`
+ *   - WishlistProvider                  → `wishlist` (P2 focus-scoped)
  *   - StoreLocationProvider             → `store_locations` OR `warranty_registration`
- *     (activate form needs partner stores even when the Stores tab is off)
- *   - PromotionProvider                 → `promotions`
- *   - ClaimProvider + WarrantyCreditProvider → `claims`
- *   - WarrantyRegistrationProvider      → `warranty_registration`
+ *     (activate form needs partner stores even when the Stores tab is off; P2 focus-scoped)
+ *   - PromotionProvider                 → `promotions` (P2 focus-scoped)
+ *   - ClaimProvider + WarrantyCreditProvider → `claims` (P2 focus-scoped)
+ *   - WarrantyRegistrationProvider      → `warranty_registration` (P2 focus-scoped)
+ *   - NotificationProvider              → always on when bundle mounts (P2 focus-scoped)
  */
 export function RouteContextBundle({ children }: PropsWithChildren): React.ReactElement {
   const { isEnabled } = useFeatureFlags();

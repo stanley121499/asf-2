@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -19,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { CartButton } from "@/components/cart/CartButton";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { PostVideo } from "@/components/PostVideo";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
@@ -27,6 +27,7 @@ import { usePostContext } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { colors } from "@/constants/theme";
 import type { Tables } from "@/database.types";
+import { openLinkedProducts } from "@/lib/browseNavigation";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 /** 4:5 aspect ratio — matches web `pt-[125%]` */
@@ -136,7 +137,6 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
   const mediaUrl = firstMedia?.media_url ?? null;
   const isVideo = (firstMedia?.media_type ?? "image") === "video";
   const caption = translatePost(post.id, "caption", post.caption);
-  const ctaText = translatePost(post.id, "cta_text", post.cta_text);
 
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -176,10 +176,23 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
     } catch { /* ignore */ }
   }, [isSaved, post.id]);
 
+  /** Home parity: open linked-products so post content-view awards can fire. */
+  const openPostLinkedProducts = (): void => {
+    openLinkedProducts(router, "post", post.id);
+  };
+
+  const mediaA11yLabel =
+    caption.length > 0 ? caption : t("post.featuredContent");
+
   return (
     <View style={{ width: "100%", backgroundColor: "#FFFFFF", marginBottom: 32 }}>
-      {/* Media block — 4:5 ratio, black bg, edge-to-edge */}
-      <View style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, backgroundColor: "#000000" }}>
+      {/* Media block — 4:5 ratio; tap → linked-products (Home parity / QC A3b) */}
+      <Pressable
+        onPress={openPostLinkedProducts}
+        accessibilityRole="button"
+        accessibilityLabel={mediaA11yLabel}
+        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, backgroundColor: "#000000" }}
+      >
         {mediaUrl === null ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="image-outline" size={40} color="#555" />
@@ -243,9 +256,10 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
             source={{ uri: mediaUrl }}
             style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
             contentFit="cover"
+            accessibilityLabel={mediaA11yLabel}
           />
         )}
-      </View>
+      </Pressable>
 
       {/* Caption */}
       {caption.length > 0 && (
@@ -288,28 +302,6 @@ function PostCard({ post, medias }: PostCardProps): React.ReactElement {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* CTA button */}
-      {ctaText.length > 0 && (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-          <Pressable
-            onPress={() => router.push("/(tabs)/browse")}
-            style={{
-              height: 52,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: "#000000",
-              backgroundColor: "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text style={{ color: "#000000", fontSize: 15, fontWeight: "500", fontFamily: "Inter_400Regular" }}>
-              {ctaText}
-            </Text>
-          </Pressable>
-        </View>
-      )}
 
       <CommentSheet visible={commentOpen} onClose={() => setCommentOpen(false)} />
     </View>
@@ -362,12 +354,8 @@ export function ClassicHighlightsScreen(): React.ReactElement {
 
   const loading = postsLoading || mediaLoading;
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
+  if (loading && featured.length === 0) {
+    return <PageLoadingSkeleton variant="highlights" />;
   }
 
   return (

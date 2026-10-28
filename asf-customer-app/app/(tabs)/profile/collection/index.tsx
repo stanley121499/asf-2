@@ -14,7 +14,10 @@ import { ANCHORS, TourAnchor } from "@/components/guide";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
-import { useWarrantyRegistrationContext } from "@/context/WarrantyRegistrationContext";
+import {
+  useWarrantyRegistrationContext,
+  useWarrantyRegistrationP2Focus,
+} from "@/context/WarrantyRegistrationContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import { fonts } from "@/constants/theme";
 import { formatDate } from "@/i18n/format";
@@ -99,6 +102,8 @@ function CollectionListContent({
   const { user, loading: authLoading } = useAuthContext();
   const { registrations, loading, refreshRegistrations } =
     useWarrantyRegistrationContext();
+
+  useWarrantyRegistrationP2Focus("warranty_registration");
 
   const handleActivate = useCallback((): void => {
     router.push("/(tabs)/profile/collection/activate");

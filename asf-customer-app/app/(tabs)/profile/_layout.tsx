@@ -20,6 +20,8 @@ export default function ProfileStackLayout() {
         headerShown: false,
         animation: "slide_from_right",
         animationDuration: motion.duration.base,
+        /** Freeze nested profile screens while another is focused. */
+        freezeOnBlur: true,
       }}
     >
       {/*
@@ -29,6 +31,7 @@ export default function ProfileStackLayout() {
       */}
       <Stack.Screen name="index" />
       <Stack.Screen name="appearance" />
+      <Stack.Screen name="design-lab" />
     </Stack>
   );
 }

@@ -117,6 +117,9 @@ export async function postDeliveryRates(payload: {
   };
 }): Promise<DeliveryRateOption[]> {
   const base = getApiBaseUrl();
+  if (base.length === 0) {
+    throw new Error("API URL not configured");
+  }
   const res = await fetch(`${base}/api/delivery/rates`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -163,6 +166,9 @@ export async function postCreatePendingOrder(
   payload: CreatePendingOrderPayload
 ): Promise<string> {
   const base = getApiBaseUrl();
+  if (base.length === 0) {
+    throw new Error("API URL not configured");
+  }
   const res = await fetch(`${base}/api/checkout/create-pending-order`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -198,6 +204,9 @@ export async function postCreatePaymentIntent(payload: {
   orderId: string;
 }): Promise<string> {
   const base = getApiBaseUrl();
+  if (base.length === 0) {
+    throw new Error("API URL not configured");
+  }
   const res = await fetch(`${base}/api/stripe/create-payment-intent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

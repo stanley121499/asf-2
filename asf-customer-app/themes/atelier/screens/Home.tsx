@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -22,6 +21,7 @@ import {
   useHomeCeremony,
 } from "@/components/home/HomeArrivalCeremony";
 import { CeremonySection } from "@/components/motion";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation } from "@/context/LocaleContext";
@@ -39,6 +39,7 @@ import {
 } from "@/lib/appGuide";
 import { openBrowseProduct } from "@/lib/browseNavigation";
 import { formatRm } from "@/lib/formatCurrency";
+import { useHomeHeroMediaUri } from "@/lib/homeHeroMedia";
 import { motion } from "@/lib/motion";
 import { tenantBrand } from "@/lib/tenantBrand";
 import { AtelierEditorialCoverCopy } from "@/themes/atelier/components/EditorialCoverCopy";
@@ -678,6 +679,8 @@ export function AtelierHomeScreen(): React.ReactElement {
   const { categories, loading: categoriesLoading } = useCategoryContext();
   const { posts } = usePostContext();
   const { postMedias } = usePostMediaContext();
+  /** Same DB hero as Storefront (`homepage_elements` type=hero). */
+  const { heroUri: coverUri } = useHomeHeroMediaUri(postMedias);
   const { isEnabled } = useFeatureFlags();
   const { startTour } = useGuide();
   const promotionsEnabled = isEnabled("promotions");
@@ -762,30 +765,11 @@ export function AtelierHomeScreen(): React.ReactElement {
       ? tenantBrand.tagline
       : null;
 
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: tokens.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+  if (isLoading && products.length === 0) {
+    return <PageLoadingSkeleton variant="home" />;
   }
 
   const chapterProducts = sortedProducts.slice(0, MAX_HOME_CHAPTERS);
-  const coverPost = sortedPosts[0];
-  const coverUriFromPost =
-    coverPost !== undefined ? (postMediaMap.get(coverPost.id) ?? "") : "";
-  const firstChapter = chapterProducts[0];
-  const coverUriFromProduct =
-    firstChapter !== undefined ? productThumb(firstChapter) : "";
-  const coverUri =
-    coverUriFromPost.length > 0 ? coverUriFromPost : coverUriFromProduct;
 
   const hasOffers = promotionsEnabled;
   const hasCategories = sortedCategories.length > 0;

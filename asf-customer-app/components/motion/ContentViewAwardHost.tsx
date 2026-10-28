@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AchievementCeremony } from "@/components/motion/AchievementCeremony";
+import { getPointsCeremony } from "@/components/motion/pointsCeremony";
 import { useAlertContext } from "@/context/AlertContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LocaleContext";
-import { getApiBaseUrl } from "@/lib/api";
+import { useTheme } from "@/context/ThemeContext";
 import {
   contentViewTypeFromLinkedKind,
   hasShownGuestDiscoveryPrompt,
@@ -15,15 +15,13 @@ import {
 } from "@/lib/contentViewAward";
 
 /**
- * Resolves the API base for __DEV__ failure banners without throwing.
+ * TEMP for Simon QA — set false before production.
+ *
+ * When true, every logged-in content-view award attempt (PDP / linked-products)
+ * presents the theme’s +1 points ceremony, even if the server/local path says
+ * already awarded / not newly awarded. Does not fake DB points; guests unchanged.
  */
-function safeApiBaseForAlert(): string {
-  try {
-    return getApiBaseUrl();
-  } catch (err) {
-    return err instanceof Error ? err.message : "API base unavailable";
-  }
-}
+const FORCE_POINTS_CEREMONY_EVERY_TIME = true;
 
 export type ContentViewAwardHostProps = {
   /**
@@ -36,11 +34,12 @@ export type ContentViewAwardHostProps = {
 };
 
 /**
- * Host that requests a first-view discovery award and shows
- * {@link AchievementCeremony} when the server returns `awarded: true`.
+ * Host that requests a first-view discovery award (device-local AsyncStorage
+ * for now) and shows the active theme’s points ceremony when
+ * `awarded: true` (or always when {@link FORCE_POINTS_CEREMONY_EVERY_TIME}).
  *
  * Guests get an optional one-time soft “sign in to earn points” alert —
- * never a fake ceremony. Mount on PDP and linked-products only (not feed
+ * never a fake award. Mount on PDP and linked-products only (not feed
  * scroll impressions).
  */
 export function ContentViewAwardHost({
@@ -50,6 +49,7 @@ export function ContentViewAwardHost({
   const { user, loading: authLoading } = useAuthContext();
   const { showAlert } = useAlertContext();
   const { t } = useTranslation();
+  const { themeId } = useTheme();
 
   const userId = user?.id ?? null;
 
@@ -58,10 +58,13 @@ export function ContentViewAwardHost({
 
   /** Keys that reached a terminal outcome (award / already / guest prompt). */
   const terminalKeysRef = useRef<Set<string>>(new Set());
-  /** Avoid spamming soft failure alerts when the API is down. */
-  const failureAlertShownRef = useRef(false);
   const showAlertRef = useRef(showAlert);
   const tRef = useRef(t);
+
+  const PointsCeremony = useMemo(
+    () => getPointsCeremony(themeId),
+    [themeId]
+  );
 
   useEffect(() => {
     showAlertRef.current = showAlert;
@@ -74,6 +77,19 @@ export function ContentViewAwardHost({
   const onDismissCeremony = useCallback((): void => {
     setCeremonyVisible(false);
     setCeremonyPoints(0);
+  }, []);
+
+  /**
+   * Presents the active theme’s points ceremony with the given amount.
+   *
+   * @param points - Display amount (server award amount, or 1 in force QA mode)
+   */
+  const presentCeremony = useCallback((points: number): void => {
+    if (points <= 0) {
+      return;
+    }
+    setCeremonyPoints(points);
+    setCeremonyVisible(true);
   }, []);
 
   useEffect(() => {
@@ -120,55 +136,35 @@ export function ContentViewAwardHost({
       const result = await requestContentViewAward({
         contentType,
         contentId,
+        userId,
       });
 
       if (cancelled) {
         return;
       }
 
+      terminalKeysRef.current.add(attemptKey);
+
       if (result.awarded === true && result.points > 0) {
-        terminalKeysRef.current.add(attemptKey);
-        setCeremonyPoints(result.points);
-        setCeremonyVisible(true);
+        presentCeremony(result.points);
         return;
       }
 
-      if (result.alreadyAwarded === true || result.skippedLocally === true) {
-        terminalKeysRef.current.add(attemptKey);
-        if (__DEV__) {
-          console.info("[ContentViewAwardHost] no ceremony (already handled)", {
-            contentType,
-            contentId,
-            alreadyAwarded: result.alreadyAwarded,
-            skippedLocally: result.skippedLocally,
-            points: result.points,
-          });
-        }
+      // TEMP Simon QA: still pop +1 after already-awarded / skipped paths.
+      if (FORCE_POINTS_CEREMONY_EVERY_TIME) {
+        presentCeremony(1);
         return;
       }
 
-      // Transient failure — leave key unlocked so leaving/re-entering PDP retries.
-      const apiBase = safeApiBaseForAlert();
-      const attemptedUrl = `${apiBase}/api/rewards/content-view`;
-      const statusLabel =
-        result.httpStatus > 0 ? String(result.httpStatus) : "network";
-
-      console.warn("[ContentViewAwardHost] award request failed", {
-        contentType,
-        contentId,
-        httpStatus: result.httpStatus,
-        attemptedUrl,
-      });
-
-      if (__DEV__ && !failureAlertShownRef.current) {
-        failureAlertShownRef.current = true;
-        showAlertRef.current(
-          tRef.current("rewards.discoveryAwardFailedDev", {
-            url: attemptedUrl,
-            status: statusLabel,
-          }),
-          "warning"
-        );
+      if (__DEV__) {
+        console.info("[ContentViewAwardHost] no ceremony (already handled)", {
+          contentType,
+          contentId,
+          alreadyAwarded: result.alreadyAwarded,
+          skippedLocally: result.skippedLocally,
+          fromLocal: result.fromLocal,
+          points: result.points,
+        });
       }
     };
 
@@ -177,14 +173,14 @@ export function ContentViewAwardHost({
     return () => {
       cancelled = true;
     };
-  }, [authLoading, contentType, contentId, userId]);
+  }, [authLoading, contentType, contentId, userId, presentCeremony]);
 
   if (!ceremonyVisible || ceremonyPoints <= 0) {
     return null;
   }
 
   return (
-    <AchievementCeremony
+    <PointsCeremony
       visible={ceremonyVisible}
       points={ceremonyPoints}
       titleLabel={t("rewards.discoveryEarnedTitle")}

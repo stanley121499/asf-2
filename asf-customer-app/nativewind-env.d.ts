@@ -6,5 +6,7 @@ declare namespace NodeJS {
     EXPO_PUBLIC_SUPABASE_ANON_KEY: string | undefined;
     EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: string | undefined;
     EXPO_PUBLIC_API_URL: string | undefined;
+    EXPO_PUBLIC_NEARBY_STOCK_ALERTS_ENABLED: string | undefined;
+    EXPO_PUBLIC_PUSH_NOTIFICATIONS_ENABLED: string | undefined;
   }
 }

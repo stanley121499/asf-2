@@ -4,8 +4,10 @@ import { useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 
 /**
- * Keeps navigation aligned with Supabase auth: signed-out users cannot stay on protected routes;
- * signed-in users are moved out of the `(auth)` group.
+ * Keeps navigation aligned with Supabase auth:
+ * - Guests may stay on `(tabs)` (browse-as-guest / Profile guest hub).
+ * - Checkout still requires a session.
+ * - Signed-in users are moved out of the `(auth)` group.
  */
 export function NavigationSync(): null {
   const { user, loading } = useAuthContext();
@@ -23,7 +25,7 @@ export function NavigationSync(): null {
     }
 
     if (user === null) {
-      if (root === "(tabs)" || root === "checkout") {
+      if (root === "checkout") {
         router.replace("/(auth)/sign-in");
       }
       return;

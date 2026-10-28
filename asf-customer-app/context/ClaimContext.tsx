@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -12,7 +13,15 @@ import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useAlertContext } from "@/context/AlertContext";
 import { useAuthContext } from "@/context/AuthContext";
 import type { Tables, TablesInsert, TablesUpdate } from "@/database.types";
+import { logPrioP2Fetch, logPrioP2Skip } from "@/lib/prioLog";
+import { useP2FocusRetain } from "@/lib/useP2FocusRetain";
 import { supabase } from "@/lib/supabase";
+
+/**
+ * Skip claims network refetch on re-focus when the last successful fetch for
+ * this user is newer than this window.
+ */
+const CLAIMS_P2_FRESH_MS = 5 * 60 * 1000;
 
 type ClaimRow = Tables<"claims">;
 type ClaimInsert = TablesInsert<"claims">;
@@ -44,22 +53,33 @@ export interface ClaimAPI {
   updateClaim: (id: string, payload: ClaimUpdate) => Promise<Claim | undefined>;
   listByUserId: (userId: string) => Promise<Claim[]>;
   refreshClaims: () => Promise<void>;
+  /** P2: retain fetch + realtime while a claims screen is focused. */
+  retainFocus: () => () => void;
 }
 
 const ClaimContext = createContext<ClaimAPI | null>(null);
 
 /**
- * Provides claim list state, create operations, and realtime sync for the signed-in customer.
+ * Provides claim list state and create operations.
+ * Fetch + realtime run only while a screen holds {@link ClaimAPI.retainFocus} (P2).
  */
 export function ClaimProvider({ children }: PropsWithChildren): React.ReactElement {
   const { user } = useAuthContext();
   const [claims, setClaims] = useState<Claim[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [retainCount, setRetainCount] = useState(0);
+  /** Epoch ms of last completed claims fetch (0 = never). */
+  const lastFetchedAtRef = useRef(0);
+  /** User id the last fetch belonged to (null = none). */
+  const lastFetchedUserIdRef = useRef<string | null>(null);
+  /** True after at least one fetch attempt finished for the current user. */
+  const hasFetchedRef = useRef(false);
   const { showAlert } = useAlertContext();
 
   const fetchForUser = useCallback(
     async (userId: string): Promise<void> => {
       setLoading(true);
+      logPrioP2Fetch("claims", "blocking");
       try {
         const { data, error } = await supabase
           .from("claims")
@@ -68,9 +88,15 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
           .order("created_at", { ascending: false });
         if (error !== null) {
           showAlert(error.message, "error");
+          lastFetchedAtRef.current = Date.now();
+          lastFetchedUserIdRef.current = userId;
+          hasFetchedRef.current = true;
           return;
         }
         setClaims(data ?? []);
+        lastFetchedAtRef.current = Date.now();
+        lastFetchedUserIdRef.current = userId;
+        hasFetchedRef.current = true;
       } finally {
         setLoading(false);
       }
@@ -82,6 +108,9 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
     if (user === null) {
       setClaims([]);
       setLoading(false);
+      lastFetchedAtRef.current = 0;
+      lastFetchedUserIdRef.current = null;
+      hasFetchedRef.current = false;
       return;
     }
     await fetchForUser(user.id);
@@ -114,8 +143,44 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
     [user]
   );
 
+  const retainFocus = useCallback((): (() => void) => {
+    setRetainCount((count) => count + 1);
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      setRetainCount((count) => Math.max(0, count - 1));
+    };
+  }, []);
+
+  /** True while any screen holds retain (boolean — avoids effect churn on 1↔2). */
+  const isRetained = retainCount > 0;
+  const userId = user?.id ?? null;
+
   useEffect(() => {
-    void refreshClaims();
+    if (!isRetained) {
+      return;
+    }
+
+    const now = Date.now();
+    const ageMs = now - lastFetchedAtRef.current;
+    const sameUser =
+      typeof userId === "string" && lastFetchedUserIdRef.current === userId;
+    if (
+      hasFetchedRef.current &&
+      sameUser &&
+      ageMs >= 0 &&
+      ageMs < CLAIMS_P2_FRESH_MS
+    ) {
+      logPrioP2Skip(
+        "claims",
+        `fresh ${String(Math.round(ageMs))}ms < ${String(CLAIMS_P2_FRESH_MS)}ms`
+      );
+    } else {
+      void refreshClaims();
+    }
 
     const sub = supabase
       .channel("customer_claims")
@@ -129,7 +194,7 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
     return () => {
       sub.unsubscribe();
     };
-  }, [refreshClaims, onChange]);
+  }, [isRetained, refreshClaims, onChange, userId]);
 
   const createClaim = useCallback(
     async (payload: ClaimInsert): Promise<Claim | undefined> => {
@@ -210,11 +275,11 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
   );
 
   const listByUserId = useCallback(
-    async (userId: string): Promise<Claim[]> => {
+    async (userIdParam: string): Promise<Claim[]> => {
       const { data, error } = await supabase
         .from("claims")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", userIdParam)
         .order("created_at", { ascending: false });
       if (error !== null) {
         showAlert(error.message, "error");
@@ -235,6 +300,7 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
       updateClaim,
       listByUserId,
       refreshClaims,
+      retainFocus,
     }),
     [
       claims,
@@ -245,6 +311,7 @@ export function ClaimProvider({ children }: PropsWithChildren): React.ReactEleme
       updateClaim,
       listByUserId,
       refreshClaims,
+      retainFocus,
     ]
   );
 
@@ -258,4 +325,10 @@ export function useClaimContext(): ClaimAPI {
     throw new Error("useClaimContext must be used within a ClaimProvider");
   }
   return ctx;
+}
+
+/** P2: claims fetch/realtime while this screen is focused. */
+export function useClaimP2Focus(name: string = "claims"): void {
+  const { retainFocus } = useClaimContext();
+  useP2FocusRetain(name, retainFocus);
 }

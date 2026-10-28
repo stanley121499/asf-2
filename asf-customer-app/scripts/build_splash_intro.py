@@ -20,8 +20,12 @@ OUT_HTML = ROOT / "assets" / "splash" / "intro" / "splash-intro.html"
 MOBILE_CSS = """
 /* Mobile embed — logo only, no demo chrome */
 /* Forced light surface for the in-app splash (overrides dark :root default). */
+:root {
+  --bg: #ffffff;
+  --text-primary: #0d0d0d;
+}
 html, body {
-  background: #ffffff;
+  background: #ffffff !important;
 }
 body.p2m-mobile-embed {
   padding: 0;
@@ -37,12 +41,21 @@ body.p2m-mobile-embed #p2m-theme-bar {
 body.p2m-mobile-embed #logo-root {
   width: min(88vw, 420px);
   cursor: default;
+  /* Taps must not restart Web Animations API playback. */
+  pointer-events: none;
 }
 """
 
 MOBILE_INIT_PATCH = """
     document.body.classList.add("p2m-mobile-embed");
     document.documentElement.classList.add("p2m-chromeless");
+
+    function notifyReady() {
+      const payload = JSON.stringify({ type: "p2m:ready" });
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(payload);
+      }
+    }
 
     function notifyComplete() {
       const payload = JSON.stringify({ type: "p2m:complete" });
@@ -51,10 +64,19 @@ MOBILE_INIT_PATCH = """
       }
     }
 
+    function markReadyAndNotify() {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          window.__p2mReady = true;
+          notifyReady();
+        });
+      });
+    }
+
     function startMobileIntro() {
       renderHero();
       setPlaybackRate(0.5, true);
-      window.__p2mReady = true;
+      markReadyAndNotify();
       const holdMs = Math.round(DURATION / Math.max(playbackRate, 0.25)) + 120;
       window.setTimeout(notifyComplete, holdMs);
     }
@@ -68,7 +90,7 @@ MOBILE_INIT_PATCH = """
       } catch (err) {
         /* ignore */
       }
-      window.__p2mReady = true;
+      markReadyAndNotify();
       window.setTimeout(notifyComplete, 80);
     } else {
       startMobileIntro();
@@ -114,6 +136,15 @@ def main() -> int:
         "/* theme bar omitted in mobile embed */",
     )
     html = html.replace('document.body.classList.add("p2m-has-theme-bar");', "")
+
+    # Preview HTML wires logo/replay clicks to restart; disable for in-app play-once.
+    html = re.sub(
+        r'document\.getElementById\("btnReplay"\)\.addEventListener\("click", replayMain\);\s*'
+        r'document\.getElementById\("logo-root"\)\.addEventListener\("click", replayMain\);',
+        "/* tap-to-replay disabled in mobile embed */",
+        html,
+        count=1,
+    )
 
     OUT_HTML.parent.mkdir(parents=True, exist_ok=True)
     OUT_HTML.write_text(html, encoding="utf-8")

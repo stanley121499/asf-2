@@ -140,7 +140,14 @@ export function CeremonySection({
     scaleFrom,
   ]);
 
+  /**
+   * Opacity-only when there is no travel/scale — avoid a residual `transform`
+   * layer, which can break nested UIScrollView / FlatList pans on device.
+   */
   const animatedStyle = useAnimatedStyle(() => {
+    if (!useScale && resolvedTranslateFrom === 0) {
+      return { opacity: opacity.value };
+    }
     const transforms: Array<{ translateY: number } | { scale: number }> = [
       { translateY: translateY.value },
     ];

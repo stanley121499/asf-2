@@ -27,7 +27,10 @@ import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
 import { usePromotionContext } from "@/context/PromotionContext";
-import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
+import {
+  useWarrantyCreditContext,
+  useWarrantyCreditP2Focus,
+} from "@/context/WarrantyCreditContext";
 import { useAddToCartContext } from "@/context/product/CartContext";
 import { useProductContext } from "@/context/product/ProductContext";
 import { useThemeTokens } from "@/context/ThemeContext";
@@ -686,6 +689,8 @@ function WarrantyCreditCartSection({
   const { credits, applyCreditToCart } = useWarrantyCreditContext();
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+
+  useWarrantyCreditP2Focus("warranty_credits:cart");
 
   const now = Date.now();
   const activeCredits = credits.filter((c) => {

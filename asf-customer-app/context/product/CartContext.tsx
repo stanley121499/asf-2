@@ -14,6 +14,7 @@ import type { Database } from "@/database.types";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useAlertContext } from "../AlertContext";
 import { useTranslation } from "../LocaleContext";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
 
 /**
  * Cart types based on Supabase generated schema.
@@ -131,18 +132,16 @@ export function AddToCartProvider({ children }: PropsWithChildren): React.ReactE
       }
     };
 
-    const channel = supabase
-      .channel("realtime:add_to_carts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "add_to_carts" },
-        handleChanges
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
+    return scheduleDeferredRealtime(() =>
+      supabase
+        .channel("realtime:add_to_carts")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "add_to_carts" },
+          handleChanges
+        )
+        .subscribe()
+    );
   }, [showTranslatedAlert]);
 
   /** Create a new cart item with basic validation. */

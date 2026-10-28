@@ -30,12 +30,10 @@ export const motion = {
     /** Thin gold light sweep / underline wipe. */
     lightSweep: 520,
     /**
-     * Discovery-points achievement burst (confetti + strip cycle).
-     * Keep the full sequence in the ~1.5–2.5s feel window.
+     * Discovery-points side banner slide in / out.
+     * Kept at or under {@link motion.duration.addTray} so awards feel quieter.
      */
-    achievementBurst: 2200,
-    /** Achievement strip slide in / out. */
-    achievementStrip: 280,
+    achievementStrip: 220,
   },
   delay: {
     /** Stillness after splash unmount before brand beat. */
@@ -52,10 +50,11 @@ export const motion = {
      */
     addTrayHold: 1000,
     /**
-     * How long the discovery-points strip stays fully visible before exit
-     * (excluding enter/exit). Paired with {@link motion.duration.achievementBurst}.
+     * How long the discovery-points side banner stays fully visible before exit
+     * (excluding enter/exit). Kept short — toast is non-blocking but should
+     * clear quickly so the screen feels calm again.
      */
-    achievementHold: 1600,
+    achievementHold: 850,
   },
   scale: {
     /** Pressable scale while pressed. */

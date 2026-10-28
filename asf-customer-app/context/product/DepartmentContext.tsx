@@ -11,11 +11,9 @@ import React, {
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
-import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
 
-/** Department row CRUD context with realtime sync. */
+/** Department row CRUD context (lean — no cold-start list hydrate). */
 type DepartmentRow = Database["public"]["Tables"]["departments"]["Row"];
 export type Department = DepartmentRow & { media_url?: string | null };
 export type DepartmentInsert = Database["public"]["Tables"]["departments"]["Insert"];
@@ -33,8 +31,9 @@ interface DepartmentContextProps {
 const DepartmentContext = createContext<DepartmentContextProps | undefined>(undefined);
 
 export function DepartmentProvider({ children }: PropsWithChildren): React.ReactElement {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  /** Departments unused in customer list UIs — skip cold-start fetch + Realtime. */
+  const [departments] = useState<Department[]>([]);
+  const [loading] = useState<boolean>(false);
   const { showAlert } = useAlertContext();
 
   /**
@@ -45,78 +44,6 @@ export function DepartmentProvider({ children }: PropsWithChildren): React.React
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
-
-  /**
-   * Fetch all active departments from Supabase.
-   */
-  const fetchDepartments = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("departments")
-        .select("*")
-        .eq("active", true)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setDepartments((data ?? []).filter((d) => !isSoftDeletedRow(d)));
-    } catch (error: unknown) {
-      console.error("Failed to fetch departments:", error);
-      showAlertRef.current?.("Failed to fetch departments", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for department changes.
-   */
-  const handleRealtimeChanges = useCallback(
-    (payload: RealtimePostgresChangesPayload<DepartmentRow>): void => {
-      if (payload.eventType === "INSERT") {
-        setDepartments((prev) => [...prev, payload.new]);
-      }
-      if (payload.eventType === "UPDATE") {
-        const updated = payload.new;
-        if (isSoftDeletedRow(updated) || updated.active === false) {
-          setDepartments((prev) => prev.filter((d) => d.id !== updated.id));
-        } else {
-          setDepartments((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
-        }
-      }
-      if (payload.eventType === "DELETE") {
-        const removed = payload.old;
-        setDepartments((prev) => prev.filter((d) => d.id !== removed.id));
-      }
-    },
-    []
-  );
-
-  /**
-   * Initial fetch + realtime subscription.
-   */
-  useEffect(() => {
-    void fetchDepartments();
-
-    const subscription = supabase
-      .channel("departments")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "departments" },
-        (payload: RealtimePostgresChangesPayload<DepartmentRow>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchDepartments, handleRealtimeChanges]);
 
   /**
    * Create a new department.

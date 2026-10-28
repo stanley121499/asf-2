@@ -17,6 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { CartButton } from "@/components/cart/CartButton";
 import { ANCHORS, TourAnchor } from "@/components/guide";
 import { CeremonySection, GoldSweep, PressableScale } from "@/components/motion";
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useTranslation } from "@/context/LocaleContext";
 import { useCategoryContext } from "@/context/product/CategoryContext";
@@ -403,31 +404,37 @@ function NoirCatalogEmpty({
 export function NoirShopScreen(): React.ReactElement {
   const tokens = useThemeTokens();
   const { categories, loading: catLoading } = useCategoryContext();
-  const { products, loading: prodLoading } = useProductContext();
+  const {
+    products,
+    loading: prodLoading,
+    hasMore,
+    loadingMore,
+    loadMoreProducts,
+  } = useProductContext();
 
   const loading = catLoading || prodLoading;
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: tokens.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+  if (loading && products.length === 0) {
+    return <PageLoadingSkeleton variant="shop" />;
   }
 
-  return <NoirBrowseCatalogBody categories={categories} products={products} />;
+  return (
+    <NoirBrowseCatalogBody
+      categories={categories}
+      products={products}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      loadMoreProducts={loadMoreProducts}
+    />
+  );
 }
 
 type NoirBrowseCatalogBodyProps = {
   categories: ReturnType<typeof useCategoryContext>["categories"];
   products: Product[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMoreProducts: () => Promise<void>;
 };
 
 /**
@@ -437,6 +444,9 @@ type NoirBrowseCatalogBodyProps = {
 function NoirBrowseCatalogBody({
   categories,
   products,
+  hasMore,
+  loadingMore,
+  loadMoreProducts,
 }: NoirBrowseCatalogBodyProps): React.ReactElement {
   const tokens = useThemeTokens();
   const router = useRouter();
@@ -799,6 +809,23 @@ function NoirBrowseCatalogBody({
             }}
             showsVerticalScrollIndicator={false}
             style={{ flex: 1 }}
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={5}
+            removeClippedSubviews
+            onEndReached={() => {
+              if (hasMore && !loadingMore) {
+                void loadMoreProducts();
+              }
+            }}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                  <ActivityIndicator size="small" color={tokens.accent} />
+                </View>
+              ) : null
+            }
             ListEmptyComponent={
               <NoirCatalogEmpty
                 mode={emptyMode}

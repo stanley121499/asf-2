@@ -1,151 +1,87 @@
 import "react-native-gesture-handler";
 import "../global.css";
 
-import { Inter_400Regular } from "@expo-google-fonts/inter";
-import {
-  PlayfairDisplay_400Regular,
-  useFonts,
-} from "@expo-google-fonts/playfair-display";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { useState, useEffect } from "react";
+import { useRef } from "react";
 import type { ReactElement } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { AlertBanner } from "@/components/AlertBanner";
-import { GuideOverlay, GuideProvider } from "@/components/guide";
-import { NavigationSync } from "@/components/NavigationSync";
-import { AppProviders } from "@/components/Providers";
-import { SplashIntro } from "@/components/SplashIntro";
-import { useFeatureFlags } from "@/context/FeatureFlagsContext";
-import { useTranslation } from "@/context/LocaleContext";
-import { useThemeTokens } from "@/context/ThemeContext";
-import { colors } from "@/constants/theme";
-import { motion } from "@/lib/motion";
+import { bootLog, resetBootClock } from "@/lib/bootLog";
+import { installEarlyCrashLog } from "@/lib/earlyCrashLog";
+import { startDevMemorySampling } from "@/lib/memoryLog";
 import { preventNativeSplashAutoHide } from "@/lib/splashScreen";
-import * as SplashScreen from "expo-splash-screen";
 
+/** New reload / Fast Refresh cycle — elapsed ms in `[boot]` logs restart here. */
+resetBootClock();
+bootLog("_layout module load");
+
+/** __DEV__ only: ~5s heap samples for the first ~30s so Metro shows growth. */
+startDevMemorySampling();
+
+/** Catch fatals before providers mount; persist last reason for next open. */
+installEarlyCrashLog();
 preventNativeSplashAutoHide();
+bootLog("_layout module eval complete — awaiting RootLayout render");
+
+type AppRootComponent = () => ReactElement;
+
+/** Cached after first RootLayout render so Fast Refresh does not re-require. */
+let cachedAppRoot: AppRootComponent | null = null;
 
 /**
- * Inner shell rendered inside AppProviders so it has access to all context hooks.
- * Checks the `maintenance` feature flag and shows a maintenance screen when on.
+ * Sync-requires the heavy fonts/providers/shell graph only when React actually
+ * invokes RootLayout — not while expo-router walks the rest of `app/` during
+ * cold-reload route-tree setup.
  */
-function AppShell(): ReactElement {
-  const { isEnabled } = useFeatureFlags();
-  const { t } = useTranslation();
-  const tokens = useThemeTokens();
-  const [introComplete, setIntroComplete] = useState(false);
-
-  useEffect(() => {
-    if (isEnabled("maintenance")) {
-      setIntroComplete(true);
-      void SplashScreen.hideAsync();
-    }
-  }, [isEnabled]);
-
-  if (isEnabled("maintenance")) {
-    return (
-      <SafeAreaProvider>
-        <StatusBar style={tokens.statusBarStyle} />
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: tokens.bg,
-            paddingHorizontal: 32,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 22,
-              fontFamily: "PlayfairDisplay_400Regular",
-              color: tokens.text,
-              marginBottom: 12,
-              textAlign: "center",
-            }}
-          >
-            {t("common.maintenanceTitle")}
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              fontFamily: "Inter_400Regular",
-              color: tokens.muted,
-              textAlign: "center",
-            }}
-          >
-            {t("common.maintenanceBody")}
-          </Text>
-        </View>
-      </SafeAreaProvider>
-    );
+function getAppRoot(): AppRootComponent {
+  if (cachedAppRoot !== null) {
+    return cachedAppRoot;
   }
 
-  return (
-    <SafeAreaProvider>
-      <GuideProvider>
-        <NavigationSync />
-        <StatusBar style={tokens.statusBarStyle} />
-        <AlertBanner />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "slide_from_right",
-            animationDuration: motion.duration.base,
-          }}
-        >
-          {/* Auth flow — softer fade + gentle rise, slightly longer. */}
-          <Stack.Screen
-            name="(auth)"
-            options={{ animation: "fade_from_bottom", animationDuration: 320 }}
-          />
-          {/* Sheet-like layers rise from the bottom to read as modal surfaces. */}
-          <Stack.Screen name="cart" options={{ animation: "slide_from_bottom" }} />
-          <Stack.Screen name="wishlist" options={{ animation: "slide_from_bottom" }} />
-          <Stack.Screen name="checkout" options={{ animation: "slide_from_bottom" }} />
-        </Stack>
-        <GuideOverlay />
-        {!introComplete ? (
-          <SplashIntro onComplete={() => setIntroComplete(true)} />
-        ) : null}
-      </GuideProvider>
-    </SafeAreaProvider>
-  );
+  bootLog("AppRoot require start");
+  const startedAt = Date.now();
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- deferred past route-tree walk
+    const mod = require("@/components/AppRoot") as {
+      AppRoot?: AppRootComponent;
+    };
+    const candidate = mod.AppRoot;
+    if (typeof candidate !== "function") {
+      throw new Error("AppRoot export missing");
+    }
+    bootLog(`AppRoot require done (+${String(Date.now() - startedAt)}ms)`);
+    cachedAppRoot = candidate;
+    return candidate;
+  } catch (err) {
+    bootLog(
+      "AppRoot require failed",
+      err instanceof Error ? err.message : err,
+    );
+    throw err;
+  }
 }
 
 /**
- * Root layout: fonts, global providers, safe area, navigation stack.
- * AppShell (inside AppProviders) handles the maintenance mode gate.
+ * Thin root layout: splash + boot clock only.
+ *
+ * Heavy work (Providers, fonts, AppShell, Stack) lives in `components/AppRoot`
+ * and is required on first render. Combined with expo-router `asyncRoutes`,
+ * this avoids the ~14s silent gap where DEV sync mode eagerly `loadRoute()`s
+ * every file under `app/` before React can call RootLayout.
  */
 export default function RootLayout(): ReactElement {
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_400Regular,
-    Inter_400Regular,
-  });
+  const loggedRenderRef = useRef(false);
 
-  if (!fontsLoaded) {
-    return (
-      <AppProviders>
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: colors.bg,
-          }}
-        >
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </AppProviders>
-    );
+  /** Sync breadcrumb before any child work / deferred requires. */
+  if (!loggedRenderRef.current) {
+    loggedRenderRef.current = true;
+    bootLog("RootLayout render (sync)");
   }
 
+  const AppRoot = getAppRoot();
+
   return (
-    <AppProviders>
-      <AppShell />
-    </AppProviders>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AppRoot />
+    </GestureHandlerRootView>
   );
 }

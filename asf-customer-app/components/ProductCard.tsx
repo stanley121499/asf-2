@@ -108,6 +108,7 @@ export function ProductCard({
       style={{ width: "48%" }}
       accessibilityRole="button"
       accessibilityLabel={name}
+      interactionLogLabel={`product-card:${product.id}`}
     >
       {/* 3:4 image — NO border radius, panel background */}
       <View

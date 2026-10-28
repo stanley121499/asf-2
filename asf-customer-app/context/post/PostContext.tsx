@@ -4,19 +4,31 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   PropsWithChildren,
 } from "react";
 import { supabase } from "@/lib/supabase";
+import { sanitizeSupabaseErrorMessage } from "@/lib/supabaseErrorMessage";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
 import { PostMedia } from "./PostMediaContext";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
 import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
+import { scheduleDeferredRealtime } from "@/lib/deferredRealtime";
 
+/** Explicit post ↔ product junction row (`post_products`). */
+export type PostProductLink = Database["public"]["Tables"]["post_products"]["Row"];
+
+/**
+ * Post row with nested medias and explicit product links for Storefront feed resolvers.
+ * Taxonomy FKs (`department_id`, `range_id`, `category_id`, `brand_id`) live on the base row.
+ */
 export type Post = Database["public"]["Tables"]["posts"]["Row"] & {
   medias: PostMedia[];
+  /** Explicit M2M links from `post_products` (may be empty). */
+  post_products: PostProductLink[];
 };
 export type Posts = { posts: Post[] };
 export type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
@@ -29,38 +41,98 @@ interface PostContextProps {
   deletePost: (postId: string) => Promise<void>;
   restorePost: (postId: string) => Promise<void>;
   loading: boolean;
+  /** Re-fetch posts (used after transient gateway failures). */
+  refreshPosts: () => Promise<void>;
 }
 
 const PostContext = createContext<PostContextProps | undefined>(undefined);
+
+/** Max attempts for the initial posts fetch (transient Cloudflare 5xx / timeouts). */
+const POST_FETCH_MAX_ATTEMPTS = 3;
+
+/** Base delay between post-fetch retries (ms); doubles each attempt. */
+const POST_FETCH_RETRY_BASE_MS = 700;
+
+/**
+ * Wait for `ms` without rejecting.
+ *
+ * @param ms - Delay in milliseconds.
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 export function PostProvider({ children }: PropsWithChildren) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
+  const fetchGenerationRef = useRef(0);
 
   /**
-   * Fetch all posts.
+   * Fetch all posts with taxonomy FKs (via `*`) and explicit `post_products` links.
+   * Medias stay empty here; {@link PostMediaProvider} owns `post_medias` association.
+   * Retries briefly on gateway / network failures so Home hero can recover after
+   * transient Cloudflare 522-style outages without a full app remount.
    */
   const fetchPosts = useCallback(async (): Promise<void> => {
+    const generation = fetchGenerationRef.current + 1;
+    fetchGenerationRef.current = generation;
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*");
+      let lastSafeMessage = "Network request failed";
 
-      if (error) {
-        showAlert(error.message, "error");
-        return;
+      for (let attempt = 1; attempt <= POST_FETCH_MAX_ATTEMPTS; attempt += 1) {
+        if (fetchGenerationRef.current !== generation) {
+          return;
+        }
+
+        const { data, error } = await supabase.from("posts").select(`
+          *,
+          post_products(post_id, product_id, created_at)
+        `);
+
+        if (fetchGenerationRef.current !== generation) {
+          return;
+        }
+
+        if (!error) {
+          const mapped: Post[] = (data ?? [])
+            .filter((p) => !isSoftDeletedRow(p))
+            .map((p) => {
+              const links = (p.post_products ?? []) as PostProductLink[];
+              return {
+                ...p,
+                medias: [],
+                post_products: links,
+              };
+            });
+          setPosts(mapped);
+          return;
+        }
+
+        lastSafeMessage = sanitizeSupabaseErrorMessage(error);
+        if (process.env.NODE_ENV === "development") {
+          console.error(
+            `Failed to fetch posts (attempt ${String(attempt)}/${String(POST_FETCH_MAX_ATTEMPTS)}):`,
+            lastSafeMessage
+          );
+        }
+
+        if (attempt < POST_FETCH_MAX_ATTEMPTS) {
+          await delay(POST_FETCH_RETRY_BASE_MS * attempt);
+        }
       }
 
-      // Attach medias as an empty array here; media association is handled elsewhere.
-      const mapped: Post[] = (data ?? [])
-        .filter((p) => !isSoftDeletedRow(p))
-        .map((p) => ({ ...p, medias: [] }));
-      setPosts(mapped);
+      // Keep any previously loaded posts on failure so Home hero does not
+      // disappear after a mid-session remount / HMR during a gateway blip.
+      showAlert(lastSafeMessage, "error");
     } finally {
-      setLoading(false);
+      if (fetchGenerationRef.current === generation) {
+        setLoading(false);
+      }
     }
   }, [showAlert]);
 
@@ -78,7 +150,10 @@ export function PostProvider({ children }: PropsWithChildren) {
         if (isSoftDeletedRow(inserted)) {
           return;
         }
-        setPosts((prev) => [...prev, { ...inserted, medias: [] }]);
+        setPosts((prev) => [
+          ...prev,
+          { ...inserted, medias: [], post_products: [] },
+        ]);
       }
 
       if (payload.eventType === "UPDATE") {
@@ -89,7 +164,13 @@ export function PostProvider({ children }: PropsWithChildren) {
         }
         setPosts((prev) =>
           prev.map((post) =>
-            post.id === updated.id ? { ...updated, medias: post.medias } : post
+            post.id === updated.id
+              ? {
+                  ...updated,
+                  medias: post.medias,
+                  post_products: post.post_products,
+                }
+              : post
           )
         );
       }
@@ -105,24 +186,22 @@ export function PostProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     void fetchPosts();
 
-    const subscription = supabase
-      .channel("posts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "posts" },
-        (
-          payload: RealtimePostgresChangesPayload<
-            Database["public"]["Tables"]["posts"]["Row"]
-          >
-        ) => {
-          handleChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return scheduleDeferredRealtime(() =>
+      supabase
+        .channel("posts")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "posts" },
+          (
+            payload: RealtimePostgresChangesPayload<
+              Database["public"]["Tables"]["posts"]["Row"]
+            >
+          ) => {
+            handleChanges(payload);
+          }
+        )
+        .subscribe()
+    );
   }, [fetchPosts, handleChanges]);
 
   /**
@@ -132,12 +211,12 @@ export function PostProvider({ children }: PropsWithChildren) {
     const { data, error } = await supabase.from("posts").insert(post).select();
 
     if (error) {
-      showAlert(error.message, "error");
+      showAlert(sanitizeSupabaseErrorMessage(error), "error");
     }
 
     const row = data?.[0];
     if (!row) return undefined;
-    return { ...row, medias: [] } as Post;
+    return { ...row, medias: [], post_products: [] };
   }, [showAlert]);
 
   /**
@@ -157,10 +236,11 @@ export function PostProvider({ children }: PropsWithChildren) {
       .eq("id", post.id);
 
     if (error) {
-      showAlert(error.message, "error");
-      console.error(error);
+      const safeMessage = sanitizeSupabaseErrorMessage(error);
+      showAlert(safeMessage, "error");
+      console.error(safeMessage);
       // Throw so UIs can avoid showing a false success alert.
-      throw new Error(error.message);
+      throw new Error(safeMessage);
     }
   }, [showAlert]);
 
@@ -177,7 +257,7 @@ export function PostProvider({ children }: PropsWithChildren) {
       await softDeleteById("posts", postId, { setActive: true });
       showAlert("Post deleted successfully", "success");
     } catch (error: unknown) {
-      console.error("Failed to delete post:", error);
+      console.error("Failed to delete post:", sanitizeSupabaseErrorMessage(error));
       showAlert("Failed to delete post", "error");
       throw error instanceof Error ? error : new Error("Failed to delete post");
     }
@@ -198,7 +278,7 @@ export function PostProvider({ children }: PropsWithChildren) {
       await restoreById("posts", postId, { setActive: true });
       showAlert("Post restored successfully", "success");
     } catch (error: unknown) {
-      console.error("Failed to restore post:", error);
+      console.error("Failed to restore post:", sanitizeSupabaseErrorMessage(error));
       showAlert("Failed to restore post", "error");
       throw error instanceof Error ? error : new Error("Failed to restore post");
     }
@@ -212,8 +292,9 @@ export function PostProvider({ children }: PropsWithChildren) {
       deletePost,
       restorePost,
       loading,
+      refreshPosts: fetchPosts,
     }),
-    [posts, createPost, updatePost, deletePost, restorePost, loading]
+    [posts, createPost, updatePost, deletePost, restorePost, loading, fetchPosts]
   );
 
   return (
@@ -223,11 +304,10 @@ export function PostProvider({ children }: PropsWithChildren) {
   );
 }
 
-export function usePostContext() {
+export function usePostContext(): PostContextProps {
   const context = useContext(PostContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("usePostContext must be used within a PostProvider");
   }
   return context;
 }
-

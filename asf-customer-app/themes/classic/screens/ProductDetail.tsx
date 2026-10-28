@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { usePreventRemove } from "expo-router/react-navigation";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -45,6 +44,7 @@ import {
   getProductStockQuantity,
   resolveProductStockRow,
 } from "@/lib/productStock";
+import { useInterceptedBackPrevention } from "@/lib/useInterceptedBackPrevention";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -254,7 +254,7 @@ export function ClassicProductDetailScreen(): React.ReactElement {
   const reducedMotion = useReducedMotion();
   const { t } = useTranslation();
   const { translateProduct } = useContentTranslation();
-  const { products, loading } = useProductContext();
+  const { products, loading, ensureProduct } = useProductContext();
   const { user } = useAuthContext();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistContext();
   const { createAddToCart, add_to_carts, updateAddToCart } = useAddToCartContext();
@@ -266,6 +266,17 @@ export function ClassicProductDetailScreen(): React.ReactElement {
     () => (productId === null ? undefined : products.find((p) => p.id === productId)),
     [products, productId]
   );
+
+  /**
+   * Deep links / older SKUs may sit outside the P0 page — fetch that row on
+   * demand instead of waiting for a full-catalog hydrate.
+   */
+  useEffect(() => {
+    if (productId === null || product !== undefined || loading) {
+      return;
+    }
+    void ensureProduct(productId);
+  }, [productId, product, loading, ensureProduct]);
 
   const sortedMedias = useMemo(
     () => [...(product?.medias ?? [])].sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0)),
@@ -421,27 +432,13 @@ export function ClassicProductDetailScreen(): React.ReactElement {
    * back would otherwise pop to the Shop catalog. When the entry point was Home
    * or Wishlist, intercept the back and restore the correct entry screen.
    *
-   * This uses `usePreventRemove` rather than a bare `beforeRemove` +
-   * `preventDefault` listener on purpose: native-stack only keeps the native and
-   * JS navigation state in sync for screens registered through this hook (it sets
-   * `preventNativeDismiss` on iOS and disables the JS-handled system back on
-   * Android). A raw `beforeRemove` listener lets the native side dismiss the
-   * screen while JS keeps it, producing the "screen was removed natively but
-   * didn't get removed from JS state" warning.
+   * Uses Expo Router's `usePreventRemove` (via `useInterceptedBackPrevention`)
+   * so native-stack keeps native/JS state in sync (`preventNativeDismiss`).
    */
   const shouldInterceptBack = returnTo === "home" || returnTo === "wishlist";
 
-  usePreventRemove(shouldInterceptBack, ({ data }) => {
-    const actionType = data.action.type;
-    if (actionType === "GO_BACK" || actionType === "POP") {
-      leaveBrowseProduct(router, returnTo);
-      return;
-    }
-    // Non-back removals (e.g. Shop tab → catalog reset) must still proceed.
-    // Re-dispatching the original action carries React Navigation's internal
-    // "already visited" marker, so this screen is not prevented a second time
-    // and the removal completes normally.
-    navigation.dispatch(data.action);
+  useInterceptedBackPrevention(shouldInterceptBack, () => {
+    leaveBrowseProduct(router, returnTo);
   });
 
   const onAddToCart = useCallback(async (): Promise<void> => {

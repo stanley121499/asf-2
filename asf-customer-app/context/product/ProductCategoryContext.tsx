@@ -12,8 +12,6 @@ import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
 
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
 export type ProductCategory = Database["public"]["Tables"]["product_categories"]["Row"];
 export type ProductCategoryInsert = Database["public"]["Tables"]["product_categories"]["Insert"];
 export type ProductCategoryUpdate = Database["public"]["Tables"]["product_categories"]["Update"];
@@ -29,8 +27,9 @@ interface ProductCategoryContextProps {
 const ProductCategoryContext = createContext<ProductCategoryContextProps | undefined>(undefined);
 
 export function ProductCategoryProvider({ children }: PropsWithChildren) {
-  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  /** Lists unused in customer UI — category links embed on Product joins. */
+  const [productCategories] = useState<ProductCategory[]>([]);
+  const [loading] = useState(false);
   const { showAlert } = useAlertContext();
 
 
@@ -42,77 +41,6 @@ export function ProductCategoryProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
-
-  /**
-   * Fetch all product category links from Supabase.
-   */
-  const fetchProductCategories = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.from("product_categories").select("*");
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setProductCategories(data ?? []);
-    } catch (error: unknown) {
-      console.error("Failed to fetch product categories:", error);
-      showAlertRef.current?.("Failed to fetch product categories", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for product category link changes.
-   */
-  const handleRealtimeChanges = useCallback(
-    (payload: RealtimePostgresChangesPayload<ProductCategory>): void => {
-      if (payload.eventType === "INSERT") {
-        setProductCategories((prev) => [...prev, payload.new]);
-      }
-
-      if (payload.eventType === "UPDATE") {
-        setProductCategories((prev) =>
-          prev.map((productCategory) =>
-            productCategory.id === payload.new.id ? payload.new : productCategory
-          )
-        );
-      }
-
-      if (payload.eventType === "DELETE") {
-        setProductCategories((prev) =>
-          prev.filter((productCategory) => productCategory.id !== payload.old.id)
-        );
-      }
-    },
-    []
-  );
-
-  /**
-   * Fetch once on mount and subscribe to realtime changes.
-   * Auth-guarded: skip if there is no active user session.
-   */
-  useEffect(() => {
-    void fetchProductCategories();
-
-    const subscription = supabase
-      .channel("product_categories")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "product_categories" },
-        (payload: RealtimePostgresChangesPayload<ProductCategory>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProductCategories, handleRealtimeChanges]);
 
   /**
    * Create a product-category link.

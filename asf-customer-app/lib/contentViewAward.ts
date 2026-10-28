@@ -1,11 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { getApiBaseUrl } from "@/lib/api";
-import { apiFetch } from "@/lib/apiFetch";
-
 /**
- * Content kinds accepted by `POST /api/rewards/content-view`.
- * Note: linked-products route uses `promotion`; API uses `promo`.
+ * Content kinds for discovery-view awards (product PDP, post, promo).
+ * Note: linked-products route uses `promotion`; award type uses `promo`.
  */
 export type ContentViewAwardType = "product" | "post" | "promo";
 
@@ -17,12 +14,28 @@ export type ContentViewAwardResult = {
   balance?: number;
   /** True when this client session already requested this content key. */
   skippedLocally: boolean;
-  /** HTTP status when the request completed; 0 on network failure. */
+  /**
+   * HTTP status when a remote request completed; `0` for local-only /
+   * network-skip paths.
+   */
   httpStatus: number;
+  /** True when the award decision came from AsyncStorage (not the API). */
+  fromLocal: boolean;
 };
 
 /** Soft guest prompt AsyncStorage flag — shown at most once per device. */
 const GUEST_PROMPT_STORAGE_KEY = "asf_discovery_points_guest_prompt_v1";
+
+/**
+ * Persisted map of already-awarded content keys for this device.
+ * Value shape: `{ [userId:contentType:contentId]: true }`.
+ *
+ * Temporary until `POST /api/rewards/content-view` is reliably deployed.
+ */
+const LOCAL_AWARDS_STORAGE_KEY = "@asf/content_view_awards";
+
+/** Local discovery points granted on first view (matches server default). */
+const LOCAL_AWARD_POINTS = 1;
 
 /** UUID shape matching server Zod / deep-link validation. */
 const UUID_RE =
@@ -31,14 +44,22 @@ const UUID_RE =
 /** In-flight shared promises — remounts await the same request instead of skipping. */
 const inFlightPromises = new Map<string, Promise<ContentViewAwardResult>>();
 
-/** Completed keys this JS session (server remains source of truth). */
+/** Completed keys this JS session (local store remains source of truth across launches). */
 const completedKeys = new Set<string>();
 
 /**
- * Builds a stable debounce key for a content view award attempt.
+ * Builds a stable debounce / persistence key scoped to the signed-in user.
+ *
+ * @param userId - Authenticated customer id
+ * @param contentType - product | post | promo
+ * @param contentId - Content uuid
  */
-function awardKey(contentType: ContentViewAwardType, contentId: string): string {
-  return `${contentType}:${contentId}`;
+function awardKey(
+  userId: string,
+  contentType: ContentViewAwardType,
+  contentId: string
+): string {
+  return `${userId}:${contentType}:${contentId}`;
 }
 
 /**
@@ -52,6 +73,8 @@ export function isContentViewAwardUuid(value: string): boolean {
 
 /**
  * Narrows unknown JSON into a plain object record.
+ *
+ * @param value - Parsed JSON value
  */
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -61,56 +84,86 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Parses a non-negative finite number from an API field.
+ * Loads the persisted award map from AsyncStorage.
+ * Corrupt or missing data yields an empty map.
  */
-function parseNonNegativeNumber(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-    return null;
-  }
-  return value;
-}
-
-/**
- * Resolves the API base for failure logs without throwing when misconfigured.
- */
-function safeApiBaseForLog(): string {
+async function readLocalAwardMap(): Promise<Record<string, boolean>> {
   try {
-    return getApiBaseUrl();
+    const raw = await AsyncStorage.getItem(LOCAL_AWARDS_STORAGE_KEY);
+    if (raw === null || raw.length === 0) {
+      return {};
+    }
+    const parsed: unknown = JSON.parse(raw);
+    const record = asRecord(parsed);
+    if (record === null) {
+      return {};
+    }
+    const map: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (value === true) {
+        map[key] = true;
+      }
+    }
+    return map;
   } catch (err) {
-    return err instanceof Error ? err.message : "API base unavailable";
+    console.warn(
+      "[contentViewAward] local award map read failed",
+      err instanceof Error ? err.message : err
+    );
+    return {};
   }
 }
 
 /**
- * POSTs `/api/rewards/content-view` with the customer Bearer session.
+ * Persists the award map to AsyncStorage.
  *
- * Concurrent callers for the same content share one in-flight promise so a PDP
- * remount still receives `{ awarded: true }` and can show the ceremony.
- * The server unique constraint remains the authority for once-forever awards.
+ * @param map - Key → true for already-awarded content
+ */
+async function writeLocalAwardMap(map: Record<string, boolean>): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LOCAL_AWARDS_STORAGE_KEY, JSON.stringify(map));
+  } catch (err) {
+    console.warn(
+      "[contentViewAward] local award map write failed",
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
+/**
+ * Awards discovery points via device-local AsyncStorage (primary path for now).
+ *
+ * Concurrent callers for the same user+content share one in-flight promise so a
+ * PDP remount still receives `{ awarded: true }` and can show the ceremony.
+ * Guests must not call this — hosts show a soft sign-in prompt instead.
  *
  * Ceremony should run only when `awarded === true && points > 0`.
  *
  * @param options.contentType - product | post | promo
  * @param options.contentId - Content uuid
+ * @param options.userId - Signed-in customer id (required for local scoping)
  */
 export async function requestContentViewAward(options: {
   contentType: ContentViewAwardType;
   contentId: string;
+  userId: string;
 }): Promise<ContentViewAwardResult> {
   const contentType = options.contentType;
   const contentId = options.contentId.trim();
+  const userId = options.userId.trim();
 
-  if (!isContentViewAwardUuid(contentId)) {
+  if (!isContentViewAwardUuid(contentId) || userId.length === 0) {
     return {
       awarded: false,
       points: 0,
       alreadyAwarded: false,
       skippedLocally: true,
       httpStatus: 0,
+      fromLocal: true,
     };
   }
 
-  const key = awardKey(contentType, contentId);
+  const key = awardKey(userId, contentType, contentId);
 
   if (completedKeys.has(key)) {
     return {
@@ -119,6 +172,7 @@ export async function requestContentViewAward(options: {
       alreadyAwarded: true,
       skippedLocally: true,
       httpStatus: 0,
+      fromLocal: true,
     };
   }
 
@@ -127,7 +181,7 @@ export async function requestContentViewAward(options: {
     return existing;
   }
 
-  const promise = executeContentViewAwardRequest(key, contentType, contentId);
+  const promise = executeLocalContentViewAward(key, contentType, contentId);
   inFlightPromises.set(key, promise);
 
   try {
@@ -138,106 +192,85 @@ export async function requestContentViewAward(options: {
 }
 
 /**
- * Performs the network request and parses the award response.
+ * Reads AsyncStorage, awards once, and marks the session key complete.
+ *
+ * @param key - User-scoped persistence key
+ * @param contentType - Content kind (logging)
+ * @param contentId - Content uuid (logging)
  */
-async function executeContentViewAwardRequest(
+async function executeLocalContentViewAward(
   key: string,
   contentType: ContentViewAwardType,
   contentId: string
 ): Promise<ContentViewAwardResult> {
-  let response: Response;
-  try {
-    response = await apiFetch("/api/rewards/content-view", {
-      method: "POST",
-      body: JSON.stringify({
+  const map = await readLocalAwardMap();
+
+  if (map[key] === true) {
+    completedKeys.add(key);
+    if (__DEV__) {
+      console.info("[contentViewAward] local already awarded", {
         contentType,
         contentId,
-      }),
-    });
-  } catch (err) {
-    console.warn(
-      "[contentViewAward] network error",
-      {
-        apiBase: safeApiBaseForLog(),
-        contentType,
-        contentId,
-        message: err instanceof Error ? err.message : err,
-      }
-    );
+        key,
+      });
+    }
     return {
       awarded: false,
       points: 0,
-      alreadyAwarded: false,
+      alreadyAwarded: true,
       skippedLocally: false,
       httpStatus: 0,
+      fromLocal: true,
     };
   }
 
-  let json: unknown = null;
-  try {
-    json = await response.json();
-  } catch {
-    json = null;
-  }
-
-  if (!response.ok) {
-    console.warn("[contentViewAward] HTTP", {
-      apiBase: safeApiBaseForLog(),
-      status: response.status,
-      contentType,
-      contentId,
-      body: typeof json === "object" && json !== null ? json : undefined,
-    });
-    return {
-      awarded: false,
-      points: 0,
-      alreadyAwarded: false,
-      skippedLocally: false,
-      httpStatus: response.status,
-    };
-  }
-
-  const record = asRecord(json);
-  const awarded = record?.["awarded"] === true;
-  const alreadyAwarded = record?.["alreadyAwarded"] === true;
-  const pointsRaw = parseNonNegativeNumber(record?.["points"]);
-  const points = pointsRaw ?? 0;
-  const balanceRaw = parseNonNegativeNumber(record?.["balance"]);
-
+  map[key] = true;
+  await writeLocalAwardMap(map);
   completedKeys.add(key);
 
-  const result: ContentViewAwardResult = {
-    awarded,
-    points,
-    alreadyAwarded,
-    skippedLocally: false,
-    httpStatus: response.status,
-  };
-
-  if (balanceRaw !== null) {
-    result.balance = balanceRaw;
-  }
-
   if (__DEV__) {
-    console.info("[contentViewAward] ok", {
+    console.info("[contentViewAward] local award granted", {
       contentType,
       contentId,
-      awarded,
-      points,
-      alreadyAwarded,
+      key,
+      points: LOCAL_AWARD_POINTS,
     });
   }
 
-  return result;
+  return {
+    awarded: true,
+    points: LOCAL_AWARD_POINTS,
+    alreadyAwarded: false,
+    skippedLocally: false,
+    httpStatus: 0,
+    fromLocal: true,
+  };
 }
 
 /**
  * Clears this JS-session award debounce cache (dev / QA re-test helper).
- * Does not delete server `content_view_awards` rows.
+ * Does not delete persisted AsyncStorage awards — use
+ * {@link clearContentViewAwardLocalStore} for a full reset.
  */
 export function clearContentViewAwardSessionCache(): void {
   completedKeys.clear();
   inFlightPromises.clear();
+}
+
+/**
+ * Clears persisted local awards and the session cache (dev / QA re-test).
+ * After this, the next PDP open can grant a ceremony again for each content.
+ */
+export async function clearContentViewAwardLocalStore(): Promise<void> {
+  clearContentViewAwardSessionCache();
+  try {
+    await AsyncStorage.removeItem(LOCAL_AWARDS_STORAGE_KEY);
+  } catch (err) {
+    console.warn(
+      "[contentViewAward] local award map clear failed",
+      err instanceof Error ? err.message : err
+    );
+  }
 }
 
 /**
@@ -271,7 +304,7 @@ export async function markGuestDiscoveryPromptShown(): Promise<void> {
 }
 
 /**
- * Maps linked-products route `kind` to the award API `contentType`.
+ * Maps linked-products route `kind` to the award `contentType`.
  *
  * @param kind - `post` | `promotion` from browse navigation
  */

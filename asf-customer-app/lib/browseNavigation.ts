@@ -1,5 +1,7 @@
 import type { Href, ImperativeRouter } from "expo-router";
 
+import { logNavigateStart } from "@/lib/interactionLog";
+
 /**
  * Where the product detail back control should return.
  * - `home` — opened from the Home tab (new arrivals, etc.)
@@ -145,6 +147,8 @@ export function openBrowseProduct(
 
   setBrowseColorIntent(trimmed, colorId);
 
+  logNavigateStart(`/(tabs)/browse/[productId] ${trimmed}`);
+
   // Always pass `colorId` so a prior navigate cannot leave a stale swatch param
   // on the reused `[productId]` screen (`""` → resolveBrowseColorId → null).
   router.navigate(
@@ -164,6 +168,7 @@ export function openBrowseProduct(
  * Focuses the Shop tab on the catalog list, clearing any leftover product detail.
  */
 export function openBrowseCatalog(router: ImperativeRouter): void {
+  logNavigateStart("/(tabs)/browse");
   router.navigate("/(tabs)/browse" as Href);
 }
 

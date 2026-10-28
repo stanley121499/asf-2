@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -25,6 +24,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 
+import { PageLoadingSkeleton } from "@/components/PageLoadingSkeleton";
 import { PostVideo } from "@/components/PostVideo";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
@@ -33,6 +33,7 @@ import { usePostContext } from "@/context/post/PostContext";
 import { usePostMediaContext } from "@/context/post/PostMediaContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import type { Tables } from "@/database.types";
+import { openLinkedProducts } from "@/lib/browseNavigation";
 import { motion } from "@/lib/motion";
 import type { ThemeTokens } from "@/themes/types";
 
@@ -197,7 +198,6 @@ function ChapterPage({
   const mediaUrl = firstMedia?.media_url ?? null;
   const isVideo = (firstMedia?.media_type ?? "image") === "video";
   const caption = translatePost(post.id, "caption", post.caption);
-  const ctaText = translatePost(post.id, "cta_text", post.cta_text);
 
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -269,6 +269,14 @@ function ChapterPage({
   /** Leave room under overlay chrome + home indicator when caption sits low. */
   const captionBottomPad = Math.max(insets.bottom, 12) + 20;
 
+  /** Home parity: open linked-products so post content-view awards can fire. */
+  const openPostLinkedProducts = (): void => {
+    openLinkedProducts(router, "post", post.id);
+  };
+
+  const mediaA11yLabel =
+    caption.length > 0 ? caption : t("post.featuredContent");
+
   const captionBlock = (
     <View style={{ paddingHorizontal: 24, paddingBottom: captionBottomPad }}>
       <Text
@@ -306,7 +314,6 @@ function ChapterPage({
           flexDirection: "row",
           alignItems: "center",
           gap: 22,
-          marginBottom: ctaText.length > 0 ? 16 : 0,
         }}
       >
         <TouchableOpacity onPress={() => void toggleLike()} hitSlop={8}>
@@ -349,26 +356,6 @@ function ChapterPage({
           </Text>
         </TouchableOpacity>
       </View>
-
-      {ctaText.length > 0 ? (
-        <Pressable
-          onPress={() => router.push("/(tabs)/browse")}
-          style={{ paddingVertical: 4 }}
-          accessibilityRole="button"
-          accessibilityLabel={ctaText}
-        >
-          <Text
-            style={{
-              fontSize: 14,
-              color: tokens.accent,
-              fontFamily: "Inter_400Regular",
-              letterSpacing: 0.3,
-            }}
-          >
-            {ctaText}
-          </Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 
@@ -382,7 +369,10 @@ function ChapterPage({
       }}
     >
       {mediaUrl === null ? (
-        <View
+        <Pressable
+          onPress={openPostLinkedProducts}
+          accessibilityRole="button"
+          accessibilityLabel={mediaA11yLabel}
           style={{
             flex: 1,
             alignItems: "center",
@@ -401,21 +391,31 @@ function ChapterPage({
           >
             {t("post.noContent")}
           </Text>
-        </View>
-      ) : isVideo ? (
-        <PostVideo
-          uri={mediaUrl}
-          style={{ width: SCREEN_WIDTH, height: pageHeight }}
-          contentFit="cover"
-          shouldPlay={isActive}
-          muted={isMuted}
-        />
+        </Pressable>
       ) : (
-        <Image
-          source={{ uri: mediaUrl }}
+        <Pressable
+          onPress={openPostLinkedProducts}
+          accessibilityRole="button"
+          accessibilityLabel={mediaA11yLabel}
           style={{ width: SCREEN_WIDTH, height: pageHeight }}
-          contentFit="cover"
-        />
+        >
+          {isVideo ? (
+            <PostVideo
+              uri={mediaUrl}
+              style={{ width: SCREEN_WIDTH, height: pageHeight }}
+              contentFit="cover"
+              shouldPlay={isActive}
+              muted={isMuted}
+            />
+          ) : (
+            <Image
+              source={{ uri: mediaUrl }}
+              style={{ width: SCREEN_WIDTH, height: pageHeight }}
+              contentFit="cover"
+              accessibilityLabel={mediaA11yLabel}
+            />
+          )}
+        </Pressable>
       )}
 
       {/* Soft ink wash — calm lower frame for caption (editorial, not Reels UI) */}
@@ -589,19 +589,8 @@ export function AtelierHighlightsScreen(): React.ReactElement {
 
   const loading = postsLoading || mediaLoading;
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: tokens.bg,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={tokens.accent} />
-      </View>
-    );
+  if (loading && featured.length === 0) {
+    return <PageLoadingSkeleton variant="highlights" />;
   }
 
   return (

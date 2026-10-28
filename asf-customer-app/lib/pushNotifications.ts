@@ -6,18 +6,57 @@
  * the device is a simulator, Expo Go (SDK 53+ has no remote push), or token
  * registration fails.
  *
+ * `expo-notifications` is never imported at module top-level — Expo Go Android
+ * (SDK 53+) throws a fatal on import. Call sites lazy-require inside try/catch
+ * after an Expo Go check. EAS preview / development builds still get real push
+ * when the native module loads successfully.
+ *
  * No Firebase — tokens are attributed via EAS `projectId` only.
  */
 
 import Constants from "expo-constants";
 import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
+import { isExpoGoRuntime } from "@/lib/expoRuntime";
 import { supabase } from "@/lib/supabase";
+
+export { isExpoGoRuntime } from "@/lib/expoRuntime";
 
 /** Supported OS platforms stored on `push_tokens.platform`. */
 type PushPlatform = "ios" | "android";
+
+/** Permission status string returned by expo-notifications. */
+type NotificationPermissionStatus = "granted" | "denied" | "undetermined" | string;
+
+/**
+ * Minimal typed surface of `expo-notifications` used by this module.
+ * Avoids a top-level import that fatals in Expo Go on Android (SDK 53+).
+ */
+type ExpoNotificationsModule = {
+  setNotificationHandler: (handler: {
+    handleNotification: () => Promise<{
+      shouldShowAlert: boolean;
+      shouldPlaySound: boolean;
+      shouldSetBadge: boolean;
+      shouldShowBanner: boolean;
+      shouldShowList: boolean;
+    }>;
+  }) => void;
+  setNotificationChannelAsync: (
+    channelId: string,
+    channel: { name: string; importance: number },
+  ) => Promise<unknown>;
+  getPermissionsAsync: () => Promise<{ status: NotificationPermissionStatus }>;
+  requestPermissionsAsync: () => Promise<{ status: NotificationPermissionStatus }>;
+  getExpoPushTokenAsync: (options: {
+    projectId: string;
+  }) => Promise<{ data: string }>;
+  AndroidImportance: { DEFAULT: number };
+};
+
+/** Cached module after a successful lazy load (null = unavailable). */
+let cachedNotifications: ExpoNotificationsModule | null | undefined;
 
 /** Dev-only messages already printed once this session (avoid spam). */
 const warnedOnceKeys = new Set<string>();
@@ -39,19 +78,44 @@ function warnOnce(key: string, message: string): void {
 }
 
 /**
- * True when running inside Expo Go, where remote push (SDK 53+) is unavailable.
+ * Lazily loads `expo-notifications`. Must not run in Expo Go on Android —
+ * the package throws a fatal on module evaluation (SDK 53+).
  *
- * @returns Whether the current runtime is Expo Go
+ * @returns The notifications module, or null when unavailable / unsafe
  */
-export function isExpoGoRuntime(): boolean {
-  if (Constants.appOwnership === "expo") {
-    return true;
+function loadNotificationsModule(): ExpoNotificationsModule | null {
+  if (isExpoGoRuntime()) {
+    warnOnce(
+      "expo-go-notifications",
+      "[push] Expo Go does not support remote push (SDK 53+). Use a development build to register tokens.",
+    );
+    return null;
   }
-  // StoreClient is Expo Go; Bare / Standalone are development or production builds.
-  if (Constants.executionEnvironment === "storeClient") {
-    return true;
+
+  if (cachedNotifications !== undefined) {
+    return cachedNotifications;
   }
-  return false;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional soft-fail require
+    const mod = require("expo-notifications") as ExpoNotificationsModule;
+    if (
+      typeof mod.setNotificationHandler !== "function" ||
+      typeof mod.getExpoPushTokenAsync !== "function"
+    ) {
+      cachedNotifications = null;
+      return null;
+    }
+    cachedNotifications = mod;
+    return mod;
+  } catch (err) {
+    cachedNotifications = null;
+    console.warn(
+      "[push] expo-notifications unavailable",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
 }
 
 /**
@@ -77,29 +141,34 @@ function isExpectedPushFailure(message: string): boolean {
 /**
  * Configures how notifications behave while the app is foregrounded.
  * No-op on web and Expo Go (remote push / full notifications API unavailable).
+ * Never calls into expo-notifications at module scope.
  */
 export function configureForegroundNotificationHandler(): void {
   if (Platform.OS === "web") {
     return;
   }
 
-  if (isExpoGoRuntime()) {
-    warnOnce(
-      "expo-go-notifications",
-      "[push] Expo Go does not support remote push (SDK 53+). Use a development build to register tokens.",
-    );
+  const Notifications = loadNotificationsModule();
+  if (Notifications === null) {
     return;
   }
 
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (err) {
+    console.warn(
+      "[push] setNotificationHandler soft-failed",
+      err instanceof Error ? err.message : err,
+    );
+  }
 }
 
 /**
@@ -138,15 +207,24 @@ function resolvePushPlatform(): PushPlatform | null {
 
 /**
  * Ensures the Android default notification channel exists (no-op on iOS).
+ *
+ * @param Notifications - Loaded expo-notifications module
  */
-async function ensureAndroidDefaultChannel(): Promise<void> {
+async function ensureAndroidDefaultChannel(
+  Notifications: ExpoNotificationsModule,
+): Promise<void> {
   if (Platform.OS !== "android") {
     return;
   }
 
+  const importance =
+    typeof Notifications.AndroidImportance?.DEFAULT === "number"
+      ? Notifications.AndroidImportance.DEFAULT
+      : 3;
+
   await Notifications.setNotificationChannelAsync("default", {
     name: "default",
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance,
   });
 }
 
@@ -157,6 +235,7 @@ async function ensureAndroidDefaultChannel(): Promise<void> {
  * Soft-fails (returns null) when:
  * - Expo Go / web / not a physical device
  * - permission denied
+ * - native module missing
  * - project id / platform / token unavailable
  * - Supabase upsert or network errors
  *
@@ -195,6 +274,11 @@ export async function registerForPushNotifications(
     return null;
   }
 
+  const Notifications = loadNotificationsModule();
+  if (Notifications === null) {
+    return null;
+  }
+
   try {
     const existing = await Notifications.getPermissionsAsync();
     let finalStatus = existing.status;
@@ -212,7 +296,7 @@ export async function registerForPushNotifications(
       return null;
     }
 
-    await ensureAndroidDefaultChannel();
+    await ensureAndroidDefaultChannel(Notifications);
 
     const projectId = resolveEasProjectId();
     if (projectId === null) {

@@ -76,7 +76,19 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = `${getApiBaseUrl()}${normalizedPath}`;
+  const baseUrl = getApiBaseUrl();
+  if (baseUrl.length === 0) {
+    console.error("[apiFetch] skipped — EXPO_PUBLIC_API_URL is not configured:", normalizedPath);
+    return new Response(
+      JSON.stringify({ error: "API URL not configured" }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  const url = `${baseUrl}${normalizedPath}`;
 
   if (__DEV__ && token === null) {
     console.warn("[apiFetch] no access token for", normalizedPath);

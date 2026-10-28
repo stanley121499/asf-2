@@ -23,14 +23,19 @@ export function resolvePromotionDisplayTitle(
   promotion: Pick<Promotion, "name" | "code">,
   locale: Locale
 ): string {
+  const name =
+    typeof promotion.name === "string" && promotion.name.trim().length > 0
+      ? promotion.name.trim()
+      : "";
+
   if (locale === "zh-CN") {
-    return promotion.name;
+    return name.length > 0 ? name : getPromotionCode(promotion) ?? "";
   }
   const code = getPromotionCode(promotion);
   if (code !== null) {
     return code;
   }
-  return promotion.name;
+  return name;
 }
 
 /**

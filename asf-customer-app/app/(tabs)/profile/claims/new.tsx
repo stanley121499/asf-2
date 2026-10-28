@@ -16,7 +16,7 @@ import {
 import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAlertContext } from "@/context/AlertContext";
 import { useAuthContext } from "@/context/AuthContext";
-import { useClaimContext } from "@/context/ClaimContext";
+import { useClaimContext, useClaimP2Focus } from "@/context/ClaimContext";
 import { useContentTranslation } from "@/context/ContentTranslationContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useTranslation, useLocale } from "@/context/LocaleContext";
@@ -71,6 +71,8 @@ export default function NewClaimScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const { showAlert } = useAlertContext();
   const { createClaimWithItems } = useClaimContext();
+
+  useClaimP2Focus("claims:new");
 
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItemWithProduct[]>([]);

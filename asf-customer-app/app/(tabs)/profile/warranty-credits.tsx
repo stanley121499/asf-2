@@ -12,7 +12,10 @@ import { SubPageHeader } from "@/components/SubPageHeader";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { useLocale, useTranslation } from "@/context/LocaleContext";
-import { useWarrantyCreditContext } from "@/context/WarrantyCreditContext";
+import {
+  useWarrantyCreditContext,
+  useWarrantyCreditP2Focus,
+} from "@/context/WarrantyCreditContext";
 import { useThemeTokens } from "@/context/ThemeContext";
 import { formatClaimLabel } from "@/lib/claims/claimEligibility";
 import { formatDate } from "@/i18n/format";
@@ -31,6 +34,8 @@ export default function WarrantyCreditsScreen(): React.ReactElement {
   const { isEnabled } = useFeatureFlags();
   const { credits, loading } = useWarrantyCreditContext();
   const [tab, setTab] = useState<CreditTab>("active");
+
+  useWarrantyCreditP2Focus("warranty_credits");
 
   const filtered = useMemo(() => {
     const now = Date.now();

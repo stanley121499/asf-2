@@ -11,10 +11,7 @@ import React, {
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/database.types";
 import { useAlertContext } from "../AlertContext";
-
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { restoreById, softDeleteById } from "@/lib/softDelete";
-import { isSoftDeletedRow } from "@/lib/softDeleteRuntime";
 
 export type ProductColor = Database["public"]["Tables"]["product_colors"]["Row"];
 export type ProductColorInsert = Database["public"]["Tables"]["product_colors"]["Insert"];
@@ -32,8 +29,9 @@ interface ProductColorContextProps {
 const ProductColorContext = createContext<ProductColorContextProps | undefined>(undefined);
 
 export function ProductColorProvider({ children }: PropsWithChildren) {
-  const [productColors, setProductColors] = useState<ProductColor[]>([]);
-  const [loading, setLoading] = useState(true);
+  /** Lists unused in customer UI — colors embed on Product joins. */
+  const [productColors] = useState<ProductColor[]>([]);
+  const [loading] = useState(false);
   const { showAlert } = useAlertContext();
 
 
@@ -46,85 +44,6 @@ export function ProductColorProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     showAlertRef.current = showAlert;
   }, [showAlert]);
-
-  /**
-   * Fetch all product colors from Supabase.
-   */
-  const fetchProductColors = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("product_colors")
-        .select("*");
-
-      if (error) {
-        showAlertRef.current?.(error.message, "error");
-        return;
-      }
-
-      setProductColors((data ?? []).filter((c) => !isSoftDeletedRow(c)));
-    } catch (error: unknown) {
-      console.error("Failed to fetch product colors:", error);
-      showAlertRef.current?.("Failed to fetch product colors", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Realtime handler for product color changes.
-   */
-  const handleRealtimeChanges = useCallback(
-    (payload: RealtimePostgresChangesPayload<ProductColor>): void => {
-      if (payload.eventType === "INSERT") {
-        if (isSoftDeletedRow(payload.new)) {
-          return;
-        }
-        setProductColors((prev) => [...prev, payload.new]);
-      }
-
-      if (payload.eventType === "UPDATE") {
-        if (isSoftDeletedRow(payload.new)) {
-          setProductColors((prev) => prev.filter((c) => c.id !== payload.new.id));
-          return;
-        }
-
-        setProductColors((prev) =>
-          prev.map((productColor) => (productColor.id === payload.new.id ? payload.new : productColor))
-        );
-      }
-
-      if (payload.eventType === "DELETE") {
-        setProductColors((prev) =>
-          prev.filter((productColor) => productColor.id !== payload.old.id)
-        );
-      }
-    },
-    []
-  );
-
-  /**
-   * Fetch once on mount and subscribe to realtime changes.
-   * Auth-guarded: skip if there is no active user session.
-   */
-  useEffect(() => {
-    void fetchProductColors();
-
-    const subscription = supabase
-      .channel("product_colors")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "product_colors" },
-        (payload: RealtimePostgresChangesPayload<ProductColor>) => {
-          handleRealtimeChanges(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProductColors, handleRealtimeChanges]);
 
   /**
    * Create a new product color row.
