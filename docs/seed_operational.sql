@@ -245,6 +245,9 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO homepage_elements
     (id, type, "contentType", "targetId", amount, arrangement, created_at)
 VALUES
+-- Storefront / Next Home cover: type=hero → posts.id → post_medias.media_url
+('55550000-0000-0000-0000-000000000010',
+ 'hero',     'post',      'c2010001-24a8-4f00-8000-000000000004', 1, 0, now()),
 ('55550000-0000-0000-0000-000000000001',
  'posts',    'latest',    NULL,                                   3, 1, now()),
 ('55550000-0000-0000-0000-000000000002',
