@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { createCustomerNotification } from "@/app/api/_lib/customerNotifications";
 import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 import { getStripe } from "@/app/api/_lib/stripe";
 import { myrToSen, senToMyr } from "@/app/api/_lib/money";
@@ -27,7 +28,8 @@ const AMOUNT_TOLERANCE_SEN = 1;
  * Verifies `Stripe-Signature`, then processes `payment_intent.succeeded` and
  * `payment_intent.payment_failed` events. On success: creates or updates `orders`,
  * `order_items`, `payments`, decrements `product_stock.count`, clears `add_to_carts`, inserts a
- * confirmation `notifications` row. Idempotent on `payments.stripe_payment_intent_id`.
+ * confirmation notification via {@link createCustomerNotification}. Idempotent on
+ * `payments.stripe_payment_intent_id`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const rawBody = await request.text();
@@ -77,20 +79,54 @@ function isPaymentIntent(value: Stripe.Event.Data["object"]): value is Stripe.Pa
   return typeof value === "object" && value !== null && "object" in value && value.object === "payment_intent";
 }
 
+/**
+ * Builds a short human-readable order label from a UUID (e.g. `#A1B2C3D4`).
+ *
+ * @param orderId - Order UUID
+ * @returns Display label for notification templates
+ */
+function orderLabelFromId(orderId: string): string {
+  const shortRef = orderId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `#${shortRef}`;
+}
+
+/**
+ * Builds an optional amount suffix for the `payment_failed` template
+ * (`{{amount_label}}` is concatenated directly after "payment").
+ *
+ * @param amountSen - Stripe amount in sen (smallest currency unit)
+ * @returns Suffix such as `" (RM 12.34)"`, or `""` when amount is unusable
+ */
+function paymentFailedAmountLabel(amountSen: number): string {
+  if (!Number.isFinite(amountSen)) {
+    return "";
+  }
+  const amountMyr = senToMyr(amountSen);
+  if (!Number.isFinite(amountMyr)) {
+    return "";
+  }
+  return ` (RM ${amountMyr.toFixed(2)})`;
+}
+
 async function handlePaymentIntentFailed(pi: Stripe.PaymentIntent): Promise<void> {
   const userId = pi.metadata["userId"];
   if (typeof userId !== "string" || !isUuid(userId)) {
     return;
   }
   const supabase = createServiceRoleClient();
-  const { error } = await supabase.from("notifications").insert({
-    user_id: userId,
-    type: "payment_failed",
-    title: "Payment Failed",
-    body: "Your payment could not be completed. Please try again or use a different card.",
-  });
-  if (error !== null) {
-    console.error("stripe webhook: payment_failed notification", error.message);
+  try {
+    const result = await createCustomerNotification({
+      supabase,
+      userId,
+      type: "payment_failed",
+      vars: { amount_label: paymentFailedAmountLabel(pi.amount) },
+      metadata: { stripe_payment_intent_id: pi.id },
+    });
+    if (result.notificationId === null && result.skipped === false) {
+      console.error("stripe webhook: payment_failed notification failed");
+    }
+  } catch (err) {
+    console.error("stripe webhook: payment_failed notification", err);
   }
 }
 
@@ -179,17 +215,25 @@ async function fulfillPendingOrder(
   const rows = (cartRows ?? []) as CartRow[];
   const subResult = cartSubtotalMyr(rows);
   if (subResult.ok === false) {
-    const emptyMeta: Json = { stripe_payment_intent_id: pi.id };
-    const { error: nErr } = await supabase.from("notifications").insert({
-      user_id: userId,
-      type: "order_fulfillment_error",
-      title: "Payment received",
-      body:
-        "We received your payment but your cart was empty. Please contact support with your payment reference.",
-      metadata: emptyMeta,
-    });
-    if (nErr !== null) {
-      console.error("stripe webhook: empty cart notification", nErr.message);
+    try {
+      const result = await createCustomerNotification({
+        supabase,
+        userId,
+        type: "order_fulfillment_error",
+        vars: {
+          order_id: orderId,
+          order_label: orderLabelFromId(orderId),
+        },
+        metadata: {
+          order_id: orderId,
+          stripe_payment_intent_id: pi.id,
+        },
+      });
+      if (result.notificationId === null && result.skipped === false) {
+        console.error("stripe webhook: empty cart notification failed");
+      }
+    } catch (err) {
+      console.error("stripe webhook: empty cart notification", err);
     }
     return { error: "Cart empty at webhook" };
   }
@@ -210,16 +254,26 @@ async function fulfillPendingOrder(
   for (const row of rows) {
     const stockCheck = await ensureStockAvailable(supabase, row);
     if (stockCheck.ok === false) {
-      const stockMeta: Json = { stripe_payment_intent_id: pi.id };
-      const { error: nErr } = await supabase.from("notifications").insert({
-        user_id: userId,
-        type: "order_fulfillment_error",
-        title: "Inventory issue",
-        body: `We could not complete your order (${stockCheck.message}). Support will contact you.`,
-        metadata: stockMeta,
-      });
-      if (nErr !== null) {
-        console.error("stripe webhook: stock error notification", nErr.message);
+      try {
+        const result = await createCustomerNotification({
+          supabase,
+          userId,
+          type: "order_fulfillment_error",
+          vars: {
+            order_id: orderId,
+            order_label: orderLabelFromId(orderId),
+          },
+          metadata: {
+            order_id: orderId,
+            stripe_payment_intent_id: pi.id,
+            reason: stockCheck.message,
+          },
+        });
+        if (result.notificationId === null && result.skipped === false) {
+          console.error("stripe webhook: stock error notification failed");
+        }
+      } catch (err) {
+        console.error("stripe webhook: stock error notification", err);
       }
       return { error: stockCheck.message };
     }
@@ -312,16 +366,22 @@ async function fulfillPendingOrder(
     console.error("stripe webhook: cart delete", delError.message);
   }
 
-  const shortRef = orderId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const { error: notifError } = await supabase.from("notifications").insert({
-    user_id: userId,
-    type: "order_confirmed",
-    title: "Order Confirmed",
-    body: `Your order #${shortRef} has been confirmed.`,
-    metadata: { order_id: orderId } as Json,
-  });
-  if (notifError !== null) {
-    console.error("stripe webhook: notification", notifError.message);
+  try {
+    const result = await createCustomerNotification({
+      supabase,
+      userId,
+      type: "order_confirmed",
+      vars: {
+        order_id: orderId,
+        order_label: orderLabelFromId(orderId),
+      },
+      metadata: { order_id: orderId },
+    });
+    if (result.notificationId === null && result.skipped === false) {
+      console.error("stripe webhook: order_confirmed notification failed");
+    }
+  } catch (err) {
+    console.error("stripe webhook: notification", err);
   }
 
   return { error: null };
@@ -347,17 +407,19 @@ async function fulfillLegacyNewOrder(
 
   const rows = (cartRows ?? []) as CartRow[];
   if (rows.length === 0) {
-    const emptyMeta: Json = { stripe_payment_intent_id: pi.id };
-    const { error: nErr } = await supabase.from("notifications").insert({
-      user_id: userId,
-      type: "order_fulfillment_error",
-      title: "Payment received",
-      body:
-        "We received your payment but your cart was empty. Please contact support with your payment reference.",
-      metadata: emptyMeta,
-    });
-    if (nErr !== null) {
-      console.error("stripe webhook: empty cart notification", nErr.message);
+    try {
+      const result = await createCustomerNotification({
+        supabase,
+        userId,
+        type: "order_fulfillment_error",
+        vars: { order_label: "N/A" },
+        metadata: { stripe_payment_intent_id: pi.id },
+      });
+      if (result.notificationId === null && result.skipped === false) {
+        console.error("stripe webhook: empty cart notification failed");
+      }
+    } catch (err) {
+      console.error("stripe webhook: empty cart notification", err);
     }
     return { error: "Cart empty at webhook" };
   }
@@ -378,16 +440,22 @@ async function fulfillLegacyNewOrder(
   for (const row of rows) {
     const stockCheck = await ensureStockAvailable(supabase, row);
     if (stockCheck.ok === false) {
-      const stockMeta: Json = { stripe_payment_intent_id: pi.id };
-      const { error: nErr } = await supabase.from("notifications").insert({
-        user_id: userId,
-        type: "order_fulfillment_error",
-        title: "Inventory issue",
-        body: `We could not complete your order (${stockCheck.message}). Support will contact you.`,
-        metadata: stockMeta,
-      });
-      if (nErr !== null) {
-        console.error("stripe webhook: stock error notification", nErr.message);
+      try {
+        const result = await createCustomerNotification({
+          supabase,
+          userId,
+          type: "order_fulfillment_error",
+          vars: { order_label: "N/A" },
+          metadata: {
+            stripe_payment_intent_id: pi.id,
+            reason: stockCheck.message,
+          },
+        });
+        if (result.notificationId === null && result.skipped === false) {
+          console.error("stripe webhook: stock error notification failed");
+        }
+      } catch (err) {
+        console.error("stripe webhook: stock error notification", err);
       }
       return { error: stockCheck.message };
     }
@@ -473,16 +541,22 @@ async function fulfillLegacyNewOrder(
     console.error("stripe webhook: cart delete", delError.message);
   }
 
-  const shortRef = newOrderId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const { error: notifError } = await supabase.from("notifications").insert({
-    user_id: userId,
-    type: "order_confirmed",
-    title: "Order Confirmed",
-    body: `Your order #${shortRef} has been confirmed.`,
-    metadata: { order_id: newOrderId } as Json,
-  });
-  if (notifError !== null) {
-    console.error("stripe webhook: notification", notifError.message);
+  try {
+    const result = await createCustomerNotification({
+      supabase,
+      userId,
+      type: "order_confirmed",
+      vars: {
+        order_id: newOrderId,
+        order_label: orderLabelFromId(newOrderId),
+      },
+      metadata: { order_id: newOrderId },
+    });
+    if (result.notificationId === null && result.skipped === false) {
+      console.error("stripe webhook: order_confirmed notification failed");
+    }
+  } catch (err) {
+    console.error("stripe webhook: notification", err);
   }
 
   return { error: null };

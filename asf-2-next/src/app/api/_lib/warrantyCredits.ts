@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, TablesInsert } from "@/database.types";
+import { createCustomerNotification } from "@/app/api/_lib/customerNotifications";
+import type { Database, Json, TablesInsert } from "@/database.types";
 import { calculateCreditAmount, roundMyr } from "@/modules/warranty/calculateCreditAmount";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
 import {
@@ -253,33 +254,41 @@ export async function approveClaimAndIssueCredits(
     notes: staffNotes ?? "Approved and warranty credits issued",
   });
 
-  const totalCredit = issuedCredits.reduce((sum, c) => sum + c.amountMyr, 0);
   const label = formatClaimLabel(claimId);
-  const creditSummary = issuedCredits
-    .map((c) => `RM ${c.amountMyr.toFixed(2)}`)
-    .join(", ");
 
   await notifyClaimStatusChange(supabase, {
     userId: claim.user_id,
     claimId,
     newStatus: "approved",
-    extraBody: `Warranty credit of ${creditSummary} (total RM ${totalCredit.toFixed(2)}) has been added to your account for claim ${label}. Valid until ${expiresAt.toLocaleDateString()}.`,
   });
 
   for (const credit of issuedCredits) {
-    const notifyRow: TablesInsert<"notifications"> = {
-      user_id: claim.user_id,
-      type: "warranty_credit_issued",
-      title: "Warranty Credit Issued",
-      body: `RM ${credit.amountMyr.toFixed(2)} warranty credit is now available in your account. Valid until ${expiresAt.toLocaleDateString()}.`,
-      metadata: {
-        claim_id: claimId,
-        claim_item_id: credit.claimItemId,
-        warranty_credit_id: credit.id,
-        amount_myr: credit.amountMyr,
-      },
+    const amountRm = credit.amountMyr.toFixed(2);
+    const metadata: Json = {
+      claim_id: claimId,
+      claim_item_id: credit.claimItemId,
+      warranty_credit_id: credit.id,
+      amount_myr: credit.amountMyr,
     };
-    await supabase.from("notifications").insert(notifyRow);
+
+    const result = await createCustomerNotification({
+      supabase,
+      userId: claim.user_id,
+      type: "warranty_credit_issued",
+      vars: {
+        amount_rm: amountRm,
+        claim_label: label,
+        claim_id: claimId,
+      },
+      metadata,
+    });
+
+    if (result.notificationId === null && result.skipped === false) {
+      console.error(
+        "approveClaimAndIssueCredits: warranty_credit_issued failed",
+        credit.id
+      );
+    }
   }
 
   return { ok: true, credits: issuedCredits };

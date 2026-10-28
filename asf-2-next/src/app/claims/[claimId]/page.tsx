@@ -31,7 +31,6 @@ import {
   type ClaimStatus,
 } from "@/modules/claims/claimPolicyConfig";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
-import { applyClaimStatusChange } from "@/modules/claims/claimStatusTransition";
 import { WarrantyCreditReviewPanel } from "@/components/claims/WarrantyCreditReviewPanel";
 import { supabase } from "@/utils/supabaseClient";
 import type { Tables } from "@/database.types";
@@ -145,27 +144,29 @@ const ClaimDetailPage: React.FC = () => {
       }
       setUpdating(true);
       try {
-        const oldStatus = claim.status;
-        const ok = await applyClaimStatusChange({
-          supabase,
-          claimId: claim.id,
-          userId: claim.user_id,
-          oldStatus,
-          newStatus,
-          changedBy: authUser.id,
-          updatePayload: {
-            staff_notes: staffNotes.trim().length > 0 ? staffNotes.trim() : null,
-            ...extra,
-          },
-          notes: staffNotes.trim().length > 0 ? staffNotes.trim() : null,
-          notifyExtraBody: extra?.rejection_reason ?? undefined,
-        });
-        if (!ok) {
+        const staffNotesValue =
+          staffNotes.trim().length > 0 ? staffNotes.trim() : null;
+        const res = await fetch(
+          `/api/claims/${encodeURIComponent(claim.id)}/status`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              newStatus,
+              notes: staffNotesValue,
+              notifyExtraBody: extra?.rejection_reason,
+              staff_notes: staffNotesValue,
+              approved_resolution: extra?.approved_resolution,
+              rejection_reason: extra?.rejection_reason,
+            }),
+          }
+        );
+        if (!res.ok) {
           return;
         }
         await updateClaim(claim.id, {
           status: newStatus,
-          staff_notes: staffNotes.trim().length > 0 ? staffNotes.trim() : null,
+          staff_notes: staffNotesValue,
           ...extra,
           ...(newStatus === "resolved" ? { resolved_at: new Date().toISOString() } : {}),
         });

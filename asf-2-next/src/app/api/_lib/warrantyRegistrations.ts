@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, Tables, TablesInsert } from "@/database.types";
+import { createCustomerNotification } from "@/app/api/_lib/customerNotifications";
+import type { Database, Json, Tables, TablesInsert } from "@/database.types";
 import { calculateCreditAmount } from "@/modules/warranty/calculateCreditAmount";
 import { daysSincePurchase } from "@/modules/warranty/daysSincePurchase";
 import { generateRedemptionCode } from "@/modules/warranty/generateRedemptionCode";
@@ -111,6 +112,17 @@ export type RedeemPreviewPayload = {
 };
 
 const MAX_REDEMPTION_CODE_ATTEMPTS = 8;
+
+/**
+ * Short human-readable label for a warranty registration (deep-link / templates).
+ *
+ * @param registrationId - Registration UUID
+ * @returns Label like `WR-A1B2C3D4`
+ */
+function formatRegistrationLabel(registrationId: string): string {
+  const compact = registrationId.replace(/-/g, "");
+  return `WR-${compact.slice(0, 8).toUpperCase()}`;
+}
 
 /**
  * Maps a registration row + joins into the public summary shape with tier preview.
@@ -430,6 +442,32 @@ export async function activateWarrantyRegistration(
     };
   }
 
+  const registrationLabel = formatRegistrationLabel(registration.id);
+  try {
+    const notifyResult = await createCustomerNotification({
+      supabase,
+      userId: params.userId,
+      type: "warranty_registration_activated",
+      vars: {
+        registration_label: registrationLabel,
+        code: normalizedCode,
+        registration_id: registration.id,
+      },
+      metadata: {
+        registration_id: registration.id,
+        code: normalizedCode,
+      } satisfies Json,
+    });
+    if (notifyResult.notificationId === null && notifyResult.skipped === false) {
+      console.error(
+        "activateWarrantyRegistration: notification failed",
+        registration.id
+      );
+    }
+  } catch (err) {
+    console.error("activateWarrantyRegistration: notification", err);
+  }
+
   return {
     ok: true,
     registration: buildRegistrationSummary(registration, {
@@ -747,6 +785,35 @@ export async function claimWarrantyRegistration(
       message: "Issued credit is missing a redemption code",
       httpStatus: 500,
     };
+  }
+
+  const registrationLabel = formatRegistrationLabel(params.registrationId);
+  try {
+    const notifyResult = await createCustomerNotification({
+      supabase,
+      userId: params.userId,
+      type: "warranty_registration_claimed",
+      vars: {
+        registration_label: registrationLabel,
+        code: voucher.redemptionCode,
+        amount_rm: voucher.amountMyr.toFixed(2),
+        registration_id: params.registrationId,
+      },
+      metadata: {
+        registration_id: params.registrationId,
+        warranty_credit_id: voucher.creditId,
+        code: voucher.redemptionCode,
+        amount_myr: voucher.amountMyr,
+      } satisfies Json,
+    });
+    if (notifyResult.notificationId === null && notifyResult.skipped === false) {
+      console.error(
+        "claimWarrantyRegistration: notification failed",
+        params.registrationId
+      );
+    }
+  } catch (err) {
+    console.error("claimWarrantyRegistration: notification", err);
   }
 
   const refreshed = await getWarrantyRegistrationForUser(

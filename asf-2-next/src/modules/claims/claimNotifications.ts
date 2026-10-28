@@ -1,35 +1,26 @@
 /**
  * Helpers for claim status transitions, notifications, and audit logging.
+ *
+ * Notification inserts go through {@link createCustomerNotification} (service-role
+ * client required). Do not import this module into client components — call the
+ * claim notify / status Route Handlers instead.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, TablesInsert } from "@/database.types";
+
+import { createCustomerNotification } from "@/app/api/_lib/customerNotifications";
+import type { Database, Json, TablesInsert } from "@/database.types";
 import type { ClaimStatus } from "@/modules/claims/claimPolicyConfig";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
 import { getClaimStatusLabel } from "@/modules/claims/claimPolicyConfig";
 
 type DbClient = SupabaseClient<Database>;
 
-/** Maps claim status to customer notification title. */
-function notificationTitleForStatus(status: ClaimStatus): string {
-  switch (status) {
-    case "in_review":
-      return "Claim Under Review";
-    case "needs_info":
-      return "More Information Needed";
-    case "approved":
-      return "Claim Approved";
-    case "rejected":
-      return "Claim Rejected";
-    case "resolved":
-      return "Claim Resolved";
-    default:
-      return "Claim Update";
-  }
-}
-
 /**
  * Inserts a status change log row for a claim.
+ *
+ * @param supabase - Privileged or staff-authorized Supabase client
+ * @param params - Claim id, old/new status, actor, optional notes
  */
 export async function insertClaimStatusLog(
   supabase: DbClient,
@@ -52,7 +43,11 @@ export async function insertClaimStatusLog(
 }
 
 /**
- * Sends a customer notification when claim status changes.
+ * Notifies the customer when claim status changes (`claim_status_changed`).
+ * Uses DB templates via {@link createCustomerNotification}.
+ *
+ * @param supabase - Service-role (or otherwise privileged) Supabase client
+ * @param params - Customer user id, claim id, new status; `extraBody` kept for callers
  */
 export async function notifyClaimStatusChange(
   supabase: DbClient,
@@ -63,36 +58,64 @@ export async function notifyClaimStatusChange(
     extraBody?: string;
   }
 ): Promise<void> {
-  const label = formatClaimLabel(params.claimId);
+  const claimLabel = formatClaimLabel(params.claimId);
   const statusLabel = getClaimStatusLabel(params.newStatus);
-  const bodyParts = [`Your claim ${label} is now: ${statusLabel}.`];
-  if (typeof params.extraBody === "string" && params.extraBody.trim().length > 0) {
-    bodyParts.push(params.extraBody.trim());
-  }
-  const row: TablesInsert<"notifications"> = {
-    user_id: params.userId,
-    type: "claim_status_changed",
-    title: notificationTitleForStatus(params.newStatus),
-    body: bodyParts.join(" "),
-    metadata: { claim_id: params.claimId, status: params.newStatus },
+
+  const metadata: Json = {
+    claim_id: params.claimId,
+    status: params.newStatus,
   };
-  await supabase.from("notifications").insert(row);
+
+  const result = await createCustomerNotification({
+    supabase,
+    userId: params.userId,
+    type: "claim_status_changed",
+    vars: {
+      claim_label: claimLabel,
+      claim_id: params.claimId,
+      status_label: statusLabel,
+    },
+    metadata,
+  });
+
+  if (result.notificationId === null && result.skipped === false) {
+    console.error(
+      "notifyClaimStatusChange: notification failed",
+      params.claimId,
+      params.newStatus
+    );
+  }
 }
 
 /**
- * Notifies customer when a new claim is submitted.
+ * Notifies the customer when a new claim is submitted (`claim_created`).
+ * Uses DB templates via {@link createCustomerNotification}.
+ *
+ * @param supabase - Service-role (or otherwise privileged) Supabase client
+ * @param params - Customer user id and claim id
  */
 export async function notifyClaimSubmitted(
   supabase: DbClient,
   params: { userId: string; claimId: string }
 ): Promise<void> {
-  const label = formatClaimLabel(params.claimId);
-  const row: TablesInsert<"notifications"> = {
-    user_id: params.userId,
-    type: "claim_created",
-    title: "Claim Submitted",
-    body: `We received your claim ${label}. Our team will review it shortly.`,
-    metadata: { claim_id: params.claimId },
+  const claimLabel = formatClaimLabel(params.claimId);
+
+  const metadata: Json = {
+    claim_id: params.claimId,
   };
-  await supabase.from("notifications").insert(row);
+
+  const result = await createCustomerNotification({
+    supabase,
+    userId: params.userId,
+    type: "claim_created",
+    vars: {
+      claim_label: claimLabel,
+      claim_id: params.claimId,
+    },
+    metadata,
+  });
+
+  if (result.notificationId === null && result.skipped === false) {
+    console.error("notifyClaimSubmitted: notification failed", params.claimId);
+  }
 }

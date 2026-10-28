@@ -68,6 +68,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, messages, onSendM
       onSendMessage(input);
     } else {
       await createMessage(payload);
+      const ticketId = conversation.ticket_id;
+      if (typeof ticketId === "string" && ticketId.length > 0) {
+        try {
+          await fetch(
+            `/api/tickets/${encodeURIComponent(ticketId)}/notify-replied`,
+            { method: "POST" }
+          );
+        } catch (notifyError) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[SupportChat] notify-replied failed", notifyError);
+          }
+        }
+      }
     }
     
     setInput("");

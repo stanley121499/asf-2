@@ -52,6 +52,34 @@ interface StatusHistory {
   created_at: string;
 }
 
+/**
+ * Narrows an unknown API payload field to a status-history row.
+ */
+function isStatusHistory(value: unknown): value is StatusHistory {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.id === "string" &&
+    (typeof row.old_status === "string" || row.old_status === null) &&
+    (typeof row.new_status === "string" || row.new_status === null) &&
+    (typeof row.changed_by === "string" || row.changed_by === null) &&
+    typeof row.created_at === "string"
+  );
+}
+
+/**
+ * Reads a string `message` field from an unknown JSON error payload.
+ */
+function readErrorMessage(payload: unknown, fallback: string): string {
+  if (typeof payload !== "object" || payload === null) {
+    return fallback;
+  }
+  const row = payload as Record<string, unknown>;
+  return typeof row.message === "string" ? row.message : fallback;
+}
+
 /** One row for admin display of Delyva tracking history (loosely typed API payload). */
 interface TrackingEventDisplay {
   id: string;
@@ -461,10 +489,10 @@ const OrderDetailPage: React.FC = function () {
   }, [orderId, order, order?.tracking_number]);
 
   /**
-   * Handle status update
+   * Handle status update via staff API (audit log + customer notification).
    */
-  const handleStatusUpdate = async () => {
-    if (!order || newStatus === order.status) {
+  const handleStatusUpdate = async (): Promise<void> => {
+    if (order === null || newStatus === order.status) {
       setIsStatusModalOpen(false);
       return;
     }
@@ -472,47 +500,40 @@ const OrderDetailPage: React.FC = function () {
     try {
       setUpdatingStatus(true);
 
-      // Update order status
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", order.id);
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(order.id)}/status`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus }),
+        }
+      );
 
-      if (updateError) {
-        throw new Error(updateError.message);
+      const payload: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(readErrorMessage(payload, "Failed to update status"));
       }
 
-      // Persist status change to order_status_logs audit trail
-      const { data: logData, error: logError } = await supabase
-        .from("order_status_logs")
-        .insert({
-          order_id: order.id,
-          old_status: order.status,
-          new_status: newStatus,
-          changed_by: "admin",
-        })
-        .select("id, old_status, new_status, changed_by, created_at")
-        .single();
-
-      if (logError && process.env.NODE_ENV === "development") {
-        console.error("order_status_logs insert failed:", logError.message);
-      }
-
-      // Update local state
       setOrder({ ...order, status: newStatus });
 
-      if (logData) {
-        setStatusHistory(prev => [logData, ...prev]);
+      if (typeof payload === "object" && payload !== null) {
+        const row = payload as Record<string, unknown>;
+        if (isStatusHistory(row.statusLog)) {
+          const log = row.statusLog;
+          setStatusHistory((prev) => [log, ...prev]);
+        }
       }
 
       showAlert("Order status updated successfully", "success");
       setIsStatusModalOpen(false);
-
     } catch (err) {
       if (process.env.NODE_ENV === "development") {
         console.error("Error updating status:", err);
       }
-      showAlert(err instanceof Error ? err.message : "Failed to update status", "error");
+      showAlert(
+        err instanceof Error ? err.message : "Failed to update status",
+        "error"
+      );
     } finally {
       setUpdatingStatus(false);
     }

@@ -15,10 +15,10 @@ type RouteParams = { params: { id: string } };
  * Own registration detail with current tier preview and claim eligibility.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   context: RouteParams
 ): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

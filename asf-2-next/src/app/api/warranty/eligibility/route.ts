@@ -10,7 +10,7 @@ import { evaluateWarrantyCreditEstimate } from "@/modules/claims/claimEligibilit
  * POST /api/warranty/eligibility — batch estimate for order items.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

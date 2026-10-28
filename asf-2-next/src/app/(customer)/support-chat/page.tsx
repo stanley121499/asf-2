@@ -13,8 +13,6 @@ import {
 import { LandingLayout } from "@/layouts";
 import BottomNavbar from "@/components/home/bottom-nav";
 import ChatWindow from "@/components/ChatWindow";
-import { supabase } from "@/utils/supabaseClient";
-import type { TablesInsert } from "@/database.types";
 
 /**
  * Maps a ticket UUID to the short public label shown to customers (e.g. TK-A1B2C3D4).
@@ -239,16 +237,17 @@ export default function SupportChatPage() {
       setLocalConversation(conversation);
       setActiveConversationId(conversation.id);
 
-      const body = `Your ticket #${label} has been received.`;
-      const row: TablesInsert<"notifications"> = {
-        user_id: user.id,
-        type: "ticket_created",
-        title: "Support Ticket Created",
-        body,
-      };
-      const { error: notificationError } = await supabase.from("notifications").insert(row);
-      if (notificationError !== null) {
-        showAlert(`工单已创建，但通知发送失败：${notificationError.message}`, "warning");
+      try {
+        const notifyRes = await fetch(
+          `/api/tickets/${encodeURIComponent(ticket.id)}/notify-created`,
+          { method: "POST" }
+        );
+        if (!notifyRes.ok) {
+          showAlert("工单已创建，但通知发送失败。", "warning");
+        }
+      } catch (notifyError) {
+        console.error("support-chat: notify-created", notifyError);
+        showAlert("工单已创建，但通知发送失败。", "warning");
       }
 
       setSubmitted(true);

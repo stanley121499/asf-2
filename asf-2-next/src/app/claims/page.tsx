@@ -19,7 +19,6 @@ import {
   type ClaimStatus,
 } from "@/modules/claims/claimPolicyConfig";
 import { formatClaimLabel } from "@/modules/claims/claimEligibility";
-import { applyClaimStatusChange } from "@/modules/claims/claimStatusTransition";
 import { calculateCreditAmount } from "@/modules/warranty/calculateCreditAmount";
 import { supabase } from "@/utils/supabaseClient";
 
@@ -145,22 +144,19 @@ const ClaimsQueuePage: React.FC = () => {
 
   const handleQuickStatus = async (
     claimId: string,
-    userId: string,
-    oldStatus: string,
+    _userId: string,
+    _oldStatus: string,
     newStatus: ClaimStatus
   ): Promise<void> => {
     if (authUser === null) {
       return;
     }
-    const ok = await applyClaimStatusChange({
-      supabase,
-      claimId,
-      userId,
-      oldStatus,
-      newStatus,
-      changedBy: authUser.id,
+    const res = await fetch(`/api/claims/${encodeURIComponent(claimId)}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newStatus }),
     });
-    if (ok) {
+    if (res.ok) {
       await updateClaim(claimId, { status: newStatus });
     }
   };

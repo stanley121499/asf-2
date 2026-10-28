@@ -6,8 +6,8 @@ import { createServiceRoleClient } from "@/app/api/_lib/supabaseServiceRole";
 /**
  * GET /api/warranty/credits — list credits for the authenticated customer.
  */
-export async function GET(): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+export async function GET(request: Request): Promise<NextResponse> {
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

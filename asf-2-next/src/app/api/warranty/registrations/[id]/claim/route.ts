@@ -16,10 +16,10 @@ type RouteParams = { params: { id: string } };
  * No staff approval. Server computes amount — never trusts client percent/amount.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   context: RouteParams
 ): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

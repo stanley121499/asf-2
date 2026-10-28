@@ -61,10 +61,15 @@ interface HomePageProps {
   ranges: Tables<"ranges">[];
   productCategories: Tables<"product_categories">[];
   postMedias: Tables<"post_medias">[];
+  /**
+   * DB-controlled hero from `homepage_elements` type=hero (server-resolved).
+   * Null → client falls back to newest post media / gradient.
+   */
+  heroImageUrl?: string | null;
 }
 
 const HomePageClient: React.FC<HomePageProps> = ({
-  products, categories, posts, productMedias, postMedias
+  products, categories, posts, productMedias, postMedias, heroImageUrl = null
 }) => {
   const router = useRouter();
   const { user } = useAuthContext();
@@ -204,7 +209,14 @@ const HomePageClient: React.FC<HomePageProps> = ({
   }, [tiers, points]);
 
   const firstPost = sortedPosts.length > 0 ? sortedPosts[0] : null;
-  const heroImage = firstPost ? (firstPost.medias?.[0]?.media_url || postMediaMap.get(firstPost.id)) : null;
+  const newestPostHero = firstPost
+    ? (firstPost.medias?.[0]?.media_url || postMediaMap.get(firstPost.id) || null)
+    : null;
+  /** Prefer server-resolved `homepage_elements` hero; else newest post media. */
+  const heroImage =
+    typeof heroImageUrl === "string" && heroImageUrl.trim().length > 0
+      ? heroImageUrl.trim()
+      : newestPostHero;
 
   const CATEGORY_NAMES: Record<string, string> = {
     "Handbag": "手袋",

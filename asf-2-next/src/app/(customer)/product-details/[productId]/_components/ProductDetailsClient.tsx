@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAlertContext } from "@/context/AlertContext";
@@ -19,6 +19,47 @@ import {
 } from "@/utils/productStock";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { claimPolicyConfig } from "@/modules/claims/claimPolicyConfig";
+
+type ProductMediaRow = Tables<"product_medias">;
+
+/**
+ * Resolves PDP gallery medias for an optional colorway.
+ * Prefer color-tagged rows, else product-level (`color_id` null), else all.
+ *
+ * @param medias - All medias for the product (any order)
+ * @param colorId - Selected colorway id, or null when none selected
+ */
+function resolveGalleryMedias(
+  medias: readonly ProductMediaRow[],
+  colorId: string | null
+): ProductMediaRow[] {
+  const sorted = [...medias].sort((a, b) => {
+    const arrA = a.arrangement ?? 0;
+    const arrB = b.arrangement ?? 0;
+    if (arrA !== arrB) {
+      return arrA - arrB;
+    }
+    return a.id.localeCompare(b.id);
+  });
+
+  if (sorted.length === 0) {
+    return [];
+  }
+
+  if (typeof colorId === "string" && colorId.length > 0) {
+    const colorMatch = sorted.filter((m) => m.color_id === colorId);
+    if (colorMatch.length > 0) {
+      return colorMatch;
+    }
+  }
+
+  const productLevel = sorted.filter((m) => m.color_id === null);
+  if (productLevel.length > 0) {
+    return productLevel;
+  }
+
+  return sorted;
+}
 
 interface ProductDetailsClientProps {
   productId: string;
@@ -70,12 +111,6 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
     return { status: "available" };
   }, [product]);
 
-  const sortedProductMedia = useMemo(() => {
-    const medias = [...productMedias];
-    medias.sort((a, b) => (a.arrangement ?? 0) - (b.arrangement ?? 0));
-    return medias;
-  }, [productMedias]);
-
   const activeColorsForProduct = useMemo(() => productColors.filter((c) => c.active), [productColors]);
   const activeSizesForProduct = useMemo(() => productSizes.filter((s) => s.active), [productSizes]);
 
@@ -91,11 +126,28 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
   // Accordion state
   const [openAccordion, setOpenAccordion] = useState<string>("description");
 
+  /** Horizontal swipe track for the PDP image gallery. */
+  const galleryTrackRef = useRef<HTMLDivElement>(null);
+
+  const galleryMedias = useMemo(
+    () => resolveGalleryMedias(productMedias, selectedColor?.id ?? null),
+    [productMedias, selectedColor]
+  );
+
   useEffect(() => {
-    if (selectedImageIndex >= sortedProductMedia.length && sortedProductMedia.length > 0) {
+    if (selectedImageIndex >= galleryMedias.length && galleryMedias.length > 0) {
       setSelectedImageIndex(0);
     }
-  }, [selectedImageIndex, sortedProductMedia.length]);
+  }, [selectedImageIndex, galleryMedias.length]);
+
+  /** Reset pager when colorway (and its media set) changes. */
+  useEffect(() => {
+    setSelectedImageIndex(0);
+    const track = galleryTrackRef.current;
+    if (track !== null) {
+      track.scrollTo({ left: 0, behavior: "auto" });
+    }
+  }, [selectedColor?.id]);
 
   useEffect(() => {
     if (!requiresColor) {
@@ -118,6 +170,39 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
       return;
     }
   }, [activeSizesForProduct, requiresSize, selectedSize]);
+
+  /**
+   * Updates the counter from native horizontal scroll snap position.
+   */
+  const handleGalleryScroll = useCallback((): void => {
+    const track = galleryTrackRef.current;
+    if (track === null || galleryMedias.length <= 1) {
+      return;
+    }
+    const width = track.clientWidth;
+    if (width <= 0) {
+      return;
+    }
+    const nextIdx = Math.round(track.scrollLeft / width);
+    if (nextIdx < 0 || nextIdx >= galleryMedias.length) {
+      return;
+    }
+    setSelectedImageIndex(nextIdx);
+  }, [galleryMedias.length]);
+
+  /**
+   * Selects a colorway and resets the gallery to that color's primary media.
+   *
+   * @param color - Active product color row
+   */
+  const handleSelectColor = useCallback((color: Tables<"product_colors">): void => {
+    setSelectedColor(color);
+    setSelectedImageIndex(0);
+    const track = galleryTrackRef.current;
+    if (track !== null) {
+      track.scrollTo({ left: 0, behavior: "auto" });
+    }
+  }, []);
 
   const currentStockRow = useMemo(() => {
     return resolveProductStockRow({
@@ -227,30 +312,52 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
         <HiOutlineArrowLeft size={20} className="text-black" />
       </button>
 
-      <div className="relative w-full pt-[100%] bg-gray-100">
-        <Image
-          src={sortedProductMedia[selectedImageIndex]?.media_url || "/default-image.jpg"}
-          alt={product.name ?? ""}
-          fill
-          className="object-cover"
-          priority
-        />
-        {sortedProductMedia.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-medium tracking-widest flex items-center gap-2">
-            <span>{selectedImageIndex + 1} / {sortedProductMedia.length}</span>
-          </div>
-        )}
-        
-        {sortedProductMedia.length > 1 && (
-          <div className="absolute inset-0 flex">
-            <div 
-              className="w-1/2 h-full" 
-              onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : sortedProductMedia.length - 1)} 
-            />
-            <div 
-              className="w-1/2 h-full" 
-              onClick={() => setSelectedImageIndex(prev => prev < sortedProductMedia.length - 1 ? prev + 1 : 0)} 
-            />
+      <div className="relative w-full bg-gray-100">
+        <div
+          ref={galleryTrackRef}
+          onScroll={handleGalleryScroll}
+          className="flex w-full overflow-x-auto snap-x snap-mandatory overscroll-x-contain scrollbar-hide"
+          style={{ WebkitOverflowScrolling: "touch" }}
+          aria-label="Product images"
+        >
+          {galleryMedias.length > 0 ? (
+            galleryMedias.map((media, index) => {
+              const src =
+                typeof media.media_url === "string" && media.media_url.length > 0
+                  ? media.media_url
+                  : "/default-image.jpg";
+              return (
+                <div
+                  key={media.id}
+                  className="relative aspect-square w-full min-w-full shrink-0 snap-center"
+                >
+                  <Image
+                    src={src}
+                    alt={product.name ?? ""}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                    sizes="100vw"
+                  />
+                </div>
+              );
+            })
+          ) : (
+            <div className="relative aspect-square w-full min-w-full shrink-0 snap-center">
+              <Image
+                src="/default-image.jpg"
+                alt={product.name ?? ""}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
+          )}
+        </div>
+        {galleryMedias.length > 1 && (
+          <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-medium tracking-widest flex items-center gap-2">
+            <span>{selectedImageIndex + 1} / {galleryMedias.length}</span>
           </div>
         )}
       </div>
@@ -292,7 +399,7 @@ const ProductDetailsClient: React.FC<ProductDetailsClientProps> = ({
                 return (
                   <button
                     key={color.id}
-                    onClick={() => setSelectedColor(color)}
+                    onClick={() => handleSelectColor(color)}
                     className={`h-10 px-4 rounded-full border-2 flex items-center justify-center text-sm transition-colors ${
                       isSelected ? "border-black text-black font-medium" : "border-gray-200 text-gray-500"
                     }`}

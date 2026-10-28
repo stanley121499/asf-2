@@ -10,7 +10,7 @@ import { validateWarrantyCreditForCart } from "@/app/api/_lib/warrantyCredits";
  * POST /api/warranty/credits/apply — validate credit for cart (does not consume).
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

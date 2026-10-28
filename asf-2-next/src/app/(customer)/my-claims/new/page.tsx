@@ -19,7 +19,6 @@ import {
   evaluateClaimEligibility,
   type WarrantyCreditEstimate,
 } from "@/modules/claims/claimEligibility";
-import { notifyClaimSubmitted } from "@/modules/claims/claimNotifications";
 import { resolveDeliveryDate } from "@/modules/warranty/resolveDeliveryDate";
 import { supabase } from "@/utils/supabaseClient";
 import type { Database } from "@/database.types";
@@ -264,7 +263,14 @@ export default function NewClaimPage(): React.ReactElement {
         notes: "Customer submitted multi-item claim",
       });
 
-      await notifyClaimSubmitted(supabase, { userId: user.id, claimId: created.id });
+      try {
+        await fetch(
+          `/api/claims/${encodeURIComponent(created.id)}/notify-submitted`,
+          { method: "POST" }
+        );
+      } catch (notifyError) {
+        console.error("my-claims/new: notify-submitted", notifyError);
+      }
 
       showAlert("申请已提交，我们会尽快处理。", "success");
       router.push(`/my-claims/${created.id}`);

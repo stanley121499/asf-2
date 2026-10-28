@@ -205,6 +205,16 @@ const SupportPage: React.FC = function () {
         type: "text",
         media_url: null,
       });
+      try {
+        await fetch(
+          `/api/tickets/${encodeURIComponent(selectedTicketId)}/notify-replied`,
+          { method: "POST" }
+        );
+      } catch (notifyError) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("support: notify-replied", notifyError);
+        }
+      }
     } finally {
       setIsStartingConversation(false);
     }

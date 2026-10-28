@@ -14,7 +14,7 @@ import {
  * Authenticated customer activates a one-time physical card code.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

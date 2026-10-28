@@ -11,8 +11,8 @@ import {
  * GET /api/warranty/registrations
  * Lists the authenticated customer's physical warranty registrations with tier preview.
  */
-export async function GET(): Promise<NextResponse> {
-  const auth = await requireAuthenticatedUser();
+export async function GET(request: Request): Promise<NextResponse> {
+  const auth = await requireAuthenticatedUser(request);
   if (auth.ok === false) {
     return auth.response;
   }

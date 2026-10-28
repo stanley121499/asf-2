@@ -247,61 +247,56 @@ export const OrderProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   /**
-   * Update order status and log the change
+   * Update order status via staff API (audit log + customer notification).
    * @param orderId - Order ID to update
    * @param newStatus - New status value
-   * @param changedBy - User ID of who made the change (optional)
+   * @param _changedBy - Unused; API records the authenticated staff user
    * @returns Promise<boolean> - Success status
    */
   const updateOrderStatus = useCallback(async (
     orderId: string,
     newStatus: string,
-    changedBy?: string
+    _changedBy?: string
   ): Promise<boolean> => {
     try {
-      // Get current order to track old status
-      const currentOrder = orders.find(o => o.id === orderId);
-      if (!currentOrder) {
+      const currentOrder = orders.find((o) => o.id === orderId);
+      if (currentOrder === undefined) {
         showAlertRef.current?.("Order not found", "error");
         return false;
       }
 
-      // Update order status
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", orderId);
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(orderId)}/status`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newStatus }),
+        }
+      );
 
-      if (updateError) {
-        throw new Error(updateError.message);
+      const payload: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message =
+          typeof payload === "object" &&
+          payload !== null &&
+          "message" in payload &&
+          typeof (payload as Record<string, unknown>).message === "string"
+            ? String((payload as Record<string, unknown>).message)
+            : "Failed to update order status";
+        throw new Error(message);
       }
 
-      // Log the status change — order_status_logs is an append-only audit trail
-      const statusLogInsert: OrderStatusLogInsert = {
-        order_id: orderId,
-        old_status: currentOrder.status,
-        new_status: newStatus,
-        changed_by: changedBy ?? null,
-      };
-      const { error: logError } = await supabase
-        .from("order_status_logs")
-        .insert(statusLogInsert);
-      if (logError && process.env.NODE_ENV === "development") {
-        console.error("order_status_logs insert failed:", logError.message);
-      }
-
-      // Update local state
-      setOrders(prev => prev.map(order =>
-        order.id === orderId
-          ? { ...order, status: newStatus }
-          : order
-      ));
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
 
       showAlertRef.current?.("Order status updated successfully", "success");
       return true;
-
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update order status";
+      const message =
+        err instanceof Error ? err.message : "Failed to update order status";
       showAlertRef.current?.(message, "error");
       return false;
     }
