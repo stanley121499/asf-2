@@ -63,7 +63,7 @@ function getPostgresErrorCode(value: unknown): string | null {
  * WishlistProvider keeps the current user's wishlist rows in sync with Supabase,
  * including realtime updates filtered to only the authenticated user.
  */
-export function WishlistProvider({ children }: PropsWithChildren): JSX.Element {
+export function WishlistProvider({ children }: PropsWithChildren): React.ReactElement {
   const { showAlert } = useAlertContext();
   const { user } = useAuthContext();
   const { products } = useProductContext();

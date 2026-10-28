@@ -37,7 +37,7 @@ interface ProductFolderContextProps {
 
 const ProductFolderContext = createContext<ProductFolderContextProps | undefined>(undefined);
 
-export function ProductFolderProvider({ children }: Readonly<PropsWithChildren>): JSX.Element {
+export function ProductFolderProvider({ children }: Readonly<PropsWithChildren>): React.ReactElement {
   // Keep folder state as rows-only; medias are derived from ProductFolderMediaContext via useMemo.
   const [productFolderRows, setProductFolderRows] = useState<ProductFolderRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

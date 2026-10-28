@@ -193,7 +193,7 @@ export default function PromotionsListScreen(): React.ReactElement {
     const q = search.toLowerCase();
     return sorted.filter(
       (p) =>
-        p.name.toLowerCase().includes(q) ||
+        (p.name ?? "").toLowerCase().includes(q) ||
         p.code?.toLowerCase().includes(q) === true
     );
   }, [sorted, search]);

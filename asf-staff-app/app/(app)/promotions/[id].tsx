@@ -356,7 +356,7 @@ export default function PromotionEditScreen(): React.ReactElement {
   /** Seed form fields from the promotion once available */
   useEffect(() => {
     if (promotion === null) return;
-    setName(promotion.name);
+    setName(promotion.name ?? "");
     setDescription(promotion.description ?? "");
     setCode(promotion.code ?? "");
     setDiscountType(promotion.discount_type === "fixed" ? "fixed" : "percentage");
@@ -364,7 +364,7 @@ export default function PromotionEditScreen(): React.ReactElement {
     setStartDate(isoToPickerDate(promotion.start_date));
     setEndDate(isoToPickerDate(promotion.end_date));
     setMaxUses(promotion.max_uses === null ? "" : String(promotion.max_uses));
-    setActive(promotion.active);
+    setActive(promotion.active ?? false);
   }, [promotion]);
 
   /** Fetch the linked product IDs from the API (not in the bulk list payload) */

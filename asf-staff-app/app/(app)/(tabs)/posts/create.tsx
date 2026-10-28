@@ -223,7 +223,7 @@ export default function PostCreateScreen(): React.ReactElement {
     const assets = await pickImages();
     setLocalAssets((prev) => [
       ...prev,
-      ...assets.map((a) => ({ uri: a.uri, type: a.type })),
+      ...assets.map((a) => ({ uri: a.uri, type: a.type ?? undefined })),
     ]);
   };
 

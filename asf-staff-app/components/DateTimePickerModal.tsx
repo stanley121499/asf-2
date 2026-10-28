@@ -94,7 +94,7 @@ export function DateTimePickerModal({
        * from being intercepted before they reach the WheelPicker FlatLists.
        */}
       <View style={{ flex: 1 }}>
-        <Pressable onPress={onDismiss} style={StyleSheet.absoluteFillObject}>
+        <Pressable onPress={onDismiss} style={StyleSheet.absoluteFill}>
           <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)" }} />
         </Pressable>
 

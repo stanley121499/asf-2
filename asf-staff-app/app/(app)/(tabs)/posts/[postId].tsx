@@ -137,7 +137,7 @@ export default function PostEditScreen(): React.ReactElement {
         ? raw
         : "draft"
     );
-    setActive(post.active);
+    setActive(post.active ?? false);
     setTimePosts(post.time_post === null ? null : new Date(post.time_post));
   }, [post]);
 

@@ -45,6 +45,7 @@ export default function AnalyticsUsersScreen(): React.ReactElement {
     // New users per day
     const countByDate = new Map<string, number>();
     for (const row of newUsersRes.data ?? []) {
+      if (row.created_at === null) continue;
       const key = row.created_at.slice(0, 10);
       countByDate.set(key, (countByDate.get(key) ?? 0) + 1);
     }

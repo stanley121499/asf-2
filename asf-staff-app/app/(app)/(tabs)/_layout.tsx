@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, View, type ColorValue } from "react-native";
 
 import { useStaffRole } from "@/context/StaffRoleContext";
 import { useFeatureFlags } from "@/context/FeatureFlagsContext";
 import { roleAllowsTab } from "@/hooks/useRoleGuard";
 
-/** Shared prop type for all tab bar icon render functions. */
-type TabIconProps = { color: string; size: number };
+/** Shared prop type for all tab bar icon render functions (SDK 58 ColorValue). */
+type TabIconProps = { color: ColorValue; size: number };
 
 /** Module-level icon render functions — stable references, no re-creation on each render. */
 const HomeIcon = ({ color, size }: TabIconProps): React.ReactElement => (

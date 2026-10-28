@@ -62,7 +62,7 @@ interface ProductContextProps {
 
 const ProductContext = createContext<ProductContextProps | undefined>(undefined);
 
-export function ProductProvider({ children }: Readonly<PropsWithChildren>): JSX.Element {
+export function ProductProvider({ children }: Readonly<PropsWithChildren>): React.ReactElement {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlertContext();
