@@ -369,3 +369,23 @@ Append-only. Newest entries at the bottom (or top—stay consistent). This vault
 - Source: `raw/sources/2026-09-08-expo-customer-engagement-qc-notes.md`
 - Wiki touched: [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]], [[index.md]], [[wiki/00-overview]]
 - Notes: §13 matrix 11 PASS / 1 FAIL (Highlights linked-products) / 5 SKIP (device/native). Ceremony not on nearby; stock_place unused. Demo inbox 6 rows. P0 none.
+
+## [2026-09-14] ingest | Expo customer perf + engagement mid-record (prompts deleted)
+
+- Source: `raw/sources/2026-09-14-expo-customer-perf-engagement-mid-record.md`
+- Wiki touched: [[wiki/sources/2026-09-14-expo-customer-perf-engagement-mid-record]], [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]], [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]], [[index.md]], [[wiki/00-overview]]
+- Notes: Deleted engagement agent-prompts (raw+wiki). Mid-record: nearby kill-switch OFF default; perf P0–P2/idle warm; verify git before EAS; do not re-ingest prompts.
+
+## [2026-09-16] note | APK crash — SDK myth vs native nearby plugins
+
+- Context: Instant Android preview crash after nearby/push JS kill-switches; Stanley suspected SDK 57 upgrade.
+- Finding: Sep 5 build `2f931d4d` / commit `7ce176d` is already SDK 57 without TaskManager/FGS — if that APK opens, crash is engagement delta (`7c34ef3`+), not SDK upgrade alone.
+- Code prepared (uncommitted): `asf-customer-app/app.config.ts` gates `expo-task-manager` + background location FGS off by default; `app.json` safe foreground-only location.
+- Wiki touched: [[wiki/sources/2026-09-14-expo-customer-perf-engagement-mid-record]] (addendum; raw mid-record left immutable)
+- Notes: No EAS started this turn; next preview rebuild must show a **new** native fingerprint (no ACCESS_BACKGROUND_LOCATION / FGS when nearby off).
+
+## [2026-09-28] ingest | Expo customer APK crash + UI polish mid-record (agent-prompts deleted vault-wide)
+
+- Source: `raw/sources/2026-09-28-expo-customer-apk-crash-ui-polish-mid-record.md`
+- Wiki touched: [[wiki/sources/2026-09-28-expo-customer-apk-crash-ui-polish-mid-record]], [[wiki/sources/2026-09-14-expo-customer-perf-engagement-mid-record]], [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]], [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]], [[index.md]], [[wiki/00-overview]]
+- Notes: Deleted all `*agent-prompts*` under asf-vault (raw+wiki, 28 files). Mid-record: crash = expo-task-manager autolink (not SDK 57); do not reinstall casually; nearby+push OFF; guest browse + Home/Highlights polish; verify git before EAS. Do not re-ingest prompts.

@@ -6,12 +6,20 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 
 - [[wiki/00-overview]] — what this vault is and how to use it
 
-## Sources — 2026-09-08 Expo customer engagement (discovery points + nearby stock) — **implemented; QC pending device**
+## Sources — 2026-09-28 Expo customer APK crash + UI polish mid-record — **current SOT for runtime / crash / polish**
+
+- [[wiki/sources/2026-09-28-expo-customer-apk-crash-ui-polish-mid-record]] — Crash = task-manager autolink (not SDK 57); nearby+push OFF; guest browse; Home/Highlights polish; do not reinstall expo-task-manager
+- `raw/sources/2026-09-28-expo-customer-apk-crash-ui-polish-mid-record.md` — Full mid-record SOT
+
+## Sources — 2026-09-14 Expo customer perf + engagement mid-record — **prior SOT; still true for locked decisions + perf backlog**
+
+- [[wiki/sources/2026-09-14-expo-customer-perf-engagement-mid-record]] — Mid-session: nearby kill-switch OFF; perf P0–P2 + idle warm; uncommitted/EAS checklist (superseded for crash root-cause by 2026-09-28)
+- `raw/sources/2026-09-14-expo-customer-perf-engagement-mid-record.md` — Full Sep 14 mid-record
+
+## Sources — 2026-09-08 Expo customer engagement (discovery points + nearby stock) — **implemented; nearby kill-switched; crash resolved 2026-09-28**
 
 - [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan]] — First-view points + nearby wishlist stock; Rewards settings; store×SKU stock; demo inbox
-- `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan.md` — Full plan SOT
-- [[wiki/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts]] — 7 agent prompts (~200k-sized)
-- `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-agent-prompts.md` — Copy-paste prompts (Agents 01–07)
+- `raw/sources/2026-09-08-expo-customer-engagement-discovery-points-nearby-stock-plan.md` — Full plan SOT (agent prompts deleted — do not re-ingest)
 - [[wiki/sources/2026-09-08-expo-customer-engagement-qc-notes]] — Agent 07 QC: 11 PASS / 1 FAIL / 5 SKIP; P0 none; Highlights linked-products P2
 - `raw/sources/2026-09-08-expo-customer-engagement-qc-notes.md` — Full QC matrix
 
@@ -44,15 +52,12 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 ## Sources — 2026-09-03 Expo customer Storefront occupation taxonomy + Home filter — **planned program**
 
 - [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan]] — Occupation ranges + `kind_key` categories; Home filter rail; post hero; See all; Shop occupations-only
-- `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan.md` — Full plan SOT
-- [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts]] — 8 agent prompts (~200k-sized)
-- `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-agent-prompts.md` — Copy-paste prompts (Agents 01–08)
+- `raw/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-plan.md` — Full plan SOT (agent prompts deleted — do not re-ingest)
 - [[wiki/sources/2026-09-03-expo-customer-storefront-occupation-taxonomy-qc-notes]] — Agent 08 QC: 15 PASS / 0 FAIL / 1 SKIP; pending device QC
 
 ## Sources — 2026-08-25 Expo customer Storefront curated seed — **planned program**
 
-- `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-plan.md` — Full catalog bible, UUID scheme, 80 SKUs, 10 posts, image QC rules, 38-agent pack overview
-- `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-agent-prompts.md` — Copy-paste agent prompts (Agents 01–38)
+- `raw/sources/2026-08-25-expo-customer-storefront-curated-seed-plan.md` — Full catalog bible, UUID scheme, 80 SKUs, 10 posts, image QC rules (agent prompts deleted — do not re-ingest)
 
 ## Sources — 2026-08-24 Expo customer Storefront theme (Classic clone) — **session SOT**
 
@@ -64,38 +69,32 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 ## Sources — 2026-08-12 Expo customer Home Noir differentiation Round 5 (Noir only)
 
 - [[wiki/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan]] — Classic frozen; Noir 1-col stream + chips + minimal journal
-- `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan.md` — Full R5 plan SOT
-- `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-agent-prompts.md` — 1 agent prompt
+- `raw/sources/2026-08-12-expo-customer-home-noir-diff-r5-plan.md` — Full R5 plan SOT (agent prompts deleted)
 
 ## Sources — 2026-08-12 Expo customer Home cover + editorial body Round 4 (authoritative for Classic)
 
 - [[wiki/sources/2026-08-12-expo-customer-home-tidy-r4-plan]] — Tall cover + vertical grid body; kill product/post snap; restore hierarchy
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r4-plan.md` — Full Round 4 plan SOT
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r4-agent-prompts.md` — 3 agent prompts (1→3)
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r4-plan.md` — Full Round 4 plan SOT (agent prompts deleted)
 
 ## Sources — 2026-08-12 Expo customer Home editorial density Round 3 (composition superseded)
 
 - [[wiki/sources/2026-08-12-expo-customer-home-tidy-r3-plan]] — Shrink Frame 1; above-fold promo + 2 products; denser editorial scroll; DB has content
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r3-plan.md` — Full Round 3 plan SOT
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r3-agent-prompts.md` — 3 agent prompts (1→3)
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r3-plan.md` — Full Round 3 plan SOT (agent prompts deleted)
 
 ## Sources — 2026-08-12 Expo customer Home tidy revamp Round 2 (tidy grammar; density superseded)
 
 - [[wiki/sources/2026-08-12-expo-customer-home-tidy-r2-plan]] — Round 2: no peek, snap+affordance, no wordmark, push-down Frame 1, fixed promo banners
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r2-plan.md` — Round 2 plan
-- `raw/sources/2026-08-12-expo-customer-home-tidy-r2-agent-prompts.md` — Round 2 prompts
+- `raw/sources/2026-08-12-expo-customer-home-tidy-r2-plan.md` — Round 2 plan (agent prompts deleted)
 
 ## Sources — 2026-08-12 Expo customer Home tidy revamp Round 1 (superseded for tidy grammar)
 
 - [[wiki/sources/2026-08-12-expo-customer-home-tidy-revamp-plan]] — Round 1: product Frame 1 + HOME_SPACE; failed Simon tidy on device
-- `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-plan.md` — Round 1 plan (historical)
-- `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-agent-prompts.md` — Round 1 prompts (historical)
+- `raw/sources/2026-08-12-expo-customer-home-tidy-revamp-plan.md` — Round 1 plan (historical; agent prompts deleted)
 
-## Sources — 2026-07-28 Expo customer notifications (plan + prompts)
+## Sources — 2026-07-28 Expo customer notifications (plan)
 
 - [[wiki/sources/2026-07-28-expo-customer-notifications-plan]] — Approved plan: Expo Push, templates, promo admin, prefs, deep links; no staff-app push
-- `raw/sources/2026-07-28-expo-customer-notifications-plan.md` — Full plan SOT
-- `raw/sources/2026-07-28-expo-customer-notifications-agent-prompts.md` — 8 agent prompts (1→8; producers + admin UIs split)
+- `raw/sources/2026-07-28-expo-customer-notifications-plan.md` — Full plan SOT (agent prompts deleted — do not re-ingest)
 
 ## Sources — 2026-07-28 Expo customer theme skins session (SOT)
 
@@ -188,20 +187,17 @@ Compounding personal/team knowledge wiki maintained by an LLM per [[CLAUDE.md]].
 - [[wiki/sources/llm-wiki-idea]] — `raw/sources/llm-wiki-idea.md` (LLM Wiki pattern document)
 - [[wiki/sources/batch-2026-04-09-docs-and-root-readme]] — thematic overview + contradictions for the whole docs/root README mirror (use alongside per-file pages below)
 
-## Sources — ASF-2 docs (one wiki page per raw file, 66)
+## Sources — ASF-2 docs (wiki pages; agent-prompt dumps deleted 2026-09-28)
 
 Each entry satisfies [[CLAUDE.md]] ingest step: `wiki/sources/<slug>.md` per raw file, with summary, outline, wikilinks, and open-questions placeholder.
 
-- [[wiki/sources/doc-admin-customer-split-agent-prompts-2026]] — Admin / Customer Split — Agent Prompts 2026 — raw: `ADMIN_CUSTOMER_SPLIT_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-admin-customer-split-plan-2026]] — Admin / Customer Code Split Plan — 2026 — raw: `ADMIN_CUSTOMER_SPLIT_PLAN_2026.md`
 - [[wiki/sources/doc-admin-panel]] — Admin Panel Documentation — raw: `ADMIN_PANEL.md`
-- [[wiki/sources/doc-ai-agent-prompts]] — AI Agent Prompts for ASF-2 Project Fixes — raw: `AI_AGENT_PROMPTS.md`
 - [[wiki/sources/doc-architecture]] — System Architecture — raw: `ARCHITECTURE.md`
 - [[wiki/sources/doc-complete-herbs-product-data]] — Complete Medicinal Herbs Product Data Sheet — raw: `COMPLETE_HERBS_PRODUCT_DATA.md`
 - [[wiki/sources/doc-contexts]] — React Context Providers Documentation — raw: `CONTEXTS.md`
 - [[wiki/sources/doc-critical-bugs]] — Critical Bugs & Issues — raw: `CRITICAL_BUGS.md`
 - [[wiki/sources/doc-customer-facing]] — Customer-Facing Pages Documentation — raw: `CUSTOMER_FACING.md`
-- [[wiki/sources/doc-customer-redesign-agent-prompts-2026]] — Customer App — Full Redesign Agent Prompts (2026) — raw: `CUSTOMER_REDESIGN_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-customer-redesign-bugfix-prompts-2026]] — Customer App — Bug Fix Agent Prompts (Round 2, March 2026) — raw: `CUSTOMER_REDESIGN_BUGFIX_PROMPTS_2026.md`
 - [[wiki/sources/doc-customer-redesign-bugfix-prompts-2026-round2]] — Customer App — Bug Fix Agent Prompts Round 2 (March 2026) — raw: `CUSTOMER_REDESIGN_BUGFIX_PROMPTS_2026_ROUND2.md`
 - [[wiki/sources/doc-customer-redesign-bugfix-prompts-2026-round3]] — Customer App — Fix Prompts Round 3 (March 2026) — raw: `CUSTOMER_REDESIGN_BUGFIX_PROMPTS_2026_ROUND3.md`
@@ -209,36 +205,21 @@ Each entry satisfies [[CLAUDE.md]] ingest step: `wiki/sources/<slug>.md` per raw
 - [[wiki/sources/doc-customer-redesign-bugfix-prompts-2026-round5]] — Customer App — Fix Prompts Round 5 (March 2026) — raw: `CUSTOMER_REDESIGN_BUGFIX_PROMPTS_2026_ROUND5.md`
 - [[wiki/sources/doc-customer-redesign-bugfix-prompts-2026-round6]] — Customer App — Fix Prompts Round 6 (March 2026) — raw: `CUSTOMER_REDESIGN_BUGFIX_PROMPTS_2026_ROUND6.md`
 - [[wiki/sources/doc-customer-redesign-plan-2026]] — Customer App — Full UI/UX Redesign Plan (2026) — raw: `CUSTOMER_REDESIGN_PLAN_2026.md`
-- [[wiki/sources/doc-customer-ux-fixes-agent-prompts-2026]] — Customer UX Fixes — Agent Prompts (March 2026) — raw: `CUSTOMER_UX_FIXES_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-customer-ux-fixes-plan-2026]] — Customer UX Fixes — Plan (March 2026) — raw: `CUSTOMER_UX_FIXES_PLAN_2026.md`
-- [[wiki/sources/doc-customer-ux-improvements-agent-prompts-2026]] — Customer UX Improvements — Agent Prompts (March 2026) — raw: `CUSTOMER_UX_IMPROVEMENTS_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-customer-ux-improvements-plan-2026]] — Customer UX Improvements — Plan (March 2026) — raw: `CUSTOMER_UX_IMPROVEMENTS_PLAN_2026.md`
 - [[wiki/sources/doc-database]] — Database Schema Documentation — raw: `DATABASE.md`
 - [[wiki/sources/doc-deployment]] — Deployment Guide — raw: `DEPLOYMENT.md`
 - [[wiki/sources/doc-development-guide]] — Development Guide — raw: `DEVELOPMENT_GUIDE.md`
-- [[wiki/sources/doc-feature-implementation-agent-prompts-2026]] — Feature Implementation — Agent Prompts 2026 — raw: `FEATURE_IMPLEMENTATION_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-feature-implementation-plan-2026]] — Feature Implementation Plan — 2026 — raw: `FEATURE_IMPLEMENTATION_PLAN_2026.md`
 - [[wiki/sources/doc-features]] — Feature Inventory & Implementation Status — raw: `FEATURES.md`
 - [[wiki/sources/doc-herbs-blog-posts-data]] — Medicinal Herbs Blog Post Data — raw: `HERBS_BLOG_POSTS_DATA.md`
 - [[wiki/sources/doc-herbs-images-sources]] — Medicinal Herbs Product Images - Free Stock Photos — raw: `HERBS_IMAGES_SOURCES.md`
 - [[wiki/sources/doc-herbs-migration-quickstart]] — Quick Start: Medicinal Herbs Data Migration — raw: `HERBS_MIGRATION_QUICKSTART.md`
-- [[wiki/sources/doc-highlights-scroll-performance-agent-prompts]] — Highlights Page — Scroll & Image Performance Agent Prompts — raw: `HIGHLIGHTS_SCROLL_PERFORMANCE_AGENT_PROMPTS.md`
 - [[wiki/sources/doc-highlights-scroll-performance-issue]] — Highlights Page — Scroll & Image Load Performance Issue — raw: `HIGHLIGHTS_SCROLL_PERFORMANCE_ISSUE.md`
-- [[wiki/sources/doc-image-fix-agent-prompts]] — Image Performance Fix — Agent Prompts — raw: `IMAGE_FIX_AGENT_PROMPTS.md`
 - [[wiki/sources/doc-image-lazy-revert-prompts]] — Image Fix — Revert to Native Lazy Loading — raw: `IMAGE_LAZY_REVERT_PROMPTS.md`
 - [[wiki/sources/doc-image-performance-audit]] — Image Loading Performance Audit — raw: `IMAGE_PERFORMANCE_AUDIT.md`
-- [[wiki/sources/doc-nextjs-migration-agent-prompts-2026]] — Next.js Migration — Agent Prompts 2026 — raw: `NEXTJS_MIGRATION_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-nextjs-migration-plan-2026]] — Next.js Migration Plan — 2026 — raw: `NEXTJS_MIGRATION_PLAN_2026.md`
 - [[wiki/sources/doc-performance-audit-2026]] — Performance Audit — ASF-2 React App — raw: `PERFORMANCE_AUDIT_2026.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts]] — Performance Fix — Agent Prompts — raw: `PERFORMANCE_FIX_AGENT_PROMPTS.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026]] — Performance Fix Agent Prompts — ASF-2 (March 2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round2]] — Performance Fix Agent Prompts – Round 2 (2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND2.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round3]] — Performance Fix Agent Prompts — Round 3 (2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND3.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round4]] — Performance Fix Agent Prompts — Round 4 (2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND4.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round5]] — Performance Fix Agent Prompts — Round 5 (2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND5.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round6]] — Performance Fix Agent Prompts — Round 6 (2026) — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND6.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round7]] — Performance Fix Agent Prompts — Round 7 (2026): Phone Heating — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND7.md`
-- [[wiki/sources/doc-performance-fix-agent-prompts-2026-round8]] — Performance Fix Agent Prompts — Round 8 (2026): White Scroll Blank Sections — raw: `PERFORMANCE_FIX_AGENT_PROMPTS_2026_ROUND8.md`
 - [[wiki/sources/doc-performance-fix-plan-2026]] — Performance Fix Plan — ASF-2 (March 2026) — raw: `PERFORMANCE_FIX_PLAN_2026.md`
 - [[wiki/sources/doc-performance-fix-plan-2026-round2]] — Performance Fix Plan – Round 2 (2026) — raw: `PERFORMANCE_FIX_PLAN_2026_ROUND2.md`
 - [[wiki/sources/doc-performance-fix-plan-2026-round3]] — Performance Fix Plan — Round 3 (2026) — raw: `PERFORMANCE_FIX_PLAN_2026_ROUND3.md`
@@ -248,11 +229,9 @@ Each entry satisfies [[CLAUDE.md]] ingest step: `wiki/sources/<slug>.md` per raw
 - [[wiki/sources/doc-performance-fix-plan-2026-round7]] — Performance Fix Plan — Round 7 (2026): Phone Heating — raw: `PERFORMANCE_FIX_PLAN_2026_ROUND7.md`
 - [[wiki/sources/doc-performance-fix-plan-2026-round8]] — Performance Fix Plan — Round 8 (2026): White/Blank Sections on Fast Scroll — raw: `PERFORMANCE_FIX_PLAN_2026_ROUND8.md`
 - [[wiki/sources/doc-performance-issues]] — Performance Issues & Solutions — raw: `PERFORMANCE_ISSUES.md`
-- [[wiki/sources/doc-product-section-agent-prompts]] — Product Section Enhancement — Agent Prompts — raw: `PRODUCT_SECTION_AGENT_PROMPTS.md`
 - [[wiki/sources/doc-product-section-enhancements]] — Product Section Enhancements — raw: `PRODUCT_SECTION_ENHANCEMENTS.md`
 - [[wiki/sources/doc-readme]] — ASF-2 Project Documentation — raw: `docs/README.md`
 - [[wiki/sources/doc-repo-root-readme]] — Getting Started with Create React App — raw: `repo root README.md` (mirror at `raw/sources/root/README.md`)
-- [[wiki/sources/doc-settings-redesign-agent-prompts-2026]] — Settings Page Redesign — Agent Prompts 2026 — raw: `SETTINGS_REDESIGN_AGENT_PROMPTS_2026.md`
 - [[wiki/sources/doc-settings-redesign-plan-2026]] — Settings Page Redesign Plan — 2026 — raw: `SETTINGS_REDESIGN_PLAN_2026.md`
 - [[wiki/sources/doc-setup]] — Development Environment Setup Guide — raw: `SETUP.md`
 - [[wiki/sources/doc-soft-delete-strategy]] — Soft Delete Implementation Strategy — raw: `SOFT_DELETE_STRATEGY.md`
