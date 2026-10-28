@@ -1,0 +1,145 @@
+[
+  {
+    "mediaId": "a3601201-24a8-4f00-8000-000000000003",
+    "productId": "dddd1201-24a8-4f00-8000-000000000001",
+    "productZh": "真皮腰带",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1201_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 真皮腰带. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601201-24a8-4f00-8000-000000000001",
+    "productId": "dddd1201-24a8-4f00-8000-000000000001",
+    "productZh": "真皮腰带",
+    "colorId": "a3501201-24a8-4f00-8000-000000000001",
+    "hex": "#111111",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1201_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 真皮腰带. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601201-24a8-4f00-8000-000000000002",
+    "productId": "dddd1201-24a8-4f00-8000-000000000001",
+    "productZh": "真皮腰带",
+    "colorId": "a3501201-24a8-4f00-8000-000000000002",
+    "hex": "#78350F",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1201_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 真皮腰带. Primary color: #78350F (#78350F). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601202-24a8-4f00-8000-000000000003",
+    "productId": "dddd1202-24a8-4f00-8000-000000000002",
+    "productZh": "编织休闲腰带",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1202_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 编织休闲腰带. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601202-24a8-4f00-8000-000000000001",
+    "productId": "dddd1202-24a8-4f00-8000-000000000002",
+    "productZh": "编织休闲腰带",
+    "colorId": "a3501202-24a8-4f00-8000-000000000001",
+    "hex": "#1E3A5F",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1202_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 编织休闲腰带. Primary color: #1E3A5F (navy blue). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601202-24a8-4f00-8000-000000000002",
+    "productId": "dddd1202-24a8-4f00-8000-000000000002",
+    "productZh": "编织休闲腰带",
+    "colorId": "a3501202-24a8-4f00-8000-000000000002",
+    "hex": "#78350F",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1202_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 编织休闲腰带. Primary color: #78350F (#78350F). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601203-24a8-4f00-8000-000000000003",
+    "productId": "dddd1203-24a8-4f00-8000-000000000003",
+    "productZh": "鞋拔金属款",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1203_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋拔金属款. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601203-24a8-4f00-8000-000000000001",
+    "productId": "dddd1203-24a8-4f00-8000-000000000003",
+    "productZh": "鞋拔金属款",
+    "colorId": "a3501203-24a8-4f00-8000-000000000001",
+    "hex": "#C0C0C0",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1203_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋拔金属款. Primary color: #C0C0C0 (silver gray). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601203-24a8-4f00-8000-000000000002",
+    "productId": "dddd1203-24a8-4f00-8000-000000000003",
+    "productZh": "鞋拔金属款",
+    "colorId": "a3501203-24a8-4f00-8000-000000000002",
+    "hex": "#111111",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1203_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋拔金属款. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601204-24a8-4f00-8000-000000000004",
+    "productId": "dddd1204-24a8-4f00-8000-000000000004",
+    "productZh": "鞋带三双装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1204_000000000004.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋带三双装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601204-24a8-4f00-8000-000000000001",
+    "productId": "dddd1204-24a8-4f00-8000-000000000004",
+    "productZh": "鞋带三双装",
+    "colorId": "a3501204-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1204_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋带三双装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601204-24a8-4f00-8000-000000000002",
+    "productId": "dddd1204-24a8-4f00-8000-000000000004",
+    "productZh": "鞋带三双装",
+    "colorId": "a3501204-24a8-4f00-8000-000000000002",
+    "hex": "#111111",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1204_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋带三双装. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  },
+  {
+    "mediaId": "a3601204-24a8-4f00-8000-000000000003",
+    "productId": "dddd1204-24a8-4f00-8000-000000000004",
+    "productZh": "鞋带三双装",
+    "colorId": "a3501204-24a8-4f00-8000-000000000003",
+    "hex": "#9CA3AF",
+    "arrangement": 12,
+    "isFallback": false,
+    "filename": "prod_1204_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, leather belt or small fashion accessory for category 腰带与小物. Product: 鞋带三双装. Primary color: #9CA3AF (cool gray). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a belt or small leather accessory. MUST NOT be handbag, footwear, or wallet."
+  }
+]

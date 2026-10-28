@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-19",
+  "aspectRatio": "16:9",
+  "notes": [
+    "Editorial feed/home post heroes featuring Simon flats (products 01–06).",
+    "Scenes are unique post-only editorials (POST-S01…POST-S10) — not reused from product-gallery pose bank P01–P16.",
+    "productFolderId links to simon-generated/products/{folder}/; catalogProductId is a placeholder UUID until CMS IDs are assigned.",
+    "2026-10-25: all posts regenerated with Southeast/East Asian nurse / scrubs-coded models; shoe strap locks unchanged.",
+    "2026-10-28: regenerated with varied full-body compositions (hospital + nurse-life); cache-bust ?v=20261028nursecomp"
+  ],
+  "posts": [
+    {
+      "id": "post-01",
+      "file": "post-01.png",
+      "sceneId": "POST-S01",
+      "scene": "Nurses station standing with chart — full-body",
+      "outfit": "Cream linen midi dress",
+      "productFolderId": "01-knit-maryjane-buckle",
+      "productId": "01",
+      "colorway": "beige",
+      "catalogProductId": "00000000-0000-4000-8000-000000000001",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman in warm hotel elevator lobby, brass and marble. Shoes hero: knit Mary Jane single instep strap + buckle, oatmeal beige ribbed knit, dark brown heel/sole. Cream linen midi dress. Standing in elevator threshold mid-step. Shallow DOF, no text/watermark.",
+      "referenceSources": [
+        "products/01-knit-maryjane-buckle/beige/sf-hero-34.png",
+        "products/01-knit-maryjane-buckle/beige/sf-side.png",
+        "simon-product-refs/01-knit-maryjane-buckle/beige/side-01.jpg",
+        "simon-product-refs/01-knit-maryjane-buckle/beige/side-02.jpg"
+      ]
+    },
+    {
+      "id": "post-02",
+      "file": "post-02.png",
+      "sceneId": "POST-S02",
+      "scene": "Overnight ward corridor walk — full-body",
+      "outfit": "Oversized charcoal blazer + black tailored shorts",
+      "productFolderId": "02-knit-ballet-xstrap",
+      "productId": "02",
+      "colorway": "black",
+      "catalogProductId": "00000000-0000-4000-8000-000000000002",
+      "prompt": "Cinematic 16:9 fashion editorial. Young East Asian woman in art gallery, polished concrete. Shoes hero: knit ballet flat with TWO wide elastic X straps (no buckle), matte black ribbed knit. Charcoal blazer + black shorts. Crouched adjusting strap, other foot planted. Cool museum light, no text/watermark.",
+      "referenceSources": [
+        "products/02-knit-ballet-xstrap/black/sf-hero-34.png",
+        "products/02-knit-ballet-xstrap/black/sf-side.png",
+        "simon-product-refs/02-knit-ballet-xstrap/black/side-01.jpg",
+        "simon-product-refs/02-knit-ballet-xstrap/black/front-01.jpg"
+      ]
+    },
+    {
+      "id": "post-03",
+      "file": "post-03.png",
+      "sceneId": "POST-S03",
+      "scene": "Staff break room seated coffee — near-full",
+      "outfit": "Soft blush chiffon sundress",
+      "productFolderId": "03-knit-ankle-strap",
+      "productId": "03",
+      "colorway": "blush",
+      "catalogProductId": "00000000-0000-4000-8000-000000000003",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman at garden wedding aisle edge. Shoes hero: knit square-toe flat with wide ANKLE strap + large rectangular buckle, dusty rose/blush ribbed knit, dark brown heel. Blush chiffon sundress. Standing among petals. Warm late-afternoon light, no text/watermark.",
+      "referenceSources": [
+        "products/03-knit-ankle-strap/blush/sf-hero-34.png",
+        "products/03-knit-ankle-strap/blush/sf-side.png",
+        "simon-product-refs/03-knit-ankle-strap/blush/side-01.jpg",
+        "simon-product-refs/03-knit-ankle-strap/blush/side-02.jpg"
+      ]
+    },
+    {
+      "id": "post-04",
+      "file": "post-04.png",
+      "sceneId": "POST-S04",
+      "scene": "Hospital courtyard garden bench — full-body seated",
+      "outfit": "Ivory silk slip dress + light cardigan",
+      "productFolderId": "04-satin-ankle-strap",
+      "productId": "04",
+      "colorway": "cream",
+      "catalogProductId": "00000000-0000-4000-8000-000000000004",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman seated on riverside stone pier at blue hour. Shoes hero: satin square-toe flat with wide ANKLE strap + chunky buckle, cream/ivory satin (not knit), dark brown heel. Ivory slip dress. Legs dangling, one toe pointed. Photorealistic shallow DOF, no text/watermark.",
+      "referenceSources": [
+        "products/04-satin-ankle-strap/cream/sf-hero-34.png",
+        "products/04-satin-ankle-strap/cream/sf-side.png",
+        "simon-product-refs/04-satin-ankle-strap/cream/side-01.jpg",
+        "simon-product-refs/04-satin-ankle-strap/cream/side-rear-01.jpg"
+      ]
+    },
+    {
+      "id": "post-05",
+      "file": "post-05.png",
+      "sceneId": "POST-S05",
+      "scene": "Elevator lobby mid-stride with tote — full-body",
+      "outfit": "Black midi skirt + white blouse",
+      "productFolderId": "05-satin-maryjane",
+      "productId": "05",
+      "colorway": "black-pink",
+      "catalogProductId": "00000000-0000-4000-8000-000000000005",
+      "prompt": "Cinematic 16:9 fashion editorial. Young East Asian woman at vintage tram stop at dusk. Shoes hero: satin Mary Jane single INSTEP strap + small buckle, matte black satin (not knit), pink interior if visible. Black midi skirt + white blouse. One foot on curb edge. Warm lamps + tram bokeh, no text/watermark.",
+      "referenceSources": [
+        "products/05-satin-maryjane/black-pink/sf-hero-34.png",
+        "products/05-satin-maryjane/black-pink/sf-side.png",
+        "simon-product-refs/05-satin-maryjane/black-pink/side-01.jpg",
+        "simon-product-refs/05-satin-maryjane/cream/side-01.jpg"
+      ]
+    },
+    {
+      "id": "post-06",
+      "file": "post-06.png",
+      "sceneId": "POST-S06",
+      "scene": "Scrub room doorway lean — full-body",
+      "outfit": "Pale blue cotton house dress",
+      "productFolderId": "06-satin-ballet-xstrap",
+      "productId": "06",
+      "colorway": "cream",
+      "catalogProductId": "00000000-0000-4000-8000-000000000006",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman on sunlit laundry balcony with white sheets. Shoes hero: satin ballet flat with TWO elastic X straps (no buckle), cream/ivory satin (not knit). Pale blue house dress. Leaning on railing, one foot crossed. Golden morning light, no text/watermark.",
+      "referenceSources": [
+        "products/06-satin-ballet-xstrap/cream/sf-hero-34.png",
+        "products/06-satin-ballet-xstrap/cream/sf-side.png",
+        "simon-product-refs/06-satin-ballet-xstrap/cream/side-01.jpg",
+        "simon-product-refs/06-satin-ballet-xstrap/cream/side-02.jpg"
+      ]
+    },
+    {
+      "id": "post-07",
+      "file": "post-07.png",
+      "sceneId": "POST-S07",
+      "scene": "Overnight nurses station on rolling stool — near-full",
+      "outfit": "Wide charcoal trousers + cream knit sweater",
+      "productFolderId": "01-knit-maryjane-buckle",
+      "productId": "01",
+      "colorway": "black",
+      "catalogProductId": "00000000-0000-4000-8000-000000000001",
+      "prompt": "Cinematic 16:9 fashion editorial. Young East Asian woman in rainy café booth. Shoes hero: knit Mary Jane single instep strap + buckle, matte black ribbed knit. Charcoal trousers + cream sweater. Feet propped on banquette edge. Moody premium light, no text/watermark.",
+      "referenceSources": [
+        "products/01-knit-maryjane-buckle/black/sf-hero-34.png",
+        "products/01-knit-maryjane-buckle/black/sf-side.png",
+        "simon-product-refs/01-knit-maryjane-buckle/black/side-01.jpg",
+        "simon-product-refs/01-knit-maryjane-buckle/black/topdown-insole-01.jpg"
+      ]
+    },
+    {
+      "id": "post-08",
+      "file": "post-08.png",
+      "sceneId": "POST-S08",
+      "scene": "After-shift outdoor hospital grounds — full-body",
+      "outfit": "Camel wide-leg trousers + white tank",
+      "productFolderId": "02-knit-ballet-xstrap",
+      "productId": "02",
+      "colorway": "beige",
+      "catalogProductId": "00000000-0000-4000-8000-000000000002",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman in museum sculpture courtyard beside stone column. Shoes hero: knit ballet flat with TWO elastic X straps, oatmeal beige ribbed knit, tan sole. Camel wide-leg trousers + white tank. One foot stepped into sunlight. Hard midday sun, no text/watermark.",
+      "referenceSources": [
+        "products/02-knit-ballet-xstrap/beige/sf-hero-34.png",
+        "products/02-knit-ballet-xstrap/beige/sf-side.png",
+        "simon-product-refs/02-knit-ballet-xstrap/beige/side-01.jpg",
+        "simon-product-refs/02-knit-ballet-xstrap/beige/rear-01.jpg"
+      ]
+    },
+    {
+      "id": "post-09",
+      "file": "post-09.png",
+      "sceneId": "POST-S09",
+      "scene": "Overnight ward corridor environmental — full-body",
+      "outfit": "Black satin slip dress",
+      "productFolderId": "06-satin-ballet-xstrap",
+      "productId": "06",
+      "colorway": "black-pink",
+      "catalogProductId": "00000000-0000-4000-8000-000000000006",
+      "prompt": "Cinematic 16:9 fashion editorial. Young East Asian woman descending jazz club staircase with amber sconces. Shoes hero: satin ballet flat with TWO elastic X straps, matte black satin (not knit), pink lining if glimpsed. Black satin slip dress. Mid-descent, front foot on lower step. Warm amber light, no text/watermark.",
+      "referenceSources": [
+        "products/06-satin-ballet-xstrap/black-pink/sf-hero-34.png",
+        "products/06-satin-ballet-xstrap/black-pink/sf-side.png",
+        "simon-product-refs/06-satin-ballet-xstrap/black-pink/side-01.jpg",
+        "simon-product-refs/06-satin-ballet-xstrap/cream/side-01.jpg"
+      ]
+    },
+    {
+      "id": "post-10",
+      "file": "post-10.png",
+      "sceneId": "POST-S10",
+      "scene": "Main lobby glass doors walk-in — full-body",
+      "outfit": "Sage linen wrap skirt + white cotton blouse",
+      "productFolderId": "05-satin-maryjane",
+      "productId": "05",
+      "colorway": "cream",
+      "catalogProductId": "00000000-0000-4000-8000-000000000005",
+      "prompt": "Cinematic 16:9 fashion editorial. Young Southeast Asian woman in sunlit conservatory greenhouse. Shoes hero: satin Mary Jane single INSTEP strap + small buckle, cream/ivory satin (not knit). Sage wrap skirt + white blouse. Perched on plant bench, ankles crossed, one shoe in sunlight shaft. Soft filtered light, no text/watermark.",
+      "referenceSources": [
+        "products/05-satin-maryjane/cream/sf-hero-34.png",
+        "products/05-satin-maryjane/cream/sf-side.png",
+        "simon-product-refs/05-satin-maryjane/cream/side-01.jpg",
+        "simon-product-refs/05-satin-maryjane/cream/side-02.jpg"
+      ]
+    }
+  ]
+}

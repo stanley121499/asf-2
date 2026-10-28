@@ -1,0 +1,44 @@
+[
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000001",
+    "promoZh": "新会员首单 15%",
+    "filename": "promo_000001.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 新会员首单 15% in clean sans-serif typography. Product montage of assorted premium sneakers at bottom third. Deep navy gradient background with gold accent, premium Malaysian footwear retail, legible zh text, no watermark, photorealistic product renders."
+  },
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000002",
+    "promoZh": "模力全场 10%",
+    "filename": "promo_000002.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 模力全场 10% in white typography. Dynamic grid of mixed footwear — runners, courts, boots — on vibrant coral-to-orange gradient. Premium retail campaign, legible zh text, no watermark, photorealistic."
+  },
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000003",
+    "promoZh": "会员专属减 RM20",
+    "filename": "promo_000003.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 会员专属减 RM20 with RM20 emphasized. Elegant dark green background, gold ribbon accent, two hero sneakers spotlighted. VIP member promotion feel, legible zh text, no watermark, photorealistic."
+  },
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000004",
+    "promoZh": "球鞋季特惠 12%",
+    "filename": "promo_000004.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 球鞋季特惠 12%. Sneaker season sale — multiple court and lifestyle sneakers floating on electric blue gradient with subtle confetti. Energetic retail campaign, legible zh text, no watermark, photorealistic."
+  },
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000005",
+    "promoZh": "配件加购礼",
+    "filename": "promo_000005.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 配件加购礼. Accessories bundle — bag, socks, belt, care kit — arranged with gift ribbon on soft cream background. Add-on gift promotion, legible zh text, no watermark, photorealistic."
+  },
+  {
+    "promoId": "44440001-24a8-4f00-8000-000000000006",
+    "promoZh": "正装通勤季",
+    "filename": "promo_000006.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium retail campaign banner 16:9. Bold Chinese headline 正装通勤季. Formal commuter season — polished dress sneakers and leather loafers on marble surface with city skyline blur. Sophisticated charcoal and burgundy palette, legible zh text, no watermark, photorealistic."
+  }
+]

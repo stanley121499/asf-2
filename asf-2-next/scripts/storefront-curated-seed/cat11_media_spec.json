@@ -1,0 +1,90 @@
+[
+  {
+    "mediaId": "a3601101-24a8-4f00-8000-000000000002",
+    "productId": "dddd1101-24a8-4f00-8000-000000000001",
+    "productZh": "鞋类护理四件套",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1101_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 鞋类护理四件套. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601101-24a8-4f00-8000-000000000001",
+    "productId": "dddd1101-24a8-4f00-8000-000000000001",
+    "productZh": "鞋类护理四件套",
+    "colorId": "a3501101-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1101_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 鞋类护理四件套. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601102-24a8-4f00-8000-000000000002",
+    "productId": "dddd1102-24a8-4f00-8000-000000000002",
+    "productZh": "麂皮护理套装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1102_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 麂皮护理套装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601102-24a8-4f00-8000-000000000001",
+    "productId": "dddd1102-24a8-4f00-8000-000000000002",
+    "productZh": "麂皮护理套装",
+    "colorId": "a3501102-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1102_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 麂皮护理套装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601103-24a8-4f00-8000-000000000002",
+    "productId": "dddd1103-24a8-4f00-8000-000000000003",
+    "productZh": "皮革清洁套装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1103_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 皮革清洁套装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601103-24a8-4f00-8000-000000000001",
+    "productId": "dddd1103-24a8-4f00-8000-000000000003",
+    "productZh": "皮革清洁套装",
+    "colorId": "a3501103-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1103_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 皮革清洁套装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601104-24a8-4f00-8000-000000000002",
+    "productId": "dddd1104-24a8-4f00-8000-000000000004",
+    "productZh": "小白鞋清洁套装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1104_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 小白鞋清洁套装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  },
+  {
+    "mediaId": "a3601104-24a8-4f00-8000-000000000001",
+    "productId": "dddd1104-24a8-4f00-8000-000000000004",
+    "productZh": "小白鞋清洁套装",
+    "colorId": "a3501104-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1104_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, shoe care kit with bottles, brush, and packaging for category 护理套装. Product: 小白鞋清洁套装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a shoe care or cleaning kit product set. MUST NOT be footwear, bag, or apparel."
+  }
+]

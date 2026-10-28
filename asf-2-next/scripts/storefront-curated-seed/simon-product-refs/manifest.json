@@ -1,0 +1,529 @@
+{
+  "version": 1,
+  "source": "Simon physical samples via WhatsApp 2026-10-13",
+  "root": "asf-2-next/scripts/storefront-curated-seed/simon-product-refs",
+  "usage": "Pass colorway.refs paths as GenerateImage reference_image_paths. Merge promptLock into every generation prompt.",
+  "products": [
+    {
+      "id": "01",
+      "slug": "knit-maryjane-buckle",
+      "displayName": "Knit Mary Jane (buckle strap)",
+      "catalogRule": "One product model, two colorways (not two separate SKUs).",
+      "promptLock": {
+        "silhouette": "Women's flat Mary Jane with rounded toe and single instep strap",
+        "upper": "Ribbed knit fabric; vertical ribs on toe box; ribs follow contour on sides",
+        "strap": "Single Mary Jane strap across instep; denser woven/seed-stitch texture than body; matching plastic buckle on outer side (round or small square)",
+        "vamp": "Shallow V-notch at center opening",
+        "heelCollar": "Smooth padded collar at heel — BLACK colorway uses BLACK collar matching exterior (not tan); beige colorway uses tonal tan/beige collar",
+        "heel": "Very low flat block heel",
+        "insole": "Light tan footbed",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "MODEL MATCH",
+          "layout": "Ornate crown above decorative crest; stacked serif MODEL / MATCH; small year banner (e.g. 1982)",
+          "color": "Black print on tan insole"
+        },
+        "sole": {
+          "forefoot": "Grid of small four-petal floral/clover grips (beige colorway) or checkered grid (black)",
+          "mid": "Smooth recess with embossed size 37",
+          "heel": "Horizontal ridged traction block"
+        },
+        "mustNot": [
+          "X elastic cross straps",
+          "Ankle strap",
+          "Blank insole when top-down / open view",
+          "Wrong brand name"
+        ]
+      },
+      "colorways": {
+        "black": {
+          "hexHint": "#111111",
+          "upper": "Matte black ribbed knit",
+          "buckle": "Matte black",
+          "soleHeel": "Black",
+          "refs": [
+            "01-knit-maryjane-buckle/black/topdown-insole-01.jpg",
+            "01-knit-maryjane-buckle/black/topdown-insole-02.jpg",
+            "01-knit-maryjane-buckle/black/topdown-insole-03.jpg",
+            "01-knit-maryjane-buckle/black/side-01.jpg",
+            "01-knit-maryjane-buckle/black/rear-01.jpg",
+            "01-knit-maryjane-buckle/black/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "01-knit-maryjane-buckle/black/topdown-insole-02.jpg",
+            "01-knit-maryjane-buckle/black/topdown-insole-03.jpg"
+          ]
+        },
+        "beige": {
+          "hexHint": "#D6C6A8",
+          "upper": "Oatmeal / light beige ribbed knit",
+          "buckle": "Matching matte beige",
+          "soleHeel": "Dark brown / medium tan",
+          "refs": [
+            "01-knit-maryjane-buckle/beige/side-01.jpg",
+            "01-knit-maryjane-buckle/beige/side-02.jpg",
+            "01-knit-maryjane-buckle/beige/topdown-insole-01.jpg",
+            "01-knit-maryjane-buckle/beige/front-insole-01.jpg",
+            "01-knit-maryjane-buckle/beige/rear-top-01.jpg",
+            "01-knit-maryjane-buckle/beige/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "01-knit-maryjane-buckle/beige/topdown-insole-01.jpg",
+            "01-knit-maryjane-buckle/beige/front-insole-01.jpg"
+          ]
+        }
+      }
+    },
+    {
+      "id": "02",
+      "slug": "knit-ballet-xstrap",
+      "displayName": "Knit ballet flat (X elastic straps)",
+      "catalogRule": "One product model, two colorways (not two separate SKUs).",
+      "promptLock": {
+        "silhouette": "Women's sporty ballet flat with rounded-square toe",
+        "upper": "Ribbed knit; vertical ribs on toe; diagonal ribs on sides; sock-like construction",
+        "strap": "TWO wide flat elastic bands crossing in a clear X over the instep and wrapping the heel/ankle — NO buckle",
+        "heelDetail": "Vertical heel reinforcement strip and small pull tab",
+        "heel": "Very low flat block heel",
+        "insole": "Light tan footbed",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "MODEL MATCH",
+          "layout": "Ornate crown/crest; MODEL MATCH lettering; year 1982 common",
+          "color": "Black print on tan insole"
+        },
+        "sole": {
+          "forefoot": "Floral/clover grip grid",
+          "mid": "Smooth with size 37 circle",
+          "heel": "Horizontal ridged block"
+        },
+        "mustNot": [
+          "Single buckle Mary Jane strap",
+          "Ankle strap with large rectangular buckle",
+          "Blank insole when top-down / open view"
+        ]
+      },
+      "colorways": {
+        "black": {
+          "hexHint": "#111111",
+          "upper": "Matte black ribbed knit",
+          "straps": "Matte black elastic",
+          "soleHeel": "Black",
+          "refs": [
+            "02-knit-ballet-xstrap/black/side-insole-01.jpg",
+            "02-knit-ballet-xstrap/black/side-01.jpg",
+            "02-knit-ballet-xstrap/black/front-01.jpg",
+            "02-knit-ballet-xstrap/black/topdown-insole-01.jpg",
+            "02-knit-ballet-xstrap/black/rear-01.jpg",
+            "02-knit-ballet-xstrap/black/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "02-knit-ballet-xstrap/black/side-insole-01.jpg",
+            "02-knit-ballet-xstrap/black/topdown-insole-01.jpg"
+          ]
+        },
+        "beige": {
+          "hexHint": "#D6C6A8",
+          "upper": "Oatmeal / nude beige ribbed knit",
+          "straps": "Matching beige elastic",
+          "soleHeel": "Medium tan / brown",
+          "refs": [
+            "02-knit-ballet-xstrap/beige/side-01.jpg",
+            "02-knit-ballet-xstrap/beige/side-hand-01.jpg",
+            "02-knit-ballet-xstrap/beige/topdown-01.jpg",
+            "02-knit-ballet-xstrap/beige/rear-01.jpg",
+            "02-knit-ballet-xstrap/beige/sole-01.jpg",
+            "02-knit-ballet-xstrap/beige/sole-02.jpg"
+          ],
+          "bestInsoleRefs": [
+            "02-knit-ballet-xstrap/beige/topdown-01.jpg"
+          ]
+        }
+      }
+    },
+    {
+      "id": "03",
+      "slug": "knit-ankle-strap",
+      "displayName": "Knit flat (wide ankle strap + buckle)",
+      "catalogRule": "One product model, two colorways (blush, beige).",
+      "notes": [
+        "Insole branding on blush top-down reads LUMIXIU SHOES (confirm with Simon if MODEL MATCH is expected instead)."
+      ],
+      "promptLock": {
+        "silhouette": "Women's square-toe flat with wide ankle strap",
+        "upper": "Fine ribbed knit; ribs run along shoe length (horizontal on side profile / vertical from top-down toe)",
+        "strap": "Wide smooth leather-like ANKLE strap (not instep Mary Jane); large chunky rectangular tonal buckle with silver metal prong",
+        "heelDetail": "Smooth vertical heel strip with stitching; strap threads through heel loop",
+        "vamp": "Open U/V throat showing top of foot",
+        "heel": "Very low flat block heel, contrasting darker brown/tan",
+        "insole": "Light tan footbed",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "LUMIXIU SHOES",
+          "layout": "Ornate crown above scalloped/circular border; brand text in all-caps sans-serif; small flourish below",
+          "color": "Black print on tan insole",
+          "confirmWithSimon": "Brand mark differs from products 01/02 (MODEL MATCH). Verify before full media batch."
+        },
+        "sole": {
+          "color": "Dark brown",
+          "forefoot": "Floral/clover grip grid",
+          "mid": "Smooth panel with size 37",
+          "heel": "Horizontal ridged block"
+        },
+        "mustNot": [
+          "X elastic cross straps",
+          "Single narrow instep Mary Jane buckle strap only",
+          "Blank insole when top-down / open view"
+        ]
+      },
+      "colorways": {
+        "blush": {
+          "hexHint": "#E8C4C4",
+          "upper": "Dusty rose / blush / pale pink ribbed knit",
+          "strapBuckle": "Matching matte blush, silver prong",
+          "soleHeel": "Dark brown",
+          "refs": [
+            "03-knit-ankle-strap/blush/side-01.jpg",
+            "03-knit-ankle-strap/blush/side-02.jpg",
+            "03-knit-ankle-strap/blush/topdown-insole-01.jpg",
+            "03-knit-ankle-strap/blush/topdown-insole-02.jpg"
+          ],
+          "bestInsoleRefs": [
+            "03-knit-ankle-strap/blush/topdown-insole-01.jpg",
+            "03-knit-ankle-strap/blush/topdown-insole-02.jpg"
+          ]
+        },
+        "beige": {
+          "hexHint": "#D6C6A8",
+          "upper": "Light beige / nude ribbed knit",
+          "strapBuckle": "Matching matte beige large square buckle",
+          "soleHeel": "Medium brown / tan",
+          "refs": [
+            "03-knit-ankle-strap/beige/side-01.jpg",
+            "03-knit-ankle-strap/beige/side-02.jpg",
+            "03-knit-ankle-strap/beige/topdown-insole-01.jpg",
+            "03-knit-ankle-strap/beige/front-insole-01.jpg",
+            "03-knit-ankle-strap/beige/rear-01.jpg",
+            "03-knit-ankle-strap/beige/sole-01.jpg",
+            "03-knit-ankle-strap/beige/extra-rear-01.jpg",
+            "03-knit-ankle-strap/beige/extra-sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "03-knit-ankle-strap/beige/topdown-insole-01.jpg",
+            "03-knit-ankle-strap/beige/front-insole-01.jpg"
+          ]
+        }
+      }
+    },
+    {
+      "id": "04",
+      "slug": "satin-ankle-strap",
+      "folder": "04-satin-ankle-strap",
+      "displayName": "Satin ankle-strap flat (cream / black-almond)",
+      "catalogRule": "One product model, two colorways: cream (physical) and black-almond (AI-generated from cream refs).",
+      "notes": [
+        "Material is smooth satin — not ribbed knit (see product 03 for knit ankle-strap family).",
+        "black-almond colorway was generated 2026-10-19 because no physical black sample photos existed.",
+        "black-almond side/topdown/front/rear refs regenerated v2 2026-10-19 to fix insole artifact; sole-01 unchanged.",
+        "black-almond = matte black exterior (satin + strap + buckle) with almond side lining + cream/white textured footbed and MODEL MATCH print (not solid wrinkled almond pad).",
+        "Treat black-almond refs as secondary refs — always also attach cream physical photos when generating storefront media."
+      ],
+      "promptLock": {
+        "silhouette": "Women's square-toe flat with wide ankle strap",
+        "upper": "Smooth satin fabric with subtle sheen — NOT ribbed knit",
+        "strap": "Wide smooth ANKLE strap; large chunky rectangular tonal buckle with silver metal prong",
+        "heelDetail": "Smooth vertical heel strip with stitching",
+        "vamp": "Soft V throat",
+        "heel": "Very low flat block heel, dark brown",
+        "insole": "Cream/white textured footbed with MODEL MATCH print; almond/tan side lining (ALWAYS light interior even on black colorway — not solid wrinkled almond pad)",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "MODEL MATCH",
+          "layout": "Ornate crown above decorative crest; stacked serif MODEL / MATCH; small year banner (e.g. 1982)",
+          "color": "Black print on tan insole"
+        },
+        "sole": {
+          "color": "Dark brown",
+          "forefoot": "Floral/clover grip grid",
+          "mid": "Size 37 circle",
+          "heel": "Horizontal ridged block"
+        },
+        "colorwayRules": {
+          "cream": "Exterior cream/ivory satin matching physical refs; interior tan",
+          "black-almond": "Exterior matte black (satin + strap + buckle + heel strip); interior = almond side lining + cream/white textured footbed — never black insole or solid wrinkled almond pad"
+        },
+        "mustNot": [
+          "X elastic cross straps",
+          "Ribbed knit texture",
+          "Black insole on black-almond colorway",
+          "Solid wrinkled almond footbed pad (use cream/white textured footbed)",
+          "Blank insole when top-down / open view",
+          "LUMIXIU SHOES branding (this product uses MODEL MATCH)"
+        ]
+      },
+      "colorways": {
+        "cream": {
+          "source": "physical",
+          "hexHint": "#F5F0E6",
+          "upper": "Cream / ivory satin with soft sheen",
+          "strapBuckle": "Matching cream covered buckle, silver prong",
+          "interior": "Light tan",
+          "soleHeel": "Dark brown",
+          "refs": [
+            "04-satin-ankle-strap/cream/side-01.jpg",
+            "04-satin-ankle-strap/cream/side-rear-01.jpg",
+            "04-satin-ankle-strap/cream/topdown-insole-01.jpg",
+            "04-satin-ankle-strap/cream/front-insole-01.jpg",
+            "04-satin-ankle-strap/cream/rear-01.jpg",
+            "04-satin-ankle-strap/cream/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "04-satin-ankle-strap/cream/topdown-insole-01.jpg",
+            "04-satin-ankle-strap/cream/front-insole-01.jpg"
+          ]
+        },
+        "black-almond": {
+          "source": "ai-generated-2026-10-19",
+          "hexHint": "#111111",
+          "upper": "Matte black satin",
+          "strapBuckle": "Matte black covered buckle, silver prong",
+          "interior": "Almond side lining + cream/white textured footbed (critical; not solid wrinkled almond pad)",
+          "soleHeel": "Dark brown",
+          "refs": [
+            "04-satin-ankle-strap/black-almond/side-01.jpg",
+            "04-satin-ankle-strap/black-almond/topdown-insole-01.jpg",
+            "04-satin-ankle-strap/black-almond/front-insole-01.jpg",
+            "04-satin-ankle-strap/black-almond/rear-01.jpg",
+            "04-satin-ankle-strap/black-almond/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "04-satin-ankle-strap/black-almond/topdown-insole-01.jpg",
+            "04-satin-ankle-strap/black-almond/front-insole-01.jpg"
+          ],
+          "alsoAttachPhysical": [
+            "04-satin-ankle-strap/cream/topdown-insole-01.jpg",
+            "04-satin-ankle-strap/cream/side-01.jpg"
+          ]
+        }
+      }
+    },
+    {
+      "id": "05",
+      "slug": "satin-maryjane",
+      "folder": "05-satin-maryjane",
+      "displayName": "Satin Mary Jane (instep strap / cream / black-pink)",
+      "catalogRule": "One product model, two colorways: cream (physical) and black-pink (AI-generated from cream refs).",
+      "notes": [
+        "Distinct from product 04: single instep Mary Jane strap + small buckle — NOT wide ankle strap.",
+        "Material is smooth satin/synthetic sheen — not ribbed knit.",
+        "black-pink colorway was generated 2026-10-19 from cream physical refs.",
+        "black-pink: matte black satin exterior (upper + strap + buckle); interior pink lining AND pink-toned insole; keep black MODEL MATCH logo; prefer black heel for cohesion (pale cream/yellow heel on cream may stay light on cream only)."
+      ],
+      "promptLock": {
+        "silhouette": "Women's flat Mary Jane with soft square / rounded-square toe and single instep strap",
+        "upper": "Smooth satin or synthetic fabric with subtle sheen — NOT ribbed knit",
+        "strap": "Single Mary Jane strap across instep (not ankle); small covered buckle on outer side with silver metal prong",
+        "vamp": "Soft V or shallow throat opening",
+        "heel": "Very low flat block heel",
+        "insole": "Light tan or pink-toned footbed depending on colorway",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "MODEL MATCH",
+          "layout": "Ornate crown above decorative crest; stacked serif MODEL / MATCH; small year banner (e.g. 1982)",
+          "color": "Black print on footbed"
+        },
+        "sole": {
+          "color": "Dark brown",
+          "forefoot": "Floral/clover grip grid",
+          "mid": "Size 37 circle",
+          "heel": "Horizontal ridged block"
+        },
+        "colorwayRules": {
+          "cream": "Exterior cream/ivory satin matching physical refs; interior light tan",
+          "black-pink": "Exterior matte black satin (upper + strap + buckle + prefer black heel); interior pink lining AND pink-toned insole; black MODEL MATCH print"
+        },
+        "mustNot": [
+          "Ankle strap",
+          "Wide ankle strap with large rectangular buckle",
+          "X elastic cross straps",
+          "Ribbed knit texture",
+          "Blank insole when top-down / open view",
+          "Wrong brand name"
+        ]
+      },
+      "colorways": {
+        "cream": {
+          "source": "physical",
+          "hexHint": "#F5F0E6",
+          "upper": "Cream / ivory satin with soft sheen",
+          "strapBuckle": "Matching cream covered buckle, silver prong",
+          "interior": "Light tan",
+          "soleHeel": "Dark brown; heel may read pale cream/yellow on sample",
+          "refs": [
+            "05-satin-maryjane/cream/side-01.jpg",
+            "05-satin-maryjane/cream/side-02.jpg",
+            "05-satin-maryjane/cream/front-01.jpg",
+            "05-satin-maryjane/cream/rear-top-insole-01.jpg",
+            "05-satin-maryjane/cream/topdown-insole-01.jpg",
+            "05-satin-maryjane/cream/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "05-satin-maryjane/cream/topdown-insole-01.jpg",
+            "05-satin-maryjane/cream/rear-top-insole-01.jpg"
+          ]
+        },
+        "black-pink": {
+          "source": "ai-generated-2026-10-19",
+          "hexHint": "#111111",
+          "upper": "Matte black satin",
+          "strapBuckle": "Matte black covered buckle, silver prong",
+          "interior": "Pink lining + pink-toned insole; black MODEL MATCH print",
+          "soleHeel": "Dark brown; prefer black heel block for cohesion",
+          "refs": [
+            "05-satin-maryjane/black-pink/side-01.jpg",
+            "05-satin-maryjane/black-pink/side-02.jpg",
+            "05-satin-maryjane/black-pink/topdown-insole-01.jpg",
+            "05-satin-maryjane/black-pink/front-01.jpg",
+            "05-satin-maryjane/black-pink/rear-top-insole-01.jpg",
+            "05-satin-maryjane/black-pink/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "05-satin-maryjane/black-pink/topdown-insole-01.jpg",
+            "05-satin-maryjane/black-pink/rear-top-insole-01.jpg"
+          ],
+          "alsoAttachPhysical": [
+            "05-satin-maryjane/cream/topdown-insole-01.jpg",
+            "05-satin-maryjane/cream/side-01.jpg"
+          ]
+        }
+      }
+    },
+    {
+      "id": "06",
+      "slug": "satin-ballet-xstrap",
+      "folder": "06-satin-ballet-xstrap",
+      "displayName": "Satin ballet flat (X elastic straps / cream / black-pink)",
+      "catalogRule": "One product model, two colorways: cream (physical) and black-pink (AI-generated from cream refs).",
+      "notes": [
+        "Distinct from product 02: 02 is ribbed KNIT X-strap ballet; 06 is SMOOTH satin/matte white X-strap ballet (same strap layout, different upper material).",
+        "Two wide elastic X straps crossing over instep; square toe; very low block heel; no buckle.",
+        "Branding: MODEL MATCH (heart/crown crest) on insole when visible.",
+        "black-pink colorway was generated 2026-10-19 from cream physical refs."
+      ],
+      "promptLock": {
+        "silhouette": "Women's ballet flat with square toe and two wide elastic X straps over the instep",
+        "upper": "Smooth satin or matte white synthetic with subtle sheen — NOT ribbed knit",
+        "strap": "TWO wide flat elastic bands crossing in a clear X over the instep and wrapping the heel/ankle — NO buckle",
+        "heelDetail": "Smooth vertical heel strip; low flat block heel",
+        "heel": "Very low flat block heel",
+        "insole": "Light tan footbed (cream colorway); pink-toned footbed on black-pink when generated",
+        "branding": {
+          "mustIncludeWhenVisible": true,
+          "text": "MODEL MATCH",
+          "layout": "Ornate heart/crown crest above decorative border; stacked serif MODEL / MATCH; small year banner (e.g. 1982)",
+          "color": "Black print on footbed"
+        },
+        "sole": {
+          "color": "Dark brown",
+          "forefoot": "Floral/clover grip grid",
+          "mid": "Size 37 circle",
+          "heel": "Horizontal ridged block"
+        },
+        "colorwayRules": {
+          "cream": "Exterior cream/ivory satin matching physical refs; matching cream elastic straps; interior light tan",
+          "black-pink": "Exterior matte black (body + elastic straps + heel); interior pink lining AND pink-toned insole; keep black MODEL MATCH logo"
+        },
+        "mustNot": [
+          "Ribbed knit texture",
+          "Single buckle Mary Jane strap",
+          "Ankle strap with large rectangular buckle",
+          "Blank insole when top-down / open view",
+          "Wrong brand name"
+        ]
+      },
+      "colorways": {
+        "cream": {
+          "source": "physical",
+          "hexHint": "#F5F0E6",
+          "upper": "Cream / ivory satin or matte white with soft sheen",
+          "straps": "Matching cream elastic",
+          "interior": "Light tan",
+          "soleHeel": "Dark brown",
+          "refs": [
+            "06-satin-ballet-xstrap/cream/side-01.jpg",
+            "06-satin-ballet-xstrap/cream/side-02.jpg",
+            "06-satin-ballet-xstrap/cream/rear-01.jpg",
+            "06-satin-ballet-xstrap/cream/topdown-01.jpg",
+            "06-satin-ballet-xstrap/cream/topdown-insole-01.jpg",
+            "06-satin-ballet-xstrap/cream/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "06-satin-ballet-xstrap/cream/topdown-insole-01.jpg",
+            "06-satin-ballet-xstrap/cream/topdown-01.jpg"
+          ]
+        },
+        "black-pink": {
+          "source": "ai-generated-2026-10-19",
+          "hexHint": "#111111",
+          "upper": "Matte black satin or synthetic",
+          "straps": "Matte black elastic",
+          "interior": "Pink lining + pink-toned insole; black MODEL MATCH print",
+          "soleHeel": "Dark brown",
+          "refs": [
+            "06-satin-ballet-xstrap/black-pink/side-01.jpg",
+            "06-satin-ballet-xstrap/black-pink/side-02.jpg",
+            "06-satin-ballet-xstrap/black-pink/rear-01.jpg",
+            "06-satin-ballet-xstrap/black-pink/topdown-01.jpg",
+            "06-satin-ballet-xstrap/black-pink/topdown-insole-01.jpg",
+            "06-satin-ballet-xstrap/black-pink/sole-01.jpg"
+          ],
+          "bestInsoleRefs": [
+            "06-satin-ballet-xstrap/black-pink/topdown-insole-01.jpg",
+            "06-satin-ballet-xstrap/black-pink/topdown-01.jpg"
+          ],
+          "alsoAttachPhysical": [
+            "06-satin-ballet-xstrap/cream/topdown-insole-01.jpg",
+            "06-satin-ballet-xstrap/cream/side-01.jpg",
+            "06-satin-ballet-xstrap/cream/side-02.jpg"
+          ]
+        }
+      }
+    }
+  ],
+  "fidelityTests": {
+    "01-knit-maryjane-buckle": [
+      "_fidelity-tests/01-knit-maryjane-buckle/v1-storefront-beige.jpg",
+      "_fidelity-tests/01-knit-maryjane-buckle/v1-model-beige.jpg",
+      "_fidelity-tests/01-knit-maryjane-buckle/v2-storefront-beige-topdown.jpg",
+      "_fidelity-tests/01-knit-maryjane-buckle/v2-model-beige-insole.jpg"
+    ],
+    "02-knit-ballet-xstrap": [
+      "_fidelity-tests/02-knit-ballet-xstrap/v1-storefront-beige.jpg",
+      "_fidelity-tests/02-knit-ballet-xstrap/v1-model-beige.jpg"
+    ],
+    "03-knit-ankle-strap": [],
+    "04-satin-ankle-strap": [
+      "_fidelity-tests/04-satin-ankle-strap/generated-black-almond-side-01.jpg",
+      "_fidelity-tests/04-satin-ankle-strap/generated-black-almond-topdown-insole-01.jpg",
+      "_fidelity-tests/04-satin-ankle-strap/generated-black-almond-front-insole-01.jpg",
+      "_fidelity-tests/04-satin-ankle-strap/generated-black-almond-rear-01.jpg",
+      "_fidelity-tests/04-satin-ankle-strap/generated-black-almond-sole-01.jpg"
+    ],
+    "05-satin-maryjane": [
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-side-01.jpg",
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-side-02.jpg",
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-topdown-insole-01.jpg",
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-front-01.jpg",
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-rear-top-insole-01.jpg",
+      "_fidelity-tests/05-satin-maryjane/generated-black-pink-sole-01.jpg"
+    ],
+    "06-satin-ballet-xstrap": [
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-side-01.jpg",
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-side-02.jpg",
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-rear-01.jpg",
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-topdown-01.jpg",
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-topdown-insole-01.jpg",
+      "_fidelity-tests/06-satin-ballet-xstrap/generated-black-pink-sole-01.jpg"
+    ]
+  }
+}

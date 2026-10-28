@@ -1,0 +1,8 @@
+# Ephemeral apply/MCP scratch — never commit
+.tmp/
+.venv/
+__pycache__/
+*.pyc
+
+# Local backup copies (regenerable)
+**/_bak_*/

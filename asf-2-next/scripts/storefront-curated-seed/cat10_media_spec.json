@@ -1,0 +1,178 @@
+[
+  {
+    "mediaId": "a3601001-24a8-4f00-8000-000000000004",
+    "productId": "dddd1001-24a8-4f00-8000-000000000001",
+    "productZh": "品牌棒球帽",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1001_000000000004.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 品牌棒球帽. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601001-24a8-4f00-8000-000000000001",
+    "productId": "dddd1001-24a8-4f00-8000-000000000001",
+    "productZh": "品牌棒球帽",
+    "colorId": "a3501001-24a8-4f00-8000-000000000001",
+    "hex": "#111111",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1001_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 品牌棒球帽. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601001-24a8-4f00-8000-000000000002",
+    "productId": "dddd1001-24a8-4f00-8000-000000000001",
+    "productZh": "品牌棒球帽",
+    "colorId": "a3501001-24a8-4f00-8000-000000000002",
+    "hex": "#F5F0E8",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1001_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 品牌棒球帽. Primary color: #F5F0E8 (warm cream). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601001-24a8-4f00-8000-000000000003",
+    "productId": "dddd1001-24a8-4f00-8000-000000000001",
+    "productZh": "品牌棒球帽",
+    "colorId": "a3501001-24a8-4f00-8000-000000000003",
+    "hex": "#1E3A5F",
+    "arrangement": 12,
+    "isFallback": false,
+    "filename": "prod_1001_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 品牌棒球帽. Primary color: #1E3A5F (navy blue). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601002-24a8-4f00-8000-000000000004",
+    "productId": "dddd1002-24a8-4f00-8000-000000000002",
+    "productZh": "船员袜三双装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1002_000000000004.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 船员袜三双装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601002-24a8-4f00-8000-000000000001",
+    "productId": "dddd1002-24a8-4f00-8000-000000000002",
+    "productZh": "船员袜三双装",
+    "colorId": "a3501002-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1002_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 船员袜三双装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601002-24a8-4f00-8000-000000000002",
+    "productId": "dddd1002-24a8-4f00-8000-000000000002",
+    "productZh": "船员袜三双装",
+    "colorId": "a3501002-24a8-4f00-8000-000000000002",
+    "hex": "#9CA3AF",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1002_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 船员袜三双装. Primary color: #9CA3AF (cool gray). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601002-24a8-4f00-8000-000000000003",
+    "productId": "dddd1002-24a8-4f00-8000-000000000002",
+    "productZh": "船员袜三双装",
+    "colorId": "a3501002-24a8-4f00-8000-000000000003",
+    "hex": "#111111",
+    "arrangement": 12,
+    "isFallback": false,
+    "filename": "prod_1002_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 船员袜三双装. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601003-24a8-4f00-8000-000000000004",
+    "productId": "dddd1003-24a8-4f00-8000-000000000003",
+    "productZh": "运动短袜三双装",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1003_000000000004.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 运动短袜三双装. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601003-24a8-4f00-8000-000000000001",
+    "productId": "dddd1003-24a8-4f00-8000-000000000003",
+    "productZh": "运动短袜三双装",
+    "colorId": "a3501003-24a8-4f00-8000-000000000001",
+    "hex": "#FFFFFF",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1003_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 运动短袜三双装. Primary color: #FFFFFF (white). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601003-24a8-4f00-8000-000000000002",
+    "productId": "dddd1003-24a8-4f00-8000-000000000003",
+    "productZh": "运动短袜三双装",
+    "colorId": "a3501003-24a8-4f00-8000-000000000002",
+    "hex": "#111111",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1003_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 运动短袜三双装. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601003-24a8-4f00-8000-000000000003",
+    "productId": "dddd1003-24a8-4f00-8000-000000000003",
+    "productZh": "运动短袜三双装",
+    "colorId": "a3501003-24a8-4f00-8000-000000000003",
+    "hex": "#2563EB",
+    "arrangement": 12,
+    "isFallback": false,
+    "filename": "prod_1003_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 运动短袜三双装. Primary color: #2563EB (#2563EB). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601004-24a8-4f00-8000-000000000004",
+    "productId": "dddd1004-24a8-4f00-8000-000000000004",
+    "productZh": "针织冷帽",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_1004_000000000004.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 针织冷帽. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601004-24a8-4f00-8000-000000000001",
+    "productId": "dddd1004-24a8-4f00-8000-000000000004",
+    "productZh": "针织冷帽",
+    "colorId": "a3501004-24a8-4f00-8000-000000000001",
+    "hex": "#111111",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_1004_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 针织冷帽. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601004-24a8-4f00-8000-000000000002",
+    "productId": "dddd1004-24a8-4f00-8000-000000000004",
+    "productZh": "针织冷帽",
+    "colorId": "a3501004-24a8-4f00-8000-000000000002",
+    "hex": "#6B7280",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_1004_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 针织冷帽. Primary color: #6B7280 (gray). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  },
+  {
+    "mediaId": "a3601004-24a8-4f00-8000-000000000003",
+    "productId": "dddd1004-24a8-4f00-8000-000000000004",
+    "productZh": "针织冷帽",
+    "colorId": "a3501004-24a8-4f00-8000-000000000003",
+    "hex": "#7F1D1D",
+    "arrangement": 12,
+    "isFallback": false,
+    "filename": "prod_1004_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, baseball cap, beanie, or sock multi-pack for category 帽袜. Product: 针织冷帽. Primary color: #7F1D1D (#7F1D1D). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a cap, beanie, or sock pack product. MUST NOT be footwear, bag, or belt."
+  }
+]

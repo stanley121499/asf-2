@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "cutover": "2026-10-simon",
+  "storagePrefix": "storefront-curated/2026-10/simon",
+  "taxonomy": {
+    "departmentId": "a3100001-24a8-4f00-8000-000000000002",
+    "departmentName": "女鞋",
+    "rangeId": "a4200001-24a8-4f00-8000-000000000001",
+    "rangeName": "护士",
+    "categoryId": "a4300001-24a8-4f00-8000-000000000001",
+    "categoryName": "鞋履",
+    "brandId": "a3400001-24a8-4f00-8000-000000000001",
+    "brandName": "模力"
+  },
+  "products": {
+    "01": {
+      "id": "c1010001-24a8-4f00-8000-000000000001",
+      "folder": "01-knit-maryjane-buckle",
+      "zh": "针织玛丽珍扣带平底鞋",
+      "en": "Knit Mary Jane Buckle Flat",
+      "ms": "Kasut Mary Jane Knit Buckle",
+      "price": 189,
+      "colorways": {
+        "black": {
+          "id": "c1500101-24a8-4f00-8000-000000000001",
+          "hex": "#111111"
+        },
+        "beige": {
+          "id": "c1500101-24a8-4f00-8000-000000000002",
+          "hex": "#D6C6A8"
+        }
+      },
+      "fallbackMediaId": "c1600100-24a8-4f00-8000-000000000001",
+      "stockId": "c1550101-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540101-24a8-4f00-8000-000000000001"
+    },
+    "02": {
+      "id": "c1010001-24a8-4f00-8000-000000000002",
+      "folder": "02-knit-ballet-xstrap",
+      "zh": "针织芭蕾交叉带平底鞋",
+      "en": "Knit Ballet X-Strap Flat",
+      "ms": "Kasut Ballet Knit X-Strap",
+      "price": 189,
+      "colorways": {
+        "black": {
+          "id": "c1500201-24a8-4f00-8000-000000000001",
+          "hex": "#111111"
+        },
+        "beige": {
+          "id": "c1500201-24a8-4f00-8000-000000000002",
+          "hex": "#D6C6A8"
+        }
+      },
+      "fallbackMediaId": "c1600200-24a8-4f00-8000-000000000001",
+      "stockId": "c1550201-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540201-24a8-4f00-8000-000000000001"
+    },
+    "03": {
+      "id": "c1010001-24a8-4f00-8000-000000000003",
+      "folder": "03-knit-ankle-strap",
+      "zh": "针织踝带扣平底鞋",
+      "en": "Knit Ankle Strap Flat",
+      "ms": "Kasut Knit Ankle Strap",
+      "price": 199,
+      "colorways": {
+        "blush": {
+          "id": "c1500301-24a8-4f00-8000-000000000001",
+          "hex": "#E8C4C4"
+        },
+        "beige": {
+          "id": "c1500301-24a8-4f00-8000-000000000002",
+          "hex": "#D6C6A8"
+        }
+      },
+      "fallbackMediaId": "c1600300-24a8-4f00-8000-000000000001",
+      "stockId": "c1550301-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540301-24a8-4f00-8000-000000000001"
+    },
+    "04": {
+      "id": "c1010001-24a8-4f00-8000-000000000004",
+      "folder": "04-satin-ankle-strap",
+      "zh": "缎面踝带扣平底鞋",
+      "en": "Satin Ankle Strap Flat",
+      "ms": "Kasut Satin Ankle Strap",
+      "price": 219,
+      "colorways": {
+        "cream": {
+          "id": "c1500401-24a8-4f00-8000-000000000001",
+          "hex": "#F5F0E8"
+        },
+        "black-almond": {
+          "id": "c1500401-24a8-4f00-8000-000000000002",
+          "hex": "#111111"
+        }
+      },
+      "fallbackMediaId": "c1600400-24a8-4f00-8000-000000000001",
+      "stockId": "c1550401-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540401-24a8-4f00-8000-000000000001"
+    },
+    "05": {
+      "id": "c1010001-24a8-4f00-8000-000000000005",
+      "folder": "05-satin-maryjane",
+      "zh": "缎面玛丽珍平底鞋",
+      "en": "Satin Mary Jane Flat",
+      "ms": "Kasut Mary Jane Satin",
+      "price": 219,
+      "colorways": {
+        "cream": {
+          "id": "c1500501-24a8-4f00-8000-000000000001",
+          "hex": "#F5F0E8"
+        },
+        "black-pink": {
+          "id": "c1500501-24a8-4f00-8000-000000000002",
+          "hex": "#111111"
+        }
+      },
+      "fallbackMediaId": "c1600500-24a8-4f00-8000-000000000001",
+      "stockId": "c1550501-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540501-24a8-4f00-8000-000000000001"
+    },
+    "06": {
+      "id": "c1010001-24a8-4f00-8000-000000000006",
+      "folder": "06-satin-ballet-xstrap",
+      "zh": "缎面芭蕾交叉带平底鞋",
+      "en": "Satin Ballet X-Strap Flat",
+      "ms": "Kasut Ballet Satin X-Strap",
+      "price": 219,
+      "colorways": {
+        "cream": {
+          "id": "c1500601-24a8-4f00-8000-000000000001",
+          "hex": "#F5F0E8"
+        },
+        "black-pink": {
+          "id": "c1500601-24a8-4f00-8000-000000000002",
+          "hex": "#111111"
+        }
+      },
+      "fallbackMediaId": "c1600600-24a8-4f00-8000-000000000001",
+      "stockId": "c1550601-24a8-4f00-8000-000000000001",
+      "productCategoryId": "c1540601-24a8-4f00-8000-000000000001"
+    }
+  },
+  "mediaShots": [
+    {
+      "file": "sf-hero-34.png",
+      "arrangement": 10,
+      "role": "Angle A — 3/4 hero (PDP gallery 1)"
+    },
+    {
+      "file": "sf-side.png",
+      "arrangement": 11,
+      "role": "Angle B — pure side profile (PDP gallery 2)"
+    }
+  ],
+  "mediaShotsLegacyOnDiskOnly": [
+    {
+      "file": "sf-topdown-insole.png",
+      "note": "Kept on disk/storage; removed from product_medias 2026-10-25 two-angle cutover"
+    },
+    {
+      "file": "sf-pair-or-sole.png",
+      "note": "Kept on disk/storage; removed from product_medias 2026-10-25 two-angle cutover"
+    },
+    {
+      "file": "md-editorial-a.png",
+      "note": "Nurse lifestyle kept on disk/storage; removed from color gallery product_medias"
+    },
+    {
+      "file": "md-editorial-b.png",
+      "note": "Nurse lifestyle kept on disk/storage; removed from color gallery product_medias"
+    }
+  ],
+  "fallbackShot": {
+    "file": "sf-fallback.png",
+    "arrangement": 1,
+    "color_id": null
+  },
+  "posts": [
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000001",
+      "file": "post-01.png",
+      "productKey": "01",
+      "zh": "护士站 · 针织玛丽珍",
+      "en": "Nurses Station · Knit Mary Jane",
+      "caption": "护士站日常，奶油针织玛丽珍陪你走完一整班。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000002",
+      "file": "post-02.png",
+      "productKey": "02",
+      "zh": "夜班走廊 · 交叉带芭蕾",
+      "en": "Night Corridor · X-Strap Ballet",
+      "caption": "夜班走廊里的利落步伐，黑色针织交叉带。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000003",
+      "file": "post-03.png",
+      "productKey": "03",
+      "zh": "休息室 · 踝带平底",
+      "en": "Break Room · Ankle Strap",
+      "caption": "休息室小憩，腮红针织踝带温柔落地。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000004",
+      "file": "post-04.png",
+      "productKey": "04",
+      "zh": "医院庭院 · 缎面踝带",
+      "en": "Hospital Courtyard · Satin Ankle",
+      "caption": "庭院日光下，奶油缎面踝带的柔软光泽。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000005",
+      "file": "post-05.png",
+      "productKey": "05",
+      "zh": "电梯大堂 · 缎面玛丽珍",
+      "en": "Elevator Lobby · Satin Mary Jane",
+      "caption": "电梯大堂的通勤节奏，黑粉缎面玛丽珍。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000006",
+      "file": "post-06.png",
+      "productKey": "06",
+      "zh": "换衣间门口 · 缎面芭蕾",
+      "en": "Scrub Doorway · Satin Ballet",
+      "caption": "换衣间门口的片刻停顿，奶油缎面交叉带。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000007",
+      "file": "post-07.png",
+      "productKey": "01",
+      "zh": "夜班护士站 · 黑色玛丽珍",
+      "en": "Night Station · Black Mary Jane",
+      "caption": "夜班护士站，黑色针织扣带沉稳陪伴。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000008",
+      "file": "post-08.png",
+      "productKey": "02",
+      "zh": "下班回家 · 米色交叉带",
+      "en": "After Shift · Beige X-Strap",
+      "caption": "下班路上的金色光线，米色针织芭蕾。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000009",
+      "file": "post-09.png",
+      "productKey": "06",
+      "zh": "夜间病房 · 黑粉芭蕾",
+      "en": "Night Ward · Black-Pink Ballet",
+      "caption": "夜间病房走廊，黑粉缎面交叉带轻盈前行。"
+    },
+    {
+      "id": "c2010001-24a8-4f00-8000-000000000010",
+      "file": "post-10.png",
+      "productKey": "05",
+      "zh": "医院正门 · 奶油玛丽珍",
+      "en": "Main Entrance · Cream Mary Jane",
+      "caption": "走进医院正门，奶油缎面玛丽珍开启新一天。"
+    }
+  ],
+  "promos": [
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000001",
+      "file": "promo-01-new-season.jpg",
+      "zh": "新季女鞋",
+      "code": "SIMONNEW",
+      "productKey": "01",
+      "discountType": "percentage",
+      "discountValue": 10
+    },
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000002",
+      "file": "promo-02-members.jpg",
+      "zh": "会员专属",
+      "code": "SIMONMEMBER",
+      "productKey": "04",
+      "discountType": "fixed",
+      "discountValue": 20
+    },
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000003",
+      "file": "promo-03-satin-elegance.jpg",
+      "zh": "缎面优雅",
+      "code": "SIMONSATIN",
+      "productKey": "05",
+      "discountType": "percentage",
+      "discountValue": 12
+    },
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000004",
+      "file": "promo-04-limited-offer.jpg",
+      "zh": "限时特惠",
+      "code": "SIMONLIMIT",
+      "productKey": "02",
+      "discountType": "percentage",
+      "discountValue": 15
+    },
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000005",
+      "file": "promo-05-commute.jpg",
+      "zh": "通勤必备",
+      "code": "SIMONCOMMUTE",
+      "productKey": "03",
+      "discountType": "percentage",
+      "discountValue": 10
+    },
+    {
+      "id": "c3010001-24a8-4f00-8000-000000000006",
+      "file": "promo-06-evening.jpg",
+      "zh": "夜色轻舞",
+      "code": "SIMONEVE",
+      "productKey": "06",
+      "discountType": "percentage",
+      "discountValue": 12
+    }
+  ]
+}

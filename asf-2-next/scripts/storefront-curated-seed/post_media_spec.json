@@ -1,0 +1,72 @@
+[
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000001",
+    "postZh": "男鞋新季精选",
+    "filename": "post_000001.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium footwear editorial hero, 16:9 landscape. Men's seasonal shoe collection — running sneakers, court sneakers, and lifestyle trainers arranged on warm concrete steps in soft morning light. Footwear-forward composition, no model faces, premium Malaysian retail tone, cinematic depth of field, subtle urban backdrop, no illegible text, no watermark, photorealistic lifestyle editorial."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000002",
+    "postZh": "运动休闲系列",
+    "filename": "post_000002.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium footwear editorial hero, 16:9 landscape. Sport lifestyle range — cushioned sneakers in neutral and accent colors on a minimalist gym-meets-street set. Soft studio lighting with lifestyle props (water bottle edge, towel fold), footwear as hero, no model, premium e-commerce editorial, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000003",
+    "postZh": "球场经典分类",
+    "filename": "post_000003.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium footwear editorial hero, 16:9 landscape. Court classics category — clean white and gum-sole court sneakers on polished hardwood floor with subtle court line markings. Classic silhouettes, premium retail editorial, footwear-forward, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000004",
+    "postZh": "球场线品牌故事",
+    "filename": "post_000004.png",
+    "aspectRatio": "16:9",
+    "prompt": "Premium footwear brand story editorial, 16:9 landscape. Courtline brand — heritage court sneakers with bold stripe details on muted teal backdrop, product montage feel, premium storytelling layout, footwear hero, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000005",
+    "postZh": "造型师精选 A",
+    "filename": "post_000005.png",
+    "aspectRatio": "16:9",
+    "prompt": "Stylist edit editorial, 16:9 landscape. Curated cross-category footwear flat lay — running shoe, court sneaker, ankle boot, and high-top arranged in artful grid on linen surface. Premium fashion editorial, footwear-forward, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000006",
+    "postZh": "造型师精选 B",
+    "filename": "post_000006.png",
+    "aspectRatio": "16:9",
+    "prompt": "Stylist edit editorial B, 16:9 landscape. Second curated footwear set — trail runner, Chelsea boot, high-top sneaker, and dress sneaker on stone plinths with soft side lighting. Premium retail editorial, footwear hero, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000007",
+    "postZh": "女鞋日常灵感",
+    "filename": "post_000007.png",
+    "aspectRatio": "16:9",
+    "prompt": "Women's daily footwear inspiration editorial, 16:9 landscape. Women's sneakers, ankle boots, and ballet flats on a sunlit café terrace floor. Soft natural light, lifestyle editorial, footwear-forward, no model faces, premium Malaysian retail tone, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000008",
+    "postZh": "短靴衣橱必备",
+    "filename": "post_000008.png",
+    "aspectRatio": "16:9",
+    "prompt": "Women's ankle boot wardrobe editorial, 16:9 landscape. Three distinct women's ankle boots — black leather, tan suede, and white leather — on warm autumn-toned backdrop with subtle knit texture. Boot silhouettes clearly ankle height, premium editorial, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000009",
+    "postZh": "穿戴配件点睛",
+    "filename": "post_000009.png",
+    "aspectRatio": "16:9",
+    "prompt": "Accessories spotlight editorial, 16:9 landscape. Crossbody bag, beanie hat, crew socks, and leather belt arranged as flat lay with one sneaker anchor. Premium accessories retail editorial, clean composition, no model, no illegible text, no watermark, photorealistic."
+  },
+  {
+    "postId": "eeee0001-24a8-4f00-8000-000000000010",
+    "postZh": "越野型户外特辑",
+    "filename": "post_000010.png",
+    "aspectRatio": "16:9",
+    "prompt": "Trail outdoor footwear editorial, 16:9 landscape. Rugged trail running shoes with aggressive tread on mossy rock and pine needle forest floor. Outdoor adventure mood, footwear hero, no model, premium editorial, no illegible text, no watermark, photorealistic."
+  }
+]

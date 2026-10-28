@@ -1,0 +1,134 @@
+[
+  {
+    "mediaId": "a3600901-24a8-4f00-8000-000000000003",
+    "productId": "dddd0901-24a8-4f00-8000-000000000001",
+    "productZh": "迷你斜挎包",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_0901_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 迷你斜挎包. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600901-24a8-4f00-8000-000000000001",
+    "productId": "dddd0901-24a8-4f00-8000-000000000001",
+    "productZh": "迷你斜挎包",
+    "colorId": "a3500901-24a8-4f00-8000-000000000001",
+    "hex": "#111111",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_0901_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 迷你斜挎包. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600901-24a8-4f00-8000-000000000002",
+    "productId": "dddd0901-24a8-4f00-8000-000000000001",
+    "productZh": "迷你斜挎包",
+    "colorId": "a3500901-24a8-4f00-8000-000000000002",
+    "hex": "#78350F",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_0901_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 迷你斜挎包. Primary color: #78350F (#78350F). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600902-24a8-4f00-8000-000000000003",
+    "productId": "dddd0902-24a8-4f00-8000-000000000002",
+    "productZh": "托特购物袋",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_0902_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 托特购物袋. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600902-24a8-4f00-8000-000000000001",
+    "productId": "dddd0902-24a8-4f00-8000-000000000002",
+    "productZh": "托特购物袋",
+    "colorId": "a3500902-24a8-4f00-8000-000000000001",
+    "hex": "#F5F0E8",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_0902_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 托特购物袋. Primary color: #F5F0E8 (warm cream). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600902-24a8-4f00-8000-000000000002",
+    "productId": "dddd0902-24a8-4f00-8000-000000000002",
+    "productZh": "托特购物袋",
+    "colorId": "a3500902-24a8-4f00-8000-000000000002",
+    "hex": "#111111",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_0902_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 托特购物袋. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600903-24a8-4f00-8000-000000000003",
+    "productId": "dddd0903-24a8-4f00-8000-000000000003",
+    "productZh": "双肩通勤包",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_0903_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 双肩通勤包. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600903-24a8-4f00-8000-000000000001",
+    "productId": "dddd0903-24a8-4f00-8000-000000000003",
+    "productZh": "双肩通勤包",
+    "colorId": "a3500903-24a8-4f00-8000-000000000001",
+    "hex": "#111111",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_0903_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 双肩通勤包. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600903-24a8-4f00-8000-000000000002",
+    "productId": "dddd0903-24a8-4f00-8000-000000000003",
+    "productZh": "双肩通勤包",
+    "colorId": "a3500903-24a8-4f00-8000-000000000002",
+    "hex": "#1E3A5F",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_0903_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 双肩通勤包. Primary color: #1E3A5F (navy blue). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600904-24a8-4f00-8000-000000000003",
+    "productId": "dddd0904-24a8-4f00-8000-000000000004",
+    "productZh": "皮质手拿包",
+    "colorId": null,
+    "hex": null,
+    "arrangement": 1,
+    "isFallback": true,
+    "filename": "prod_0904_000000000003.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 皮质手拿包. Neutral multi-tone presentation showing typical color accents. Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600904-24a8-4f00-8000-000000000001",
+    "productId": "dddd0904-24a8-4f00-8000-000000000004",
+    "productZh": "皮质手拿包",
+    "colorId": "a3500904-24a8-4f00-8000-000000000001",
+    "hex": "#78350F",
+    "arrangement": 10,
+    "isFallback": false,
+    "filename": "prod_0904_000000000001.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 皮质手拿包. Primary color: #78350F (#78350F). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  },
+  {
+    "mediaId": "a3600904-24a8-4f00-8000-000000000002",
+    "productId": "dddd0904-24a8-4f00-8000-000000000004",
+    "productZh": "皮质手拿包",
+    "colorId": "a3500904-24a8-4f00-8000-000000000002",
+    "hex": "#111111",
+    "arrangement": 11,
+    "isFallback": false,
+    "filename": "prod_0904_000000000002.png",
+    "prompt": "Premium e-commerce studio packshot, handbag, tote, crossbody bag, or backpack for category 包袋. Product: 皮质手拿包. Primary color: #111111 (black). Pure white background #F7F7F5, single item, 3/4 front angle, soft shadow, no model, no text, no watermark, photorealistic, Malaysian premium footwear retail. MUST be a bag product (handbag, tote, crossbody, or backpack). MUST NOT be footwear, belt, cap, or sock."
+  }
+]

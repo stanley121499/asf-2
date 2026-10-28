@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-10-19",
+  "aspectRatio": "16:9",
+  "style": "photorealistic campaign banners with legible Chinese sale headlines; Simon flats as product heroes",
+  "count": 6,
+  "promos": [
+    {
+      "id": "promo-01",
+      "file": "promo-01-new-season.jpg",
+      "headlineZh": "新季女鞋",
+      "subtitleZh": "轻盈日常 · 精致步伐",
+      "theme": "new-season",
+      "linkedProducts": [
+        {
+          "productId": "01",
+          "folder": "01-knit-maryjane-buckle",
+          "colorway": "black",
+          "refHero": "products/01-knit-maryjane-buckle/black/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Warm cream-to-peach gradient; black knit Mary Jane instep buckle as hero; left-aligned Chinese headline."
+    },
+    {
+      "id": "promo-02",
+      "file": "promo-02-members.jpg",
+      "headlineZh": "会员专属",
+      "subtitleZh": "专属折扣 · 优先发货",
+      "theme": "members-exclusive",
+      "linkedProducts": [
+        {
+          "productId": "04",
+          "folder": "04-satin-ankle-strap",
+          "colorway": "cream",
+          "refHero": "products/04-satin-ankle-strap/cream/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Champagne/taupe luxury gradient; cream satin ankle-strap buckle flat as hero; members campaign."
+    },
+    {
+      "id": "promo-03",
+      "file": "promo-03-satin-elegance.jpg",
+      "headlineZh": "缎面优雅",
+      "subtitleZh": "光泽质感 · 晚宴与日常",
+      "theme": "satin-elegance",
+      "linkedProducts": [
+        {
+          "productId": "05",
+          "folder": "05-satin-maryjane",
+          "colorway": "cream",
+          "refHero": "products/05-satin-maryjane/cream/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Rose-blush/ivory gradient; cream satin Mary Jane instep strap as hero; romantic satin campaign."
+    },
+    {
+      "id": "promo-04",
+      "file": "promo-04-limited-offer.jpg",
+      "headlineZh": "限时特惠",
+      "subtitleZh": "精选平底鞋 · 今日开抢",
+      "theme": "limited-offer",
+      "linkedProducts": [
+        {
+          "productId": "02",
+          "folder": "02-knit-ballet-xstrap",
+          "colorway": "beige",
+          "refHero": "products/02-knit-ballet-xstrap/beige/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Beige-to-soft-coral gradient; beige knit X-strap ballet as hero; refined limited-time sale."
+    },
+    {
+      "id": "promo-05",
+      "file": "promo-05-commute.jpg",
+      "headlineZh": "通勤必备",
+      "subtitleZh": "舒适全天 · 轻盈随行",
+      "theme": "commute-essentials",
+      "linkedProducts": [
+        {
+          "productId": "03",
+          "folder": "03-knit-ankle-strap",
+          "colorway": "blush",
+          "refHero": "products/03-knit-ankle-strap/blush/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Cool gray-to-ivory gradient; blush knit ankle-strap large buckle as hero; commute essentials."
+    },
+    {
+      "id": "promo-06",
+      "file": "promo-06-evening.jpg",
+      "headlineZh": "夜色轻舞",
+      "subtitleZh": "缎面芭蕾 · 闪耀时刻",
+      "theme": "evening-satin",
+      "linkedProducts": [
+        {
+          "productId": "06",
+          "folder": "06-satin-ballet-xstrap",
+          "colorway": "black-pink",
+          "refHero": "products/06-satin-ballet-xstrap/black-pink/sf-hero-34.png"
+        }
+      ],
+      "promptSummary": "Charcoal-to-plum night bokeh; black satin X-strap ballet (pink interior hint) as hero; evening campaign."
+    }
+  ]
+}
