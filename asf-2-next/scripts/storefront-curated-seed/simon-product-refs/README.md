@@ -9,7 +9,7 @@ simon-product-refs/
   manifest.json                          # machine-readable catalog + prompt locks
   01-knit-maryjane-buckle/{black,beige}/
   02-knit-ballet-xstrap/{black,beige}/
-  03-knit-ankle-strap/{blush,beige}/
+  03-knit-ankle-strap/{beige}/   # blush/ on disk is NOT a real CW (beige clones)
   04-satin-ankle-strap/{cream,black-almond}/
   05-satin-maryjane/{cream,black-pink}/
   06-satin-ballet-xstrap/{cream,black-pink}/
@@ -46,7 +46,7 @@ simon-product-refs/
 |---|---|---|---|
 | 01 | `knit-maryjane-buckle` | black, beige | Single instep strap + buckle |
 | 02 | `knit-ballet-xstrap` | black, beige | Two wide elastic **X** straps (no buckle) |
-| 03 | `knit-ankle-strap` | blush, beige | Wide **ankle** strap + large tonal buckle; **knit** upper |
+| 03 | `knit-ankle-strap` | **beige only** | Wide **ankle** strap + large tonal buckle; **knit** upper. No real blush/pink CW — `blush/` refs are beige clones; do not seed `#E8C4C4` as active. |
 | 04 | `satin-ankle-strap` | cream, **black-almond** | Wide **ankle** strap + buckle; **satin** upper; black exterior / almond interior (generated) |
 | 05 | `satin-maryjane` | cream, **black-pink** | Single **instep** Mary Jane strap + small buckle (not ankle strap); **satin** upper; black-pink is AI-generated |
 | 06 | `satin-ballet-xstrap` | cream, **black-pink** | Two wide elastic **X** straps (no buckle); **smooth satin/matte white** upper — not knit; square toe; black-pink is AI-generated |

@@ -1,8 +1,45 @@
 # Simon generated media — run log
 
+
+## 2026-11-07 — 01 black heel-collar fix (`?v=20261107blackcollar`)
+
+- Cursor GenerateImage: ban cream collar → solid black cushion matching exterior (physical rear/side refs). Tan footbed peek optional; result is all-black interior.
+- Preferred: `preferred-cursor+02black/p01-black-cursor-v1-blackcollar.png` (+ overwrite `p01-black-cursor-v1.png`). Bak: `preferred-cursor+02black/bak/p01-black-cursor-v1-pre-blackcollar.png`.
+- Desathue re-ran for 01 black only → `preferred-desathue/p01-black-cursor-v1-desathue.png`.
+- Installed `products/01-knit-maryjane-buckle/black/sf-hero-34.png`; shipped storage upsert + DB URL `?v=20261107blackcollar`.
+
+## 2026-11-04 — CURSOR_V3 preferred heroes (`?v=20261104cursorv3`)
+
+- Shipped **all 11** active CW `sf-hero-34` (+ 6 light `sf-fallback` clones) from `_qc/.tmp-fal-test/preferred-cursor+02black/`.
+- Includes v3 fixes already in preferred: **01 black** under-shadow + **06** cream/BP BG fixes. Sheet: `cmp/cmp-cursor-plus-02black-all11-v3.jpg`.
+- Upload: `.tmp/upload_cursorv3.py` — 17 webps upserted; DB arr 1+10 → `?v=20261104cursorv3`.
+- Slot2 / inactive 03 blush untouched (`?v=20261102warm0304`). Bak: `_bak_cursorv3_20261104/`.
+
+## 2026-11-02 — HERO_DIFFBG_GATE (`?v=20261102diffbggate` on 02)
+
+- Hard QC after diffBG batch (`BRIEF_REV=20261102-diffbg`).
+- FAIL→fix: **02** X-crossing vs PHYS; shipped `?v=20261102diffbggate`.
+- BG distinctness 01–06 + cam vs gold: PASS. Notes: `_qc/HERO_DIFFBG_GATE.md`.
+
+## 2026-11-02 — HERO_DIFFBG_05_06 (`?v=20261102diffbg0506`)
+
+- BRIEF_REV=`20261102-diffbg`. Scope 05+06 heroes + cream fallbacks only.
+- Gold-plate cam lock; §2.1 BG hex `#C4B8A8` (05) / `#BEB6A9` (06); 06 X strap fidelity vs refs.
+- No rembg / no 3D; arr 11 untouched (`?v=20261102model0406`).
+- QC: `_qc/HERO_DIFFBG_05_06.md`. Scratch: `_qc/.tmp-diffbg0506/`.
+
+## 2026-11-02 — HERO_DIFFBG_01_02 (`?v=20261102diffbg0102`)
+
+- Regenerated Product **01** + **02** `sf-hero-34` (+ beige fallbacks) only.
+- Brief `BRIEF_REV=20261102-diffbg`: distinct BG hex 01 `#C8C0B4` / 02 `#D2C4B0`; fixed top-left 02 black X vs physical refs; cam toe 7:00 = gold cream X.
+- Upload: `.tmp/upload_diffbg0102.py` — 6 webps; DB arr 1+10 → `?v=20261102diffbg0102`.
+- QC: `_qc/HERO_DIFFBG_01_02.md`. No rembg/3D; model slot2 untouched.
+
 ## 2026-10-19 — Product 03 (knit ankle strap)
 
 Agent generated blush + beige + fallback (13 images). No black colorway.
+
+> **2026-11-02 catalog note:** Blush is **not** a real physical CW (`blush/` refs = beige clones). Live `#E8C4C4` remains inactive; declared CW is beige only. See `_qc/03-BLUSH_NOT_A_REAL_CW.md`. Do not regenerate or reactivate blush on reseed.
 
 ### Output paths
 
@@ -269,3 +306,54 @@ Result: products=78 posts=10 promos=6 **errors=0**.
 - Upload: `simon_nurse_comp_upload.py`
 - Cache-bust: `?v=20261028nursecomp`
 - QC: `_qc/NURSE_COMPOSITION_REGEN.md`
+
+## 2026-11-02 — Mute BG + face-on yaw heroes 05/06
+
+- Regenerated Product **05** + **06** `sf-hero-34` (+ cream fallbacks) only.
+- More face-on 3/4 yaw (gold cream-X family); muted unique warm-grays `#D8D1C8` (05) / `#CDC8C1` (06).
+- Upload: `.tmp/upload_mute0506.py` — 6 webps; DB arr 1+10 → `?v=20261102mute0506`.
+- Model slot2 untouched. No rembg.
+- QC: `_qc/HERO_MUTE_BG_05_06.md`
+
+## 2026-11-02 — Camlock 7 o’clock heroes 05/06
+
+- Regenerated Product **05** + **06** `sf-hero-34` (+ cream fallbacks) only.
+- Toe at **7 o’clock**; identical camera height/pitch (rejected higher-angle 06 bp C).
+- Muted BGs kept `#D8D1C8` / `#CDC8C1`.
+- Upload: `.tmp/upload_cam7_0506.py` — 6 webps; DB arr 1+10 → `?v=20261102cam7_0506`.
+- Model slot2 untouched. No rembg.
+- QC: `_qc/HERO_CAMLOCK_05_06.md`
+
+## 2026-11-02 — Locked camera (toe 7:00) heroes 01/02
+
+- Regenerated Product **01** + **02** `sf-hero-34` (+ beige fallbacks) only.
+- Cam lock: toe **7 o’clock**; identical elevated 3/4 height/pitch (gold cream) — not mute0102 overhead.
+- Muted greige BGs ~`#CDC9C3` / `#CBC6C0`; 02 X plank thickness held.
+- Upload: `.tmp/upload_cam7_0102.py` — 6 webps; DB arr 1+10 → `?v=20261102cam7_0102`.
+- Model slot2 untouched. No rembg.
+- QC: `_qc/HERO_CAMLOCK_01_02.md`
+
+## 2026-11-02 — Brief locked-plate heroes 03/04
+
+- Regenerated Product **03** beige + **04** cream/BA `sf-hero-34` (+ fallbacks) only.
+- Gold plate = attached cream X; toe **7 o’clock**; same camera height; flat muted BG (no arcs).
+- 03 blush inactive not shipped; model slot2 untouched. No rembg / no 3D.
+- Upload: `.tmp/upload_brief0304.py` — 5 webps; DB arr 1+10 → `?v=20261102brief0304`.
+- QC: `_qc/HERO_BRIEF_BATCH_03_04.md` · sheet `_qc/.tmp-brief0304/cmp/cmp-brief-ship-vs-gold.jpg`
+
+## 2026-11-02 — Brief locked-plate heroes 05/06
+
+- Regenerated Product **05** + **06** `sf-hero-34` (+ cream fallbacks) only.
+- Gold plate = attached cream X; toe **7 o’clock**; same camera height; flat muted BG.
+- Avoided prior fails: 06 cream wrong strap; 05 cream higher angle.
+- Upload: `.tmp/upload_brief0506.py` — 6 webps; DB arr 1+10 → `?v=20261102brief0506`.
+- Model slot2 untouched. No rembg / no 3D.
+- QC: `_qc/HERO_BRIEF_BATCH_05_06.md` · sheet `_qc/.tmp-brief0506/cmp/cmp-brief0506-ship-final.jpg`
+
+## 2026-11-02 — DiffBG heroes 03/04 (`BRIEF_REV=20261102-diffbg`)
+
+- Regenerated Product **03** beige + **04** cream/BA `sf-hero-34` (+ fallbacks) only.
+- Gold plate cam lock; toe **7 o’clock**; flat BG no arcs; distinct hexes **03 `#B9B2A6`** / **04 `#D8CFC2`** (≠ 01/02/05/06).
+- 03 blush inactive not shipped; model slot2 untouched. No rembg / no 3D.
+- Uploaded 5 webps; DB arr 1+10 → `?v=20261102diffbg0304`.
+- QC: `_qc/HERO_DIFFBG_03_04.md` · sheet `_qc/.tmp-diffbg0304/cmp/cmp-diffbg-ship-vs-gold.jpg`

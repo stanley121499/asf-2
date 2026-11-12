@@ -1,0 +1,84 @@
+{
+  "productId": "c1010001-24a8-4f00-8000-000000000001",
+  "colorId": "c1500101-24a8-4f00-8000-000000000001",
+  "sku": "01-knit-maryjane-buckle",
+  "colorway": "black",
+  "frameCount": 12,
+  "stepDeg": 30,
+  "cacheBust": "v=20261101spin01",
+  "gesture": "horizontal-drag-scrub",
+  "frames": [
+    {
+      "index": 0,
+      "yawDeg": 0,
+      "file": "spin-00.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-00.webp?v=20261101spin01"
+    },
+    {
+      "index": 1,
+      "yawDeg": 30,
+      "file": "spin-01.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-01.webp?v=20261101spin01"
+    },
+    {
+      "index": 2,
+      "yawDeg": 60,
+      "file": "spin-02.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-02.webp?v=20261101spin01"
+    },
+    {
+      "index": 3,
+      "yawDeg": 90,
+      "file": "spin-03.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-03.webp?v=20261101spin01"
+    },
+    {
+      "index": 4,
+      "yawDeg": 120,
+      "file": "spin-04.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-04.webp?v=20261101spin01"
+    },
+    {
+      "index": 5,
+      "yawDeg": 150,
+      "file": "spin-05.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-05.webp?v=20261101spin01"
+    },
+    {
+      "index": 6,
+      "yawDeg": 180,
+      "file": "spin-06.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-06.webp?v=20261101spin01"
+    },
+    {
+      "index": 7,
+      "yawDeg": 210,
+      "file": "spin-07.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-07.webp?v=20261101spin01"
+    },
+    {
+      "index": 8,
+      "yawDeg": 240,
+      "file": "spin-08.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-08.webp?v=20261101spin01"
+    },
+    {
+      "index": 9,
+      "yawDeg": 270,
+      "file": "spin-09.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-09.webp?v=20261101spin01"
+    },
+    {
+      "index": 10,
+      "yawDeg": 300,
+      "file": "spin-10.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-10.webp?v=20261101spin01"
+    },
+    {
+      "index": 11,
+      "yawDeg": 330,
+      "file": "spin-11.webp",
+      "url": "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/c1500101-24a8-4f00-8000-000000000001/spin/spin-11.webp?v=20261101spin01"
+    }
+  ]
+}

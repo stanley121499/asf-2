@@ -1,5 +1,7 @@
 # QC — Product 03 blush
 
+> **SUPERSEDED as a sellable CW (2026-11-02):** Blush is **not** a real physical colorway. Refs are beige clones; live `#E8C4C4` stays `active=false`. See `03-BLUSH_NOT_A_REAL_CW.md`. Historical generation notes below only.
+
 **Product:** Knit wide ankle strap + large buckle (NOT satin P04)  
 **Branding:** LUMIXIU SHOES when insole visible  
 **Poses:** P02 (md-a), P03 (md-b)

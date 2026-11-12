@@ -92,7 +92,7 @@ Use `GenerateImage` (Cursor) or equivalent. Prefer `aspect_ratio` `1:1` for stor
 |---|---|---|---|---|
 | 01 | `01-knit-maryjane-buckle` | black, beige | Single **instep** strap + buckle / **ribbed knit** | `MODEL MATCH` |
 | 02 | `02-knit-ballet-xstrap` | black, beige | **X elastic** (no buckle) / **ribbed knit** | `MODEL MATCH` |
-| 03 | `03-knit-ankle-strap` | blush, beige | Wide **ankle** strap + large buckle / **knit** | `LUMIXIU SHOES` |
+| 03 | `03-knit-ankle-strap` | **beige only** | Wide **ankle** strap + large buckle / **knit** | `LUMIXIU SHOES` |
 | 04 | `04-satin-ankle-strap` | cream, black-almond* | Wide **ankle** strap / **satin** | `MODEL MATCH` |
 | 05 | `05-satin-maryjane` | cream, black-pink* | Single **instep** strap / **satin** | `MODEL MATCH` |
 | 06 | `06-satin-ballet-xstrap` | cream, black-pink* | **X elastic** / **satin** (not knit) | `MODEL MATCH` |
@@ -104,6 +104,7 @@ Use `GenerateImage` (Cursor) or equivalent. Prefer `aspect_ratio` `1:1` for stor
 - 02 vs 06: knit vs satin X-strap
 - 03 vs 04: knit vs satin ankle strap
 - 03 has **no black** colorway
+- 03 has **no real blush/pink** colorway — `blush/` refs are beige clones; catalog sells **beige `#D6C6A8` only**. Do not generate or reseed `#E8C4C4` as an active second CW.
 
 For `sf-pair-or-sole`: colorway A → pair; colorway B → sole (keeps variety).
 
@@ -271,13 +272,14 @@ Unique pose IDs. Do not confuse with product 06 (satin X-strap).
 
 ---
 
-### AGENT CARD — `P03-blush` / `P03-beige` / `P03-fallback`
+### AGENT CARD — `P03-beige` / `P03-fallback`
 
 ```text
-Product 03 = KNIT wide ANKLE strap + large buckle. Colors: blush, beige ONLY (no black).
+Product 03 = KNIT wide ANKLE strap + large buckle. Colorway: beige #D6C6A8 ONLY (no black, no blush).
 Branding: LUMIXIU SHOES on insole when visible.
-Folder: 03-knit-ankle-strap/{blush|beige}/
-Same 6-file pattern. Unique poses. Do not confuse with product 04 (satin ankle).
+Folder: 03-knit-ankle-strap/beige/
+Do NOT treat blush/ as a real CW — those refs are beige clones; #E8C4C4 stays inactive.
+Same 6-file pattern for beige (+ fallback). Unique poses. Do not confuse with product 04 (satin ankle).
 ```
 
 ---

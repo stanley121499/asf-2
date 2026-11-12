@@ -63,13 +63,17 @@
       "ms": "Kasut Knit Ankle Strap",
       "price": 199,
       "colorways": {
-        "blush": {
-          "id": "c1500301-24a8-4f00-8000-000000000001",
-          "hex": "#E8C4C4"
-        },
         "beige": {
           "id": "c1500301-24a8-4f00-8000-000000000002",
           "hex": "#D6C6A8"
+        }
+      },
+      "inactiveColorways": {
+        "blush": {
+          "id": "c1500301-24a8-4f00-8000-000000000001",
+          "hex": "#E8C4C4",
+          "active": false,
+          "note": "NOT a real physical colorway. simon-product-refs/03-knit-ankle-strap/blush/ files are beige clones. Do not declare or reactivate as a second CW on reseed."
         }
       },
       "fallbackMediaId": "c1600300-24a8-4f00-8000-000000000001",
@@ -147,9 +151,9 @@
       "role": "Angle A — 3/4 hero (PDP gallery 1)"
     },
     {
-      "file": "sf-side.png",
+      "file": "sf-model.png",
       "arrangement": 11,
-      "role": "Angle B — pure side profile (PDP gallery 2)"
+      "role": "Model lifestyle on-foot (PDP gallery 2; replaces former sf-side). Products 04–06 live ?v=20261102model0406; 01–03 see MODEL_SLOT2_01_03.md when shipped."
     }
   ],
   "mediaShotsLegacyOnDiskOnly": [

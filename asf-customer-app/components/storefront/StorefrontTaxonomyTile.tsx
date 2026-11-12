@@ -25,14 +25,14 @@ export type StorefrontTaxonomyTileProps = {
    * Label should already be localized (e.g. `shop.comingSoon`).
    */
   disabled?: boolean;
-  /** Outer cell style (e.g. `flex: 1` in a 3-across row). */
+  /** Outer cell style (e.g. fixed width in the horizontal tile row). */
   style?: StyleProp<ViewStyle>;
 };
 
 /**
  * Next-level taxonomy tile for Storefront Shop (image + label).
  *
- * Used in the right-pane 3-across category rows above the product grid
+ * Used in the right-pane horizontal category row above the product grid
  * (plan §3.3).
  */
 export function StorefrontTaxonomyTile({

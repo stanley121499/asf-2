@@ -24,7 +24,8 @@ INSERT INTO public.product_colors (id, product_id, color, active, created_at, up
   ('c1500101-24a8-4f00-8000-000000000002', 'c1010001-24a8-4f00-8000-000000000001', '#D6C6A8', true, NOW(), NOW()),
   ('c1500201-24a8-4f00-8000-000000000001', 'c1010001-24a8-4f00-8000-000000000002', '#111111', true, NOW(), NOW()),
   ('c1500201-24a8-4f00-8000-000000000002', 'c1010001-24a8-4f00-8000-000000000002', '#D6C6A8', true, NOW(), NOW()),
-  ('c1500301-24a8-4f00-8000-000000000001', 'c1010001-24a8-4f00-8000-000000000003', '#E8C4C4', true, NOW(), NOW()),
+  -- Product 03 blush #E8C4C4: NOT a real CW (beige clones) — keep inactive on reseed
+  ('c1500301-24a8-4f00-8000-000000000001', 'c1010001-24a8-4f00-8000-000000000003', '#E8C4C4', false, NOW(), NOW()),
   ('c1500301-24a8-4f00-8000-000000000002', 'c1010001-24a8-4f00-8000-000000000003', '#D6C6A8', true, NOW(), NOW()),
   ('c1500401-24a8-4f00-8000-000000000001', 'c1010001-24a8-4f00-8000-000000000004', '#F5F0E8', true, NOW(), NOW()),
   ('c1500401-24a8-4f00-8000-000000000002', 'c1010001-24a8-4f00-8000-000000000004', '#111111', true, NOW(), NOW()),
@@ -34,7 +35,7 @@ INSERT INTO public.product_colors (id, product_id, color, active, created_at, up
   ('c1500601-24a8-4f00-8000-000000000002', 'c1010001-24a8-4f00-8000-000000000006', '#111111', true, NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET
   product_id = EXCLUDED.product_id, color = EXCLUDED.color,
-  active = true, deleted_at = NULL, updated_at = NOW();
+  active = EXCLUDED.active, deleted_at = NULL, updated_at = NOW();
 
 INSERT INTO public.product_medias (id, product_id, media_url, arrangement, color_id, created_at, updated_at) VALUES
   ('c1600100-24a8-4f00-8000-000000000001', 'c1010001-24a8-4f00-8000-000000000001', 'https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public/product_medias/storefront-curated/2026-10/simon/products/c1010001-24a8-4f00-8000-000000000001/fallback.webp', 1, NULL, NOW(), NOW()),

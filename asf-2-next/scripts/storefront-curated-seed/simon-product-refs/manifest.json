@@ -10,12 +10,13 @@
       "displayName": "Knit Mary Jane (buckle strap)",
       "catalogRule": "One product model, two colorways (not two separate SKUs).",
       "promptLock": {
-        "silhouette": "Women's flat Mary Jane with rounded toe and single instep strap",
-        "upper": "Ribbed knit fabric; vertical ribs on toe box; ribs follow contour on sides",
-        "strap": "Single Mary Jane strap across instep; denser woven/seed-stitch texture than body; matching plastic buckle on outer side (round or small square)",
-        "vamp": "Shallow V-notch at center opening",
-        "heelCollar": "Smooth padded collar at heel — BLACK colorway uses BLACK collar matching exterior (not tan); beige colorway uses tonal tan/beige collar",
-        "heel": "Very low flat block heel",
+        "silhouette": "Women's flat Mary Jane with soft square / rounded-square toe and single instep strap; chunky substantial Mary Jane proportions (not sleek almond ballet)",
+        "upper": "Ribbed knit fabric; strong vertical ribs on toe box; ribs follow contour / more horizontal around heel; heavier gauge than fine corduroy",
+        "strap": "CRITICAL: WIDE thick woven Mary Jane strap ~1.5–2+ cm across instep (NOT thin ribbon); denser honeycomb/seed-stitch/cross-hatch weave distinct from body ribs; visible padded thickness/depth; matching tonal matte plastic rounded-square buckle sized to strap width + silver prong",
+        "vamp": "Shallow center V-notch at throat opening (not deep U/oval scoop)",
+        "heelCollar": "Present smooth padded comfort pillow at heel — BLACK colorway = BLACK collar matching exterior (not tan); beige colorway = tonal tan/beige collar; substantial rolled cushion not thin binding",
+        "heelWebbing": "CRITICAL: centered vertical grosgrain/webbing reinforcement strip on exterior heel back (flush strip ~1.5–2 cm wide, NOT tall dangling pull-tab loop); visible on 3/4 and side rear",
+        "heel": "Very low flat integrated block heel (not tall sharp architectural)",
         "insole": "Light tan footbed",
         "branding": {
           "mustIncludeWhenVisible": true,
@@ -31,6 +32,10 @@
         "mustNot": [
           "X elastic cross straps",
           "Ankle strap",
+          "Thin ribbon strap or dainty delicate strap",
+          "Missing heel vertical webbing strip",
+          "Almond/pointed tapered toe last",
+          "Deep U/oval throat opening",
           "Blank insole when top-down / open view",
           "Wrong brand name"
         ]
@@ -83,7 +88,8 @@
         "silhouette": "Women's sporty ballet flat with rounded-square toe",
         "upper": "Ribbed knit; vertical ribs on toe; diagonal ribs on sides; sock-like construction",
         "strap": "TWO wide flat elastic bands crossing in a clear X over the instep and wrapping the heel/ankle — NO buckle",
-        "heelDetail": "Vertical heel reinforcement strip and small pull tab",
+        "heelDetail": "Vertical heel reinforcement strip and small pull tab only. Heel topline slim/flush — NO padded back cushion / pillow collar (unlike product 01).",
+        "heelCollar": "NONE — product 02 has no padded heel collar; only vertical strip + pull tab.",
         "heel": "Very low flat block heel",
         "insole": "Light tan footbed",
         "branding": {
@@ -100,7 +106,8 @@
         "mustNot": [
           "Single buckle Mary Jane strap",
           "Ankle strap with large rectangular buckle",
-          "Blank insole when top-down / open view"
+          "Blank insole when top-down / open view",
+          "Padded back cushion / pillow heel collar / bulbous Achilles pad"
         ]
       },
       "colorways": {
@@ -145,15 +152,17 @@
       "id": "03",
       "slug": "knit-ankle-strap",
       "displayName": "Knit flat (wide ankle strap + buckle)",
-      "catalogRule": "One product model, two colorways (blush, beige).",
+      "catalogRule": "One product model, ONE active colorway (beige #D6C6A8 only). Blush is NOT a real physical CW.",
       "notes": [
-        "Insole branding on blush top-down reads LUMIXIU SHOES (confirm with Simon if MODEL MATCH is expected instead)."
+        "Blush #E8C4C4 is NOT a real physical colorway — blush/ refs are beige byte-clones. Keep product_colors row inactive; do not sell or regenerate as a second CW.",
+        "Insole branding on beige (and legacy blush folder) top-down reads LUMIXIU SHOES (confirm with Simon if MODEL MATCH is expected instead)."
       ],
       "promptLock": {
         "silhouette": "Women's square-toe flat with wide ankle strap",
         "upper": "Fine ribbed knit; ribs run along shoe length (horizontal on side profile / vertical from top-down toe)",
         "strap": "Wide smooth leather-like ANKLE strap (not instep Mary Jane); large chunky rectangular tonal buckle with silver metal prong",
-        "heelDetail": "Smooth vertical heel strip with stitching; strap threads through heel loop",
+        "heelDetail": "Smooth vertical heel strip with stitching; ankle strap threads through a flat center-back heel loop / small pull-tab. Heel topline is SLIM and FLUSH — knit meets thin tan lining with NO thickness. Do NOT invent a padded back cushion.",
+        "heelCollar": "NONE — product 03 has no padded heel collar / pillow / Achilles cushion (unlike product 01). Only a flat vertical strip + strap loop.",
         "vamp": "Open U/V throat showing top of foot",
         "heel": "Very low flat block heel, contrasting darker brown/tan",
         "insole": "Light tan footbed",
@@ -173,26 +182,12 @@
         "mustNot": [
           "X elastic cross straps",
           "Single narrow instep Mary Jane buckle strap only",
-          "Blank insole when top-down / open view"
+          "Blank insole when top-down / open view",
+          "Padded back cushion / pillow heel collar / bulbous Achilles pad (does not exist on physical sample)",
+          "Thick rolled heel collar like product 01 Mary Jane"
         ]
       },
       "colorways": {
-        "blush": {
-          "hexHint": "#E8C4C4",
-          "upper": "Dusty rose / blush / pale pink ribbed knit",
-          "strapBuckle": "Matching matte blush, silver prong",
-          "soleHeel": "Dark brown",
-          "refs": [
-            "03-knit-ankle-strap/blush/side-01.jpg",
-            "03-knit-ankle-strap/blush/side-02.jpg",
-            "03-knit-ankle-strap/blush/topdown-insole-01.jpg",
-            "03-knit-ankle-strap/blush/topdown-insole-02.jpg"
-          ],
-          "bestInsoleRefs": [
-            "03-knit-ankle-strap/blush/topdown-insole-01.jpg",
-            "03-knit-ankle-strap/blush/topdown-insole-02.jpg"
-          ]
-        },
         "beige": {
           "hexHint": "#D6C6A8",
           "upper": "Light beige / nude ribbed knit",
@@ -211,6 +206,21 @@
           "bestInsoleRefs": [
             "03-knit-ankle-strap/beige/topdown-insole-01.jpg",
             "03-knit-ankle-strap/beige/front-insole-01.jpg"
+          ]
+        }
+      },
+      "inactiveColorways": {
+        "blush": {
+          "hexHint": "#E8C4C4",
+          "active": false,
+          "notARealColorway": true,
+          "note": "No unique pink/blush physical sample. Files under blush/ are beige clones. Live product_colors #E8C4C4 stays active=false. Do not use as generation ground truth for a second CW.",
+          "upper": "LEGACY LABEL ONLY — dusty rose was never photographed; do not generate",
+          "refs": [
+            "03-knit-ankle-strap/blush/side-01.jpg",
+            "03-knit-ankle-strap/blush/side-02.jpg",
+            "03-knit-ankle-strap/blush/topdown-insole-01.jpg",
+            "03-knit-ankle-strap/blush/topdown-insole-02.jpg"
           ]
         }
       }
@@ -232,9 +242,10 @@
         "silhouette": "Women's square-toe flat with wide ankle strap",
         "upper": "Smooth satin fabric with subtle sheen — NOT ribbed knit",
         "strap": "Wide smooth ANKLE strap; large chunky rectangular tonal buckle with silver metal prong",
-        "heelDetail": "Smooth vertical heel strip with stitching",
+        "heelDetail": "Smooth vertical heel strip with stitching; slim flush heel topline — NO padded back cushion (unlike product 01 Mary Jane collar)",
+        "heelCollar": "NONE — product 04 has no padded heel collar / pillow; only vertical strip + strap attachment",
         "vamp": "Soft V throat",
-        "heel": "Very low flat block heel, dark brown",
+        "heel": "Very low flat block heel — cream colorway uses cream/off-white heel+outsole edge; black-almond uses dark/black heel",
         "insole": "Cream/white textured footbed with MODEL MATCH print; almond/tan side lining (ALWAYS light interior even on black colorway — not solid wrinkled almond pad)",
         "branding": {
           "mustIncludeWhenVisible": true,
@@ -243,13 +254,13 @@
           "color": "Black print on tan insole"
         },
         "sole": {
-          "color": "Dark brown",
+          "color": "Cream/off-white on cream colorway (physical); dark/black on black-almond",
           "forefoot": "Floral/clover grip grid",
           "mid": "Size 37 circle",
           "heel": "Horizontal ridged block"
         },
         "colorwayRules": {
-          "cream": "Exterior cream/ivory satin matching physical refs; interior tan",
+          "cream": "Exterior cream/ivory satin matching physical refs; interior tan; cream/off-white sole+heel (never dark brown wood sole)",
           "black-almond": "Exterior matte black (satin + strap + buckle + heel strip); interior = almond side lining + cream/white textured footbed — never black insole or solid wrinkled almond pad"
         },
         "mustNot": [
@@ -258,7 +269,8 @@
           "Black insole on black-almond colorway",
           "Solid wrinkled almond footbed pad (use cream/white textured footbed)",
           "Blank insole when top-down / open view",
-          "LUMIXIU SHOES branding (this product uses MODEL MATCH)"
+          "LUMIXIU SHOES branding (this product uses MODEL MATCH)",
+          "Padded back cushion / pillow heel collar / bulbous Achilles pad"
         ]
       },
       "colorways": {
@@ -268,7 +280,7 @@
           "upper": "Cream / ivory satin with soft sheen",
           "strapBuckle": "Matching cream covered buckle, silver prong",
           "interior": "Light tan",
-          "soleHeel": "Dark brown",
+          "soleHeel": "Cream / off-white matching physical sample (not dark brown)",
           "refs": [
             "04-satin-ankle-strap/cream/side-01.jpg",
             "04-satin-ankle-strap/cream/side-rear-01.jpg",
@@ -413,10 +425,10 @@
       "promptLock": {
         "silhouette": "Women's ballet flat with square toe and two wide elastic X straps over the instep",
         "upper": "Smooth satin or matte white synthetic with subtle sheen — NOT ribbed knit",
-        "strap": "TWO wide flat elastic bands crossing in a clear X over the instep and wrapping the heel/ankle — NO buckle",
+        "strap": "TWO VERY WIDE dense coarse-ribbed elastic bands (~2–2.5+ cm / ~1/4–1/3 midfoot stack) crossing in a bulky X over the instep and wrapping the heel/ankle — NO buckle; NEVER skinny ribbon elastic",
         "heelDetail": "Smooth vertical heel strip; low flat block heel",
-        "heel": "Very low flat block heel",
-        "insole": "Light tan footbed (cream colorway); pink-toned footbed on black-pink when generated",
+        "heel": "Very low flat block heel — cream CW: warm yellowish cream block (not metallic gold); black-pink CW: black block",
+        "insole": "Light tan footbed (cream colorway); MUTED dusty/baby pink footbed on black-pink (not bubblegum)",
         "branding": {
           "mustIncludeWhenVisible": true,
           "text": "MODEL MATCH",
@@ -424,21 +436,25 @@
           "color": "Black print on footbed"
         },
         "sole": {
-          "color": "Dark brown",
+          "color": "Pale cream / off-white (BOTH colorways — cream physical + black-pink canon; NOT dark/chocolate brown)",
           "forefoot": "Floral/clover grip grid",
           "mid": "Size 37 circle",
           "heel": "Horizontal ridged block"
         },
         "colorwayRules": {
-          "cream": "Exterior cream/ivory satin matching physical refs; matching cream elastic straps; interior light tan",
-          "black-pink": "Exterior matte black (body + elastic straps + heel); interior pink lining AND pink-toned insole; keep black MODEL MATCH logo"
+          "cream": "Exterior cream/ivory satin matching physical refs; matching cream elastic straps (same wide gauge); interior light tan; warm yellowish cream heel block",
+          "black-pink": "Exterior matte black (body + elastic straps + heel); MUTED dusty pink lining AND pink-toned insole; keep black MODEL MATCH logo; outsole pale cream like cream CW"
         },
         "mustNot": [
           "Ribbed knit texture",
           "Single buckle Mary Jane strap",
           "Ankle strap with large rectangular buckle",
           "Blank insole when top-down / open view",
-          "Wrong brand name"
+          "Wrong brand name",
+          "Skinny/narrow X-strap ribbon thinner than physical (~35%+ too thin)",
+          "Chocolate / dark brown outsole on black-pink",
+          "Oversaturated bubblegum pink interior",
+          "Metallic gold heel plate on cream"
         ]
       },
       "colorways": {
@@ -446,9 +462,9 @@
           "source": "physical",
           "hexHint": "#F5F0E6",
           "upper": "Cream / ivory satin or matte white with soft sheen",
-          "straps": "Matching cream elastic",
+          "straps": "Matching cream wide coarse-ribbed elastic (physical gauge)",
           "interior": "Light tan",
-          "soleHeel": "Dark brown",
+          "soleHeel": "Warm yellowish cream block heel; pale cream outsole",
           "refs": [
             "06-satin-ballet-xstrap/cream/side-01.jpg",
             "06-satin-ballet-xstrap/cream/side-02.jpg",
@@ -466,9 +482,9 @@
           "source": "ai-generated-2026-10-19",
           "hexHint": "#111111",
           "upper": "Matte black satin or synthetic",
-          "straps": "Matte black elastic",
-          "interior": "Pink lining + pink-toned insole; black MODEL MATCH print",
-          "soleHeel": "Dark brown",
+          "straps": "Matte black wide coarse-ribbed elastic (same gauge as cream physical)",
+          "interior": "Muted dusty/baby pink lining + pink-toned insole; black MODEL MATCH print",
+          "soleHeel": "Black heel block; pale cream/off-white outsole (NOT dark brown)",
           "refs": [
             "06-satin-ballet-xstrap/black-pink/side-01.jpg",
             "06-satin-ballet-xstrap/black-pink/side-02.jpg",

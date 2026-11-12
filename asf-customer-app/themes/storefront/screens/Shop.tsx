@@ -11,6 +11,7 @@ import React, {
 import {
   ActivityIndicator,
   FlatList,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -60,7 +61,6 @@ import {
   isShopVisibleCategoryKind,
   pageShopProducts,
   resolveOccupationCategoryTiles,
-  SHOP_CATEGORY_TILE_COLUMNS,
   SHOP_PRODUCT_PAGE_SIZE,
   type ShopProduct,
   type StorefrontOccupationSelection,
@@ -71,7 +71,7 @@ import { storefrontTokens as tokens } from "@/themes/storefront/tokens";
 /** Left rail width percent (~22–28% per plan §3.3). */
 const SIDEBAR_WIDTH_PERCENT = "26%" as const;
 
-/** Gap between category tiles (3-across rows). */
+/** Gap between category tiles in the horizontal scroll row. */
 const TILE_GAP = 8;
 
 /** Horizontal padding inside the right pane. */
@@ -81,21 +81,13 @@ const RIGHT_PAD = 10;
 const PRODUCT_GAP = 10;
 
 /**
- * Chunks category tiles into fixed-width rows (3-across) so flexWrap cannot
- * collapse to 2 columns from fractional widths.
+ * How many category tiles fit in the visible pane. Fractional so the next
+ * tile peeks and signals horizontal scroll (keeps tiles tappable-sized).
  */
-function chunkCategoryTileRows(
-  tiles: readonly StorefrontSidebarItem[],
-  columns: number = SHOP_CATEGORY_TILE_COLUMNS
-): StorefrontSidebarItem[][] {
-  const cols =
-    Number.isFinite(columns) && columns > 0 ? Math.floor(columns) : 1;
-  const rows: StorefrontSidebarItem[][] = [];
-  for (let i = 0; i < tiles.length; i += cols) {
-    rows.push(tiles.slice(i, i + cols));
-  }
-  return rows;
-}
+const CATEGORY_TILE_VISIBLE = 2.55;
+
+/** Fallback tile width before the right pane has laid out. */
+const CATEGORY_TILE_WIDTH_FALLBACK = 96;
 
 /**
  * Maps a catalog {@link Product} into the Shop filter shape.
@@ -118,9 +110,9 @@ function toShopProduct(product: Product): ShopProduct {
  * Storefront Shop — occupation left rail + category tiles + lazy 2-col
  * products (plan §3.3).
  *
- * **Tiles:** 3-across × 2 rows (6 slots) — shoes only (bags/accessories
- * hidden in UI) plus Coming Soon placeholders (`shop.comingSoon`). Same
- * rule for every occupation.
+ * **Tiles:** one horizontal scroll row (6 slots) — shoes only
+ * (bags/accessories hidden in UI) plus Coming Soon placeholders
+ * (`shop.comingSoon`). Same rule for every occupation.
  *
  * **Search:** free-text is AND-ed within the current occupation (and
  * category when a tile is selected). Empty query → selection-only filter.
@@ -270,7 +262,7 @@ function StorefrontShopBody({
     return map;
   }, [products]);
 
-  /** 3-across × 2 rows: shoes + Coming Soon placeholders for the occupation. */
+  /** Horizontal row: shoes + Coming Soon placeholders for the occupation. */
   const categoryTiles = useMemo(() => {
     if (selection === null) {
       return [];
@@ -438,6 +430,16 @@ function StorefrontShopBody({
     return (inner - PRODUCT_GAP) / 2;
   }, [rightPaneWidth]);
 
+  /** Fixed tile width so ~2.5 tiles show (peek of next = scroll affordance). */
+  const categoryTileWidth = useMemo(() => {
+    if (rightPaneWidth <= 0) {
+      return CATEGORY_TILE_WIDTH_FALLBACK;
+    }
+    const visible = rightPaneWidth - RIGHT_PAD;
+    const gapCount = Math.floor(CATEGORY_TILE_VISIBLE);
+    return (visible - TILE_GAP * gapCount) / CATEGORY_TILE_VISIBLE;
+  }, [rightPaneWidth]);
+
   const entranceBaseDelayMs = 0;
   const entranceDurationMs = motion.duration.dailyEntrance;
   const entranceStaggerMs = motion.delay.dailyStagger;
@@ -548,51 +550,45 @@ function StorefrontShopBody({
     }
 
     const comingSoonLabel = t("shop.comingSoon");
-    const tileRows = chunkCategoryTileRows(
-      categoryTiles,
-      SHOP_CATEGORY_TILE_COLUMNS
-    );
 
     return (
-      <View
-        style={{
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        nestedScrollEnabled
+        contentContainerStyle={{
           gap: TILE_GAP,
           paddingHorizontal: RIGHT_PAD,
           paddingBottom: 14,
         }}
       >
-        {tileRows.map((row, rowIndex) => (
-          <View
-            key={`tile-row-${rowIndex}`}
-            style={{ flexDirection: "row", gap: TILE_GAP }}
-          >
-            {row.map((tile) => {
-              const isPlaceholder = tile.placeholder === true;
-              const isSelected =
-                !isPlaceholder &&
-                selection.categoryId !== null &&
-                selection.categoryId === tile.id;
-              return (
-                <StorefrontTaxonomyTile
-                  key={`${tile.kind}:${tile.id}`}
-                  label={
-                    isPlaceholder ? comingSoonLabel : resolveItemLabel(tile)
-                  }
-                  mediaUrl={isPlaceholder ? null : tile.mediaUrl}
-                  selected={isSelected}
-                  disabled={isPlaceholder}
-                  onPress={() => handleTilePress(tile)}
-                  style={{ flex: 1, minWidth: 0 }}
-                />
-              );
-            })}
-          </View>
-        ))}
-      </View>
+        {categoryTiles.map((tile) => {
+          const isPlaceholder = tile.placeholder === true;
+          const isSelected =
+            !isPlaceholder &&
+            selection.categoryId !== null &&
+            selection.categoryId === tile.id;
+          return (
+            <StorefrontTaxonomyTile
+              key={`${tile.kind}:${tile.id}`}
+              label={
+                isPlaceholder ? comingSoonLabel : resolveItemLabel(tile)
+              }
+              mediaUrl={isPlaceholder ? null : tile.mediaUrl}
+              selected={isSelected}
+              disabled={isPlaceholder}
+              onPress={() => handleTilePress(tile)}
+              style={{ width: categoryTileWidth }}
+            />
+          );
+        })}
+      </ScrollView>
     );
   }, [
     selection,
     categoryTiles,
+    categoryTileWidth,
     resolveItemLabel,
     handleTilePress,
     t,
@@ -626,7 +622,7 @@ function StorefrontShopBody({
         </View>
       );
     }
-    // Occupation overview already shows the 3-across Coming Soon grid —
+    // Occupation overview already shows the Coming Soon tile row —
     // avoid a redundant "no products" line under the placeholders.
     if (selection === null || selection.categoryId === null) {
       return <View style={{ height: 8 }} />;

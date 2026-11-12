@@ -13,10 +13,10 @@
  * category tile is selected, also require that category via `category_id` ∪
  * `product_categories`. Search is AND-ed **within** that selection.
  *
- * **Shop tile grid:** only `kind_key === "shoes"` is shown; bags/accessories
+ * **Shop tile row:** only `kind_key === "shoes"` is shown; bags/accessories
  * stay in the catalog but are UI-hidden. The right pane pads to a fixed
- * 3-across × 2-row grid (`SHOP_CATEGORY_TILE_COLUMNS` ×
- * `SHOP_CATEGORY_TILE_ROWS`) with synthetic Coming Soon placeholders.
+ * horizontal row of {@link SHOP_CATEGORY_TILE_GRID_SLOTS} slots with
+ * synthetic Coming Soon placeholders (UI scrolls horizontally).
  *
  * **Coming soon (products):** when a visible category has zero eligible
  * products, {@link isComingSoonCategory} drives the product-area placeholder.
@@ -51,17 +51,17 @@ export type StorefrontSidebarItem = {
   /** Present on category tiles when the category row carries `kind_key`. */
   kindKey?: string | null;
   /**
-   * Synthetic non-navigating Coming Soon cell in the Shop 3-across tile grid.
+   * Synthetic non-navigating Coming Soon cell in the Shop category tile row.
    * Not a real taxonomy id — UI must ignore presses.
    */
   placeholder?: boolean;
 };
 
-/** Shop right-pane category tiles: columns (3-across) × rows. */
-export const SHOP_CATEGORY_TILE_COLUMNS = 3;
-export const SHOP_CATEGORY_TILE_ROWS = 2;
-export const SHOP_CATEGORY_TILE_GRID_SLOTS =
-  SHOP_CATEGORY_TILE_COLUMNS * SHOP_CATEGORY_TILE_ROWS;
+/**
+ * Shop right-pane category tiles: one horizontal scroll row of this many
+ * slots (real shoes tile + Coming Soon pads).
+ */
+export const SHOP_CATEGORY_TILE_GRID_SLOTS = 6;
 
 /**
  * Product-type `kind_key` values shown as real tappable Shop tiles.
@@ -413,7 +413,7 @@ export function isShopVisibleCategoryKind(
 }
 
 /**
- * Occupation categories that remain visible in the Shop tile grid (shoes only).
+ * Occupation categories that remain visible in the Shop tile row (shoes only).
  */
 export function listVisibleCategoriesForOccupation(
   occupationId: string,
@@ -425,7 +425,7 @@ export function listVisibleCategoriesForOccupation(
 }
 
 /**
- * Pads visible category tiles to a fixed 3-across × 2-row grid with Coming Soon
+ * Pads visible category tiles to a fixed horizontal row with Coming Soon
  * placeholders (`SHOP_CATEGORY_TILE_GRID_SLOTS`).
  *
  * @param visibleTiles - Real tiles (typically shoes only)
@@ -491,7 +491,7 @@ export function resolveNextLevelTiles(
  * Occupation-mode next-level tiles for the Shop right pane.
  *
  * Shows only shoes (hides bags / accessories in UI) and pads to a fixed
- * 3-across × 2-row grid with synthetic Coming Soon placeholders.
+ * horizontal row with synthetic Coming Soon placeholders.
  *
  * @param occupationId - Selected occupation range id
  * @param categories - Catalog categories

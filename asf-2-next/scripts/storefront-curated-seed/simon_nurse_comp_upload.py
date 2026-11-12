@@ -24,7 +24,7 @@ GEN = SCRIPT_DIR / "simon-generated"
 CATALOG_PATH = GEN / "CATALOG_IDS.json"
 TMP = SCRIPT_DIR / ".tmp"
 PUBLIC_BASE = "https://gswszoljvafugtdikimn.supabase.co/storage/v1/object/public"
-CACHE_BUST = "v=20261028nursecomp"
+CACHE_BUST = "v=20261101straptidy"
 MD_SHOTS = ["md-editorial-a.png", "md-editorial-b.png"]
 
 

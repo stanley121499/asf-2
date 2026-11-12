@@ -135,14 +135,20 @@ def write_insert_sql() -> Path:
     color_vals: list[str] = []
     for prod in catalog["products"].values():
         for cw in prod["colorways"].values():
+            active = "true" if cw.get("active", True) else "false"
             color_vals.append(
-                f"  ('{cw['id']}', '{prod['id']}', '{cw['hex']}', true, NOW(), NOW())"
+                f"  ('{cw['id']}', '{prod['id']}', '{cw['hex']}', {active}, NOW(), NOW())"
+            )
+        # Legacy / non-physical CWs (e.g. product 03 blush) — keep row, stay inactive
+        for cw in prod.get("inactiveColorways", {}).values():
+            color_vals.append(
+                f"  ('{cw['id']}', '{prod['id']}', '{cw['hex']}', false, NOW(), NOW())"
             )
     lines.append(",\n".join(color_vals))
     lines.append(
         "ON CONFLICT (id) DO UPDATE SET\n"
         "  product_id = EXCLUDED.product_id, color = EXCLUDED.color,\n"
-        "  active = true, deleted_at = NULL, updated_at = NOW();\n"
+        "  active = EXCLUDED.active, deleted_at = NULL, updated_at = NOW();\n"
     )
 
     # Medias

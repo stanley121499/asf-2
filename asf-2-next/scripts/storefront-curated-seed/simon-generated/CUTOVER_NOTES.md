@@ -2,7 +2,7 @@
 
 ## Result
 
-Customer-facing live catalog is **only** Simon’s 6 flats (12 colorways, 78 product medias), plus 10 posts and 6 promos.
+Customer-facing live catalog is **only** Simon’s 6 flats (**11 active** colorways — product 03 blush `#E8C4C4` is inactive / not a real CW; beige `#D6C6A8` only for 03; 78 product medias), plus 10 posts and 6 promos.
 
 | Metric | Count |
 |---|---|
